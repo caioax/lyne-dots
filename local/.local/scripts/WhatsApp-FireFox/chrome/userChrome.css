@@ -1,0 +1,29 @@
+/* userChrome.css para modo "webapp" - esconde barra de abas e barra de URL */
+
+/* Esconder a barra de abas */
+#TabsToolbar {
+  visibility: collapse !important;
+  height: 0 !important;
+}
+
+/* Esconder barra de navegação (URL) */
+#nav-bar {
+  visibility: collapse !important;
+  height: 0 !important;
+}
+
+/* Esconder a barra de favoritos */
+#PersonalToolbar {
+  visibility: collapse !important;
+  height: 0 !important;
+}
+
+/* Opcional: remover sombras e bordas internas */
+#titlebar, #browser { 
+  box-shadow: none !important;
+}
+
+/* Deixar somente a área do conteúdo */
+#main-window[sizemode="normal"] {
+  margin: 0 !important;
+}

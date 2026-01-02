@@ -1,20 +1,46 @@
+# ==============================================================================
+# UWSM GLOBAL ENVIRONMENT VARIABLES
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# NVIDIA & HARDWARE ACCELERATION
+# Essenciais para garantir que a GPU dedicada seja usada corretamente
+# ------------------------------------------------------------------------------
 export LIBVA_DRIVER_NAME=nvidia
 export __GLX_VENDOR_LIBRARY_NAME=nvidia
-export ELECTRON_OZONE_PLATFORM_HINT=auto
 export NVD_BACKEND=direct
 
+# Força apps Electron (VSCode, Discord, Obsidian) a usar Wayland nativo
+export ELECTRON_OZONE_PLATFORM_HINT=auto
+
+# ------------------------------------------------------------------------------
+# XDG / SESSION IDENTIFICATION
+# Identifica a sessão para portais e gerenciadores
+# ------------------------------------------------------------------------------
 export XDG_CURRENT_DESKTOP=Hyprland
 export XDG_SESSION_TYPE=wayland
 export XDG_SESSION_DESKTOP=Hyprland
+
+# Garante que menus de apps sigam o padrão do Arch
 export XDG_MENU_PREFIX=arch-
 
+# ------------------------------------------------------------------------------
+# TOOLKITS (GTK & QT)
+# Configurações visuais e de backend para interfaces gráficas
+# ------------------------------------------------------------------------------
+# GTK: Prioriza Wayland, depois X11
 export GDK_BACKEND="wayland,x11,*"
 
+# QT: Configurações para Qt6/Qt5
 export QT_QPA_PLATFORM="wayland;xcb"
 export QT_QPA_PLATFORMTHEME=qt6ct
 export QT_AUTO_SCREEN_SCALE_FACTOR=1
 export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 
+# ------------------------------------------------------------------------------
+# LOCALIZAÇÃO & IDIOMA
+# Sistema em Inglês, Formatos (Data/Dinheiro) em PT-BR
+# ------------------------------------------------------------------------------
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 

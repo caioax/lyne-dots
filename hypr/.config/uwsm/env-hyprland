@@ -1,9 +1,31 @@
-export XCURSOR_SIZE=24
+# ==============================================================================
+# UWSM HYPRLAND SPECIFIC ENVIRONMENT
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# CURSORS / THEMES
+# Define o tema e tamanho do cursor tanto para XWayland quanto Wayland nativo
+# ------------------------------------------------------------------------------
 export XCURSOR_THEME=Bibata-Modern-Classic
+export XCURSOR_SIZE=24
+
 export HYPRCURSOR_THEME=Bibata-Modern-Classic
 export HYPRCURSOR_SIZE=24
 
+# ------------------------------------------------------------------------------
+# AQUAMARINE / RENDERING (Hyprland > 0.40)
+# Configurações criticas de renderização e seleção de GPU
+# ------------------------------------------------------------------------------
+# Correção para alguns artefatos visuais (0 = desativado)
 export AQ_FORCE_LINEAR_BLIT=0
+
+# Seleção explicita de GPUs (Nvidia dGPU primeiro, Intel iGPU depois)
+# Garante que o Hyprland renderize na placa correta
 export AQ_DRM_DEVICES="/dev/dri/nvidia-dgpu:/dev/dri/intel-igpu"
 
+# ------------------------------------------------------------------------------
+# APPS & TOOLS CONFIGURATION
+# Variáveis customizadas para scripts e ferramentas do usuário
+# ------------------------------------------------------------------------------
+# Diretório padrão para salvar capturas de tela do Hyprshot
 export HYPRSHOT_DIR="$HOME/Pictures/Screenshots"
