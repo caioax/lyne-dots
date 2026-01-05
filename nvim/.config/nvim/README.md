@@ -1,135 +1,125 @@
-# 📖 Manual do meu Neovim
+# 📖 Manual do Neovim
 
-Este é o guia de referência para a minha configuração personalizada do Neovim.
-**Tema Atual:** Tokyo Night (Night) | **Líder Key:** `Space`
-
----
-
-## ⌨️ Atalhos Essenciais (Cheat Sheet)
-
-### 🧭 Navegação e Janelas
-
-| Atalho        | Ação                                                   |
-| :------------ | :----------------------------------------------------- |
-| `<C-h/j/k/l>` | Navegar entre janelas (Esquerda, Baixo, Cima, Direita) |
-| `<C-Seta>`    | Redimensionar janelas (Segure Ctrl e use as setas)     |
-| `<Leader>e`   | Abrir/Fechar a árvore de arquivos lateral (Neo-tree)   |
-| `<Leader>fb`  | Ver lista de buffers (arquivos) abertos                |
-
-### 📂 Gerenciamento de Arquivos
-
-| Atalho       | Ação                                                         |
-| :----------- | :----------------------------------------------------------- |
-| `<Leader>ff` | **Find Files:** Busca arquivos pelo nome (Telescope)         |
-| `<Leader>fg` | **Live Grep:** Busca texto dentro dos arquivos               |
-| `:Delete`    | **Custom:** Apaga o arquivo atual do disco (com confirmação) |
-
-### 📝 Edição
-
-| Atalho        | Ação                                          |
-| :------------ | :-------------------------------------------- |
-| `Esc`         | Limpa o destaque da busca (search highlight)  |
-| `J` (Visual)  | Move as linhas selecionadas para baixo        |
-| `K` (Visual)  | Move as linhas selecionadas para cima         |
-| `<Leader>mp`  | **Make Pretty:** Formata o código manualmente |
-| `Salvar (:w)` | Formata o código automaticamente              |
-
-### 🧠 Inteligência (LSP)
-
-_Funciona em: Lua, TS/JS, Python, HTML, CSS, Bash, C, etc._
-
-| Atalho       | Ação                                                              |
-| :----------- | :---------------------------------------------------------------- |
-| `K`          | **Hover:** Mostra documentação/info sobre o código sob o cursor   |
-| `gd`         | **Go to Definition:** Pula para onde a função/variável foi criada |
-| `<Leader>rn` | **Rename:** Renomeia a variável em todo o projeto                 |
-| `<Leader>ca` | **Code Action:** Sugere correções (ex: importar lib faltante)     |
-
-### 🌳 Árvore de Arquivos (Neo-tree)
-
-_Quando a barra lateral estiver em foco:_
-
-| Tecla   | Ação                           |
-| :------ | :----------------------------- |
-| `l`     | Abre pasta ou arquivo (Expand) |
-| `h`     | Fecha pasta (Collapse)         |
-| `Space` | Abre/Fecha pasta               |
+| Informação      | Valor                    |
+| :-------------- | :----------------------- |
+| **Tema**        | `Tokyo Night (Night)`    |
+| **Fonte**       | Caskaydia Cove Nerd Font |
+| **Leader Key**  | `Space` (Espaço)         |
+| **Gerenciador** | `Lazy.nvim`              |
 
 ---
 
-## 🛠️ Ferramentas Instaladas
+## 🧭 Navegação Imersiva (Nvim 🤝 Tmux)
 
-### 1. Formatação (Auto-Formatting)
+Graças ao plugin `vim-tmux-navigator`, a fronteira entre o editor e o terminal não existe mais.
 
-O sistema usa o **Conform.nvim**. A formatação ocorre automaticamente ao salvar (`:w`).
-
-- **Lua:** StyLua
-- **Python:** Black + Isort
-- **Web (HTML/CSS/JS):** Prettier
-- **Shell:** Shfmt
-- **Outras (C, Rust, Go, QML):** Usa o formatador nativo do LSP.
-
-### 2. Autocomplete (CMP)
-
-- **Tab:** Próxima sugestão.
-- **Shift+Tab:** Sugestão anterior.
-- **Enter:** Confirma a sugestão.
-- **Fontes:** LSP, Snippets, Buffer (texto atual), Caminhos de arquivo.
-
-### 3. Git (Gitsigns)
-
-Barra lateral esquerda mostra cores: ▎(Adicionado/Modificado),  (Deletado).
-
-| Atalho       | Ação                                                     |
-| :----------- | :------------------------------------------------------- |
-| `]c`         | Pula para a próxima mudança git no arquivo               |
-| `[c`         | Volta para a mudança anterior                            |
-| `<Leader>gp` | **Preview:** Mostra janela flutuante com o diff da linha |
-| `<Leader>gb` | **Blame:** Mostra quem editou a linha atual              |
+| Atalho       | Contexto    | Ação                                        |
+| :----------- | :---------- | :------------------------------------------ |
+| `<Ctrl> + h` | ⬅️ Esquerda | Move o foco para o split/painel da esquerda |
+| `<Ctrl> + j` | ⬇️ Baixo    | Move o foco para o split/painel de baixo    |
+| `<Ctrl> + k` | ⬆️ Cima     | Move o foco para o split/painel de cima     |
+| `<Ctrl> + l` | ➡️ Direita  | Move o foco para o split/painel da direita  |
 
 ---
 
-## ⚙️ Manutenção e Gerenciamento
+## ⌨️ Cheat Sheet de Atalhos
 
-### Como instalar novos plugins?
+### 📂 Arquivos e Buffers
 
-1. Edite ou crie um arquivo em `lua/plugins/`.
-2. Adicione o bloco do plugin.
-3. Salve e reinicie. O `lazy.nvim` instala sozinho.
+| Atalho        | Comando                | Descrição                                      |
+| :------------ | :--------------------- | :--------------------------------------------- |
+| `<Leader> ff` | `Telescope find_files` | Busca arquivos (ignora pastas na visualização) |
+| `<Leader> fg` | `Telescope live_grep`  | Busca por palavras dentro de todos os arquivos |
+| `<Leader> fb` | `Telescope buffers`    | Lista arquivos abertos na memória              |
+| `<Leader> e`  | `NeoTree toggle`       | Abre/Fecha a árvore lateral de arquivos        |
+| `:Delete`     | `User Command`         | **Perigo:** Apaga o arquivo atual do disco     |
 
-### Comandos de Gerenciamento
+### 🧠 Inteligência (LSP) & Código
 
-- `:Lazy` -> Abre o painel de plugins (Atualizar, Limpar, Perfil).
-- `:Mason` -> Abre o gerenciador de ferramentas (LSP, Formatadores).
-  - Use `/` para buscar.
-  - Use `i` para instalar.
+| Atalho          | Descrição                                                   |
+| :-------------- | :---------------------------------------------------------- |
+| `K`             | **Hover:** Mostra a documentação da função sob o cursor     |
+| `gd`            | **Go Definition:** Pula para onde a função foi criada       |
+| `<Leader> rn`   | **Rename:** Renomeia a variável no projeto todo (Refactor)  |
+| `<Leader> ca`   | **Code Action:** Menu de correções rápidas (Imports, Fixes) |
+| `<Leader> mp`   | **Format:** Formata o código manualmente (Prettier/Stylua)  |
+| `Tab` / `S-Tab` | Navega nas sugestões do Autocomplete (CMP)                  |
 
-### Como mudar o tema?
+### 🛠️ Utilitários & Terminais
 
-Edite o arquivo `lua/plugins/theme.lua`:
+O `Snacks.nvim` fornece ferramentas poderosas embutidas:
+
+| Atalho        | Ferramenta        | O que faz?                                     |
+| :------------ | :---------------- | :--------------------------------------------- |
+| `<Leader> lg` | **LazyGit**       | Abre uma interface gráfica completa para Git   |
+| `<Leader> gl` | **Git Log**       | Mostra o histórico de commits do arquivo atual |
+| `<Leader> sf` | **Scratchpad**    | Abre um bloco de notas temporário flutuante    |
+| `<Ctrl> + /`  | **Terminal**      | Abre/Fecha um terminal flutuante rápido        |
+| `<Leader> un` | **Notifications** | Limpa todas as notificações da tela            |
+
+### 💾 Sessões (Persistence)
+
+O Neovim lembra onde você parou.
+
+| Atalho        | Ação                                        |
+| :------------ | :------------------------------------------ |
+| `<Leader> qs` | Restaura a sessão da pasta atual            |
+| `<Leader> ql` | Restaura a **última** sessão usada (global) |
+| `<Leader> qd` | Desativa a gravação de sessão atual         |
+
+---
+
+## 🎨 Personalização Visual
+
+### Temas
+
+O sistema carrega o **Tokyo Night** por padrão. Para mudar, edite `lua/plugins/theme.lua`:
 
 ```lua
--- Mude o nome dentro do comando:
 vim.cmd.colorscheme("tokyonight-night")
--- Opções instaladas: catppuccin, gruvbox-material, kanagawa, rose-pine
+-- Opções: catppuccin, gruvbox-material, kanagawa, rose-pine
 ```
 
-### 📂 Estrutura de Pastas
+### Git Signs (Barra Lateral)
 
-```
+- `▎` (Azul/Verde): Linha adicionada ou modificada.
+- `` (Vermelho): Linha deletada.
+- **Preview:** Use `<Leader>gp` para ver o que foi alterado na linha sem abrir o git.
+
+---
+
+## ⚙️ Estrutura de Diretórios
+
+Entenda onde mexer para não quebrar nada:
+
+```text
 ~/.config/nvim/
-├── init.lua             # Entrada principal (carrega tudo)
-├── lazy-lock.json       # Versões exatas dos plugins (não mexer)
+├── init.lua             # 🧠 Cérebro: Carrega os módulos
+├── lazy-lock.json       # 🔒 Trava versões dos plugins (NÃO MEXA)
 ├── lua/
-│   ├── config/          # Configurações Base
-│   │   ├── commands.lua # Meus comandos
-│   │   ├── keymaps.lua  # Meus atalhos
-│   │   ├── options.lua  # Opções do Vim (números, tabs)
-│   │   └── lazy.lua     # Boot do gerenciador de plugins
-│   └── plugins/         # Cada arquivo é um plugin ou categoria
-│       ├── cmp.lua      # Autocomplete
-│       ├── editor.lua   # Neo-tree, Telescope, Treesitter
-│       ├── lsp.lua      # Inteligência (Linguagens)
-│       ├── formatting.lua # Regras de formatação
+│   ├── config/          # ⚙️ Configurações Base
+│   │   ├── options.lua  # Tabs, Números, Clipboard
+│   │   ├── keymaps.lua  # Seus atalhos manuais
+│   │   ├── lazy.lua     # Boot do gerenciador
+│   │   └── commands.lua # Comandos customizados (:Delete)
+│   └── plugins/         # 🧩 Módulos (Adicione novos aqui)
+│       ├── lsp.lua      # Linguagens (JS, Lua, Python...)
+│       ├── editor.lua   # Telescope, Neo-tree
+│       ├── snacks.lua   # Dashboard, Terminal, Git
 │       └── ...
 ```
+
+## 📦 Como instalar coisas novas?
+
+### Adicionar um Plugin
+
+1. Crie um arquivo em `lua/plugins/nome-do-plugin.lua`.
+2. Cole o código `return { "usuario/repo", ... }`.
+3. Reinicie o Neovim.
+
+### Adicionar uma Linguagem (LSP/Formatter)
+
+1. Digite `:Mason`.
+2. Use `/` para buscar (ex: `python`, `gopls`).
+3. Aperte `i` para instalar.
+4. **Nota:** Se quiser que fique salvo na config, adicione na lista `ensure_installed` em `lua/plugins/lsp.lua` ou `formatting.lua`.
