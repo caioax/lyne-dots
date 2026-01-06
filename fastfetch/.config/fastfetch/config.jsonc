@@ -1,134 +1,65 @@
 {
     "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
     "logo": {
-        "type": "kitty",
-        "source": "${HOME}/.config/fastfetch/arch.png",
-        "height": 17,
-        "width": 34,
+        "type": "small",
         "padding": {
-            "top": 2,
+            "top": 1,
             "left": 2,
-            "right": 2
+            "right": 5
+        },
+        "color": {
+            "1": "blue",
+            "2": "blue"
         }
-        //"color": {
-        //    "1": "blue",
-        //}
+    },
+    "display": {
+        "separator": "    ",
+        "color": "blue"
     },
     "modules": [
-        "break",
         {
-            "type": "custom",
-            "format": "\u001b[38;5;245mHardware"
-        },
-        {
-            "type": "host",
-            "key": " PC",
-            "keyColor": "#7d9bba"
-        },
-        {
-            "type": "gpu",
-            "key": "│ ├󰍛",
-            "keyColor": "#7d9bba"
-        },
-        {
-            "type": "cpu",
-            "key": "└ └󰍛",
-            "keyColor": "#7d9bba"
-        },
-        // {
-        //     "type": "memory",
-        //     "key": "│ ├󰍛",
-        //     "keyColor": "#7d9bba"
-        // },
-        // {
-        //     "type": "disk",
-        //     "key": "└ └",
-        //     "keyColor": "#7d9bba"
-        // },
-        "break",
-        {
-            "type": "custom",
-            "format": "\u001b[38;5;245mSoftware"
+            "type": "title",
+            "key": "  user     ",
+            "keyColor": "red",
+            "format": "{user-name}"
         },
         {
             "type": "os",
-            "key": " OS",
-            "keyColor": "#7d9bba"
+            "key": "  distro   ",
+            "keyColor": "blue"
         },
         {
             "type": "kernel",
-            "key": "│ ├",
-            "keyColor": "#7d9bba"
-        },
-        // {
-        //     "type": "bios",
-        //     "key": "│ ├",
-        //     "keyColor": "#7d9bba"
-        // },
-        {
-            "type": "packages",
-            "key": "│ ├󰏖",
-            "keyColor": "#7d9bba"
-        },
-        {
-            "type": "shell",
-            "key": "│ ├",
-            "keyColor": "#7d9bba"
-        },
-        // "break",
-        {
-            "type": "de",
-            "key": " DE",
-            "keyColor": "#7d9bba"
-        },
-        {
-            "type": "lm",
-            "key": "│ ├",
-            "keyColor": "#7d9bba"
-        },
-        {
-            "type": "wm",
-            "key": "│ ├",
-            "keyColor": "#7d9bba"
-        },
-        {
-            "type": "wmtheme",
-            "key": "│ ├󰉼",
-            "keyColor": "#7d9bba"
+            "key": "  kernel   ",
+            "keyColor": "green"
         },
         {
             "type": "terminal",
-            "key": "└ └",
-            "keyColor": "#7d9bba"
-        },
-        "break",
-        {
-            "type": "custom",
-            "format": "\u001b[38;5;245mAge / Uptime"
+            "key": "  term     ",
+            "keyColor": "red"
         },
         {
-            "type": "command",
-            "key": " OS Age",
-            "keyColor": "#7d9bba",
-            "text": "birth_install=$(stat -c %W /); current=$(date +%s); time_progression=$((current - birth_install)); days_difference=$((time_progression / 86400)); echo $days_difference days"
+            "type": "wm",
+            "key": "  wm       ",
+            "keyColor": "blue"
         },
         {
             "type": "uptime",
-            "key": " Uptime",
-            "keyColor": "#7d9bba"
+            "key": "  uptime   ",
+            "keyColor": "yellow"
         },
-        // {
-        //     "type": "datetime",
-        //     "key": " Date Time",
-        //     "keyColor": "#7d9bba"
-        // },
-        "break",
+        {
+            "type": "command",
+            "key": "  os age   ",
+            "keyColor": "blue",
+            "text": "birth_install=$(stat -c %W /); current=$(date +%s); time_progression=$((current - birth_install)); days_difference=$((time_progression / 86400)); echo $days_difference days"
+        },
         {
             "type": "colors",
-            "paddingLeft": 0,
+            "key": "  colors   ",
+            "keyColor": "green",
             "symbol": "circle"
-        }
- 
+        },
+        "break"
     ]
 }
-

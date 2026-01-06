@@ -4,7 +4,7 @@ return {
 	priority = 1000,
 	lazy = false,
 	opts = {
-		-- Configurações visuais e utilitários
+		-- === MÓDULOS ATIVADOS ===
 		bigfile = { enabled = true },
 		indent = { enabled = true },
 		input = { enabled = true },
@@ -14,32 +14,65 @@ return {
 		statuscolumn = { enabled = true },
 		words = { enabled = true },
 
+		-- Adicionei estes 3 que faltavam para os atalhos funcionarem:
+		lazygit = { enabled = true },
+		scratch = { enabled = true },
+		terminal = { enabled = true },
+
 		-- CONFIGURAÇÃO DO DASHBOARD
 		dashboard = {
 			enabled = true,
 			preset = {
 				header = [[
-                                                 
-        ████ ██████           █████       ██                    
-       ███████████              █████                             
-       █████████ ███████████████████ ███   ███████████    
-      █████████  ███    █████████████ █████ ██████████████    
-     █████████ ██████████ █████████ █████ █████ ████ █████    
-   ███████████ ███    ███ █████████ █████ █████ ████ █████   
-  ██████  █████████████████████ ████ █████ █████ ████ ██████  
+                                                                     
+       ████ ██████           █████      ██                     
+      ███████████             █████                             
+      █████████ ███████████████████ ███   ███████████   
+     █████████  ███    █████████████ █████ ██████████████   
+    █████████ ██████████ █████████ █████ █████ ████ █████   
+  ███████████ ███    ███ █████████ █████ █████ ████ █████  
+ ██████  █████████████████████ ████ █████ █████ ████ ██████ 
                 ]],
 
 				-- Botões do Menu
 				keys = {
-					{ icon = " ", key = "f", desc = "Procurar Arquivo", action = ":Telescope find_files" },
-					{ icon = " ", key = "n", desc = "Novo Arquivo", action = ":ene | startinsert" },
-					{ icon = " ", key = "g", desc = "Procurar Texto", action = ":Telescope live_grep" },
-					{ icon = " ", key = "r", desc = "Arquivos Recentes", action = ":Telescope oldfiles" },
+					{
+						icon = " ",
+						key = "f",
+						desc = "Procurar Arquivo",
+						action = function()
+							require("telescope.builtin").find_files()
+						end,
+					},
+					{
+						icon = " ",
+						key = "n",
+						desc = "Novo Arquivo",
+						action = ":ene | startinsert",
+					},
+					{
+						icon = " ",
+						key = "g",
+						desc = "Procurar Texto",
+						action = function()
+							require("telescope.builtin").live_grep()
+						end,
+					},
+					{
+						icon = " ",
+						key = "r",
+						desc = "Arquivos Recentes",
+						action = function()
+							require("telescope.builtin").oldfiles()
+						end,
+					},
 					{
 						icon = " ",
 						key = "c",
 						desc = "Configuração",
-						action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})",
+						action = function()
+							require("telescope.builtin").find_files({ cwd = vim.fn.stdpath("config") })
+						end,
 					},
 					{ icon = " ", key = "s", desc = "Restaurar Sessão", section = "session" },
 					{ icon = " ", key = "q", desc = "Sair", action = ":qa" },

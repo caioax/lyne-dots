@@ -1,7 +1,5 @@
 # 🖥️ Manual do Tmux
 
-> **Filosofia:** Um multiplexador de terminais moderno, focado em fluxo contínuo com o Neovim, persistência de sessões e estética limpa (_Transparent/TokyoNight_).
-
 | Informação           | Valor                                |
 | :------------------- | :----------------------------------- |
 | **Prefixo (Leader)** | `Ctrl` + `Space` (Espaço)            |
