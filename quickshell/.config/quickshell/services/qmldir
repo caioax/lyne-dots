@@ -10,3 +10,4 @@ singleton NotificationService NotificationService.qml
 singleton BrightnessService BrightnessService.qml
 singleton PowerService PowerService.qml
 singleton StateService StateService.qml
+singleton ShortcutService ShortcutService.qml
