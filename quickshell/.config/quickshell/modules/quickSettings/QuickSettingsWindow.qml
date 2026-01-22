@@ -51,16 +51,6 @@ PopupWindow {
         }
     }
 
-    // --- Processos ---
-    Process {
-        id: createLock
-        command: ["touch", "/tmp/QsQuickSettingsOpen"]
-    }
-    Process {
-        id: removeLock
-        command: ["rm", "/tmp/QsQuickSettingsOpen"]
-    }
-
     // --- Foco ---
     HyprlandFocusGrab {
         id: focusGrab
@@ -83,10 +73,10 @@ PopupWindow {
         if (visible) {
             isClosing = false;
             isOpening = true;
-            createLock.running = true;
+            WindowManagerService.registerOpen("QuickSettings");
             grapTimer.restart();
         } else {
-            removeLock.running = true;
+            WindowManagerService.registerClose("QuickSettings");
             pageStack.currentIndex = 0;
             focusGrab.active = false;
             isOpening = false;

@@ -12,3 +12,5 @@ singleton PowerService PowerService.qml
 singleton StateService StateService.qml
 singleton ShortcutService ShortcutService.qml
 singleton LauncherService LauncherService.qml
+singleton SystemMonitorService SystemMonitorService.qml
+singleton WindowManagerService WindowManagerService.qml

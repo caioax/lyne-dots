@@ -236,5 +236,7 @@ Item {
                 onIconClicked: BrightnessService.toggleBrightness()
             }
         }
+
+        SystemMonitorWidget {}
     }
 }

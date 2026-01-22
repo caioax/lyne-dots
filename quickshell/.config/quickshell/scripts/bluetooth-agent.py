@@ -12,7 +12,7 @@ import os
 BUS_NAME = 'org.bluez'
 AGENT_INTERFACE = 'org.bluez.Agent1'
 AGENT_PATH = '/org/bluez/agent'
-LOCK_FILE = "/tmp/QsQuickSettingsOpen"
+LOCK_FILE = "/tmp/QsAnyModuleIsOpen"
 
 def close_quick_settings():
     """

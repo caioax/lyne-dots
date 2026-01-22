@@ -58,10 +58,12 @@ PopupWindow {
         if (visible) {
             isClosing = false;
             isOpening = true;
+            WindowManagerService.registerOpen("NotificationWindow");
             grabTimer.restart();
         } else {
             focusGrab.active = false;
             isOpening = false;
+            WindowManagerService.registerClose("NotificationWindow");
         }
     }
 

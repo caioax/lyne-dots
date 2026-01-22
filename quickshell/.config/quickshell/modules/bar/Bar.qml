@@ -1,8 +1,10 @@
 pragma ComponentBehavior: Bound
 import Quickshell
+import Quickshell.Wayland
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.services
 import "../../components/"
 import "../quickSettings/"
 import "../notifications/"
@@ -19,7 +21,10 @@ Scope {
         PanelWindow {
             required property var modelData
 
-            property bool enableAutoHide: false
+            property bool enableAutoHide: true
+
+            // NameSpace
+            WlrLayershell.namespace: "qs_modules"
 
             // --- CONFIGURAÇÃO DA BARRA ---
             implicitHeight: 30
@@ -44,7 +49,12 @@ Scope {
             // --- LÓGICA DE AUTOHIDE ---
             // Se o mouse estiver em cima, margem é 0 (mostra tudo).
             // Se não, margem é -29 (esconde, deixando 1px no topo para pegar o mouse).
-            margins.top: enableAutoHide ? mouseSensor.hovered ? 0 : (-1 * (height - 1)) : 0
+            margins.top: {
+                if (WindowManagerService.anyModuleOpen || !enableAutoHide || mouseSensor.hovered)
+                    return 0;
+
+                return (-1 * (height - 1));
+            }
 
             // Animação suave no movimento da janela
             Behavior on margins.top {
