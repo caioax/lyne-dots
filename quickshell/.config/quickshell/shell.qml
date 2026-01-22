@@ -90,6 +90,12 @@ ShellRoot {
         }
     }
 
+    // Launcher
+    Loader {
+        active: true
+        source: "./modules/launcher/Launcher.qml"
+    }
+
     // =========================================================================
     // ATALHOS GLOBAIS
     // =========================================================================
@@ -114,5 +120,13 @@ ShellRoot {
             console.log("[Shell] Power menu solicitado");
             PowerService.showOverlay();
         }
+    }
+
+    // Atalho: Launcher
+    GlobalShortcut {
+        name: "app_launcher"
+        description: "App Launcher"
+
+        onPressed: LauncherService.show()
     }
 }

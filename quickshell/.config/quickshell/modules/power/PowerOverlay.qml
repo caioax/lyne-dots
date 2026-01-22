@@ -7,226 +7,303 @@ import Quickshell.Hyprland
 import qs.config
 import qs.services
 
-Scope {
+PanelWindow {
     id: root
 
-    Variants {
-        model: Quickshell.screens
+    visible: PowerService.overlayVisible
 
-        delegate: PanelWindow {
-            id: window
+    anchors {
+        top: true
+        bottom: true
+        left: true
+        right: true
+    }
 
-            required property var modelData
-            screen: modelData
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
-            visible: PowerService.overlayVisible
+    color: "transparent"
 
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-            WlrLayershell.exclusiveZone: -1
+    property int selectedIndex: 0
+    readonly property var actions: [
+        { id: "shutdown", icon: "󰐥", color: Config.errorColor, label: "Desligar" },
+        { id: "reboot", icon: "󰜉", color: Config.warningColor, label: "Reiniciar" },
+        { id: "suspend", icon: "󰒲", color: Config.accentColor, label: "Suspender" },
+        { id: "logout", icon: "󰍃", color: Config.subtextColor, label: "Sair" },
+        { id: "lock", icon: "󰌾", color: Config.subtextColor, label: "Bloquear" }
+    ]
 
-            anchors {
-                top: true
-                left: true
-                right: true
+    function navigate(delta: int) {
+        selectedIndex = (selectedIndex + delta + actions.length) % actions.length;
+    }
+
+    function executeSelected() {
+        PowerService.executeAction(actions[selectedIndex].id);
+    }
+
+    // Fundo
+    Rectangle {
+        anchors.fill: parent
+        color: Qt.rgba(0, 0, 0, 0.3)
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: PowerService.hideOverlay()
+        }
+    }
+
+    // Widget central
+    Rectangle {
+        id: powerWidget
+
+        anchors.centerIn: parent
+
+        width: contentColumn.implicitWidth + 48
+        height: contentColumn.implicitHeight + 40
+
+        radius: Config.radiusLarge
+        color: Config.backgroundColor
+        border.width: 1
+        border.color: Config.surface2Color
+
+        scale: PowerService.overlayVisible ? 1.0 : 0.9
+        opacity: PowerService.overlayVisible ? 1.0 : 0.0
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: 200
+                easing.type: Easing.OutBack
+            }
+        }
+
+        Behavior on opacity {
+            NumberAnimation { duration: 150 }
+        }
+
+        ColumnLayout {
+            id: contentColumn
+            anchors.centerIn: parent
+            spacing: 20
+
+            Text {
+                Layout.alignment: Qt.AlignHCenter
+                text: "O que deseja fazer?"
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeLarge
+                font.weight: Font.DemiBold
+                color: Config.textColor
             }
 
-            implicitHeight: 100
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 12
 
-            color: "transparent"
+                Repeater {
+                    model: root.actions
 
-            // Área invisível para fechar ao clicar fora
-            MouseArea {
-                anchors.fill: parent
-                onClicked: PowerService.hideOverlay()
-            }
+                    delegate: Rectangle {
+                        id: actionBtn
 
-            // Widget flutuante minimalista
-            Rectangle {
-                id: powerWidget
+                        required property var modelData
+                        required property int index
 
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: parent.top
-                anchors.topMargin: 15
+                        Layout.preferredWidth: 72
+                        Layout.preferredHeight: 80
 
-                width: powerRow.implicitWidth + 32
-                height: 52
+                        radius: Config.radius
 
-                radius: height / 2
-                color: Config.surface0Color
+                        property bool isSelected: index === root.selectedIndex
 
-                border.width: 1
-                border.color: Config.surface2Color
+                        color: {
+                            if (isSelected) return Config.surface1Color;
+                            if (btnMouse.containsMouse) return Config.surface0Color;
+                            return "transparent";
+                        }
 
-                // Animação de entrada
-                property bool showState: PowerService.overlayVisible
+                        border.width: isSelected ? 2 : 0
+                        border.color: modelData.color
 
-                scale: showState ? 1.0 : 0.8
-                opacity: showState ? 1.0 : 0.0
+                        scale: btnMouse.pressed ? 0.95 : 1.0
 
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: Config.animDurationLong
-                        easing.type: Easing.OutBack
-                    }
-                }
+                        Behavior on color { ColorAnimation { duration: 100 } }
+                        Behavior on scale { NumberAnimation { duration: 80 } }
+                        Behavior on border.width { NumberAnimation { duration: 100 } }
 
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Config.animDuration
-                    }
-                }
+                        ColumnLayout {
+                            anchors.centerIn: parent
+                            spacing: 8
 
-                // Conteúdo
-                RowLayout {
-                    id: powerRow
-                    anchors.centerIn: parent
-                    spacing: 6
-
-                    Repeater {
-                        model: [
-                            { id: "lock", icon: "󰌾", color: Config.accentColor, tooltip: "Bloquear" },
-                            { id: "logout", icon: "󰍃", color: Config.subtextColor, tooltip: "Sair" },
-                            { id: "suspend", icon: "󰒲", color: Config.subtextColor, tooltip: "Suspender" },
-                            { id: "reboot", icon: "󰜉", color: Config.warningColor, tooltip: "Reiniciar" },
-                            { id: "shutdown", icon: "󰐥", color: Config.errorColor, tooltip: "Desligar" }
-                        ]
-
-                        delegate: Rectangle {
-                            id: actionBtn
-
-                            required property var modelData
-                            required property int index
-
-                            Layout.preferredWidth: 40
-                            Layout.preferredHeight: 40
-
-                            radius: width / 2
-
-                            color: {
-                                if (btnMouse.pressed)
-                                    return Qt.alpha(modelData.color, 0.3);
-                                if (btnMouse.containsMouse)
-                                    return Qt.alpha(modelData.color, 0.15);
-                                return "transparent";
-                            }
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Config.animDurationShort
-                                }
-                            }
-
-                            scale: btnMouse.pressed ? 0.9 : 1.0
-                            Behavior on scale {
-                                NumberAnimation {
-                                    duration: Config.animDurationShort
-                                }
-                            }
-
-                            // Ícone
-                            Text {
-                                anchors.centerIn: parent
-                                text: modelData.icon
-                                font.family: Config.font
-                                font.pixelSize: 20
-                                color: btnMouse.containsMouse ? modelData.color : Config.textColor
-
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: Config.animDurationShort
-                                    }
-                                }
-                            }
-
-                            // Tooltip
                             Rectangle {
-                                visible: btnMouse.containsMouse
-                                anchors.top: parent.bottom
-                                anchors.topMargin: 6
-                                anchors.horizontalCenter: parent.horizontalCenter
-
-                                width: tooltipText.implicitWidth + 10
-                                height: tooltipText.implicitHeight + 4
-                                radius: Config.radiusSmall
-                                color: Config.surface1Color
+                                Layout.alignment: Qt.AlignHCenter
+                                Layout.preferredWidth: 44
+                                Layout.preferredHeight: 44
+                                radius: 22
+                                color: actionBtn.isSelected
+                                    ? Qt.alpha(actionBtn.modelData.color, 0.2)
+                                    : Config.surface0Color
 
                                 Text {
-                                    id: tooltipText
                                     anchors.centerIn: parent
-                                    text: modelData.tooltip
+                                    text: actionBtn.modelData.icon
                                     font.family: Config.font
-                                    font.pixelSize: 11
-                                    color: Config.subtextColor
+                                    font.pixelSize: 22
+                                    color: actionBtn.isSelected || btnMouse.containsMouse
+                                        ? actionBtn.modelData.color
+                                        : Config.textColor
                                 }
                             }
 
-                            MouseArea {
-                                id: btnMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-
-                                onClicked: {
-                                    PowerService.executeAction(modelData.id);
-                                }
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: actionBtn.modelData.label
+                                font.family: Config.font
+                                font.pixelSize: Config.fontSizeSmall
+                                color: actionBtn.isSelected ? Config.textColor : Config.subtextColor
                             }
                         }
-                    }
 
-                    // Separador
-                    Rectangle {
-                        Layout.preferredWidth: 1
-                        Layout.preferredHeight: 24
-                        Layout.leftMargin: 4
-                        Layout.rightMargin: 4
-                        color: Config.surface2Color
-                    }
+                        Rectangle {
+                            visible: actionBtn.isSelected
+                            anchors.top: parent.top
+                            anchors.right: parent.right
+                            anchors.margins: 4
+                            width: 18
+                            height: 18
+                            radius: 4
+                            color: Config.surface2Color
 
-                    // Botão fechar
-                    Rectangle {
-                        Layout.preferredWidth: 32
-                        Layout.preferredHeight: 32
-
-                        radius: width / 2
-                        color: closeMouse.containsMouse ? Config.surface1Color : "transparent"
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "󰅖"
-                            font.family: Config.font
-                            font.pixelSize: 16
-                            color: closeMouse.containsMouse ? Config.textColor : Config.subtextColor
+                            Text {
+                                anchors.centerIn: parent
+                                text: String(actionBtn.index + 1)
+                                font.family: Config.font
+                                font.pixelSize: 10
+                                font.bold: true
+                                color: Config.subtextColor
+                            }
                         }
 
                         MouseArea {
-                            id: closeMouse
+                            id: btnMouse
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: PowerService.hideOverlay()
+
+                            onClicked: {
+                                if (actionBtn.isSelected) {
+                                    root.executeSelected();
+                                } else {
+                                    root.selectedIndex = actionBtn.index;
+                                }
+                            }
                         }
                     }
                 }
+            }
 
-                focus: PowerService.overlayVisible
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 16
 
-                Keys.onEscapePressed: PowerService.hideOverlay()
+                Repeater {
+                    model: [
+                        { key: "←→", label: "Navegar" },
+                        { key: "Enter", label: "Confirmar" },
+                        { key: "Esc", label: "Cancelar" }
+                    ]
 
-                Keys.onPressed: event => {
-                    const actions = ["lock", "logout", "suspend", "reboot", "shutdown"];
-                    if (event.key >= Qt.Key_1 && event.key <= Qt.Key_5) {
-                        const index = event.key - Qt.Key_1;
-                        PowerService.executeAction(actions[index]);
+                    Row {
+                        required property var modelData
+                        spacing: 4
+
+                        Rectangle {
+                            width: keyText.implicitWidth + 8
+                            height: 18
+                            radius: 4
+                            color: Config.surface1Color
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            Text {
+                                id: keyText
+                                anchors.centerIn: parent
+                                text: modelData.key
+                                font.family: Config.font
+                                font.pixelSize: 9
+                                font.bold: true
+                                color: Config.subtextColor
+                            }
+                        }
+
+                        Text {
+                            text: modelData.label
+                            font.family: Config.font
+                            font.pixelSize: 10
+                            color: Config.mutedColor
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
                     }
                 }
             }
+        }
+    }
 
-            onVisibleChanged: {
-                if (visible) {
-                    powerWidget.forceActiveFocus();
-                }
+    // Keyboard
+    Item {
+        id: keyHandler
+        focus: true
+
+        Keys.onPressed: event => {
+            switch (event.key) {
+                case Qt.Key_Escape:
+                    PowerService.hideOverlay();
+                    break;
+                case Qt.Key_Return:
+                case Qt.Key_Enter:
+                    root.executeSelected();
+                    break;
+                case Qt.Key_Left:
+                case Qt.Key_H:
+                    root.navigate(-1);
+                    break;
+                case Qt.Key_Right:
+                case Qt.Key_L:
+                    root.navigate(1);
+                    break;
+                case Qt.Key_1:
+                case Qt.Key_2:
+                case Qt.Key_3:
+                case Qt.Key_4:
+                case Qt.Key_5:
+                    root.selectedIndex = event.key - Qt.Key_1;
+                    root.executeSelected();
+                    break;
             }
+            event.accepted = true;
+        }
+    }
+
+    // Focus grab
+    HyprlandFocusGrab {
+        id: focusGrab
+        windows: [root]
+        active: false
+        onCleared: PowerService.hideOverlay()
+    }
+
+    Timer {
+        id: focusTimer
+        interval: 50
+        onTriggered: {
+            focusGrab.active = true;
+            keyHandler.forceActiveFocus();
+        }
+    }
+
+    onVisibleChanged: {
+        if (visible) {
+            selectedIndex = 0;
+            focusTimer.restart();
+        } else {
+            focusGrab.active = false;
         }
     }
 }

@@ -11,3 +11,4 @@ singleton BrightnessService BrightnessService.qml
 singleton PowerService PowerService.qml
 singleton StateService StateService.qml
 singleton ShortcutService ShortcutService.qml
+singleton LauncherService LauncherService.qml
