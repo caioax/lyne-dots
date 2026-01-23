@@ -1,0 +1,19 @@
+[General]
+TerminalApplication=kitty
+TerminalService=kitty.desktop
+font=Caskaydia Cove Nerd Font,10,-1,5,50,0,0,0,0,0
+menuFont=Caskaydia Cove Nerd Font,10,-1,5,50,0,0,0,0,0
+toolBarFont=Caskaydia Cove Nerd Font,10,-1,5,50,0,0,0,0,0
+
+[Icons]
+Theme=Tela-blue-dark
+
+[KDE]
+widgetStyle=qt6ct-style
+
+[PreviewSettings]
+EnableRemoteFolderThumbnail=false
+MaximumRemoteSize=0
+
+[Sounds]
+Theme=freedesktop

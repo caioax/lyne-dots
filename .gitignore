@@ -2,8 +2,15 @@
 .qmlls.ini
 state.json
 
+# Hyprland local configs (não rastreados pelo git)
 hyprland/.config/hypr/local/*
 !hyprland/.config/hypr/local/.gitkeep
 
 hyprland/.config/uwsm/env.d/*
 !hyprland/.config/uwsm/env.d/.gitkeep
+
+# Monitor e workspace configs (específicos da máquina)
+# Esses arquivos são criados pelo script de instalação
+# e podem ser editados pelo usuário ou pelo nwg-displays/workspace-manager
+hyprland/.config/hypr/monitors.conf
+hyprland/.config/hypr/workspaces.conf
