@@ -66,8 +66,8 @@ PanelWindow {
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 12
-                spacing: 10
+                anchors.margins: Config.spacing + 4
+                spacing: Config.spacing
 
                 // Barra de busca
                 Rectangle {
@@ -81,15 +81,15 @@ PanelWindow {
 
                     Behavior on border.width {
                         NumberAnimation {
-                            duration: 100
+                            duration: Config.animDurationShort
                         }
                     }
 
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 14
-                        anchors.rightMargin: 14
-                        spacing: 10
+                        anchors.leftMargin: Config.spacing + 6
+                        anchors.rightMargin: Config.spacing + 6
+                        spacing: Config.spacing
 
                         Text {
                             text: ""
@@ -189,9 +189,9 @@ PanelWindow {
 
                             Text {
                                 anchors.centerIn: parent
-                                text: ""
+                                text: "󰅖"
                                 font.family: Config.font
-                                font.pixelSize: Config.fontSizeNormal
+                                font.pixelSize: Config.fontSizeSmall
                                 color: Config.subtextColor
                             }
 
@@ -353,7 +353,7 @@ PanelWindow {
                                 text: "󰌑"
                                 color: Config.accentColor
                                 font.family: Config.font
-                                font.pixelSize: 14
+                                font.pixelSize: Config.fontSizeSmall
                             }
                         }
 
@@ -377,21 +377,21 @@ PanelWindow {
                     // Estado vazio
                     Column {
                         anchors.centerIn: parent
-                        spacing: 8
+                        spacing: Config.spacing
                         visible: appList.count === 0
                         opacity: visible ? 1 : 0
 
                         Behavior on opacity {
                             NumberAnimation {
-                                duration: 150
+                                duration: Config.animDurationShort
                             }
                         }
 
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: LauncherService.query ? "" : "󰑓"
+                            text: LauncherService.query ? "󰅖" : "󰑓"
                             font.family: Config.font
-                            font.pixelSize: 32
+                            font.pixelSize: Config.fontSizeIconLarge
                             color: Config.mutedColor
 
                             RotationAnimator on rotation {
@@ -429,7 +429,7 @@ PanelWindow {
 
                             Behavior on opacity {
                                 NumberAnimation {
-                                    duration: 100
+                                    duration: Config.animDurationShort
                                 }
                             }
                         }

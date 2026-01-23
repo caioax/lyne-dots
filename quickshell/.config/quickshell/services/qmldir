@@ -14,3 +14,4 @@ singleton ShortcutService ShortcutService.qml
 singleton LauncherService LauncherService.qml
 singleton SystemMonitorService SystemMonitorService.qml
 singleton WindowManagerService WindowManagerService.qml
+singleton OsdService OsdService.qml

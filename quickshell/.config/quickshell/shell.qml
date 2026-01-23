@@ -98,6 +98,12 @@ ShellRoot {
         source: "./modules/launcher/Launcher.qml"
     }
 
+    // OSD - carrega sob demanda
+    Loader {
+        active: OsdService.visible
+        source: "./modules/osd/OsdOverlay.qml"
+    }
+
     // =========================================================================
     // ATALHOS GLOBAIS
     // =========================================================================
@@ -130,5 +136,60 @@ ShellRoot {
         description: "App Launcher"
 
         onPressed: LauncherService.show()
+    }
+
+    // Atalho: Volume Up
+    GlobalShortcut {
+        name: "volume_up"
+        description: "Aumentar volume"
+
+        onPressed: {
+            AudioService.increaseVolume();
+            OsdService.showVolume(AudioService.volume, AudioService.muted);
+        }
+    }
+
+    // Atalho: Volume Down
+    GlobalShortcut {
+        name: "volume_down"
+        description: "Diminuir volume"
+
+        onPressed: {
+            AudioService.decreaseVolume();
+            OsdService.showVolume(AudioService.volume, AudioService.muted);
+        }
+    }
+
+    // Atalho: Volume Mute
+    GlobalShortcut {
+        name: "volume_mute"
+        description: "Silenciar volume"
+
+        onPressed: {
+            AudioService.toggleMute();
+            OsdService.showVolume(AudioService.volume, AudioService.muted);
+        }
+    }
+
+    // Atalho: Brightness Up
+    GlobalShortcut {
+        name: "brightness_up"
+        description: "Aumentar brilho"
+
+        onPressed: {
+            BrightnessService.increaseBrightness();
+            OsdService.showBrightness(BrightnessService.brightness);
+        }
+    }
+
+    // Atalho: Brightness Down
+    GlobalShortcut {
+        name: "brightness_down"
+        description: "Diminuir brilho"
+
+        onPressed: {
+            BrightnessService.decreaseBrightness();
+            OsdService.showBrightness(BrightnessService.brightness);
+        }
     }
 }
