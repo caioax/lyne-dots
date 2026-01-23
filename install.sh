@@ -59,6 +59,7 @@ check_internet() {
         log_error "Sem conexão com a internet!"
         exit 1
     fi
+    log_info "Conexão OK"
 }
 
 check_aur_helper() {
@@ -136,12 +137,13 @@ show_menu() {
     echo "  3) editor     - Neovim + ferramentas de desenvolvimento"
     echo "  4) apps       - Dolphin, Zen Browser, Spotify, Rofi"
     echo "  5) utils      - Clipboard, playerctl, audio, etc"
-    echo "  6) fonts      - Nerd Fonts, cursores"
+    echo "  6) fonts      - Nerd Fonts, cursores, ícones"
     echo "  7) quickshell - QuickShell bar/shell"
     echo "  8) theming    - Qt/GTK theming"
     echo "  9) nvidia     - Drivers NVIDIA (apenas se tiver GPU NVIDIA)"
     echo ""
     echo "  a) ALL        - Instalar tudo (exceto nvidia)"
+    echo "  n) ALL+NVIDIA - Instalar tudo (incluindo nvidia)"
     echo "  q) QUIT       - Sair"
     echo ""
 }
@@ -161,6 +163,10 @@ get_selection() {
             ;;
         a | A)
             SELECTED=("core" "terminal" "editor" "apps" "utils" "fonts" "quickshell" "theming")
+            break
+            ;;
+        n | N)
+            SELECTED=("core" "terminal" "editor" "apps" "utils" "fonts" "quickshell" "theming" "nvidia")
             break
             ;;
         *)
@@ -196,13 +202,13 @@ get_selection() {
 run_stow() {
     log_header "Criando Symlinks (Stow)"
     source "$SETUP_DIR/stow.sh"
-    main
+    run_stow_main
 }
 
 run_hyprland_setup() {
     log_header "Configurando Hyprland"
     source "$SETUP_DIR/hyprland.sh"
-    main
+    run_hyprland_main
 }
 
 setup_zsh() {
@@ -257,9 +263,13 @@ setup_services() {
 full_install() {
     log_header "Iniciando Instalação Completa"
 
+    # Verificar internet e AUR helper agora (após seleção)
+    check_internet
+    check_aur_helper
+
     # Instalar stow primeiro
     log_step "Instalando GNU Stow..."
-    sudo pacman -S --needed --noconfirm stow
+    sudo pacman -S --needed --noconfirm stow git
 
     # Instalar pacotes selecionados
     for category in "${CATEGORIES[@]}"; do
@@ -352,12 +362,10 @@ EOF
 main() {
     show_banner
 
-    # Verificações
+    # Verificar se é Arch Linux
     check_arch
-    check_internet
-    check_aur_helper
 
-    # Seleção de categorias
+    # PRIMEIRO: Seleção de categorias (antes de qualquer instalação)
     get_selection
 
     echo ""
@@ -371,7 +379,7 @@ main() {
         exit 0
     fi
 
-    # Executar instalação
+    # Executar instalação (verificações e AUR helper aqui)
     full_install
 
     # Mostrar resumo
@@ -399,13 +407,13 @@ case "${1:-}" in
     check_arch
     sudo pacman -S --needed --noconfirm stow
     source "$SETUP_DIR/stow.sh"
-    main
+    run_stow_main
     exit 0
     ;;
 --setup-only)
     check_arch
     source "$SETUP_DIR/hyprland.sh"
-    main
+    run_hyprland_main
     exit 0
     ;;
 --packages)

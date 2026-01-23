@@ -177,9 +177,9 @@ setup_screenshots_dir() {
 }
 
 # =============================================================================
-# Main
+# Main (para execução direta)
 # =============================================================================
-main() {
+run_hyprland_main() {
     echo ""
     echo "=================================================="
     echo "       Hyprland Setup - Local Configuration"
@@ -219,5 +219,5 @@ main() {
 
 # Executar se chamado diretamente
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main "$@"
+    run_hyprland_main "$@"
 fi
