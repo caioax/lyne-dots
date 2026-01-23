@@ -14,3 +14,4 @@ hyprland/.config/uwsm/env.d/*
 # e podem ser editados pelo usuário ou pelo nwg-displays/workspace-manager
 hyprland/.config/hypr/monitors.conf
 hyprland/.config/hypr/workspaces.conf
+
