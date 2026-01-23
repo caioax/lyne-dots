@@ -32,6 +32,9 @@ STOW_DIRS=(
     "local"         # Local scripts
     "fastfetch"     # System info
     "kde"           # KDE globals (terminal, fonts, icons)
+    "qt5ct"         # Qt5 theme configuration
+    "qt6ct"         # Qt6 theme configuration
+    "gtk"           # GTK 3/4 theme configuration
 )
 
 # =============================================================================

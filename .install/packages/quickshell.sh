@@ -6,7 +6,10 @@
 # =============================================================================
 
 QUICKSHELL_PACKAGES=(
-    # Qt6 Dependencies
+    # QuickShell (repositório oficial extra)
+    "quickshell"            # QuickShell shell framework
+
+    # Qt6 Dependencies (já são dependências do quickshell, mas garantir)
     "qt6-base"              # Qt6 base
     "qt6-declarative"       # QML support
     "qt6-wayland"           # Qt6 Wayland platform
@@ -19,5 +22,5 @@ QUICKSHELL_PACKAGES=(
 
 # Pacotes AUR
 QUICKSHELL_AUR_PACKAGES=(
-    "quickshell-git"        # QuickShell shell framework
+    # Nenhum - quickshell está no repositório oficial
 )
