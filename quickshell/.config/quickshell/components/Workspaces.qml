@@ -45,7 +45,7 @@ Item {
         })
 
     // --- Monitor & Workspace Logic ---
-    property var currentMonitor: screen ? Hyprland.monitorFor(screen) : Hyprland.focusedMonitor
+    property var currentMonitor: screen ? Hyprland.monitorFor(screen) : (Hyprland.focusedMonitor ?? null)
     readonly property string activeSpecialFull: currentMonitor?.lastIpcObject?.specialWorkspace?.name ?? ""
     readonly property bool isSpecialWorkspace: activeSpecialFull !== ""
 
@@ -98,16 +98,52 @@ Item {
     readonly property int renderStart: Math.max(0, targetIndex - renderBuffer)
     readonly property int renderEnd: Math.min(totalWorkspaces - 1, targetIndex + renderBuffer)
 
-    // --- IPC Listeners ---
+    // --- Cached workspace IDs (avoids accessing Hyprland.workspaces during rapid updates) ---
+    property var occupiedWorkspaces: ({})
+
+    function updateOccupiedWorkspaces() {
+        let newObj = {};
+        let values = Hyprland.workspaces?.values;
+        if (values) {
+            for (let ws of values) {
+                if (ws && ws.id > 0) newObj[ws.id] = true;
+            }
+        }
+        occupiedWorkspaces = newObj;
+    }
+
+    Component.onCompleted: updateOccupiedWorkspaces()
+
+    Timer {
+        id: occupiedUpdateTimer
+        interval: 50
+        onTriggered: root.updateOccupiedWorkspaces()
+    }
+
+    // --- IPC Listeners (debounced to avoid race conditions) ---
+    Timer {
+        id: refreshDebounce
+        interval: 16  // ~1 frame
+        onTriggered: {
+            if (Hyprland) Hyprland.refreshMonitors();
+        }
+    }
+
     Connections {
         target: Hyprland
         function onRawEvent(event) {
             if (event.name === "activespecial" || event.name === "workspace" || event.name === "focusedmon") {
-                Hyprland.refreshMonitors();
+                refreshDebounce.restart();
+            }
+            // Update occupied workspaces cache on relevant events
+            if (event.name === "createworkspace" || event.name === "destroyworkspace" ||
+                event.name === "openwindow" || event.name === "closewindow" ||
+                event.name === "movewindow") {
+                occupiedUpdateTimer.restart();
             }
         }
         function onFocusedMonitorChanged() {
-            Hyprland.refreshMonitors();
+            refreshDebounce.restart();
         }
     }
 
@@ -225,8 +261,7 @@ Item {
 
                     readonly property int workspaceId: root.monitorOffset + index + 1
                     readonly property bool isActive: workspaceId === root.activeId && !root.isSpecialWorkspace
-                    readonly property var wsObject: Hyprland.workspaces.values?.find(ws => ws.id === workspaceId) ?? undefined
-                    readonly property bool isEmpty: wsObject === undefined
+                    readonly property bool isEmpty: root.occupiedWorkspaces[workspaceId] !== true
 
                     // Hybrid virtualization: renderiza só os próximos do ativo
                     readonly property bool shouldRender: index >= root.renderStart && index <= root.renderEnd

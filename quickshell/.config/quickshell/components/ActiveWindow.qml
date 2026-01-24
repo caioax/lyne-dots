@@ -13,7 +13,7 @@ Item {
     // Internal state to force clearing
     property bool windowExists: Hyprland.activeToplevel !== null
 
-    readonly property string windowTitle: (windowExists && Hyprland.activeToplevel) ? Hyprland.activeToplevel.title : ""
+    readonly property string windowTitle: Hyprland.activeToplevel?.title ?? ""
 
     // Logic to verify focus changes
     Connections {
@@ -29,7 +29,7 @@ Item {
             if (event.name === "workspace") {
                 // Small delay to let Hyprland update its internal state
                 Qt.callLater(() => {
-                    root.windowExists = Hyprland.activeToplevel !== null;
+                    if (root) root.windowExists = Hyprland.activeToplevel !== null;
                 });
             }
         }
