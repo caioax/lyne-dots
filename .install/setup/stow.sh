@@ -32,9 +32,7 @@ STOW_DIRS=(
     "local"         # Local scripts
     "fastfetch"     # System info
     "kde"           # KDE globals (terminal, fonts, icons)
-    "qt5ct"         # Qt5 theme configuration
-    "qt6ct"         # Qt6 theme configuration
-    "gtk"           # GTK 3/4 theme configuration
+    "theming"       # Qt5/Qt6/GTK theme configuration
 )
 
 # =============================================================================
@@ -82,8 +80,8 @@ get_stow_targets() {
         "kde")
             targets+=("$HOME/.config/kdeglobals")
             ;;
-        "gtk")
-            targets+=("$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0")
+        "theming")
+            targets+=("$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0" "$HOME/.config/qt5ct" "$HOME/.config/qt6ct")
             ;;
         *)
             targets+=("$HOME/.config/${dir}")

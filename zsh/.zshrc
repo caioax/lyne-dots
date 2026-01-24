@@ -73,7 +73,7 @@ plugins=(
 source $ZSH/oh-my-zsh.sh
 
 # === ENVIRONMENT VARIABLES ===
-[[ -n $SSH_CONNECTION ]] && export EDITOR='nvim' || export EDITOR='vim'
+[[ -n $SSH_CONNECTION ]] && export EDITOR='vim' || export EDITOR='nvim'
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$PATH:$HOME/.spicetify"
 

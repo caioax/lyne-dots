@@ -1,8 +1,8 @@
 #!/bin/bash
 # =============================================================================
 #
-#   ▄▀█ █▀█ █▀▀ █░█ ▄▄ █▀▄ █▀█ ▀█▀ █▀
-#   █▀█ █▀▄ █▄▄ █▀█ ░░ █▄▀ █▄█ ░█░ ▄█
+#   ▄▀█ █▀█ █▀▀ █ █ ▄▄ █▀▄ █▀█ ▀█▀ █▀
+#   █▀█ █▀▄ █▄▄ █▀█    █▄▀ █▄█  █  ▄█
 #
 #   Installation Script
 #   https://github.com/caioax/.arch-dots
@@ -55,7 +55,7 @@ check_arch() {
 
 check_internet() {
     log_step "Verificando conexão com a internet..."
-    if ! ping -c 1 archlinux.org &>/dev/null; then
+    if ! ping -c 1 google.com &>/dev/null; then
         log_error "Sem conexão com a internet!"
         exit 1
     fi
@@ -284,9 +284,9 @@ setup_wallpaper() {
     log_step "Iniciando swww daemon..."
     # Iniciar daemon se não estiver rodando
     if ! pgrep -f "swww-daemon" &>/dev/null; then
-        swww-daemon &
-        sleep 2
+        swww-daemon >/dev/null 2>&1 &
     fi
+    sleep 3
 
     # Verificar se o daemon iniciou
     if ! pgrep -f "swww-daemon" &>/dev/null; then
@@ -346,6 +346,11 @@ full_install() {
     # Configurar wallpaper inicial
     if [[ " ${CATEGORIES[*]} " =~ " core " ]]; then
         setup_wallpaper
+    fi
+
+    # Aplicar tema GTK
+    if [[ " ${CATEGORIES[*]} " =~ " theming " ]]; then
+        setup_theming
     fi
 }
 
@@ -412,10 +417,10 @@ show_banner() {
     cat <<'EOF'
     ╔═══════════════════════════════════════════════════════════════╗
     ║                                                               ║
-    ║   ▄▀█ █▀█ █▀▀ █░█ ▄▄ █▀▄ █▀█ ▀█▀ █▀                           ║
-    ║   █▀█ █▀▄ █▄▄ █▀█ ░░ █▄▀ █▄█ ░█░ ▄█                           ║
+    ║   ▄▀█ █▀█ █▀▀ █ █ ▄▄ █▀▄ █▀█ ▀█▀ █▀                           ║
+    ║   █▀█ █▀▄ █▄▄ █▀█    █▄▀ █▄█  █  ▄█                           ║
     ║                                                               ║
-    ║   Hyprland + QuickShell + Neovim + Zsh                        ║
+    ║   https://github.com/caioax/.arch-dots                        ║
     ║   Installation Script                                         ║
     ║                                                               ║
     ╚═══════════════════════════════════════════════════════════════╝
