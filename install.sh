@@ -344,6 +344,7 @@ full_install() {
     # Rodar setup scripts
     run_stow
     run_hyprland_setup
+    setup_mimetypes
 
     # Instalar Tela icons do git (se fonts foi selecionado)
     if [[ " ${CATEGORIES[*]} " =~ " fonts " ]]; then
