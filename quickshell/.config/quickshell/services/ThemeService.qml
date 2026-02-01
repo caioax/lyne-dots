@@ -281,7 +281,8 @@ Singleton {
                     if (i < root.availableThemes.length) {
                         previews[root.availableThemes[i]] = {
                             name: data.name || root.availableThemes[i],
-                            palette: data.palette || {}
+                            palette: data.palette || {},
+                            wallpaper: data.wallpaper || ""
                         };
                     }
                 } catch (e) {

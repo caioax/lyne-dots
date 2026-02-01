@@ -3,8 +3,12 @@
     "editor": "nvim"
   },
   "theme": {
-    "name": "tokyonight",
-    "dynamicWallpaper": true
+    "name": "tokyonight"
+  },
+  "wallpaper": {
+    "current": "~/.local/wallpapers/themes/tokyonight/theme-tokyonight.jpg",
+    "dynamic": true,
+    "favorites": []
   },
   "nightLight": {
     "enabled": false,
