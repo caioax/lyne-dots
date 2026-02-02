@@ -1,4 +1,4 @@
-# dots state - Open state.json in the configured editor
+# lyne state - Open state.json in the configured editor
 
 local config_path="$DOTS_DIR/quickshell/.config/quickshell/state.json"
 local default_editor="nvim"
@@ -10,6 +10,6 @@ if [[ -n "$custom_editor" && "$custom_editor" != "null" ]] && command -v "${cust
     eval "$custom_editor $config_path"
 else
     [[ -n "$custom_editor" && "$custom_editor" != "null" ]] && \
-        echo "dots state: editor '$custom_editor' not found, falling back to $default_editor"
+        echo "lyne state: editor '$custom_editor' not found, falling back to $default_editor"
     $default_editor "$config_path"
 fi

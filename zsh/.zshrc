@@ -92,10 +92,10 @@ function zvm_after_init() {
   zvm_bindkey viins '^V' edit-command-line
 }
 
-# === DOTS CLI ===
-dots() {
-    local DOTS_DIR="$HOME/.arch-dots"
-    local CMD_DIR="$DOTS_DIR/.data/dots/commands"
+# === LYNE CLI ===
+lyne() {
+    local DOTS_DIR="$HOME/.lyne-shell"
+    local CMD_DIR="$DOTS_DIR/.data/lyne-cli/commands"
 
     local cmd="${1:-help}"
     shift 2>/dev/null
@@ -104,7 +104,7 @@ dots() {
     if [[ -f "$cmd_file" ]]; then
         source "$cmd_file" "$@"
     else
-        echo "dots: unknown command '$cmd'"
+        echo "lyne: unknown command '$cmd'"
         echo "Available commands:"
         for f in "$CMD_DIR"/*.sh; do
             echo "  $(basename "${f%.sh}")"

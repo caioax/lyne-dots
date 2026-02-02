@@ -1,8 +1,8 @@
-# dots help - Show available commands
+# lyne help - Show available commands
 
-echo "dots - Dotfiles management CLI"
+echo "lyne - Dotfiles management CLI"
 echo ""
-echo "Usage: dots <command> [args...]"
+echo "Usage: lyne <command> [args...]"
 echo ""
 echo "Commands:"
 echo "  git <args>   Run git commands in the dotfiles repo"

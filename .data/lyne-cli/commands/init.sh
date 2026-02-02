@@ -1,10 +1,10 @@
-# dots init - First-time setup for new installations
+# lyne init - First-time setup for new installations
 #
 # Marks all existing migrations as done (they are only relevant
 # for users upgrading from older versions) and syncs state.json.
 
-local MIGRATIONS_DIR="$DOTS_DIR/.data/dots/migrations"
-local DONE_FILE="$HOME/.local/share/dots/migrations-done"
+local MIGRATIONS_DIR="$DOTS_DIR/.data/lyne-cli/migrations"
+local DONE_FILE="$HOME/.local/share/lyne/migrations-done"
 
 mkdir -p "$(dirname "$DONE_FILE")"
 touch "$DONE_FILE"
@@ -19,8 +19,8 @@ for migration in "$MIGRATIONS_DIR"/*.sh(N); do
     fi
 done
 
-echo "dots init: marked $count migrations as done"
+echo "lyne init: marked $count migrations as done"
 
 # Sync state.json from defaults
 echo ":: Syncing state.json..."
-source "$DOTS_DIR/.data/dots/lib/sync-state.sh"
+source "$DOTS_DIR/.data/lyne-cli/lib/sync-state.sh"

@@ -1,4 +1,4 @@
-# dots reload - Restart quickshell detached from the terminal
+# lyne reload - Restart quickshell detached from the terminal
 
 quickshell kill
 sleep 0.2

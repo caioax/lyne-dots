@@ -1,13 +1,13 @@
 # run-migrations.sh - Run pending migration scripts
 #
-# Migrations live in .data/dots/migrations/ as numbered shell scripts.
+# Migrations live in .data/lyne-cli/migrations/ as numbered shell scripts.
 # Each migration runs only once. Completed migrations are tracked in
 # a local file that is not managed by git.
 #
 # Usage: source this file (expects $DOTS_DIR to be set)
 
-local MIGRATIONS_DIR="$DOTS_DIR/.data/dots/migrations"
-local DONE_FILE="$HOME/.local/share/dots/migrations-done"
+local MIGRATIONS_DIR="$DOTS_DIR/.data/lyne-cli/migrations"
+local DONE_FILE="$HOME/.local/share/lyne/migrations-done"
 
 # Ensure tracking directory exists
 mkdir -p "$(dirname "$DONE_FILE")"
@@ -30,7 +30,7 @@ for migration in "$MIGRATIONS_DIR"/*.sh(N); do
     if source "$migration"; then
         echo "$name" >> "$DONE_FILE"
     else
-        echo "dots migrate: migration '$name' failed, stopping"
+        echo "lyne migrate: migration '$name' failed, stopping"
         return 1
     fi
 done

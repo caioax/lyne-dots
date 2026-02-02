@@ -1,4 +1,4 @@
-# Arch Dots
+# Lyne Shell
 
 Arch Linux dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/), featuring a Hyprland (Wayland) desktop environment with a custom QuickShell bar and a unified theme system that applies across the entire setup.
 
@@ -51,8 +51,8 @@ No restarts required.
 ## Quick Start
 
 ```bash
-git clone https://github.com/caioax/.arch-dots.git ~/.arch-dots
-cd ~/.arch-dots
+git clone https://github.com/caioax/lyne-shell.git ~/.lyne-shell
+cd ~/.lyne-shell
 ./install.sh
 ```
 
