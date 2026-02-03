@@ -19,6 +19,7 @@ PanelWindow {
         right: true
     }
 
+    WlrLayershell.namespace: "qs_modules"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
@@ -81,7 +82,7 @@ PanelWindow {
         height: contentColumn.implicitHeight + 40
 
         radius: Config.radiusLarge
-        color: Config.backgroundColor
+        color: Config.backgroundTransparentColor
         border.width: 1
         border.color: Config.surface2Color
 

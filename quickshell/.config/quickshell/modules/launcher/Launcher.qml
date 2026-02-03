@@ -21,7 +21,7 @@ PanelWindow {
         right: true
     }
 
-    WlrLayershell.namespace: "qs_launcher"
+    WlrLayershell.namespace: "qs_modules"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 

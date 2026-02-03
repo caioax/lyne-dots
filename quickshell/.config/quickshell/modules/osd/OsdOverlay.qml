@@ -60,7 +60,7 @@ Scope {
             exclusionMode: ExclusionMode.Ignore
 
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.namespace: "qs_osd"
+            WlrLayershell.namespace: "qs_modules"
 
             implicitWidth: content.width
             implicitHeight: content.height

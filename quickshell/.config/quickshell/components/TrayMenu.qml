@@ -22,7 +22,7 @@ PanelWindow {
     implicitWidth: Math.max(220, mainColumn.implicitWidth)
     implicitHeight: mainColumn.implicitHeight
 
-    WlrLayershell.namespace: "qs_trayMenu"
+    WlrLayershell.namespace: "qs_modules"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     WlrLayershell.exclusiveZone: -1

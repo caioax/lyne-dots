@@ -24,7 +24,7 @@ PanelWindow {
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-    WlrLayershell.namespace: "qs_wallpaper"
+    WlrLayershell.namespace: "qs_modules"
 
     color: "transparent"
 

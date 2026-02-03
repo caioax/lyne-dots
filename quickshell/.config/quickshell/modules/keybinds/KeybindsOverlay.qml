@@ -22,7 +22,7 @@ PanelWindow {
         right: true
     }
 
-    WlrLayershell.namespace: "qs_keybinds"
+    WlrLayershell.namespace: "qs_modules"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
