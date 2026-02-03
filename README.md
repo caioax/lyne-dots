@@ -70,8 +70,8 @@ No restarts required.
 ### Steps
 
 ```bash
-git clone https://github.com/caioax/lyne-shell.git ~/.lyne-shell
-cd ~/.lyne-shell
+git clone https://github.com/caioax/lyne-dots.git ~/.lyne-dots
+cd ~/.lyne-dots
 ./install.sh
 ```
 

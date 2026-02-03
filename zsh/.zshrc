@@ -94,7 +94,7 @@ function zvm_after_init() {
 
 # === LYNE CLI ===
 lyne() {
-    local DOTS_DIR="$HOME/.lyne-shell"
+    local DOTS_DIR="$HOME/.lyne-dots"
     local CMD_DIR="$DOTS_DIR/.data/lyne-cli/commands"
 
     local cmd="${1:-help}"

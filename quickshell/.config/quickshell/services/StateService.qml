@@ -9,7 +9,7 @@ Singleton {
     id: root
 
     readonly property string statePath: Quickshell.env("HOME") + "/.config/quickshell/state.json"
-    readonly property string defaultsPath: Quickshell.env("HOME") + "/.lyne-shell/.data/quickshell/defaults.json"
+    readonly property string defaultsPath: Quickshell.env("HOME") + "/.lyne-dots/.data/quickshell/defaults.json"
 
     property var state: ({})
     property bool isLoading: true

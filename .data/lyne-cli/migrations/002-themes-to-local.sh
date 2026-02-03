@@ -1,7 +1,7 @@
 # 002-themes-to-local.sh - Move themes to ~/.local/themes/
 #
 # Theme JSON files were previously read directly from the git repo
-# at ~/.lyne-shell/.data/themes/. They now live in ~/.local/themes/
+# at ~/.lyne-dots/.data/themes/. They now live in ~/.local/themes/
 # (gitignored, same pattern as wallpapers) so users can freely
 # create/edit themes without git conflicts.
 
