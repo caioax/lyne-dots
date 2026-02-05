@@ -41,8 +41,9 @@ UTILS_PACKAGES=(
     "brightnessctl" # Brightness control
 
     # Screenshot
-    "grim"  # Screenshot utility (used by hyprshot)
-    "slurp" # Region selection (used by hyprshot)
+    "grim"  # Screenshot utility
+    "slurp" # Region selection
+    "satty" # Screenshot annotation tool
 
     # Image Processing
     "imagemagick" # Image manipulation (used by ThemeService for logo colorization)

@@ -132,19 +132,19 @@ show_menu() {
     echo ""
     echo -e "${CYAN}Select categories to install:${NC}"
     echo ""
-    echo "  1) core       - Hyprland, UWSM, portal (ESSENTIAL)"
-    echo "  2) terminal   - Kitty, Zsh, Tmux, Fastfetch"
-    echo "  3) editor     - Neovim + development tools"
-    echo "  4) apps       - Dolphin, Zen Browser, Spotify, mpv"
-    echo "  5) utils      - Clipboard, playerctl, audio, etc"
-    echo "  6) fonts      - Nerd Fonts, cursors, icons"
-    echo "  7) quickshell - QuickShell bar/shell"
-    echo "  8) theming    - Qt/GTK theming"
-    echo "  9) nvidia     - NVIDIA drivers (only if you have an NVIDIA GPU)"
+    echo "  1) core                - Hyprland, UWSM, portal (ESSENTIAL)"
+    echo "  2) terminal            - Kitty, Zsh, Tmux, Fastfetch"
+    echo "  3) editor              - Neovim + development tools"
+    echo "  4) apps                - Dolphin, Zen Browser, Spotify, mpv"
+    echo "  5) utils               - Clipboard, playerctl, audio, etc"
+    echo "  6) fonts               - Nerd Fonts, cursors, icons"
+    echo "  7) quickshell          - QuickShell bar/shell"
+    echo "  8) theming             - Qt/GTK theming"
+    echo "  9) nvidia(developing)  - NVIDIA drivers (only if you have an NVIDIA GPU)"
     echo ""
-    echo "  a) ALL        - Install everything (except nvidia)"
-    echo "  n) ALL+NVIDIA - Install everything (including nvidia)"
-    echo "  q) QUIT       - Exit"
+    echo "  a) ALL                 - Install everything (except nvidia)"
+    echo "  n) ALL+NVIDIA          - Install everything (including nvidia)"
+    echo "  q) QUIT                - Exit"
     echo ""
 }
 
@@ -153,7 +153,7 @@ get_selection() {
 
     while true; do
         show_menu
-        echo -ne "${BLUE}Enter numbers separated by spaces (e.g.: 1 2 3 5): ${NC}"
+        echo -ne "${BLUE}Select numbers or letters separated by spaces: ${NC}"
         read -r input
 
         case "$input" in

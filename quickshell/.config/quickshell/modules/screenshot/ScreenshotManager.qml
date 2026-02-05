@@ -13,6 +13,7 @@ Scope {
 
     property bool active: false
     property string mode: "region"  // "region", "window", "screen"
+    property bool editMode: false
     property string tempPath: ""
 
     // Selection coordinates
@@ -131,6 +132,7 @@ Scope {
     }
 
     function resetSelection() {
+        root.editMode = false;
         root.hasSelection = false;
         root.selectionX = 0;
         root.selectionY = 0;
@@ -155,6 +157,11 @@ Scope {
     }
 
     function confirmSelection() {
+        saveScreenshot(root.selectionX, root.selectionY, root.selectionWidth, root.selectionHeight);
+    }
+
+    function editSelection() {
+        root.editMode = true;
         saveScreenshot(root.selectionX, root.selectionY, root.selectionWidth, root.selectionHeight);
     }
 
@@ -251,10 +258,23 @@ Scope {
         const timestamp = Qt.formatDateTime(new Date(), "yyyy-MM-dd_hh-mm-ss");
         const outputPath = `${picturesDir}/screenshot-${timestamp}.png`;
 
-        const cmd = [`mkdir -p "${picturesDir}"`, `magick "${root.tempPath}" -crop ${scaledWidth}x${scaledHeight}+${scaledX}+${scaledY} +repage "${outputPath}"`, `wl-copy < "${outputPath}"`, `rm -f "${root.tempPath}"`, `notify-send -i accessories-screenshot -a "Screenshot" "Screenshot Saved!" "Copied to clipboard: ${outputPath}"`].join(" && ");
+        // Commands
+        const createDir = `mkdir -p "${picturesDir}"`;
+        const cropImage = `magick "${root.tempPath}" -crop ${scaledWidth}x${scaledHeight}+${scaledX}+${scaledY} +repage "${outputPath}"`;
+        const checkAndCopy = `[ -f "${outputPath}" ] && wl-copy < "${outputPath}"`;
+        const cleanTemp = `rm -f "${root.tempPath}"`;
+        const checkAndNotify = `[ -f "${outputPath}" ] && notify-send -i accessories-screenshot -a "Screenshot" "Screenshot Saved!" "Path: ${outputPath}"`;
+        const sattyAction = `magick "${root.tempPath}" -crop ${scaledWidth}x${scaledHeight}+${scaledX}+${scaledY} png:- | satty --filename - --output-filename "${outputPath}" --early-exit --init-tool brush --disable-notifications`;
+
+        // Steps
+        const defaultSteps = [createDir, cropImage, checkAndCopy, cleanTemp, checkAndNotify];
+        const sattySteps = [createDir, sattyAction, checkAndCopy, cleanTemp, checkAndNotify];
+
+        const cmd = (root.editMode ? sattySteps : defaultSteps).join(" && ");
 
         root.active = false;
         root.hasSelection = false;
+        root.editMode = false;
         Quickshell.execDetached(["sh", "-c", cmd]);
     }
 

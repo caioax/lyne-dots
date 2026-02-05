@@ -127,14 +127,14 @@ Rectangle {
                     width: 36
                     height: 36
                     radius: width / 2
-                    color: confirmArea.containsMouse ? Config.accentColor : Config.surface1Color
+                    color: confirmArea.containsMouse ? Config.surface2Color : Config.surface1Color
 
                     Text {
                         anchors.centerIn: parent
                         text: "󰄬"
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeIcon
-                        color: confirmArea.containsMouse ? Config.textReverseColor : Config.successColor
+                        color: confirmArea.containsMouse ? Config.textColor : Config.successColor
                     }
 
                     MouseArea {
@@ -143,6 +143,44 @@ Rectangle {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.screenshot.confirmSelection()
+                    }
+                }
+            }
+
+            // Edit button
+            Item {
+                width: root.screenshot.hasSelection ? 44 : 0
+                height: 42
+                visible: root.screenshot.hasSelection
+                clip: true
+
+                Behavior on width {
+                    NumberAnimation {
+                        duration: Config.animDurationShort
+                    }
+                }
+
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: 36
+                    height: 36
+                    radius: width / 2
+                    color: editArea.containsMouse ? Config.surface2Color : Config.surface1Color
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: ""
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeIcon
+                        color: editArea.containsMouse ? Config.textColor : Config.warningColor
+                    }
+
+                    MouseArea {
+                        id: editArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.screenshot.editSelection()
                     }
                 }
             }
@@ -169,10 +207,10 @@ Rectangle {
 
                     Text {
                         anchors.centerIn: parent
-                        text: "󰑓"
+                        text: ""
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeIcon
-                        color: Config.warningColor
+                        color: resetArea.containsMouse ? Config.textColor : Config.errorColor
                     }
 
                     MouseArea {
