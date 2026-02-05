@@ -72,7 +72,9 @@ RowLayout {
                     radius: width / 2
                     color: mouseArea.containsMouse ? Config.surface1Color : "transparent"
 
+                    // Primary icon (theme name, file path, or pixmap URL)
                     Image {
+                        id: trayIcon
                         anchors.centerIn: parent
                         width: 18
                         height: 18
@@ -80,10 +82,20 @@ RowLayout {
                         fillMode: Image.PreserveAspectFit
                         asynchronous: true
                         sourceSize: Qt.size(32, 32)
-                        mipmap: false
                         smooth: true
-                        onStatusChanged: if (status === Image.Error)
-                            source = "image://icon/application-default-icon"
+                        visible: status === Image.Ready
+                    }
+
+                    // Fallback when primary icon fails (e.g. pixmap-based icons from nm-applet)
+                    Image {
+                        anchors.centerIn: parent
+                        width: 18
+                        height: 18
+                        source: "image://icon/application-default-icon"
+                        fillMode: Image.PreserveAspectFit
+                        sourceSize: Qt.size(32, 32)
+                        smooth: true
+                        visible: trayIcon.status === Image.Error
                     }
 
                     MouseArea {

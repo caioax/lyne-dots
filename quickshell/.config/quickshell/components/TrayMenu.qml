@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import qs.config
+import qs.services
 
 PanelWindow {
     id: root
@@ -136,7 +137,7 @@ PanelWindow {
                     anchors.margins: 5
                     spacing: 5
                     Text {
-                        text: "⬅ Voltar"
+                        text: "⬅ Back"
                         color: Config.accentColor
                         font.family: Config.font
                         font.bold: true
@@ -199,13 +200,16 @@ PanelWindow {
                         spacing: 10
                         visible: !parent.isSeparator
 
-                        // Icon
+                        // Icon (resolved via TrayService to handle theme names, pixmaps, and file paths)
                         Image {
                             Layout.preferredWidth: 16
                             Layout.preferredHeight: 16
-                            source: (modelData.icon) ? ("image://icon/" + modelData.icon) : ""
+                            source: modelData.icon ? TrayService.getMenuIconSource(modelData.icon) : ""
                             visible: source !== "" && status === Image.Ready
+                            sourceSize: Qt.size(16, 16)
                             fillMode: Image.PreserveAspectFit
+                            smooth: true
+                            asynchronous: true
                         }
 
                         // Checkbox

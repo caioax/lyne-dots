@@ -30,17 +30,23 @@ QtObject {
             }
         }
 
-        // Absolute paths
+        // Absolute file paths
         if (iconString.startsWith("/"))
             return "file://" + iconString;
-        if (iconString.startsWith("file://"))
+
+        // Already a fully qualified URL (file://, image://qsimage/, image://icon/, etc.)
+        if (iconString.startsWith("file://") || iconString.startsWith("image://"))
             return iconString;
 
-        // Theme icons (Freedesktop)
-        if (!iconString.includes(":"))
-            return "image://icon/" + iconString;
+        // Theme icon name (Freedesktop standard)
+        return "image://icon/" + iconString;
+    }
 
-        return iconString;
+    // Resolves menu item icon source, returning empty string for missing icons
+    function getMenuIconSource(iconString) {
+        if (!iconString || iconString === "")
+            return "";
+        return getIconSource(iconString);
     }
 
     // Keeps reference to the currently open menu to ensure only 1 exists in the entire system
