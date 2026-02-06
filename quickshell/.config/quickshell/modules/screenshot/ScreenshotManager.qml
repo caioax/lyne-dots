@@ -14,7 +14,7 @@ Scope {
     property bool active: false
     property string mode: "region"  // "region", "window", "screen"
     property bool editMode: false
-    property string tempPath: ""
+    property string captureTimestamp: ""
 
     // Selection coordinates
     property real selectionX: 0
@@ -123,12 +123,27 @@ Scope {
         hyprctlMonitors.running = true;
     }
 
+    function tempPathForScreen(screenName: string): string {
+        if (root.captureTimestamp === "")
+            return "";
+        return Quickshell.cachePath(`screenshot-${root.captureTimestamp}-${screenName}.png`);
+    }
+
+    function cleanupTempFiles() {
+        const paths = [];
+        for (let i = 0; i < root.monitorsFromIpc.length; i++) {
+            paths.push("'" + tempPathForScreen(root.monitorsFromIpc[i].name) + "'");
+        }
+        if (paths.length > 0) {
+            Quickshell.execDetached(["sh", "-c", "rm -f " + paths.join(" ")]);
+        }
+        root.captureTimestamp = "";
+    }
+
     function cancelCapture() {
         root.active = false;
         root.hasSelection = false;
-        if (root.tempPath !== "") {
-            Quickshell.execDetached(["rm", "-f", root.tempPath]);
-        }
+        cleanupTempFiles();
     }
 
     function resetSelection() {
@@ -233,12 +248,16 @@ Scope {
             }
         }
 
-        const timestamp = Date.now();
-        root.tempPath = Quickshell.cachePath(`screenshot-${timestamp}.png`);
+        root.captureTimestamp = String(Date.now());
     }
 
     function startGrimCapture() {
-        grimCapture.command = ["grim", root.tempPath];
+        const commands = [];
+        for (const monitor of root.monitorsFromIpc) {
+            const path = tempPathForScreen(monitor.name);
+            commands.push(`grim -o '${monitor.name}' '${path}'`);
+        }
+        grimCapture.command = ["sh", "-c", commands.join(" & ") + " & wait"];
         grimCapture.running = true;
     }
 
@@ -247,11 +266,12 @@ Scope {
             return;
 
         const scale = root.hyprlandMonitor?.scale || 1;
-        const monitorX = root.hyprlandMonitor?.x || 0;
-        const monitorY = root.hyprlandMonitor?.y || 0;
+        const monitorName = root.hyprlandMonitor?.name || "";
+        const sourcePath = tempPathForScreen(monitorName);
 
-        const scaledX = Math.round((x + monitorX) * scale);
-        const scaledY = Math.round((y + monitorY) * scale);
+        // Per-monitor image: no monitor offset needed
+        const scaledX = Math.round(x * scale);
+        const scaledY = Math.round(y * scale);
         const scaledWidth = Math.round(width * scale);
         const scaledHeight = Math.round(height * scale);
 
@@ -261,21 +281,27 @@ Scope {
 
         // Commands
         const createDir = `mkdir -p "${picturesDir}"`;
-        const cropImage = `magick "${root.tempPath}" -crop ${scaledWidth}x${scaledHeight}+${scaledX}+${scaledY} +repage "${outputPath}"`;
+        const cropImage = `magick "${sourcePath}" -crop ${scaledWidth}x${scaledHeight}+${scaledX}+${scaledY} +repage "${outputPath}"`;
         const checkAndCopy = `[ -f "${outputPath}" ] && wl-copy < "${outputPath}"`;
-        const cleanTemp = `rm -f "${root.tempPath}"`;
         const checkAndNotify = `[ -f "${outputPath}" ] && notify-send -i accessories-screenshot -a "Screenshot" "Screenshot Saved!" "Path: ${outputPath}"`;
-        const sattyAction = `magick "${root.tempPath}" -crop ${scaledWidth}x${scaledHeight}+${scaledX}+${scaledY} png:- | satty --filename - --output-filename "${outputPath}" --early-exit --init-tool brush --disable-notifications`;
+        const sattyAction = `magick "${sourcePath}" -crop ${scaledWidth}x${scaledHeight}+${scaledX}+${scaledY} png:- | satty --filename - --output-filename "${outputPath}" --early-exit --init-tool brush --disable-notifications`;
+
+        // Cleanup all per-monitor temp files
+        let cleanPaths = [];
+        for (let i = 0; i < root.monitorsFromIpc.length; i++)
+            cleanPaths.push("'" + tempPathForScreen(root.monitorsFromIpc[i].name) + "'");
+        const cleanTemp = "rm -f " + cleanPaths.join(" ");
 
         // Steps
-        const defaultSteps = [createDir, cropImage, checkAndCopy, cleanTemp, checkAndNotify];
-        const sattySteps = [createDir, sattyAction, checkAndCopy, cleanTemp, checkAndNotify];
+        const defaultCmd = [createDir, cropImage, checkAndCopy, cleanTemp, checkAndNotify];
+        const sattyCmd = `trap '${cleanTemp}' EXIT; ` + [createDir, sattyAction, checkAndCopy, checkAndNotify].join(" && ");
 
-        const cmd = (root.editMode ? sattySteps : defaultSteps).join(" && ");
+        const cmd = root.editMode ? sattyCmd : defaultCmd.join(" && ");
 
         root.active = false;
         root.hasSelection = false;
         root.editMode = false;
+        root.captureTimestamp = "";
         Quickshell.execDetached(["sh", "-c", cmd]);
     }
 

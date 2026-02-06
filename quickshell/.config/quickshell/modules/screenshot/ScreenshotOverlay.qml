@@ -34,12 +34,10 @@ PanelWindow {
 
     Image {
         anchors.fill: parent
-        source: root.screenshot.tempPath ? "file://" + root.screenshot.tempPath : ""
+        source: root.screenshot.captureTimestamp ? "file://" + root.screenshot.tempPathForScreen(root.screen.name) : ""
         fillMode: Image.PreserveAspectCrop
         z: 0
         cache: false
-
-        sourceClipRect: Qt.rect(root.hyprMonitor?.x || 0, root.hyprMonitor?.y || 0, root.screen.width, root.screen.height)
     }
 
     // =================================================================
