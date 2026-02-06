@@ -21,5 +21,5 @@ TERMINAL_PACKAGES=(
 
 # AUR packages
 TERMINAL_AUR_PACKAGES=(
-    # Oh-My-Zsh and plugins are installed automatically by .zshrc
+    # Oh-My-Zsh and plugins are installed by setup_zsh() in install.sh
 )

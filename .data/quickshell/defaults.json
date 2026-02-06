@@ -1,6 +1,7 @@
 {
   "system": {
-    "editor": "nvim"
+    "editor": "nvim",
+    "aurHelper": "yay"
   },
   "theme": {
     "name": "tokyonight"

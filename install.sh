@@ -223,8 +223,38 @@ setup_zsh() {
         log_info "Zsh is already the default shell."
     fi
 
-    log_info "Oh-My-Zsh and plugins will be installed automatically"
-    log_info "the first time you open a terminal."
+    # Install Oh-My-Zsh
+    local ZSH_DIR="$HOME/.oh-my-zsh"
+    if [[ ! -d "$ZSH_DIR" ]]; then
+        log_step "Installing Oh-My-Zsh..."
+        git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$ZSH_DIR"
+        log_info "Oh-My-Zsh installed."
+    else
+        log_info "Oh-My-Zsh is already installed."
+    fi
+
+    # Install plugins and themes
+    local ZSH_CUSTOM_DIR="$ZSH_DIR/custom"
+    local ZSH_DEPS=(
+        "https://github.com/zsh-users/zsh-autosuggestions|plugins/zsh-autosuggestions"
+        "https://github.com/zsh-users/zsh-syntax-highlighting|plugins/zsh-syntax-highlighting"
+        "https://github.com/jeffreytse/zsh-vi-mode|plugins/zsh-vi-mode"
+        "https://github.com/romkatv/powerlevel10k|themes/powerlevel10k"
+    )
+
+    for item in "${ZSH_DEPS[@]}"; do
+        local URL="${item%%|*}"
+        local DEST="${item##*|}"
+        local NAME=$(basename "$DEST")
+
+        if [[ ! -d "$ZSH_CUSTOM_DIR/$DEST" ]]; then
+            log_step "Installing $NAME..."
+            git clone --depth=1 "$URL" "$ZSH_CUSTOM_DIR/$DEST"
+            log_info "$NAME installed."
+        else
+            log_info "$NAME is already installed."
+        fi
+    done
 }
 
 setup_tmux() {
@@ -329,6 +359,26 @@ setup_wallpaper() {
     fi
 }
 
+setup_state_aur_helper() {
+    local STATE_FILE="$HOME/.config/quickshell/state.json"
+
+    if [[ ! -f "$STATE_FILE" ]]; then
+        log_warn "state.json not found. Skipping AUR helper configuration."
+        return 0
+    fi
+
+    if ! command -v jq &>/dev/null; then
+        log_warn "jq not found. Skipping AUR helper configuration."
+        return 0
+    fi
+
+    log_step "Setting AUR helper in state.json..."
+    local TEMP_FILE
+    TEMP_FILE=$(mktemp)
+    jq --arg helper "$AUR_HELPER" '.system.aurHelper = $helper' "$STATE_FILE" > "$TEMP_FILE" && mv "$TEMP_FILE" "$STATE_FILE"
+    log_info "AUR helper set to: $AUR_HELPER"
+}
+
 # =============================================================================
 # Full installation
 # =============================================================================
@@ -352,6 +402,7 @@ full_install() {
     # Run setup scripts
     run_stow
     run_hyprland_setup
+    setup_state_aur_helper
     setup_mimetypes
 
     # Install Tela icons from git (if fonts was selected)
@@ -420,8 +471,7 @@ show_summary() {
     echo ""
 
     if [[ " ${CATEGORIES[*]} " =~ " terminal " ]]; then
-        echo "  5. Open a terminal to install Oh-My-Zsh automatically"
-        echo "  6. In tmux, use prefix + I to install plugins"
+        echo "  5. In tmux, use prefix + I to install plugins"
     fi
 
     if [[ " ${CATEGORIES[*]} " =~ " nvidia " ]]; then
