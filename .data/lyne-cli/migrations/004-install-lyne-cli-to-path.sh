@@ -1,9 +1,5 @@
-# Install lyne CLI script to ~/.local/bin
+# Install lyne CLI script to ~/.local/bin and add it to the session PATH
 # This replaces the old zsh function with a standalone bash script
 
-local LYNE_SRC="$DOTS_DIR/local/.local/bin/lyne"
-local LYNE_BIN="$HOME/.local/bin/lyne"
-
-mkdir -p "$HOME/.local/bin"
-ln -sf "$LYNE_SRC" "$LYNE_BIN"
-echo "   Installed lyne CLI to $LYNE_BIN"
+cd "$DOTS_DIR" && stow -R local
+echo "   Installed lyne CLI to PATH"
