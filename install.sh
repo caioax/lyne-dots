@@ -376,7 +376,7 @@ setup_migrations() {
         name="$(basename "$migration")"
         if ! grep -qxF "$name" "$DONE_FILE" 2>/dev/null; then
             echo "$name" >> "$DONE_FILE"
-            ((count++))
+            ((count++)) || true
         fi
     done
 
