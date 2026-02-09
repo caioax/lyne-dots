@@ -125,7 +125,7 @@ Singleton {
     // ========================================================================
 
     function applyTheme(themeName) {
-        console.log("[ThemeService] Loading theme:", themeName);
+        console.log("[Theme] Loading theme:", themeName);
         loadThemeProc._themeName = themeName;
         loadThemeProc._buffer = "";
         loadThemeProc.command = ["cat", themesDir + "/" + themeName + ".json"];
@@ -133,14 +133,14 @@ Singleton {
     }
 
     function setPresetMode(themeName) {
-        console.log("[ThemeService] Switching to preset mode:", themeName);
+        console.log("[Theme] Switching to preset mode:", themeName);
         themeMode = "preset";
         setState("theme.mode", "preset");
         applyTheme(themeName);
     }
 
     function setAutoMode() {
-        console.log("[ThemeService] Switching to auto (Material You) mode");
+        console.log("[Theme] Switching to auto (Material You) mode");
         themeMode = "auto";
         setState("theme.mode", "auto");
         const wallpaper = getState("wallpaper.current", "");
@@ -150,7 +150,7 @@ Singleton {
     }
 
     function setColorScheme(scheme: string) {
-        console.log("[ThemeService] Switching color scheme to:", scheme);
+        console.log("[Theme] Switching color scheme to:", scheme);
         colorScheme = scheme;
         setState("theme.scheme", scheme);
 
@@ -172,7 +172,7 @@ Singleton {
     }
 
     function runMatugen(wallpaperPath: string) {
-        console.log("[ThemeService] Running matugen on:", wallpaperPath);
+        console.log("[Theme] Running matugen on:", wallpaperPath);
         matugenProc._buffer = "";
         matugenProc.command = ["matugen", "image", wallpaperPath, "-m", colorScheme, "-c", matugenConfigPath];
         matugenProc.running = true;
@@ -223,7 +223,7 @@ Singleton {
         _applyGtkFromPalette(data.palette);
         _applyQtFromPalette(data.palette);
 
-        console.log("[ThemeService] Theme applied:", data.name || themeName);
+        console.log("[Theme] Theme applied:", data.name || themeName);
     }
 
     function _applyHyprland(hyprColors) {
@@ -280,24 +280,20 @@ Singleton {
 
     function _clearGtkColors() {
         // Remove colors.css so adw-gtk3 uses its default light/dark colors
-        gtkProc.command = ["bash", "-c",
-            "rm -f " + shellEscape(gtkColorsPath3) + " " + shellEscape(gtkColorsPath4)];
+        gtkProc.command = ["bash", "-c", "rm -f " + shellEscape(gtkColorsPath3) + " " + shellEscape(gtkColorsPath4)];
         gtkProc.running = true;
     }
 
     function _clearQtColors() {
         // Remove custom Lyne.colors so Qt falls back to the Breeze scheme
-        qtProc.command = ["bash", "-c",
-            "rm -f " + shellEscape(qtColorSchemePath)];
+        qtProc.command = ["bash", "-c", "rm -f " + shellEscape(qtColorSchemePath)];
         qtProc.running = true;
     }
 
     function _applyGtkThemeSwitch() {
         const theme = gtkThemeName;
         const scheme = isDarkMode ? "prefer-dark" : "prefer-light";
-        gtkThemeSwitchProc.command = ["bash", "-c",
-            "gsettings set org.gnome.desktop.interface gtk-theme " + shellEscape(theme) + " 2>/dev/null; " +
-            "gsettings set org.gnome.desktop.interface color-scheme " + shellEscape(scheme) + " 2>/dev/null; true"];
+        gtkThemeSwitchProc.command = ["bash", "-c", "gsettings set org.gnome.desktop.interface gtk-theme " + shellEscape(theme) + " 2>/dev/null; " + "gsettings set org.gnome.desktop.interface color-scheme " + shellEscape(scheme) + " 2>/dev/null; true"];
         gtkThemeSwitchProc.running = true;
     }
 
@@ -352,9 +348,7 @@ Singleton {
 
         const content = lines.join("\n");
 
-        gtkProc.command = ["bash", "-c",
-            "cat > " + shellEscape(gtkColorsPath3) + " << 'GTK_EOF'\n" + content + "GTK_EOF\n" +
-            "cp " + shellEscape(gtkColorsPath3) + " " + shellEscape(gtkColorsPath4)];
+        gtkProc.command = ["bash", "-c", "cat > " + shellEscape(gtkColorsPath3) + " << 'GTK_EOF'\n" + content + "GTK_EOF\n" + "cp " + shellEscape(gtkColorsPath3) + " " + shellEscape(gtkColorsPath4)];
         gtkProc.running = true;
 
         // Also update GTK base theme to match scheme
@@ -406,11 +400,18 @@ Singleton {
             var bgColor = s0;
             var fgColor = fg;
 
-            if (group === "View") bgColor = bg;
-            if (group === "Header") bgColor = s1;
-            if (group === "Window") bgColor = s0;
-            if (group === "Tooltip") bgColor = s0;
-            if (group === "Selection") { bgColor = ac; fgColor = fgR; }
+            if (group === "View")
+                bgColor = bg;
+            if (group === "Header")
+                bgColor = s1;
+            if (group === "Window")
+                bgColor = s0;
+            if (group === "Tooltip")
+                bgColor = s0;
+            if (group === "Selection") {
+                bgColor = ac;
+                fgColor = fgR;
+            }
 
             lines.push("[Colors:" + group + "]");
             lines.push("BackgroundAlternate=" + (group === "Selection" ? ac : s1));
@@ -443,9 +444,7 @@ Singleton {
 
         const content = lines.join("\n");
 
-        qtProc.command = ["bash", "-c",
-            "mkdir -p " + shellEscape(Quickshell.env("HOME") + "/.local/share/color-schemes") + " && " +
-            "cat > " + shellEscape(qtColorSchemePath) + " << 'QT_EOF'\n" + content + "QT_EOF"];
+        qtProc.command = ["bash", "-c", "mkdir -p " + shellEscape(Quickshell.env("HOME") + "/.local/share/color-schemes") + " && " + "cat > " + shellEscape(qtColorSchemePath) + " << 'QT_EOF'\n" + content + "QT_EOF"];
         qtProc.running = true;
     }
 
@@ -482,7 +481,7 @@ Singleton {
         }
 
         stderr: SplitParser {
-            onRead: data => console.error("[ThemeService] " + data)
+            onRead: data => console.error("[Theme] " + data)
         }
 
         onExited: exitCode => {
@@ -491,10 +490,10 @@ Singleton {
                     const data = JSON.parse(_buffer.trim());
                     root._applyThemeData(_themeName, data);
                 } catch (e) {
-                    console.error("[ThemeService] Failed to parse theme:", e);
+                    console.error("[Theme] Failed to parse theme:", e);
                 }
             } else {
-                console.error("[ThemeService] Theme file not found:", _themeName);
+                console.error("[Theme] Theme file not found:", _themeName);
             }
             _buffer = "";
         }
@@ -511,7 +510,7 @@ Singleton {
         }
 
         stderr: SplitParser {
-            onRead: data => console.error("[ThemeService:SchemeSwitch] " + data)
+            onRead: data => console.error("[Theme:SchemeSwitch] " + data)
         }
 
         onExited: exitCode => {
@@ -525,15 +524,15 @@ Singleton {
                         pairName = data.darkPair;
 
                     if (pairName) {
-                        console.log("[ThemeService] Switching to pair theme:", pairName);
+                        console.log("[Theme] Switching to pair theme:", pairName);
                         root.applyTheme(pairName);
                     } else {
                         // No pair found — re-apply current theme (fallback)
-                        console.log("[ThemeService] No pair for scheme, re-applying current theme");
+                        console.log("[Theme] No pair for scheme, re-applying current theme");
                         root.applyTheme(root.currentThemeName);
                     }
                 } catch (e) {
-                    console.error("[ThemeService] Failed to read pair:", e);
+                    console.error("[Theme] Failed to read pair:", e);
                     root.applyTheme(root.currentThemeName);
                 }
             } else {
@@ -558,7 +557,7 @@ Singleton {
 
         onExited: {
             root.availableThemes = listThemesProc._collected;
-            console.log("[ThemeService] Available themes:", root.availableThemes.join(", "));
+            console.log("[Theme] Available themes:", root.availableThemes.join(", "));
             root.loadPreviews();
         }
     }
@@ -606,12 +605,12 @@ Singleton {
                         darkPair: data.darkPair || ""
                     };
                 } catch (e) {
-                    console.error("[ThemeService] Preview parse error for " + themeName + ":", e);
+                    console.error("[Theme] Preview parse error for " + themeName + ":", e);
                 }
             }
 
             root.themePreviews = previews;
-            console.log("[ThemeService] Loaded previews for", Object.keys(previews).length, "themes");
+            console.log("[Theme] Loaded previews for", Object.keys(previews).length, "themes");
             _buffer = "";
         }
     }
@@ -619,40 +618,40 @@ Singleton {
     Process {
         id: hyprProc
         stderr: SplitParser {
-            onRead: data => console.error("[ThemeService:Hyprland] " + data)
+            onRead: data => console.error("[Theme:Hyprland] " + data)
         }
     }
 
     Process {
         id: nvimProc
         stderr: SplitParser {
-            onRead: data => console.error("[ThemeService:Neovim] " + data)
+            onRead: data => console.error("[Theme:Neovim] " + data)
         }
         onExited: exitCode => {
             if (exitCode === 0)
-                console.log("[ThemeService] Neovim theme updated");
+                console.log("[Theme] Neovim theme updated");
         }
     }
 
     Process {
         id: kittyProc
         stderr: SplitParser {
-            onRead: data => console.error("[ThemeService:Kitty] " + data)
+            onRead: data => console.error("[Theme:Kitty] " + data)
         }
         onExited: exitCode => {
             if (exitCode === 0)
-                console.log("[ThemeService] Kitty theme updated");
+                console.log("[Theme] Kitty theme updated");
         }
     }
 
     Process {
         id: wallpaperProc
         stderr: SplitParser {
-            onRead: data => console.error("[ThemeService:Wallpaper] " + data)
+            onRead: data => console.error("[Theme:Wallpaper] " + data)
         }
         onExited: exitCode => {
             if (exitCode === 0) {
-                console.log("[ThemeService] Theme wallpaper applied");
+                console.log("[Theme] Theme wallpaper applied");
                 WallpaperService.getCurrentWallpaper();
             }
         }
@@ -662,11 +661,11 @@ Singleton {
     Process {
         id: gtkProc
         stderr: SplitParser {
-            onRead: data => console.error("[ThemeService:GTK] " + data)
+            onRead: data => console.error("[Theme:GTK] " + data)
         }
         onExited: exitCode => {
             if (exitCode === 0)
-                console.log("[ThemeService] GTK colors updated");
+                console.log("[Theme] GTK colors updated");
         }
     }
 
@@ -674,11 +673,11 @@ Singleton {
     Process {
         id: gtkThemeSwitchProc
         stderr: SplitParser {
-            onRead: data => console.error("[ThemeService:GtkSwitch] " + data)
+            onRead: data => console.error("[Theme:GtkSwitch] " + data)
         }
         onExited: exitCode => {
             if (exitCode === 0)
-                console.log("[ThemeService] GTK theme switched to:", root.gtkThemeName);
+                console.log("[Theme] GTK theme switched to:", root.gtkThemeName);
         }
     }
 
@@ -686,11 +685,11 @@ Singleton {
     Process {
         id: qtProc
         stderr: SplitParser {
-            onRead: data => console.error("[ThemeService:Qt] " + data)
+            onRead: data => console.error("[Theme:Qt] " + data)
         }
         onExited: exitCode => {
             if (exitCode === 0)
-                console.log("[ThemeService] Qt color scheme updated");
+                console.log("[Theme] Qt color scheme updated");
         }
     }
 
@@ -704,19 +703,19 @@ Singleton {
         }
 
         stderr: SplitParser {
-            onRead: data => console.log("[ThemeService:Matugen] " + data)
+            onRead: data => console.log("[Theme:Matugen] " + data)
         }
 
         onExited: exitCode => {
             if (exitCode === 0) {
-                console.log("[ThemeService] Matugen finished, loading palette...");
+                console.log("[Theme] Matugen finished, loading palette...");
                 // Matugen has written all template outputs (gtk, kitty, qt, hyprland, palette)
                 // Now load the QuickShell palette JSON
                 loadMatugenPaletteProc._buffer = "";
                 loadMatugenPaletteProc.command = ["cat", root.matugenCachePath + "/quickshell-palette.json"];
                 loadMatugenPaletteProc.running = true;
             } else {
-                console.error("[ThemeService] Matugen failed with exit code:", exitCode);
+                console.error("[Theme] Matugen failed with exit code:", exitCode);
             }
             _buffer = "";
         }
@@ -732,7 +731,7 @@ Singleton {
         }
 
         stderr: SplitParser {
-            onRead: data => console.error("[ThemeService:MatugenPalette] " + data)
+            onRead: data => console.error("[Theme:MatugenPalette] " + data)
         }
 
         onExited: exitCode => {
@@ -740,7 +739,7 @@ Singleton {
                 try {
                     const pal = JSON.parse(_buffer.trim());
                     root.palette = pal;
-                    console.log("[ThemeService] Auto palette applied");
+                    console.log("[Theme] Auto palette applied");
 
                     // Load and apply hyprland colors
                     root._loadAndApplyHyprlandColors();
@@ -748,7 +747,7 @@ Singleton {
                     // Reload kitty (matugen already wrote the theme file)
                     kittyReloadProc.running = true;
                 } catch (e) {
-                    console.error("[ThemeService] Failed to parse matugen palette:", e);
+                    console.error("[Theme] Failed to parse matugen palette:", e);
                 }
             }
             _buffer = "";
@@ -765,7 +764,7 @@ Singleton {
         }
 
         stderr: SplitParser {
-            onRead: data => console.error("[ThemeService:HyprColors] " + data)
+            onRead: data => console.error("[Theme:HyprColors] " + data)
         }
 
         onExited: exitCode => {
@@ -774,7 +773,7 @@ Singleton {
                     const colors = JSON.parse(_buffer.trim());
                     root._applyHyprland(colors);
                 } catch (e) {
-                    console.error("[ThemeService] Failed to parse hyprland colors:", e);
+                    console.error("[Theme] Failed to parse hyprland colors:", e);
                 }
             }
             _buffer = "";
@@ -786,11 +785,11 @@ Singleton {
         id: kittyReloadProc
         command: ["bash", "-c", "pkill -USR1 -x kitty 2>/dev/null; true"]
         stderr: SplitParser {
-            onRead: data => console.error("[ThemeService:KittyReload] " + data)
+            onRead: data => console.error("[Theme:KittyReload] " + data)
         }
         onExited: exitCode => {
             if (exitCode === 0)
-                console.log("[ThemeService] Kitty reloaded (auto mode)");
+                console.log("[Theme] Kitty reloaded (auto mode)");
         }
     }
 }
