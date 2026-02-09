@@ -1,16 +1,19 @@
 # Setup matugen, switch GTK to adw-gtk3-dark, configure Qt color scheme path
 
+fail() {
+    echo -e "\e[1;31m   Error: $1\e[0m"
+}
 # Install packages if missing
 if ! command -v matugen &>/dev/null; then
     echo "   Installing matugen..."
-    pacman -S --noconfirm matugen 2>/dev/null || echo "   Warning: failed to install matugen"
+    sudo pacman -S --noconfirm matugen || fail "failed to install matugen"
 fi
 
 if [[ ! -d /usr/share/themes/adw-gtk3-dark ]]; then
     echo "   Installing adw-gtk3..."
-    sudo pacman -S --noconfirm adw-gtk-theme 2>/dev/null ||
-        yay -S --noconfirm adw-gtk3 2>/dev/null ||
-        echo "   Warning: failed to install adw-gtk3"
+    sudo pacman -S --noconfirm adw-gtk-theme ||
+        yay -S --noconfirm adw-gtk3 ||
+        fail "failed to install adw-gtk3"
 fi
 
 # Create required directories
