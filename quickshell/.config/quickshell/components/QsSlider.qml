@@ -78,6 +78,9 @@ Item {
             Layout.fillWidth: true
             Layout.preferredHeight: parent.height - 5
 
+            readonly property real handleGap: 6
+            readonly property real visualPos: (root.value - root.from) / (root.to - root.from)
+
             // Inner container for the scale animation
             Item {
                 anchors.fill: parent
@@ -89,57 +92,94 @@ Item {
                     }
                 }
 
-                // Track Background
+                // Fill
                 Rectangle {
-                    id: track
-                    anchors.fill: parent
-                    radius: Config.radiusLarge
-                    color: Config.surface1Color
-                    clip: true
+                    id: fill
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
 
-                    // Fill Bar
-                    Rectangle {
-                        id: fill
-                        height: parent.height
-                        radius: Config.radiusLarge
+                    width: Math.max(0, (sliderContainer.visualPos * parent.width) - sliderContainer.handleGap)
+                    height: 28
+                    color: Config.accentColor
 
-                        // Width based on percentage
-                        width: {
-                            var percent = (root.value - root.from) / (root.to - root.from);
-                            percent = Math.max(0, Math.min(1, percent));
-                            return parent.width * percent;
-                        }
+                    topLeftRadius: Config.radiusLarge
+                    bottomLeftRadius: Config.radiusLarge
+                    topRightRadius: 2
+                    bottomRightRadius: 2
 
-                        color: Config.accentColor
-
-                        Behavior on width {
-                            NumberAnimation {
-                                duration: Config.animDurationShort
-                                easing.type: Easing.OutQuad
-                            }
+                    Behavior on width {
+                        NumberAnimation {
+                            duration: 80
+                            easing.type: Easing.OutQuad
                         }
                     }
+                }
 
-                    // Percentage Text
-                    Text {
-                        visible: root.showPercentage
-                        anchors.centerIn: parent
+                // Remaining
+                Rectangle {
+                    id: remainingBar
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
 
-                        text: Math.round(((root.value - root.from) / (root.to - root.from)) * 100) + "%"
+                    width: Math.max(0, ((1 - sliderContainer.visualPos) * parent.width) - sliderContainer.handleGap)
+                    height: 28
+                    color: Config.surface2Color
 
-                        font.family: Config.font
-                        font.bold: true
-                        font.pixelSize: Config.fontSizeNormal
+                    topLeftRadius: 2
+                    bottomLeftRadius: 2
+                    topRightRadius: Config.radiusLarge
+                    bottomRightRadius: Config.radiusLarge
 
-                        // Smart color
-                        property bool isCovered: fill.width > (parent.width / 2)
-                        color: isCovered ? Config.textReverseColor : Config.textColor
+                    Behavior on width {
+                        NumberAnimation {
+                            duration: 80
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+                }
 
-                        opacity: (sliderMouse.containsMouse || sliderMouse.pressed) ? 1.0 : 0.0
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Config.animDuration
-                            }
+                // Handle
+                Rectangle {
+                    id: handle
+                    width: 4
+                    height: parent.height
+                    radius: 2
+                    color: Config.accentColor
+
+                    x: (sliderContainer.visualPos * parent.width) - (width / 2)
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    opacity: sliderMouse.containsMouse || sliderMouse.pressed ? 1.0 : 0.8
+
+                    Behavior on x {
+                        NumberAnimation {
+                            duration: 80
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+                }
+
+                // Percentage Text
+                Text {
+                    visible: root.showPercentage
+                    anchors.bottom: handle.top
+                    anchors.bottomMargin: 1
+                    anchors.horizontalCenter: handle.horizontalCenter
+
+                    text: Math.round(((root.value - root.from) / (root.to - root.from)) * 100) + "%"
+
+                    font.family: Config.font
+                    font.bold: true
+                    font.pixelSize: Config.fontSizeNormal
+
+                    // Smart color
+                    property bool isCovered: fill.width > (parent.width / 2)
+                    color: Config.textColor
+
+                    opacity: (sliderMouse.containsMouse || sliderMouse.pressed) ? 1.0 : 0.0
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Config.animDuration
                         }
                     }
                 }

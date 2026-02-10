@@ -38,6 +38,9 @@ Scope {
     property var windowsFromIpc: []
     property var monitorsFromIpc: []
 
+    // Animations
+    readonly property bool activeAnimations: Config.screenshotAnimations && root.mode !== "region"
+
     readonly property var modes: ["region", "window", "screen"]
     readonly property var modeIcons: ({
             region: "󰩭",
@@ -50,31 +53,31 @@ Scope {
     // =========================================================================
 
     Behavior on selectionX {
-        enabled: Config.screenshotAnimations
-        SpringAnimation {
-            spring: 4
-            damping: 0.4
+        enabled: root.activeAnimations
+        NumberAnimation {
+            duration: Config.animDurationLong
+            easing.type: Easing.OutExpo
         }
     }
     Behavior on selectionY {
-        enabled: Config.screenshotAnimations
-        SpringAnimation {
-            spring: 4
-            damping: 0.4
+        enabled: root.activeAnimations
+        NumberAnimation {
+            duration: Config.animDurationLong
+            easing.type: Easing.OutExpo
         }
     }
     Behavior on selectionWidth {
-        enabled: Config.screenshotAnimations
-        SpringAnimation {
-            spring: 4
-            damping: 0.4
+        enabled: root.activeAnimations
+        NumberAnimation {
+            duration: Config.animDurationLong
+            easing.type: Easing.OutExpo
         }
     }
     Behavior on selectionHeight {
-        enabled: Config.screenshotAnimations
-        SpringAnimation {
-            spring: 4
-            damping: 0.4
+        enabled: root.activeAnimations
+        NumberAnimation {
+            duration: Config.animDurationLong
+            easing.type: Easing.OutExpo
         }
     }
 

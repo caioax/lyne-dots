@@ -64,14 +64,14 @@ Rectangle {
 
     RowLayout {
         anchors.fill: parent
-        anchors.margins: 15
+        anchors.margins: 10
         spacing: 15
 
         // Circle with Icon
         Rectangle {
             implicitWidth: 36
             implicitHeight: 36
-            radius: parent.width / 2
+            radius: Config.radiusLarge
             color: {
                 if (root.active)
                     return Config.accentColor;

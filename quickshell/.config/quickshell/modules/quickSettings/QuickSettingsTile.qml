@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import qs.config
+import "../../components/"
 
 Rectangle {
     id: root
@@ -26,9 +27,7 @@ Rectangle {
 
     // Colors and Animation
     color: {
-        if (active)
-            return Config.accentColor;
-        if (mainMouse.containsMouse || (detailsMouse.containsMouse && hasDetails))
+        if (mainMouse.containsMouse || (detailsButton.containsMouse && hasDetails))
             return Config.surface2Color;
         return Config.surface1Color;
     }
@@ -40,17 +39,26 @@ Rectangle {
     }
 
     // Scale effect on click
-    scale: mainMouse.pressed || detailsMouse.pressed ? 0.98 : 1.0
+    scale: mainMouse.pressed || detailsButton.pressed ? 0.98 : 1.0
     Behavior on scale {
         NumberAnimation {
             duration: Config.animDurationShort
         }
     }
 
+    // Main MouseArea (Toggle)
+    MouseArea {
+        id: mainMouse
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.toggled()
+    }
+
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 15
-        anchors.rightMargin: 5
+        anchors.leftMargin: 10
+        anchors.rightMargin: 10
         spacing: 0
 
         // TOGGLE AREA (Icon + Text)
@@ -64,12 +72,19 @@ Rectangle {
                 spacing: 12
 
                 // Icon
-                Text {
-                    text: root.icon
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeIcon
-                    // If active, dark text (contrast). If inactive, normal color.
-                    color: root.active ? Config.textReverseColor : Config.textColor
+                Rectangle {
+                    width: 37
+                    height: 37
+                    radius: Config.radiusLarge
+                    color: root.active ? Config.accentColor : Config.surface3Color
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: root.icon
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeIcon
+                        color: root.active ? Config.textReverseColor : Config.textColor
+                    }
                 }
 
                 // Text (Title and Subtitle)
@@ -82,7 +97,7 @@ Rectangle {
                         font.family: Config.font
                         font.bold: true
                         font.pixelSize: Config.fontSizeNormal
-                        color: root.active ? Config.textReverseColor : Config.textColor
+                        color: Config.textColor
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                     }
@@ -94,60 +109,28 @@ Rectangle {
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeSmall
                         // Slight transparency on subtext
-                        color: root.active ? Qt.alpha(Config.textReverseColor, 0.8) : Config.subtextColor
+                        color: Config.subtextColor
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                     }
                 }
             }
-
-            // Main MouseArea (Toggle)
-            MouseArea {
-                id: mainMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.toggled()
-            }
-        }
-
-        // SEPARATOR (Only if there are details)
-        Rectangle {
-            visible: root.hasDetails
-            Layout.preferredWidth: 1
-            Layout.preferredHeight: parent.height * 0.6
-            Layout.alignment: Qt.AlignVCenter
-            Layout.leftMargin: 5
-            Layout.rightMargin: 5
-
-            // Separator color adapts to the background
-            color: root.active ? Qt.alpha(Config.textReverseColor, 0.3) : Config.surface2Color
         }
 
         // DETAILS BUTTON (Arrow/Gear)
-        Item {
-            visible: root.hasDetails
-            Layout.preferredWidth: 30
-            Layout.fillHeight: true
+        ActionButton {
+            id: detailsButton
+            visible: root.hasDetails && (mainMouse.containsMouse || hovered)
+            icon: ""
+            opacity: visible ? 1 : 0
+            baseColor: Config.surface2Color
 
-            Text {
-                anchors.centerIn: parent
-                text: ""
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeNormal
-                font.bold: true
-                color: root.active ? Config.textReverseColor : Config.textColor
+            onClicked: root.openDetails()
 
-                // Subtle animation on the arrow when hovering over it
-                opacity: detailsMouse.containsMouse ? 1.0 : 0.7
-            }
-
-            MouseArea {
-                id: detailsMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.openDetails()
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Config.animDuration
+                }
             }
         }
     }

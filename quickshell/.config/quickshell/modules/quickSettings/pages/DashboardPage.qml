@@ -7,6 +7,7 @@ import qs.config
 import qs.services
 import "../../quickSettings/"
 import "../../../components/"
+import "../../notifications/"
 
 Item {
     id: root

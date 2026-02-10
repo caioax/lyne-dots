@@ -14,14 +14,16 @@ BarButton {
     Text {
         id: clockText
         anchors.centerIn: parent
-        text: TimeService.format("hh:mm")
+        text: TimeService.format("hh:mm - ddd, dd MMM")
         font.family: Config.font
         font.pixelSize: Config.fontSizeNormal
         font.bold: true
         color: root.active ? Config.accentColor : Config.textColor
 
         Behavior on color {
-            ColorAnimation { duration: Config.animDuration }
+            ColorAnimation {
+                duration: Config.animDuration
+            }
         }
     }
 
