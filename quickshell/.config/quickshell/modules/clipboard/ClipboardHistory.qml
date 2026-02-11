@@ -28,13 +28,15 @@ PanelWindow {
 
     color: "transparent"
 
+    function hide() {
+        contentLoader.item.forceActiveFocus();
+        ClipboardService.hide();
+    }
+
     // Click on background closes
     MouseArea {
         anchors.fill: parent
-        onClicked: {
-            contentLoader.item.forceActiveFocus();
-            ClipboardService.hide();
-        }
+        onClicked: root.hide()
     }
 
     // Loader that creates/destroys the content
@@ -124,7 +126,7 @@ PanelWindow {
                     // Clear All button
                     ClearButton {
                         visible: ClipboardService.entries.length > 0
-                        icon: "󰆴"
+                        icon: ""
                         text: "Clear"
 
                         onClicked: ClipboardService.clearAll()
@@ -183,10 +185,7 @@ PanelWindow {
 
                             onTextChanged: ClipboardService.query = text
 
-                            Keys.onEscapePressed: {
-                                focus = false;
-                                ClipboardService.hide();
-                            }
+                            Keys.onEscapePressed: root.hide()
                             Keys.onReturnPressed: {
                                 contentLoader.item.forceActiveFocus();
                                 ClipboardService.selectCurrent();
@@ -290,6 +289,24 @@ PanelWindow {
                         property bool isSelected: index === ClipboardService.selectedIndex
                         property bool isHovered: delegateMouse.containsMouse
 
+                        MouseArea {
+                            id: delegateMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            // Let delete button clicks through
+                            propagateComposedEvents: true
+
+                            onClicked: mouse => {
+                                if (delegateItem.isSelected) {
+                                    contentLoader.item.forceActiveFocus();
+                                    ClipboardService.selectItem(delegateItem.index);
+                                } else {
+                                    ClipboardService.selectedIndex = delegateItem.index;
+                                }
+                            }
+                        }
+
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 12
@@ -318,29 +335,17 @@ PanelWindow {
                                 maximumLineCount: 1
                             }
 
-                            // Delete button (visible on hover)
-                            Rectangle {
-                                visible: delegateItem.isHovered || delegateItem.isSelected
-                                Layout.preferredWidth: 24
-                                Layout.preferredHeight: 24
-                                radius: height / 2
-                                color: deleteMouse.containsMouse ? Qt.alpha(Config.errorColor, 0.2) : "transparent"
+                            // Delete button
+                            ActionButton {
+                                visible: delegateItem.isHovered || delegateItem.isSelected || hovered
+                                icon: ""
+                                size: 30
+                                textColor: hovered ? Config.errorColor : Config.textColor
+                                iconSize: Config.fontSizeNormal
+                                baseColor: delegateItem.isSelected ? Config.surface2Color : "transparent"
+                                hoverColor: delegateItem.isSelected ? Config.backgroundTransparentColor : Config.surface2Color
 
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "󰅖"
-                                    font.family: Config.font
-                                    font.pixelSize: 12
-                                    color: deleteMouse.containsMouse ? Config.errorColor : Config.mutedColor
-                                }
-
-                                MouseArea {
-                                    id: deleteMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: ClipboardService.deleteItem(delegateItem.index)
-                                }
+                                onClicked: ClipboardService.deleteItem(delegateItem.index)
                             }
 
                             // Selection indicator
@@ -350,23 +355,6 @@ PanelWindow {
                                 color: Config.accentColor
                                 font.family: Config.font
                                 font.pixelSize: Config.fontSizeSmall
-                            }
-                        }
-
-                        MouseArea {
-                            id: delegateMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            // Let delete button clicks through
-                            propagateComposedEvents: true
-
-                            onClicked: mouse => {
-                                if (delegateItem.isSelected) {
-                                    ClipboardService.selectItem(delegateItem.index);
-                                } else {
-                                    ClipboardService.selectedIndex = delegateItem.index;
-                                }
                             }
                         }
                     }
@@ -425,6 +413,6 @@ PanelWindow {
     HyprlandFocusGrab {
         windows: [root]
         active: root.visible
-        onCleared: ClipboardService.hide()
+        onCleared: root.hide()
     }
 }

@@ -14,7 +14,6 @@ Singleton {
     property bool visible: false
     property string query: ""
     property int selectedIndex: 0
-    property int maxItems: 50
 
     // Incremented on each open to force re-evaluation of the app list
     property int _refreshToken: 0
@@ -32,7 +31,7 @@ Singleton {
         });
 
         if (query === "") {
-            return apps.slice(0, maxItems);
+            return apps.slice(0, apps.length);
         }
 
         const q = query.toLowerCase();
@@ -54,7 +53,7 @@ Singleton {
         }
 
         // Name first, then description
-        return [...nameMatches, ...descMatches].slice(0, maxItems);
+        return [...nameMatches, ...descMatches].slice(0, apps.length);
     }
 
     // ========================================================================
@@ -75,12 +74,15 @@ Singleton {
     }
 
     function toggle() {
-        if (visible) hide();
-        else show();
+        if (visible)
+            hide();
+        else
+            show();
     }
 
     function launch(entry) {
-        if (!entry) return;
+        if (!entry)
+            return;
 
         console.log("[Launcher] Launching:", entry.name);
 

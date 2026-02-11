@@ -34,6 +34,12 @@ Rectangle {
         }
     }
 
+    Behavior on textColor {
+        ColorAnimation {
+            duration: Config.animDurationShort
+        }
+    }
+
     Behavior on border.color {
         ColorAnimation {
             duration: Config.animDurationShort

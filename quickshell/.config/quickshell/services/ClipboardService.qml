@@ -15,7 +15,6 @@ Singleton {
     property bool visible: false
     property string query: ""
     property int selectedIndex: 0
-    property int maxItems: 50
 
     // Raw entries from cliphist
     property var entries: []
@@ -23,12 +22,12 @@ Singleton {
     // Filtered entries based on query
     readonly property var filteredEntries: {
         if (query === "")
-            return entries.slice(0, maxItems);
+            return entries.slice(0, entries.length);
 
         const q = query.toLowerCase();
         return entries.filter(entry => {
             return entry.text.toLowerCase().includes(q);
-        }).slice(0, maxItems);
+        }).slice(0, entries.length);
     }
 
     // ========================================================================
@@ -49,8 +48,10 @@ Singleton {
     }
 
     function toggle() {
-        if (visible) hide();
-        else show();
+        if (visible)
+            hide();
+        else
+            show();
     }
 
     function selectItem(index) {
@@ -159,7 +160,7 @@ Singleton {
     Process {
         id: selectProc
 
-        onExited: (code) => {
+        onExited: code => {
             if (code === 0) {
                 console.log("[Clipboard] Entry copied to clipboard");
                 root.hide();
@@ -177,7 +178,7 @@ Singleton {
     Process {
         id: deleteProc
 
-        onExited: (code) => {
+        onExited: code => {
             if (code === 0) {
                 console.log("[Clipboard] Entry deleted");
                 root.refresh();
@@ -196,7 +197,7 @@ Singleton {
         id: clearProc
         command: ["cliphist", "wipe"]
 
-        onExited: (code) => {
+        onExited: code => {
             if (code === 0) {
                 console.log("[Clipboard] All entries cleared");
                 root.entries = [];

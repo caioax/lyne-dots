@@ -73,8 +73,8 @@ Rectangle {
 
                 // Icon
                 Rectangle {
-                    width: 37
-                    height: 37
+                    width: 36
+                    height: 36
                     radius: Config.radiusLarge
                     color: root.active ? Config.accentColor : Config.surface3Color
 

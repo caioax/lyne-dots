@@ -12,6 +12,7 @@ Item {
     property real to: 1
     property string icon: ""
     property bool showPercentage: true
+    property string fillColor: Config.accentColor
 
     // SIGNALS
     signal moved(real newValue)
@@ -20,6 +21,12 @@ Item {
     // Component size
     implicitHeight: 40
     Layout.fillWidth: true
+
+    Behavior on fillColor {
+        ColorAnimation {
+            duration: Config.animDurationShort
+        }
+    }
 
     RowLayout {
         anchors.fill: parent
@@ -76,9 +83,9 @@ Item {
 
             // Layout magic: Takes up all remaining width
             Layout.fillWidth: true
-            Layout.preferredHeight: parent.height - 5
+            Layout.preferredHeight: parent.height - 6
 
-            readonly property real handleGap: 6
+            readonly property real handleGap: 5
             readonly property real visualPos: (root.value - root.from) / (root.to - root.from)
 
             // Inner container for the scale animation
@@ -100,10 +107,10 @@ Item {
 
                     width: Math.max(0, (sliderContainer.visualPos * parent.width) - sliderContainer.handleGap)
                     height: 28
-                    color: Config.accentColor
+                    color: root.fillColor
 
-                    topLeftRadius: Config.radiusLarge
-                    bottomLeftRadius: Config.radiusLarge
+                    topLeftRadius: Config.radius
+                    bottomLeftRadius: Config.radius
                     topRightRadius: 2
                     bottomRightRadius: 2
 
@@ -127,8 +134,8 @@ Item {
 
                     topLeftRadius: 2
                     bottomLeftRadius: 2
-                    topRightRadius: Config.radiusLarge
-                    bottomRightRadius: Config.radiusLarge
+                    topRightRadius: Config.radius
+                    bottomRightRadius: Config.radius
 
                     Behavior on width {
                         NumberAnimation {
@@ -141,10 +148,10 @@ Item {
                 // Handle
                 Rectangle {
                     id: handle
-                    width: 4
+                    width: 3.5
                     height: parent.height
                     radius: 2
-                    color: Config.accentColor
+                    color: root.fillColor
 
                     x: (sliderContainer.visualPos * parent.width) - (width / 2)
                     anchors.verticalCenter: parent.verticalCenter

@@ -27,13 +27,15 @@ PanelWindow {
 
     color: "transparent"
 
+    function hide() {
+        contentLoader.item.forceActiveFocus();
+        LauncherService.hide();
+    }
+
     // Click on background closes
     MouseArea {
         anchors.fill: parent
-        onClicked: {
-            contentLoader.item.forceActiveFocus();
-            LauncherService.hide();
-        }
+        onClicked: root.hide()
     }
 
     // Loader that creates/destroys the content
@@ -124,10 +126,7 @@ PanelWindow {
 
                             onTextChanged: LauncherService.query = text
 
-                            Keys.onEscapePressed: {
-                                focus = false;
-                                LauncherService.hide();
-                            }
+                            Keys.onEscapePressed: root.hide()
 
                             Keys.onReturnPressed: {
                                 contentLoader.item.forceActiveFocus();
@@ -382,6 +381,7 @@ PanelWindow {
                             onClicked: {
                                 if (delegateItem.isSelected) {
                                     // Second click: opens the app
+                                    contentLoader.item.forceActiveFocus();
                                     LauncherService.launch(delegateItem.modelData);
                                 } else {
                                     // First click: selects
@@ -460,6 +460,6 @@ PanelWindow {
     HyprlandFocusGrab {
         windows: [root]
         active: root.visible
-        onCleared: LauncherService.hide()
+        onCleared: root.hide()
     }
 }

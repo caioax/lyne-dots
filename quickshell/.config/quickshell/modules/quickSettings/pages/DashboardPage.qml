@@ -67,7 +67,7 @@ Item {
                     font.pixelSize: Config.fontSizeLarge
                 }
                 Text {
-                    text: TimeService.format("ddd, dd MMM")
+                    text: "󰅐 " + SystemMonitorService.uptime
                     color: Config.subtextColor
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeSmall
@@ -139,8 +139,24 @@ Item {
             }
         }
 
-        MediaWidget {
+        // ========== SEPARATOR ==========
+        Rectangle {
             Layout.fillWidth: true
+            Layout.preferredHeight: 1
+            color: Config.surface1Color
+        }
+
+        MediaWidget {
+            id: mediaWidget
+            Layout.fillWidth: true
+        }
+
+        // ========== SEPARATOR ==========
+        Rectangle {
+            visible: mediaWidget.visible
+            Layout.fillWidth: true
+            Layout.preferredHeight: 1
+            color: Config.surface1Color
         }
 
         // BUTTON GRID
@@ -206,15 +222,24 @@ Item {
             }
         }
 
+        // ========== SEPARATOR ==========
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 1
+            color: Config.surface1Color
+        }
+
         // SLIDERS
         ColumnLayout {
             Layout.fillWidth: true
             spacing: 12
-            Layout.topMargin: 4
+            Layout.topMargin: 1
 
             QsSlider {
                 icon: AudioService.systemIcon
                 value: AudioService.volume
+                fillColor: AudioService.muted ? Config.surface3Color : Config.accentColor
+
                 onMoved: val => AudioService.setVolume(val)
                 onIconClicked: AudioService.toggleMute()
             }
@@ -224,6 +249,7 @@ Item {
                 visible: BrightnessService.available
                 icon: BrightnessService.icon
                 value: BrightnessService.brightness
+
                 onMoved: val => BrightnessService.setBrightness(val)
                 onIconClicked: BrightnessService.toggleBrightness()
             }

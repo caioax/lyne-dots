@@ -14,7 +14,7 @@ UTILS_PACKAGES=(
     "playerctl" # Media player controller
 
     # JSON Processing
-    "jq" # JSON processor (used by workspace-manager)
+    "jq" # JSON processor
 
     # Calculator
     "bc" # Calculator (used by scripts)
@@ -46,7 +46,7 @@ UTILS_PACKAGES=(
     "satty" # Screenshot annotation tool
 
     # Image Processing
-    "imagemagick" # Image manipulation (used by ThemeService for logo colorization)
+    "imagemagick" # Image manipulation
 
     # Misc
     "polkit-kde-agent" # KDE Polkit agent
