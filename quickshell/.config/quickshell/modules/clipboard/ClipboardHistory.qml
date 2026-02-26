@@ -13,7 +13,10 @@ import "../../components/"
 PanelWindow {
     id: root
 
-    visible: ClipboardService.visible
+    // Always visible while the outer Loader (shell.qml) keeps this component alive.
+    // The outer Loader uses a keepAlive timer so exit animations finish before
+    // this PanelWindow is destroyed.
+    visible: true
 
     anchors {
         top: true
@@ -24,12 +27,16 @@ PanelWindow {
 
     WlrLayershell.namespace: "qs_modules"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+    // Release exclusive keyboard grab as soon as the service hides, so the exit
+    // animation doesn't block other windows from receiving input.
+    WlrLayershell.keyboardFocus: ClipboardService.visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
     color: "transparent"
 
     function hide() {
-        contentLoader.item.forceActiveFocus();
+        // Move focus away from the TextField before hiding to avoid the Wayland
+        // text-input warning: "Try to disable surface X with focusing surface Y"
+        clipboardPanel.forceActiveFocus();
         ClipboardService.hide();
     }
 
@@ -39,14 +46,18 @@ PanelWindow {
         onClicked: root.hide()
     }
 
-    // Loader that creates/destroys the content
-    Loader {
-        id: contentLoader
+    // AnimatedPopup drives the entry/exit scale+opacity animation.
+    // The content Rectangle is rebuilt fresh every open because the outer
+    // Loader (shell.qml) destroys and recreates the whole window.
+    AnimatedPopup {
+        id: clipboardAnim
         anchors.centerIn: parent
-        active: ClipboardService.visible
+        width: 520
+        height: clipboardPanel.height
+        shown: ClipboardService.visible
 
-        sourceComponent: Rectangle {
-            id: content
+        Rectangle {
+            id: clipboardPanel
             width: 520
 
             // Dynamic height based on content
@@ -126,7 +137,7 @@ PanelWindow {
                     // Clear All button
                     ClearButton {
                         visible: ClipboardService.entries.length > 0
-                        icon: ""
+                        icon: ""
                         text: "Clear"
 
                         onClicked: ClipboardService.clearAll()
@@ -187,7 +198,7 @@ PanelWindow {
 
                             Keys.onEscapePressed: root.hide()
                             Keys.onReturnPressed: {
-                                contentLoader.item.forceActiveFocus();
+                                clipboardPanel.forceActiveFocus();
                                 ClipboardService.selectCurrent();
                             }
                             Keys.onUpPressed: ClipboardService.navigateUp()
@@ -299,7 +310,7 @@ PanelWindow {
 
                             onClicked: mouse => {
                                 if (delegateItem.isSelected) {
-                                    contentLoader.item.forceActiveFocus();
+                                    clipboardPanel.forceActiveFocus();
                                     ClipboardService.selectItem(delegateItem.index);
                                 } else {
                                     ClipboardService.selectedIndex = delegateItem.index;
@@ -338,7 +349,7 @@ PanelWindow {
                             // Delete button
                             ActionButton {
                                 visible: delegateItem.isHovered || delegateItem.isSelected || hovered
-                                icon: ""
+                                icon: ""
                                 size: 30
                                 textColor: hovered ? Config.errorColor : Config.textColor
                                 iconSize: Config.fontSizeNormal
@@ -409,10 +420,14 @@ PanelWindow {
         }
     }
 
-    // Focus grab
+    // Focus grab — deactivated as soon as the service hides so the exit
+    // animation doesn't keep stealing keyboard focus.
     HyprlandFocusGrab {
         windows: [root]
-        active: root.visible
-        onCleared: root.hide()
+        active: ClipboardService.visible
+        onCleared: {
+            if (ClipboardService.visible)
+                root.hide();
+        }
     }
 }

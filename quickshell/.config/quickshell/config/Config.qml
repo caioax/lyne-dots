@@ -74,6 +74,10 @@ Singleton {
     readonly property int animDuration: getState("animations.normal", 200)
     readonly property int animDurationLong: getState("animations.long", 400)
 
+    // Popup/overlay entry+exit animation presets (used by AnimatedPopup.qml)
+    readonly property real animPopupFromScale: 0.92
+    readonly property int animPopupEasing: Easing.OutExpo
+
     readonly property bool screenshotAnimations: getState("animations.screenshot", true)
 
     // ========================================================================

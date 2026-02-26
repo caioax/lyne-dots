@@ -13,7 +13,10 @@ import qs.config
 PanelWindow {
     id: root
 
-    visible: WallpaperService.pickerVisible
+    // Always visible while the outer Loader (shell.qml) keeps this alive.
+    // The outer Loader has a keepAlive timer so exit animations finish before
+    // this PanelWindow is destroyed.
+    visible: true
 
     anchors {
         top: true
@@ -23,7 +26,9 @@ PanelWindow {
     }
 
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+    // Release exclusive keyboard grab as soon as the service hides, so the
+    // exit animation doesn't block other windows from receiving input.
+    WlrLayershell.keyboardFocus: WallpaperService.pickerVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     WlrLayershell.namespace: "qs_modules"
 
     color: "transparent"
@@ -45,34 +50,25 @@ PanelWindow {
         }
     }
 
-    // Main content
-    Rectangle {
-        id: content
+    // AnimatedPopup drives the entry/exit scale+opacity animation.
+    // OutBack gives a slight bounce on entry; overshoot makes it feel lively.
+    AnimatedPopup {
+        id: pickerAnim
         anchors.centerIn: parent
         width: Math.min(900, root.width - 100)
         height: Math.min(650, root.height - 100)
+        shown: WallpaperService.pickerVisible
+        easingType: Easing.OutBack
+        easingOvershoot: 1.1
+
+    // Main content
+    Rectangle {
+        id: content
+        anchors.fill: parent
         radius: Config.radiusLarge
         color: Config.backgroundTransparentColor
         border.color: Qt.alpha(Config.accentColor, 0.2)
         border.width: 1
-
-        // Entry animation
-        scale: WallpaperService.pickerVisible ? 1 : 0.9
-        opacity: WallpaperService.pickerVisible ? 1 : 0
-
-        Behavior on scale {
-            NumberAnimation {
-                duration: Config.animDuration
-                easing.type: Easing.OutBack
-                easing.overshoot: 1.1
-            }
-        }
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Config.animDuration
-            }
-        }
 
         // just to capture the click and prevent it from closing
         MouseArea {
@@ -987,11 +983,16 @@ PanelWindow {
 
         Component.onCompleted: forceActiveFocus()
     }
+    } // AnimatedPopup
 
-    // Focus grab
+    // Focus grab — deactivated as soon as the service hides so the exit
+    // animation doesn't keep stealing keyboard focus.
     HyprlandFocusGrab {
         windows: [root]
-        active: root.visible
-        onCleared: WallpaperService.hide()
+        active: WallpaperService.pickerVisible
+        onCleared: {
+            if (WallpaperService.pickerVisible)
+                WallpaperService.hide();
+        }
     }
 }

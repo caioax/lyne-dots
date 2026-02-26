@@ -8,11 +8,15 @@ import Quickshell.Wayland
 import Quickshell.Hyprland
 import qs.services
 import qs.config
+import "../../components/"
 
 PanelWindow {
     id: root
 
-    visible: LauncherService.visible
+    // Always visible while the outer Loader (shell.qml) keeps this component alive.
+    // The outer Loader uses a keepAlive timer so exit animations finish before
+    // this PanelWindow is destroyed.
+    visible: true
 
     anchors {
         top: true
@@ -23,12 +27,16 @@ PanelWindow {
 
     WlrLayershell.namespace: "qs_modules"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+    // Release exclusive keyboard grab as soon as the service hides, so the exit
+    // animation doesn't block other windows from receiving input.
+    WlrLayershell.keyboardFocus: LauncherService.visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
     color: "transparent"
 
     function hide() {
-        contentLoader.item.forceActiveFocus();
+        // Move focus away from the TextField before hiding to avoid the Wayland
+        // text-input warning: "Try to disable surface X with focusing surface Y"
+        launcherPanel.forceActiveFocus();
         LauncherService.hide();
     }
 
@@ -38,14 +46,19 @@ PanelWindow {
         onClicked: root.hide()
     }
 
-    // Loader that creates/destroys the content
-    Loader {
-        id: contentLoader
+    // AnimatedPopup drives the entry/exit scale+opacity animation.
+    // The content Rectangle is rebuilt fresh every open because the outer
+    // Loader (shell.qml) destroys and recreates the whole window.
+    AnimatedPopup {
+        id: launcherAnim
         anchors.centerIn: parent
-        active: LauncherService.visible
+        width: 520
+        // Follow the content's animated height so the popup frame matches exactly
+        height: launcherPanel.height
+        shown: LauncherService.visible
 
-        sourceComponent: Rectangle {
-            id: content
+        Rectangle {
+            id: launcherPanel
             width: 520
 
             // Dynamic height based on content
@@ -58,11 +71,7 @@ PanelWindow {
             border.color: Qt.alpha(Config.accentColor, 0.2)
             border.width: 1
 
-            // Scale animation on entry
-            scale: 1
-            opacity: 1
-
-            // Smooth height animation
+            // Smooth height animation as the app list grows/shrinks
             Behavior on height {
                 NumberAnimation {
                     duration: Config.animDuration
@@ -129,7 +138,7 @@ PanelWindow {
                             Keys.onEscapePressed: root.hide()
 
                             Keys.onReturnPressed: {
-                                contentLoader.item.forceActiveFocus();
+                                launcherPanel.forceActiveFocus();
                                 LauncherService.launchSelected();
                             }
 
@@ -381,7 +390,7 @@ PanelWindow {
                             onClicked: {
                                 if (delegateItem.isSelected) {
                                     // Second click: opens the app
-                                    contentLoader.item.forceActiveFocus();
+                                    launcherPanel.forceActiveFocus();
                                     LauncherService.launch(delegateItem.modelData);
                                 } else {
                                     // First click: selects
@@ -456,10 +465,14 @@ PanelWindow {
         }
     }
 
-    // Focus grab
+    // Focus grab — deactivated as soon as the service hides (not tied to window
+    // visibility) so the exit animation doesn't keep stealing keyboard focus.
     HyprlandFocusGrab {
         windows: [root]
-        active: root.visible
-        onCleared: root.hide()
+        active: LauncherService.visible
+        onCleared: {
+            if (LauncherService.visible)
+                root.hide();
+        }
     }
 }

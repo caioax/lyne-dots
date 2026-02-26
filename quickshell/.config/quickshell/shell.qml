@@ -9,6 +9,7 @@ import qs.services
 import "./modules/bar/"
 import "./modules/power/"
 import "./modules/screenshot/"
+import qs.config
 
 ShellRoot {
     id: root
@@ -140,10 +141,28 @@ ShellRoot {
         }
     }
 
-    // Launcher
+    // Launcher — keepAlive lets the exit animation finish before destroying the component
     Loader {
-        active: LauncherService.visible
+        id: launcherLoader
+
+        property bool _shown: LauncherService.visible
+        property bool _keepAlive: false
+
+        active: _shown || _keepAlive
         source: "./modules/launcher/Launcher.qml"
+
+        on_ShownChanged: {
+            if (!_shown) {
+                _keepAlive = true;
+                launcherExitTimer.restart();
+            }
+        }
+
+        Timer {
+            id: launcherExitTimer
+            interval: Config.animDurationLong
+            onTriggered: launcherLoader._keepAlive = false
+        }
     }
 
     // OSD
@@ -152,16 +171,52 @@ ShellRoot {
         source: "./modules/osd/OsdOverlay.qml"
     }
 
-    // Wallpaper Picker
+    // Wallpaper Picker — keepAlive lets the exit animation finish before destroying the component
     Loader {
-        active: WallpaperService.pickerVisible
+        id: wallpaperLoader
+
+        property bool _shown: WallpaperService.pickerVisible
+        property bool _keepAlive: false
+
+        active: _shown || _keepAlive
         source: "./modules/wallpaper/WallpaperPicker.qml"
+
+        on_ShownChanged: {
+            if (!_shown) {
+                _keepAlive = true;
+                wallpaperExitTimer.restart();
+            }
+        }
+
+        Timer {
+            id: wallpaperExitTimer
+            interval: Config.animDurationLong
+            onTriggered: wallpaperLoader._keepAlive = false
+        }
     }
 
-    // Clipboard History
+    // Clipboard History — keepAlive lets the exit animation finish before destroying the component
     Loader {
-        active: ClipboardService.visible
+        id: clipboardLoader
+
+        property bool _shown: ClipboardService.visible
+        property bool _keepAlive: false
+
+        active: _shown || _keepAlive
         source: "./modules/clipboard/ClipboardHistory.qml"
+
+        on_ShownChanged: {
+            if (!_shown) {
+                _keepAlive = true;
+                clipboardExitTimer.restart();
+            }
+        }
+
+        Timer {
+            id: clipboardExitTimer
+            interval: Config.animDurationLong
+            onTriggered: clipboardLoader._keepAlive = false
+        }
     }
 
     // Keybinds Overlay
