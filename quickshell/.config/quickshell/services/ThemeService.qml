@@ -274,7 +274,7 @@ Singleton {
 
         const path = wallpaperDir + "/" + wallpaperFile;
 
-        wallpaperProc.command = ["bash", "-c", "[ -f '" + path + "' ] && swww img '" + path + "'" + " --transition-type grow --transition-duration 1 --transition-fps 60 --transition-step 90" + " || echo '[ThemeService] Wallpaper not found: " + wallpaperFile + "' >&2"];
+        wallpaperProc.command = ["bash", "-c", "[ -f '" + path + "' ] && awww img '" + path + "'" + " --transition-type grow --transition-duration 1 --transition-fps 60 --transition-step 90" + " || echo '[ThemeService] Wallpaper not found: " + wallpaperFile + "' >&2"];
         wallpaperProc.running = true;
     }
 

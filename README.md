@@ -54,20 +54,20 @@ Switching themes from the Quick Settings panel or CLI applies colors instantly t
 | Neovim                                    | Colorscheme (sent to all running instances) |
 | Hyprland                                  | Active/inactive border colors, shadow       |
 | GTK / Qt                                  | Application theme colors                    |
-| Wallpaper                                 | Theme-linked wallpaper applied via swww     |
+| Wallpaper                                 | Theme-linked wallpaper applied via awww     |
 
 No restarts required.
 
 **Available presets:**
 
-| Dark              | Light             |
-| ----------------- | ----------------- |
-| Tokyo Night       | Tokyo Night Day   |
-| Catppuccin Mocha  | Catppuccin Latte  |
-| Dracula           | —                 |
-| Gruvbox Dark      | Gruvbox Light     |
-| Nord              | Nord Light        |
-| Rose Pine         | Rose Pine Dawn    |
+| Dark             | Light            |
+| ---------------- | ---------------- |
+| Tokyo Night      | Tokyo Night Day  |
+| Catppuccin Mocha | Catppuccin Latte |
+| Dracula          | —                |
+| Gruvbox Dark     | Gruvbox Light    |
+| Nord             | Nord Light       |
+| Rose Pine        | Rose Pine Dawn   |
 
 **Material You mode** generates a color palette from your current wallpaper using [matugen](https://github.com/InioX/matugen), supporting both dark and light schemes. Enable it from Quick Settings or with `lyne theme auto`.
 
@@ -275,7 +275,7 @@ Each top-level directory is a [GNU Stow](https://www.gnu.org/software/stow/) pac
 | Shell           | Zsh + Oh-My-Zsh |
 | Multiplexer     | Tmux            |
 | Editor          | Neovim          |
-| Wallpaper       | swww            |
+| Wallpaper       | awww            |
 | Auto Theming    | matugen         |
 | File Manager    | Dolphin         |
 | Browser         | Zen Browser     |

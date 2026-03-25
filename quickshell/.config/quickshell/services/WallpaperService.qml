@@ -93,7 +93,7 @@ Singleton {
         return list;
     }
 
-    // Available transitions in swww
+    // Available transitions in awww
     readonly property var transitions: ["wipe", "wave", "grow", "center", "outer", "any"]
 
     // ========================================================================
@@ -276,7 +276,7 @@ Singleton {
         const transition = transitions[Math.floor(Math.random() * transitions.length)];
         const duration = (Math.random() * 1.5 + 0.5).toFixed(1);
 
-        setWallpaperProc.command = ["swww", "img", path, "--transition-type", transition, "--transition-duration", duration, "--transition-fps", "60", "--transition-step", "90"];
+        setWallpaperProc.command = ["awww", "img", path, "--transition-type", transition, "--transition-duration", duration, "--transition-fps", "60", "--transition-step", "90"];
         setWallpaperProc.running = true;
 
         currentWallpaper = path;
@@ -427,7 +427,7 @@ Singleton {
 
     Process {
         id: getCurrentProc
-        command: ["swww", "query"]
+        command: ["awww", "query"]
         stdout: SplitParser {
             onRead: data => {
                 const match = data.match(/image:\s*(.+)/);

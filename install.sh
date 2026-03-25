@@ -319,9 +319,9 @@ setup_wallpaper() {
         WALLPAPER="$HOME/.local/wallpapers/water.png"
     fi
 
-    # Check if swww is installed
-    if ! command -v swww &>/dev/null; then
-        log_warn "swww is not installed. Skipping wallpaper configuration."
+    # Check if awww is installed
+    if ! command -v awww &>/dev/null; then
+        log_warn "awww is not installed. Skipping wallpaper configuration."
         return 0
     fi
 
@@ -338,21 +338,21 @@ setup_wallpaper() {
         return 0
     fi
 
-    log_step "Starting swww daemon..."
+    log_step "Starting awww daemon..."
     # Start daemon if not running
-    if ! pgrep -f "swww-daemon" &>/dev/null; then
-        swww-daemon >/dev/null 2>&1 &
+    if ! pgrep -f "awww-daemon" &>/dev/null; then
+        awww-daemon >/dev/null 2>&1 &
     fi
     sleep 3
 
     # Check if daemon started
-    if ! pgrep -f "swww-daemon" &>/dev/null; then
-        log_warn "Could not start swww daemon."
+    if ! pgrep -f "awww-daemon" &>/dev/null; then
+        log_warn "Could not start awww daemon."
         return 0
     fi
 
     log_step "Applying wallpaper"
-    if swww img "$WALLPAPER" --transition-type grow --transition-duration 2 2>/dev/null; then
+    if awww img "$WALLPAPER" --transition-type grow --transition-duration 2 2>/dev/null; then
         log_info "Wallpaper configured successfully!"
     else
         log_warn "Failed to apply wallpaper."
@@ -375,7 +375,7 @@ setup_migrations() {
         local name
         name="$(basename "$migration")"
         if ! grep -qxF "$name" "$DONE_FILE" 2>/dev/null; then
-            echo "$name" >> "$DONE_FILE"
+            echo "$name" >>"$DONE_FILE"
             ((count++)) || true
         fi
     done
@@ -399,7 +399,7 @@ setup_state_aur_helper() {
     log_step "Setting AUR helper in state.json..."
     local TEMP_FILE
     TEMP_FILE=$(mktemp)
-    jq --arg helper "$AUR_HELPER" '.system.aurHelper = $helper' "$STATE_FILE" > "$TEMP_FILE" && mv "$TEMP_FILE" "$STATE_FILE"
+    jq --arg helper "$AUR_HELPER" '.system.aurHelper = $helper' "$STATE_FILE" >"$TEMP_FILE" && mv "$TEMP_FILE" "$STATE_FILE"
     log_info "AUR helper set to: $AUR_HELPER"
 }
 

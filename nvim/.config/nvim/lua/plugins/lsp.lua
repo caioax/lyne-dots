@@ -19,7 +19,7 @@ return {
 				-- Error underline: ENABLED
 				underline = true,
 
-				-- Gutter icons: ENABLED (New syntax without deprecation warning)
+				-- Gutter icons: ENABLED
 				signs = {
 					text = {
 						[vim.diagnostic.severity.ERROR] = "",
@@ -96,11 +96,23 @@ return {
 					"isort",
 					"shfmt",
 					"eslint_d",
+					"clangd",
+					"omnisharp",
 				},
 			})
 
 			require("mason-lspconfig").setup({
-				ensure_installed = { "lua_ls", "ts_ls", "html", "cssls", "bashls", "pyright", "tailwindcss" },
+				ensure_installed = {
+					"lua_ls",
+					"ts_ls",
+					"html",
+					"cssls",
+					"bashls",
+					"pyright",
+					"tailwindcss",
+					"clangd",
+					"omnisharp",
+				},
 				automatic_installation = true,
 				handlers = {
 					function(server_name)

@@ -55,6 +55,7 @@ function zvm_after_init() {
 }
 
 # === ALIASES ===
+alias ws='cd ~/facu-workspace/'
 all-update() {
     local STATE_FILE="$HOME/.config/quickshell/state.json"
     local AUR_HELPER="yay"
