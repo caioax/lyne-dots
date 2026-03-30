@@ -23,6 +23,15 @@ Singleton {
         void root._refreshToken;
         let apps = DesktopEntries.applications.values;
 
+        const seen = new Set();
+        apps = apps.filter(app => {
+            const key = app.id || app.execString || app.name;
+            if (seen.has(key))
+                return false;
+            seen.add(key);
+            return true;
+        });
+
         // Sort alphabetically
         apps = apps.slice().sort((a, b) => {
             const nameA = (a.name || "").toLowerCase();

@@ -56,6 +56,7 @@ function zvm_after_init() {
 
 # === ALIASES ===
 alias ws='cd ~/facu-workspace/'
+alias tk='tmux kill-server'
 all-update() {
     local STATE_FILE="$HOME/.config/quickshell/state.json"
     local AUR_HELPER="yay"
@@ -79,3 +80,5 @@ all-update() {
 
     echo -e "\e[1;32m:: All updates complete!\e[0m"
 }
+
+export PATH=$PATH:/home/caio/.spicetify
