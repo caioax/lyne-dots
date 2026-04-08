@@ -4,7 +4,7 @@
 SPECIAL="whatsapp"
 
 # Save the current workspace
-CURRENT_WS=$(hyprctl activewindow -j | jq -r '.workspace.id')
+# CURRENT_WS=$(hyprctl activewindow -j | jq -r '.workspace.id')
 
 # Open the special workspace (triggers on-created-empty, which opens the app)
 hyprctl dispatch togglespecialworkspace $SPECIAL
