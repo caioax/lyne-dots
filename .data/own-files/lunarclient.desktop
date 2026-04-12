@@ -1,0 +1,22 @@
+[Desktop Entry]
+Name=Lunar Client
+Exec=mangohud env DESKTOPINTEGRATION=false ELECTRON_OZONE_PLATFORM_HINT=x11 /usr/bin/lunarclient --no-sandbox %U
+Terminal=false
+Type=Application
+Icon=/home/caio/.icons/lunar/lunar_client.png
+StartupWMClass=Lunar Client
+X-AppImage-Version=3.5.11-ow
+Comment=Electron launcher for Lunar Client
+Categories=Game;
+Name[en]=Lunar Client
+Name[en_US]=Lunar Client
+Name[en_US.UTF-8]=Lunar Client
+Comment[en]=Electron launcher for Lunar Client
+Comment[en_US]=Electron launcher for Lunar Client
+Comment[en_US.UTF-8]=Electron launcher for Lunar Client
+PrefersNonDefaultGPU=false
+Hidden=false
+NoDisplay=false
+StartupNotify=false
+MimeType=x-scheme-handler/discord-562286213059444737;application/x-lcpack;x-scheme-handler/lunarclient;
+
