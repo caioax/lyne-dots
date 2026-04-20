@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+set -e
+
+# directory where compiled binaries are stored
+# change to e.g. "$HOME/.cache/cpprun" to persist across reboots
+CPPRUN_BIN_DIR="${CPPRUN_BIN_DIR:-/tmp}"
+
+# colors (stderr only, won't pollute redirected output)
+DIM='\033[2m'
+RED='\033[0;31m'
+RESET='\033[0m'
+
+info()  { echo -e "${DIM}$*${RESET}" >&2; }
+err()   { echo -e "${RED}error: $*${RESET}" >&2; }
+timer() { echo -e "${DIM}--- $* ---${RESET}" >&2; }
+
+usage() {
+    cat <<'EOF'
+usage: cpprun <file.cpp> [options] [-- program args...]
+
+options:
+  -i <files>  use files as stdin — accepts one or more (e.g. -i 1 2 3)
+  -O          compile with -O2 optimization
+  -t          show compilation time as well
+  -h          show this help
+
+examples:
+  cpprun sol.cpp
+  cpprun sol.cpp -i entrada.txt
+  cpprun sol.cpp -i caso1.txt caso2.txt caso3.txt
+  cpprun sol.cpp -i 1 2 3
+  cpprun sol.cpp -O -i caso1.txt
+  cpprun sol.cpp -- arg1 arg2
+  cpprun sol.cpp -i entrada.txt -- arg1 arg2
+EOF
+}
+
+if [[ $# -lt 1 || "$1" == "-h" || "$1" == "--help" ]]; then
+    usage
+    exit 0
+fi
+
+src="$1"
+shift
+
+if [[ ! -f "$src" ]]; then
+    err "file '$src' not found"
+    exit 1
+fi
+
+input_files=()
+optimize=""
+show_compile_time=0
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -i)
+            shift
+            while [[ $# -gt 0 && "$1" != "--" && "$1" != -* ]]; do
+                input_files+=("$1")
+                shift
+            done
+            ;;
+        -O) optimize="-O2"; shift ;;
+        -t) show_compile_time=1; shift ;;
+        --) shift; break ;;
+        -*) err "unknown option '$1'"; echo; usage; exit 1 ;;
+        *)  break ;;
+    esac
+done
+
+# auto-detect *.in files if none specified
+if [[ ${#input_files[@]} -eq 0 ]]; then
+    auto="${src%.cpp}.in"
+    if [[ -f "$auto" ]]; then
+        input_files+=("$auto")
+        info "(auto-detected $auto)"
+    fi
+fi
+
+for f in "${input_files[@]}"; do
+    if [[ ! -f "$f" ]]; then
+        err "input file '$f' not found"
+        exit 1
+    fi
+done
+
+bin="$CPPRUN_BIN_DIR/$(basename "${src%.cpp}")"
+
+# compile (skip if binary is newer than source)
+if [[ "$src" -nt "$bin" ]]; then
+    compile_start=$(date +%s%N)
+    g++ -std=c++17 -Wall $optimize -o "$bin" "$src"
+    compile_ms=$(( ($(date +%s%N) - compile_start) / 1000000 ))
+    if [[ $show_compile_time -eq 1 ]]; then
+        info "(compiled in ${compile_ms}ms)"
+    fi
+else
+    info "(using cached binary)"
+fi
+
+# run
+run_case() {
+    local input="$1"
+    local run_start exit_code run_ms
+
+    run_start=$(date +%s%N)
+    if [[ -n "$input" ]]; then
+        "$bin" "${@:2}" < "$input"
+    else
+        "$bin" "${@:2}"
+    fi
+    exit_code=$?
+    run_ms=$(( ($(date +%s%N) - run_start) / 1000000 ))
+    timer "${run_ms}ms"
+    return $exit_code
+}
+
+last_exit=0
+
+if [[ ${#input_files[@]} -eq 0 ]]; then
+    run_case "" "$@"
+    last_exit=$?
+elif [[ ${#input_files[@]} -eq 1 ]]; then
+    run_case "${input_files[0]}" "$@"
+    last_exit=$?
+else
+    total=${#input_files[@]}
+    for i in "${!input_files[@]}"; do
+        f="${input_files[$i]}"
+        info "┌─ $f"
+        run_case "$f" "$@"
+        last_exit=$?
+        [[ $(( i + 1 )) -lt $total ]] && info "│"
+    done
+fi
+
+exit $last_exit
