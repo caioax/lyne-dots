@@ -174,7 +174,7 @@ Singleton {
     function runMatugen(wallpaperPath: string) {
         console.log("[Theme] Running matugen on:", wallpaperPath);
         matugenProc._buffer = "";
-        matugenProc.command = ["matugen", "image", wallpaperPath, "-m", colorScheme, "-c", matugenConfigPath];
+        matugenProc.command = ["matugen", "image", wallpaperPath, "-m", colorScheme, "-c", matugenConfigPath, "--prefer", "saturation"];
         matugenProc.running = true;
     }
 
