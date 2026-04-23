@@ -6,6 +6,8 @@ return {
 		local parsers = {
 			-- Included by default, you can add your own you want ensure to be installed.
 			"c",
+			"cpp",
+			"c_sharp",
 			"lua",
 			"markdown",
 			"markdown_inline",
@@ -14,6 +16,21 @@ return {
 			"bash",
 			"vim",
 			"vimdoc",
+			"javascript",
+			"typescript",
+			"tsx",
+			"html",
+			"css",
+			"json",
+			"yaml",
+			"toml",
+			"go",
+			"rust",
+			"java",
+			"kotlin",
+			"php",
+			"ruby",
+			"sql",
 		}
 
 		-- Install above parsers if they are missing.

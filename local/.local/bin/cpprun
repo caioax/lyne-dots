@@ -14,6 +14,21 @@ info()  { echo -e "${DIM}$*${RESET}" >&2; }
 err()   { echo -e "${RED}error: $*${RESET}" >&2; }
 timer() { echo -e "${DIM}--- $* ---${RESET}" >&2; }
 
+format_num() {
+    local n=$1 out=""
+    while (( n >= 1000 )); do
+        out=",$(printf '%03d' $(( n % 1000 )))${out}"
+        n=$(( n / 1000 ))
+    done
+    echo "${n}${out}"
+}
+
+# detect GNU time for RAM measurement (%M = max RSS in KB)
+_TIME_CMD=""
+if /usr/bin/time -f "%M" -o /dev/null true 2>/dev/null; then
+    _TIME_CMD="/usr/bin/time"
+fi
+
 usage() {
     cat <<'EOF'
 usage: cpprun <file.cpp> [options] [-- program args...]
@@ -22,6 +37,7 @@ options:
   -i <files>  use files as stdin — accepts one or more (e.g. -i 1 2 3)
   -O          compile with -O2 optimization
   -t          show compilation time as well
+  -f          force recompilation even if binary is up to date
   -h          show this help
 
 examples:
@@ -51,6 +67,7 @@ fi
 input_files=()
 optimize=""
 show_compile_time=0
+force_compile=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -63,6 +80,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         -O) optimize="-O2"; shift ;;
         -t) show_compile_time=1; shift ;;
+        -f) force_compile=1; shift ;;
         --) shift; break ;;
         -*) err "unknown option '$1'"; echo; usage; exit 1 ;;
         *)  break ;;
@@ -88,12 +106,12 @@ done
 bin="$CPPRUN_BIN_DIR/$(basename "${src%.cpp}")"
 
 # compile (skip if binary is newer than source)
-if [[ "$src" -nt "$bin" ]]; then
+if [[ "$src" -nt "$bin" || $force_compile -eq 1 ]]; then
     compile_start=$(date +%s%N)
     g++ -std=c++17 -Wall $optimize -o "$bin" "$src"
     compile_ms=$(( ($(date +%s%N) - compile_start) / 1000000 ))
     if [[ $show_compile_time -eq 1 ]]; then
-        info "(compiled in ${compile_ms}ms)"
+        info "(compiled in $(format_num "$compile_ms")ms)"
     fi
 else
     info "(using cached binary)"
@@ -102,17 +120,39 @@ fi
 # run
 run_case() {
     local input="$1"
-    local run_start exit_code run_ms
+    local run_start exit_code run_ms mem_kb mem_str _tfile
 
-    run_start=$(date +%s%N)
-    if [[ -n "$input" ]]; then
-        "$bin" "${@:2}" < "$input"
+    if [[ -n "$_TIME_CMD" ]]; then
+        _tfile=$(mktemp)
+        run_start=$(date +%s%N)
+        if [[ -n "$input" ]]; then
+            $_TIME_CMD -f "%M" -o "$_tfile" "$bin" "${@:2}" < "$input"
+        else
+            $_TIME_CMD -f "%M" -o "$_tfile" "$bin" "${@:2}"
+        fi
+        exit_code=$?
+        run_ms=$(( ($(date +%s%N) - run_start) / 1000000 ))
+        mem_kb=$(cat "$_tfile" 2>/dev/null)
+        rm -f "$_tfile"
+        [[ "$mem_kb" =~ ^[0-9]+$ ]] && mem_str="$(format_num "$mem_kb")KB"
     else
-        "$bin" "${@:2}"
+        run_start=$(date +%s%N)
+        if [[ -n "$input" ]]; then
+            "$bin" "${@:2}" < "$input"
+        else
+            "$bin" "${@:2}"
+        fi
+        exit_code=$?
+        run_ms=$(( ($(date +%s%N) - run_start) / 1000000 ))
     fi
-    exit_code=$?
-    run_ms=$(( ($(date +%s%N) - run_start) / 1000000 ))
-    timer "${run_ms}ms"
+
+    local time_str
+    time_str="$(format_num "$run_ms")ms"
+    if [[ -n "$mem_str" ]]; then
+        timer "${time_str} | ${mem_str}"
+    else
+        timer "${time_str}"
+    fi
     return $exit_code
 }
 

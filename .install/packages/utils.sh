@@ -39,6 +39,9 @@ UTILS_PACKAGES=(
     # Brightness
     "brightnessctl" # Brightness control
 
+    # Time
+    "time" # Just package to cpprun works well
+
     # Screenshot
     "grim"  # Screenshot utility
     "slurp" # Region selection
