@@ -73,8 +73,11 @@ Item {
                 statusText: {
                     if (connecting)
                         return "Connecting...";
-                    if (active)
+                    if (active) {
+                        if (NetworkService.hasCaptivePortal)
+                            return "Login required";
                         return "Connected";
+                    }
                     if (modelData.saved)
                         return "Saved";
                     if (modelData.secure)
@@ -87,6 +90,15 @@ Item {
                 menuModel: {
                     var list = [];
                     if (active) {
+                        if (NetworkService.hasCaptivePortal) {
+                            list.push({
+                                text: "Open login page",
+                                action: "portal",
+                                icon: "",
+                                textColor: Config.accentColor,
+                                iconColor: Config.accentColor
+                            });
+                        }
                         list.push({
                             text: "Disconnect",
                             action: "disconnect",
@@ -116,7 +128,9 @@ Item {
                 }
 
                 onMenuAction: actionId => {
-                    if (actionId === "disconnect") {
+                    if (actionId === "portal") {
+                        NetworkService.openPortalBrowser();
+                    } else if (actionId === "disconnect") {
                         NetworkService.disconnect();
                     } else if (actionId === "connect") {
                         wifiToggleConnect();

@@ -13,13 +13,33 @@ Singleton {
     property bool wifiEnabled: true
     property string wifiInterface: ""
     property string connectingSsid: ""
+    property string connectivity: "unknown" // none | portal | limited | full | unknown
+    property bool _portalNotified: false
     readonly property bool scanning: rescanProc.running
+    readonly property bool hasCaptivePortal: {
+        const activeNetwork = accessPoints.find(ap => ap.active === true);
+        // Only "portal" is the real captive portal state.
+        // "limited" fires on many normal networks where the NM check URL is blocked.
+        return !!activeNetwork && connectivity === "portal";
+    }
+
+    onConnectivityChanged: {
+        if (connectivity === "portal" && !_portalNotified) {
+            _portalNotified = true;
+            openPortalProc.running = true;
+        } else if (connectivity !== "portal") {
+            _portalNotified = false;
+        }
+    }
     readonly property string systemIcon: {
         if (!wifiEnabled)
             return "󰤮";
         const activeNetwork = accessPoints.find(ap => ap.active === true);
-        if (activeNetwork)
+        if (activeNetwork) {
+            if (hasCaptivePortal)
+                return "󰤬";
             return getWifiIcon(activeNetwork.signal);
+        }
         return "󰤫";
     }
 
@@ -41,15 +61,17 @@ Singleton {
     readonly property string statusText: {
         if (!wifiEnabled)
             return "Off";
-
         const activeNetwork = accessPoints.find(ap => ap.active === true);
-
-        // If there is an active network, return the SSID
-        if (activeNetwork)
+        if (activeNetwork) {
+            if (hasCaptivePortal)
+                return (activeNetwork.ssid || "Hidden Network") + " · Portal";
             return activeNetwork.ssid || "Hidden Network";
-
-        // If enabled but not connected
+        }
         return "On";
+    }
+
+    function openPortalBrowser() {
+        openPortalProc.running = true;
     }
 
     function toggleWifi() {
@@ -111,22 +133,19 @@ Singleton {
         }
 
         onExited: code => {
-            // If exit code is 0, success. Otherwise, there was an error (wrong password, timeout, etc).
             if (code !== 0) {
-                console.error("Failed to connect. Exit code: " + code);
-
-                // IF FAILED: Delete the created profile so it doesn't remain incorrectly marked as "Saved"
-                if (root.connectingSsid !== "") {
-                    root.cleanUpBadConnection(root.connectingSsid);
-                }
+                console.error("Connect command exited with code: " + code);
+                // A non-zero exit can mean captive portal: WiFi associated but no internet.
+                // Check real connectivity before deciding to delete the profile.
+                portalCheckProc._failedSsid = root.connectingSsid;
+                portalCheckProc.running = true;
             } else {
                 console.log("Connected successfully!");
+                root.connectingSsid = "";
+                getSavedProc.running = true;
+                getNetworksProc.running = true;
+                connectivityProc.running = true;
             }
-
-            // Reset state and update lists
-            root.connectingSsid = "";
-            getSavedProc.running = true;
-            getNetworksProc.running = true;
         }
     }
 
@@ -198,6 +217,53 @@ Singleton {
         running: root.wifiEnabled
         repeat: true
         onTriggered: {
+            getSavedProc.running = true;
+            getNetworksProc.running = true;
+            connectivityProc.running = true;
+        }
+    }
+
+    // Connectivity check (detects captive portals)
+    Process {
+        id: connectivityProc
+        command: ["nmcli", "-g", "CONNECTIVITY", "general"]
+        running: true
+        stdout: SplitParser {
+            onRead: data => root.connectivity = data.trim().toLowerCase()
+        }
+    }
+
+    // Opens the default browser to the portal login page
+    Process {
+        id: openPortalProc
+        command: ["xdg-open", "http://detectportal.firefox.com/"]
+        stderr: SplitParser {
+            onRead: data => console.error("[Wifi:Portal] " + data)
+        }
+    }
+
+    // Checks connectivity after a failed connect to distinguish captive portal from real failure
+    Process {
+        id: portalCheckProc
+        property string _failedSsid: ""
+        command: ["nmcli", "-g", "CONNECTIVITY", "general"]
+
+        stdout: SplitParser {
+            onRead: data => {
+                const conn = data.trim().toLowerCase();
+                root.connectivity = conn;
+                if (conn === "none" || conn === "unknown") {
+                    if (portalCheckProc._failedSsid !== "")
+                        root.cleanUpBadConnection(portalCheckProc._failedSsid);
+                } else {
+                    console.log("[Wifi] Captive portal detected (" + conn + "), keeping profile");
+                }
+            }
+        }
+
+        onExited: {
+            portalCheckProc._failedSsid = "";
+            root.connectingSsid = "";
             getSavedProc.running = true;
             getNetworksProc.running = true;
         }
