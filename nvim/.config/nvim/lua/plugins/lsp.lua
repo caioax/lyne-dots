@@ -98,6 +98,8 @@ return {
 					"eslint_d",
 					"clangd",
 					"omnisharp",
+					"intelephense",
+					"php-cs-fixer",
 				},
 			})
 
@@ -109,9 +111,12 @@ return {
 					"cssls",
 					"bashls",
 					"pyright",
+					"jsonls",
+					"yamlls",
 					"tailwindcss",
 					"clangd",
 					"omnisharp",
+					"intelephense",
 				},
 				automatic_installation = true,
 				handlers = {
