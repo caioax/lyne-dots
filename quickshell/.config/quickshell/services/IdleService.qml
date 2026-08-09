@@ -99,12 +99,12 @@ Singleton {
 
     Process {
         id: dpmsOffProc
-        command: ["hyprctl", "dispatch", "dpms", "off"]
+        command: ["hyprctl", "dispatch", "hl.dsp.dpms({ action = \"off\" })"]
     }
 
     Process {
         id: dpmsOnProc
-        command: ["hyprctl", "dispatch", "dpms", "on"]
+        command: ["hyprctl", "dispatch", "hl.dsp.dpms({ action = \"on\" })"]
     }
 
     // ========================================================================

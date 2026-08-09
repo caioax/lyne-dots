@@ -236,7 +236,7 @@ Item {
         TapHandler {
             onTapped: {
                 if (root.specialWorkspaceName)
-                    Hyprland.dispatch("togglespecialworkspace " + root.specialWorkspaceName);
+                    Hyprland.dispatch("hl.dsp.workspace.toggle_special(\"" + root.specialWorkspaceName + "\")");
             }
         }
         HoverHandler {
@@ -315,7 +315,7 @@ Item {
                     TapHandler {
                         onTapped: {
                             if (!workspaceItem.isActive)
-                                Hyprland.dispatch("workspace " + workspaceItem.workspaceId);
+                                Hyprland.dispatch("hl.dsp.focus({ workspace = " + workspaceItem.workspaceId + " })");
                         }
                     }
 

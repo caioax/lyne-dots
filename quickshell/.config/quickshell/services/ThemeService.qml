@@ -232,11 +232,11 @@ Singleton {
 
         const cmds = [];
         if (hyprColors.activeBorder)
-            cmds.push("hyprctl keyword general:col.active_border 'rgba(" + hyprColors.activeBorder + ")'");
+            cmds.push("hyprctl eval 'hl.config({ general = { col = { active_border = \"rgba(" + hyprColors.activeBorder + ")\" } } })'");
         if (hyprColors.inactiveBorder)
-            cmds.push("hyprctl keyword general:col.inactive_border 'rgba(" + hyprColors.inactiveBorder + ")'");
+            cmds.push("hyprctl eval 'hl.config({ general = { col = { inactive_border = \"rgba(" + hyprColors.inactiveBorder + ")\" } } })'");
         if (hyprColors.shadowColor)
-            cmds.push("hyprctl keyword decoration:shadow:color 'rgba(" + hyprColors.shadowColor + ")'");
+            cmds.push("hyprctl eval 'hl.config({ decoration = { shadow = { color = \"rgba(" + hyprColors.shadowColor + ")\" } } })'");
 
         if (cmds.length > 0) {
             hyprProc.command = ["bash", "-c", cmds.join(" && ")];
