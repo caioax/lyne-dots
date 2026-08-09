@@ -288,11 +288,11 @@ Each top-level directory is a [GNU Stow](https://www.gnu.org/software/stow/) pac
 
 Machine-specific configs are kept in `~/.config/hypr/local/` and are not tracked by git. The install script generates these from templates in `.data/hyprland/templates/` on first run:
 
-- `monitors.conf` - Monitor layout
-- `workspaces.conf` - Workspace mapping
-- `extra_environment.conf` - Local environment variables
-- `autostart.conf` - Local autostart programs
-- `extra_keybinds.conf` - Local keybinds
+- `monitors.lua` - Monitor layout
+- `workspaces.lua` - Workspace mapping
+- `extra_environment.lua` - Local environment variables
+- `autostart.lua` - Local autostart programs
+- `extra_keybinds.lua` - Local keybinds
 
 ### Wallpapers
 

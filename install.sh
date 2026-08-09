@@ -504,7 +504,7 @@ show_summary() {
     if [[ " ${CATEGORIES[*]} " =~ " nvidia " ]]; then
         echo ""
         echo -e "${YELLOW}NVIDIA:${NC}"
-        echo "  - Review ~/.config/hypr/local/extra_environment.conf"
+        echo "  - Review ~/.config/hypr/local/extra_environment.lua"
         echo "  - For hybrid GPUs, uncomment the AQ_DRM_DEVICES line"
     fi
 

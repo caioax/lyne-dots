@@ -1,0 +1,12 @@
+-- =============================================================================
+-- Extra Environment Variables - Local
+-- =============================================================================
+-- Machine-specific local environment variables.
+-- This file is required by hyprland.lua
+-- =============================================================================
+
+-- Add machine-specific environment variables here
+-- Example for NVIDIA:
+-- hl.env("LIBVA_DRIVER_NAME", "nvidia")
+-- hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+-- hl.env("NVD_BACKEND", "direct")

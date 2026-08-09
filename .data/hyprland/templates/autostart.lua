@@ -1,0 +1,12 @@
+-- =============================================================================
+-- Local Autostart - Template
+-- =============================================================================
+-- Programs to auto-start specific to this machine.
+-- This file is required by hyprland.lua
+-- =============================================================================
+
+-- Add autostart commands for local programs here
+-- Example:
+-- hl.on("hyprland.start", function()
+--     hl.exec_cmd("discord")
+-- end)
