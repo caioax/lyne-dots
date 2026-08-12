@@ -7,10 +7,10 @@ SPECIAL="whatsapp"
 # CURRENT_WS=$(hyprctl activewindow -j | jq -r '.workspace.id')
 
 # Open the special workspace (triggers on-created-empty, which opens the app)
-hyprctl dispatch togglespecialworkspace $SPECIAL
+hyprctl dispatch "hl.dsp.workspace.toggle_special(\"$SPECIAL\")"
 
 # Small delay to ensure the app has started launching
 sleep 0.5
 
 # Return to the original workspace
-hyprctl dispatch togglespecialworkspace $SPECIAL
+hyprctl dispatch "hl.dsp.workspace.toggle_special(\"$SPECIAL\")"
