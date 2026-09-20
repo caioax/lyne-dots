@@ -18,6 +18,7 @@ EDITOR_PACKAGES=(
     "ripgrep"    # Fast grep (for Telescope)
     "fd"         # Fast find (for Telescope)
     "ffmpeg"     # Multimedia framework
+    "tree-sitter-cli" # Tree-sitter CLI (required by nvim-treesitter to build parsers)
 
     # Node.js (for LSPs)
     "nodejs" # JavaScript runtime
