@@ -54,6 +54,21 @@ Singleton {
     // Night light icon
     readonly property string nightLightIcon: nightLightEnabled ? "󰌵" : "󰌶"
 
+    // Temperature range the UI offers (Kelvin)
+    readonly property int nightLightMin: 2500
+    readonly property int nightLightMax: 5500
+
+    // Approximate RGB of a black body at `kelvin` (Tanner Helland), used to
+    // preview night light temperatures
+    function temperatureColor(kelvin: real): color {
+        const t = kelvin / 100;
+        const clamp = v => Math.max(0, Math.min(255, v)) / 255;
+        const r = t <= 66 ? 255 : 329.698727446 * Math.pow(t - 60, -0.1332047592);
+        const g = t <= 66 ? 99.4708025861 * Math.log(t) - 161.1195681661 : 288.1221695283 * Math.pow(t - 60, -0.0755148492);
+        const b = t >= 66 ? 255 : t <= 19 ? 0 : 138.5177312231 * Math.log(t - 10) - 305.0447927307;
+        return Qt.rgba(clamp(r), clamp(g), clamp(b), 1);
+    }
+
     // ========================================================================
     // INITIALIZATION
     // ========================================================================
@@ -99,12 +114,12 @@ Singleton {
     // Converts intensity (0-1) to Kelvin temperature
     function updateTemperatureFromIntensity() {
         // 0.0 = 2500K (very warm), 1.0 = 5500K (less warm)
-        nightLightTemperature = Math.round(2500 + (nightLightIntensity * 3000));
+        nightLightTemperature = Math.round(nightLightMin + nightLightIntensity * (nightLightMax - nightLightMin));
     }
 
     // Converts Kelvin temperature to intensity (0-1)
     function updateIntensityFromTemperature() {
-        nightLightIntensity = (nightLightTemperature - 2500) / 3000;
+        nightLightIntensity = (nightLightTemperature - nightLightMin) / (nightLightMax - nightLightMin);
     }
 
     // ========================================================================
@@ -230,7 +245,7 @@ Singleton {
     }
 
     function setNightLightTemperature(temp: int) {
-        nightLightTemperature = Math.max(2500, Math.min(5500, temp));
+        nightLightTemperature = Math.max(nightLightMin, Math.min(nightLightMax, temp));
         updateIntensityFromTemperature();
         setState("nightLight.intensity", nightLightIntensity);
 

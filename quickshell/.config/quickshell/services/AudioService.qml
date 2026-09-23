@@ -16,6 +16,24 @@ Singleton {
         objects: [root.sink, root.source]
     }
 
+    // Hardware devices (streams from apps are left out)
+    readonly property var sinks: Pipewire.nodes.values.filter(n => n.audio && n.isSink && !n.isStream)
+    readonly property var sources: Pipewire.nodes.values.filter(n => n.audio && !n.isSink && !n.isStream)
+
+    function deviceName(node): string {
+        return node?.description || node?.nickname || node?.name || "Unknown";
+    }
+
+    function setDefaultSink(node) {
+        Pipewire.preferredDefaultAudioSink = node;
+    }
+
+    function setDefaultSource(node) {
+        Pipewire.preferredDefaultAudioSource = node;
+    }
+
+    readonly property string sourceIcon: !sourceReady || sourceMuted ? "󰍭" : "󰍬"
+
     // Check if the sink is ready to operate
     readonly property bool sinkReady: sink !== null && sink.audio !== null
     readonly property bool sourceReady: source !== null && source.audio !== null

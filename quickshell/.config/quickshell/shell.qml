@@ -242,6 +242,19 @@ ShellRoot {
         }
     }
 
+    // Actions requested from the UI (Quick Settings shortcuts)
+    Connections {
+        target: ShortcutService
+
+        function onScreenshotRequested() {
+            root.screenshotActive = true;
+        }
+
+        function onKeybindsRequested() {
+            keybindsLoader.toggle();
+        }
+    }
+
     // =========================================================================
     // GLOBAL SHORTCUTS
     // =========================================================================

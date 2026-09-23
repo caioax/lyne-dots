@@ -46,6 +46,9 @@
     "long": 400,
     "screenshot": true
   },
+  "profile": {
+    "avatar": ""
+  },
   "notifications": {
     "width": 350,
     "imageSize": 40,

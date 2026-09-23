@@ -10,305 +10,313 @@ Item {
 
     signal backRequested
 
+    readonly property bool isOn: BrightnessService.nightLightEnabled
+    readonly property int temperature: BrightnessService.nightLightTemperature
+    readonly property color currentColor: BrightnessService.temperatureColor(temperature)
+    readonly property int controlSize: Config.fontSizeIconSmall * 2
+
+    // Warm → cool, the same direction as the slider
+    readonly property var presets: [
+        {
+            "label": "Candle",
+            "temp": 2500
+        },
+        {
+            "label": "Warm",
+            "temp": 3500
+        },
+        {
+            "label": "Neutral",
+            "temp": 4500
+        },
+        {
+            "label": "Cool",
+            "temp": 5500
+        }
+    ]
+    readonly property string presetName: presets.find(p => p.temp === temperature)?.label ?? "Custom"
+
     Layout.fillWidth: true
     implicitHeight: main.implicitHeight
 
     ColumnLayout {
         id: main
-        anchors.top: parent.top
+
         anchors.left: parent.left
         anchors.right: parent.right
-        spacing: 12
+        spacing: Config.spacing
 
-        // Header
         PageHeader {
-            icon: BrightnessService.nightLightEnabled ? "󰌵" : "󰌶"
-            iconColor: BrightnessService.nightLightEnabled ? Config.warningColor : Config.subtextColor
-            title: "Night Light"
+            Layout.bottomMargin: Config.padding
+            icon: BrightnessService.nightLightIcon
+            iconColor: root.isOn ? Config.warningColor : Config.subtextColor
+            title: "Night light"
+            subtitle: root.isOn ? "On · " + root.temperature + "K" : "Off"
             onBackClicked: root.backRequested()
 
-            // On/Off Switch
             QsSwitch {
-                checked: BrightnessService.nightLightEnabled
+                checked: root.isOn
                 onToggled: BrightnessService.toggleNightLight()
             }
         }
 
-        // Separator
-        Rectangle {
+        // ========== CURRENT TEMPERATURE ==========
+        Card {
             Layout.fillWidth: true
-            Layout.preferredHeight: 1
-            color: Config.surface1Color
-        }
+            border.width: 1
+            border.color: root.isOn ? Qt.alpha(Config.warningColor, 0.6) : "transparent"
 
-        // Content
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.margins: 10
-            spacing: 16
-
-            // Large icon
-            Rectangle {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: 64
-                Layout.preferredHeight: 64
-                radius: 32
-                color: BrightnessService.nightLightEnabled ? Qt.alpha(Config.warningColor, 0.2) : Config.surface1Color
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Config.animDuration
-                    }
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    text: BrightnessService.nightLightEnabled ? "󰌵" : "󰌶"
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeIconLarge
-                    color: BrightnessService.nightLightEnabled ? Config.warningColor : Config.subtextColor
+            Behavior on border.color {
+                ColorAnimation {
+                    duration: Config.animDuration
                 }
             }
 
-            // Status
-            ColumnLayout {
-                Layout.alignment: Qt.AlignHCenter
-                spacing: 4
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Config.spacing * 2
+
+                // Swatch of the applied color, with a soft halo while on
+                Item {
+                    implicitWidth: Config.fontSizeIconLarge * 2
+                    implicitHeight: implicitWidth
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: width / 2
+                        color: root.currentColor
+                        opacity: root.isOn ? 0.25 : 0
+                        scale: 1.2
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Config.animDuration
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: width / 2
+                        color: root.isOn ? root.currentColor : Config.surface1Color
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Config.animDuration
+                            }
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: BrightnessService.nightLightIcon
+                            font.family: Config.font
+                            font.pixelSize: Config.fontSizeIcon
+                            color: root.isOn ? Config.textReverseColor : Config.subtextColor
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 0
+
+                    Text {
+                        text: root.temperature + "K"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeIconLarge
+                        font.bold: true
+                        color: root.isOn ? Config.textColor : Config.subtextColor
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: root.isOn ? root.presetName + " · less blue light" : "Off · turn on to reduce blue light"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeSmall
+                        color: Config.subtextColor
+                        elide: Text.ElideRight
+                    }
+                }
+            }
+        }
+
+        // ========== TEMPERATURE ==========
+        Card {
+            Layout.fillWidth: true
+            spacing: Config.spacing + Config.padding
+
+            CardHeader {
+                icon: "󰔏"
+                iconColor: Config.warningColor
+                title: "Temperature"
+                subtitle: root.presetName
+            }
+
+            // Gradient slider: warm on the left, cool on the right
+            Item {
+                id: slider
+
+                readonly property real range: BrightnessService.nightLightMax - BrightnessService.nightLightMin
+                readonly property real position: (root.temperature - BrightnessService.nightLightMin) / range
+                readonly property int thumbSize: Config.fontSizeLarge + Config.padding
+
+                function setFromX(x: real) {
+                    const p = Math.max(0, Math.min(1, (x - thumbSize / 2) / (width - thumbSize)));
+                    // Steps of 100K keep hyprsunset calls sane while dragging
+                    BrightnessService.setNightLightTemperature(Math.round((BrightnessService.nightLightMin + p * range) / 100) * 100);
+                }
+
+                Layout.fillWidth: true
+                implicitHeight: thumbSize
+
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    height: Config.padding * 2
+                    radius: height / 2
+                    opacity: root.isOn ? 1 : 0.5
+
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+
+                        GradientStop {
+                            position: 0
+                            color: BrightnessService.temperatureColor(BrightnessService.nightLightMin)
+                        }
+                        GradientStop {
+                            position: 0.5
+                            color: BrightnessService.temperatureColor(BrightnessService.nightLightMin + slider.range / 2)
+                        }
+                        GradientStop {
+                            position: 1
+                            color: BrightnessService.temperatureColor(BrightnessService.nightLightMax)
+                        }
+                    }
+                }
+
+                Rectangle {
+                    x: slider.position * (slider.width - width)
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: slider.thumbSize
+                    height: width
+                    radius: width / 2
+                    color: root.currentColor
+                    border.width: 2
+                    border.color: Config.textColor
+                    scale: sliderMouse.pressed ? 1.15 : 1
+
+                    Behavior on x {
+                        enabled: !sliderMouse.pressed
+                        NumberAnimation {
+                            duration: Config.animDurationShort
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: Config.animDurationShort
+                        }
+                    }
+                }
+
+                MouseArea {
+                    id: sliderMouse
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onPressed: mouse => slider.setFromX(mouse.x)
+                    onPositionChanged: mouse => {
+                        if (pressed)
+                            slider.setFromX(mouse.x);
+                    }
+                    onWheel: wheel => BrightnessService.setNightLightTemperature(root.temperature + (wheel.angleDelta.y > 0 ? 100 : -100))
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
 
                 Text {
-                    Layout.alignment: Qt.AlignHCenter
-                    text: BrightnessService.nightLightEnabled ? "Enabled" : "Disabled"
+                    text: "Warmer · " + BrightnessService.nightLightMin + "K"
                     font.family: Config.font
-                    font.pixelSize: Config.fontSizeLarge
-                    font.bold: true
-                    color: Config.textColor
+                    font.pixelSize: Config.fontSizeSmall
+                    color: Config.subtextColor
+                }
+
+                Item {
+                    Layout.fillWidth: true
                 }
 
                 Text {
-                    Layout.alignment: Qt.AlignHCenter
-                    text: BrightnessService.nightLightEnabled ? "Temperature: " + BrightnessService.nightLightTemperature + "K" : "Reduces blue light from the screen"
+                    text: BrightnessService.nightLightMax + "K · Cooler"
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeSmall
                     color: Config.subtextColor
                 }
             }
 
-            // Intensity Slider
-            ColumnLayout {
+            // Presets (turn night light on when picked)
+            RowLayout {
                 Layout.fillWidth: true
-                spacing: 10
+                spacing: Config.spacing
 
-                RowLayout {
-                    Layout.fillWidth: true
-
-                    Text {
-                        text: "Intensity"
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeNormal
-                        font.bold: true
-                        color: Config.textColor
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                    }
-
-                    Text {
-                        text: Math.round((1 - BrightnessService.nightLightIntensity) * 100) + "%"
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeSmall
-                        color: Config.subtextColor
-                    }
-                }
-
-                // Custom intensity slider
-                Item {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 40
-
-                    RowLayout {
-                        anchors.top: parent.top
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-
-                        Text {
-                            text: "Warmer"
-                            font.family: Config.font
-                            font.pixelSize: Config.fontSizeSmall
-                            color: Config.warningColor
-                        }
-
-                        Item {
-                            Layout.fillWidth: true
-                        }
-
-                        Text {
-                            text: "Cooler"
-                            font.family: Config.font
-                            font.pixelSize: Config.fontSizeSmall
-                            color: Config.subtextColor
-                        }
-                    }
+                Repeater {
+                    model: root.presets
 
                     Rectangle {
-                        id: sliderTrack
-                        anchors.bottom: parent.bottom
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        height: 8
-                        radius: 4
+                        id: preset
 
-                        gradient: Gradient {
-                            orientation: Gradient.Horizontal
-                            GradientStop {
-                                position: 0.0
-                                color: "#ff9500"
-                            }
-                            GradientStop {
-                                position: 0.5
-                                color: "#ffcc00"
-                            }
-                            GradientStop {
-                                position: 1.0
-                                color: "#ffffff"
+                        required property var modelData
+                        readonly property bool selected: root.temperature === modelData.temp
+                        readonly property color swatch: BrightnessService.temperatureColor(modelData.temp)
+
+                        Layout.fillWidth: true
+                        implicitHeight: root.controlSize
+                        radius: Config.radius
+                        color: {
+                            if (selected)
+                                return Qt.alpha(swatch, 0.18);
+                            return presetMouse.containsMouse ? Config.surface2Color : Config.surface1Color;
+                        }
+                        border.width: selected ? 1 : 0
+                        border.color: swatch
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Config.animDurationShort
                             }
                         }
 
-                        Rectangle {
-                            id: sliderThumb
-                            width: 20
-                            height: 20
-                            radius: 10
-                            y: (parent.height - height) / 2
-                            x: (1 - BrightnessService.nightLightIntensity) * (parent.width - width)
-
-                            color: Config.textColor
-                            border.width: 2
-                            border.color: Config.accentColor
-
-                            Behavior on x {
-                                NumberAnimation {
-                                    duration: sliderMouse.pressed ? 0 : Config.animDurationShort
-                                }
-                            }
+                        RowLayout {
+                            anchors.centerIn: parent
+                            spacing: Config.padding
 
                             Rectangle {
-                                anchors.fill: parent
-                                anchors.margins: -2
-                                radius: parent.radius + 2
-                                color: "transparent"
-                                border.width: 2
-                                border.color: Qt.alpha(Config.backgroundColor, 0.5)
-                                z: -1
+                                implicitWidth: Config.padding * 2
+                                implicitHeight: implicitWidth
+                                radius: width / 2
+                                color: preset.swatch
+                            }
+
+                            Text {
+                                text: preset.modelData.label
+                                font.family: Config.font
+                                font.pixelSize: Config.fontSizeSmall
+                                font.bold: preset.selected
+                                color: preset.selected ? Config.textColor : Config.subtextColor
                             }
                         }
 
                         MouseArea {
-                            id: sliderMouse
+                            id: presetMouse
                             anchors.fill: parent
-                            anchors.margins: -10
-
-                            onPressed: mouse => updateFromMouse(mouse.x)
-                            onPositionChanged: mouse => {
-                                if (pressed)
-                                    updateFromMouse(mouse.x);
-                            }
-
-                            function updateFromMouse(mouseX) {
-                                let percent = (mouseX - 10) / (sliderTrack.width - 20);
-                                percent = Math.max(0, Math.min(1, percent));
-                                BrightnessService.setNightLightIntensity(1 - percent);
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Temperature presets
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                Layout.topMargin: 6
-
-                Text {
-                    text: "Presets"
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeNormal
-                    font.bold: true
-                    color: Config.textColor
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 10
-
-                    Repeater {
-                        model: [
-                            {
-                                label: "Cool",
-                                temp: 5500,
-                                color: "#fff5e6"
-                            },
-                            {
-                                label: "Neutral",
-                                temp: 4500,
-                                color: "#ffcc00"
-                            },
-                            {
-                                label: "Warm",
-                                temp: 3500,
-                                color: "#ff9500"
-                            },
-                            {
-                                label: "Candle",
-                                temp: 2500,
-                                color: "#ff6b00"
-                            }
-                        ]
-
-                        delegate: Rectangle {
-                            id: presetBtn
-
-                            required property var modelData
-                            required property int index
-
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 36
-                            radius: Config.radius
-
-                            color: {
-                                if (presetMouse.pressed)
-                                    return Qt.darker(modelData.color, 1.2);
-                                if (presetMouse.containsMouse)
-                                    return Qt.alpha(modelData.color, 0.3);
-                                if (BrightnessService.nightLightTemperature === modelData.temp)
-                                    return Qt.alpha(modelData.color, 0.2);
-                                return Config.surface1Color;
-                            }
-
-                            border.width: BrightnessService.nightLightTemperature === modelData.temp ? 1 : 0
-                            border.color: modelData.color
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: modelData.label
-                                font.family: Config.font
-                                font.pixelSize: Config.fontSizeSmall
-                                font.bold: BrightnessService.nightLightTemperature === modelData.temp
-                                color: presetMouse.containsMouse || BrightnessService.nightLightTemperature === modelData.temp ? modelData.color : Config.textColor
-                            }
-
-                            MouseArea {
-                                id: presetMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    BrightnessService.setNightLightTemperature(modelData.temp);
-                                    if (!BrightnessService.nightLightEnabled) {
-                                        BrightnessService.enableNightLight();
-                                    }
-                                }
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                BrightnessService.setNightLightTemperature(preset.modelData.temp);
+                                if (!root.isOn)
+                                    BrightnessService.enableNightLight();
                             }
                         }
                     }

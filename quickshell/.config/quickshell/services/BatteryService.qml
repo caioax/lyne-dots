@@ -20,6 +20,19 @@ Singleton {
     // Boolean helper to simplify UI bindings
     readonly property bool isCharging: state === UPowerDeviceState.Charging
 
+    // "2h 15m left" / "40m to full"; empty when UPower has no estimate
+    readonly property string timeText: {
+        if (!mainBattery)
+            return "";
+        const seconds = isCharging ? mainBattery.timeToFull : mainBattery.timeToEmpty;
+        if (!seconds || seconds <= 0)
+            return state === UPowerDeviceState.FullyCharged ? "Full" : "";
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.round((seconds % 3600) / 60);
+        const duration = hours > 0 ? hours + "h " + minutes + "m" : minutes + "m";
+        return duration + (isCharging ? " to full" : " left");
+    }
+
     // Holds the reference to the battery object
     property var mainBattery: null
 

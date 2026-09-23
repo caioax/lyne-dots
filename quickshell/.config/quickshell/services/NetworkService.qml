@@ -70,6 +70,26 @@ Singleton {
         return "On";
     }
 
+    function bandName(freq: int): string {
+        if (freq >= 5925)
+            return "6 GHz";
+        if (freq >= 5000)
+            return "5 GHz";
+        if (freq > 0)
+            return "2.4 GHz";
+        return "";
+    }
+
+    readonly property var activeNetwork: accessPoints.find(ap => ap.active) ?? null
+
+    // IP / gateway / DNS of the active connection, fetched on demand (Wi-Fi page)
+    property var details: ({})
+
+    function fetchDetails() {
+        if (wifiInterface !== "" && !detailsProc.running)
+            detailsProc.running = true;
+    }
+
     function openPortalBrowser() {
         openPortalProc.running = true;
     }
@@ -269,6 +289,21 @@ Singleton {
         }
     }
 
+    Process {
+        id: detailsProc
+        command: ["nmcli", "-g", "IP4.ADDRESS,IP4.GATEWAY,IP4.DNS", "dev", "show", root.wifiInterface]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const lines = text.trim().split("\n");
+                root.details = {
+                    "ip": (lines[0] || "").split("/")[0],
+                    "gateway": lines[1] || "",
+                    "dns": (lines[2] || "").split(" | ")[0]
+                };
+            }
+        }
+    }
+
     // List Saved Networks
     Process {
         id: getSavedProc
@@ -291,7 +326,7 @@ Singleton {
     // List Available Networks (Scan)
     Process {
         id: getNetworksProc
-        command: ["nmcli", "-g", "IN-USE,SIGNAL,SSID,SECURITY,BSSID,CHAN,RATE", "dev", "wifi", "list"]
+        command: ["nmcli", "-g", "IN-USE,SIGNAL,SSID,SECURITY,BSSID,CHAN,RATE,FREQ", "dev", "wifi", "list"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const lines = text.trim().split("\n");
@@ -301,8 +336,9 @@ Singleton {
                 lines.forEach(line => {
                     if (line.length < 5)
                         return;
-                    const parts = line.split(":");
-                    if (parts.length < 7)
+                    // -g escapes ":" inside values (BSSID, SSIDs) as "\\:"
+                    const parts = line.replace(/\\:/g, "\u0000").split(":").map(p => p.replace(/\u0000/g, ":"));
+                    if (parts.length < 8)
                         return;
 
                     const inUse = parts[0] === "*";
@@ -312,6 +348,7 @@ Singleton {
                     const bssid = parts[4];
                     const channel = parts[5];
                     const rate = parts[6];
+                    const freq = parseInt(parts[7]) || 0;
 
                     if (!ssid)
                         return;
@@ -330,7 +367,8 @@ Singleton {
                         saved: isSaved,
                         bssid: bssid,
                         channel: channel,
-                        rate: rate
+                        rate: rate,
+                        band: root.bandName(freq)
                     });
                 });
 

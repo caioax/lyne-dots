@@ -9,7 +9,7 @@ import "./pages/"
 QsPopupWindow {
     id: root
 
-    popupWidth: 400
+    popupWidth: 420
     popupMaxHeight: 820
     anchorSide: "right"
     moduleName: "QuickSettings"
@@ -34,6 +34,7 @@ QsPopupWindow {
         // PAGE 1: WI-FI
         // ==========================
         WifiPage {
+            availableHeight: root.popupMaxHeight - 32
             onBackRequested: pageStack.currentIndex = 0
             onPasswordRequested: ssid => {
                 wifiPasswordPage.targetSsid = ssid;
@@ -57,6 +58,7 @@ QsPopupWindow {
         // PAGE 3: BLUETOOTH
         // ==========================
         BluetoothPage {
+            availableHeight: root.popupMaxHeight - 32
             onBackRequested: pageStack.currentIndex = 0
         }
 
@@ -71,6 +73,15 @@ QsPopupWindow {
         // PAGE 5: THEME
         // ==========================
         ThemePage {
+            availableHeight: root.popupMaxHeight - 32
+            onBackRequested: pageStack.currentIndex = 0
+            onCloseWindow: root.closeWindow()
+        }
+
+        // ==========================
+        // PAGE 6: SOUND
+        // ==========================
+        SoundPage {
             onBackRequested: pageStack.currentIndex = 0
         }
     }

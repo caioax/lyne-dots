@@ -22,3 +22,4 @@ singleton IdleService IdleService.qml
 singleton LockService LockService.qml
 singleton HolidayService HolidayService.qml
 singleton WeatherService WeatherService.qml
+singleton ProfileService ProfileService.qml

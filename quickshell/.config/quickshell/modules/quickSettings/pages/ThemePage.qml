@@ -1,6 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
+import Quickshell.Widgets
 import qs.config
 import qs.services
 import "../../../components/"
@@ -8,317 +10,340 @@ import "../../../components/"
 Item {
     id: root
 
+    // Height the page may use; the preset grid scrolls within what's left
+    property real availableHeight: 0
+
     signal backRequested
+    signal closeWindow
+
+    readonly property var previews: ThemeService.themePreviews
+    readonly property bool auto: ThemeService.isAutoMode
+    readonly property string currentName: previews[ThemeService.currentThemeName]?.name ?? ThemeService.currentThemeName
+    readonly property int thumbHeight: Config.fontSizeIconLarge * 2 + Config.spacing * 2
 
     Layout.fillWidth: true
     implicitHeight: main.implicitHeight
 
-    Flickable {
-        id: flickable
-        anchors.fill: parent
-        contentHeight: main.implicitHeight
-        clip: true
-        boundsBehavior: Flickable.StopAtBounds
+    ColumnLayout {
+        id: main
 
+        anchors.left: parent.left
+        anchors.right: parent.right
+        spacing: Config.spacing
+
+        // Everything above the preset grid, measured to size that grid
         ColumnLayout {
-            id: main
-            width: flickable.width
-            spacing: 12
+            id: top
 
-            // Header
+            Layout.fillWidth: true
+            spacing: Config.spacing
+
             PageHeader {
+                Layout.bottomMargin: Config.padding
                 icon: "󰏘"
                 title: "Theme"
+                subtitle: (root.auto ? "Material You" : root.currentName) + " · " + (ThemeService.isDarkMode ? "Dark" : "Light")
                 onBackClicked: root.backRequested()
-
-                // Current theme badge
-                Rectangle {
-                    Layout.preferredHeight: 28
-                    Layout.preferredWidth: badgeText.implicitWidth + 16
-                    radius: Config.radius
-                    color: Qt.alpha(Config.accentColor, 0.15)
-                    border.width: 1
-                    border.color: Qt.alpha(Config.accentColor, 0.3)
-
-                    Text {
-                        id: badgeText
-                        anchors.centerIn: parent
-                        text: ThemeService.isAutoMode ? "Auto" : ThemeService.currentThemeName
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeSmall
-                        font.bold: true
-                        color: Config.accentColor
-                    }
-                }
             }
 
-            // Mode toggle (Auto / Preset)
-            RowLayout {
+            // ========== APPEARANCE ==========
+            Card {
                 Layout.fillWidth: true
-                Layout.leftMargin: 10
-                Layout.rightMargin: 10
-                spacing: 8
 
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 36
-                    radius: Config.radius
-                    color: !ThemeService.isAutoMode ? Config.accentColor : (presetMouse.containsMouse ? Config.surface1Color : Config.surface0Color)
-                    border.width: 1
-                    border.color: !ThemeService.isAutoMode ? Config.accentColor : Config.surface1Color
+                SectionLabel {
+                    text: "Colors"
+                }
 
-                    Behavior on color {
-                        ColorAnimation { duration: Config.animDurationShort }
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "Preset"
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeSmall
-                        font.bold: !ThemeService.isAutoMode
-                        color: !ThemeService.isAutoMode ? Config.backgroundColor : Config.textColor
-                    }
-
-                    MouseArea {
-                        id: presetMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (ThemeService.isAutoMode) {
-                                ThemeService.setPresetMode(ThemeService.currentThemeName);
-                            }
+                SegmentedControl {
+                    options: [
+                        {
+                            "label": "Preset",
+                            "icon": "󰏘"
+                        },
+                        {
+                            "label": "Material You",
+                            "icon": "󰸉"
                         }
+                    ]
+                    currentIndex: root.auto ? 1 : 0
+                    onSelected: index => {
+                        if (index === 1)
+                            ThemeService.setAutoMode();
+                        else
+                            ThemeService.setPresetMode(ThemeService.currentThemeName);
                     }
                 }
 
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 36
-                    radius: Config.radius
-                    color: ThemeService.isAutoMode ? Config.accentColor : (autoMouse.containsMouse ? Config.surface1Color : Config.surface0Color)
-                    border.width: 1
-                    border.color: ThemeService.isAutoMode ? Config.accentColor : Config.surface1Color
+                SectionLabel {
+                    Layout.topMargin: Config.padding
+                    text: "Mode"
+                }
 
-                    Behavior on color {
-                        ColorAnimation { duration: Config.animDurationShort }
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "Material You"
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeSmall
-                        font.bold: ThemeService.isAutoMode
-                        color: ThemeService.isAutoMode ? Config.backgroundColor : Config.textColor
-                    }
-
-                    MouseArea {
-                        id: autoMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (!ThemeService.isAutoMode) {
-                                ThemeService.setAutoMode();
-                            }
+                SegmentedControl {
+                    options: [
+                        {
+                            "label": "Dark",
+                            "icon": "󰖔"
+                        },
+                        {
+                            "label": "Light",
+                            "icon": "󰖨"
                         }
-                    }
+                    ]
+                    currentIndex: ThemeService.isDarkMode ? 0 : 1
+                    onSelected: index => ThemeService.setColorScheme(index === 0 ? "dark" : "light")
                 }
             }
 
-            // Dark / Light toggle
-            RowLayout {
+            // ========== MATERIAL YOU ==========
+            Card {
+                visible: root.auto
                 Layout.fillWidth: true
-                Layout.leftMargin: 10
-                Layout.rightMargin: 10
-                spacing: 8
+                border.width: 1
+                border.color: Qt.alpha(Config.accentColor, 0.6)
 
-                Rectangle {
+                RowLayout {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 36
-                    radius: Config.radius
-                    color: ThemeService.isDarkMode ? Config.accentColor : (darkMouse.containsMouse ? Config.surface1Color : Config.surface0Color)
-                    border.width: 1
-                    border.color: ThemeService.isDarkMode ? Config.accentColor : Config.surface1Color
+                    spacing: Config.spacing + Config.padding
 
-                    Behavior on color {
-                        ColorAnimation { duration: Config.animDurationShort }
+                    ClippingRectangle {
+                        implicitWidth: root.thumbHeight * 16 / 9
+                        implicitHeight: root.thumbHeight
+                        radius: Config.radius
+                        color: Config.surface1Color
+
+                        Image {
+                            anchors.fill: parent
+                            // Only loaded while the page is open
+                            source: root.visible && WallpaperService.currentWallpaper !== "" ? "file://" + WallpaperService.currentWallpaper : ""
+                            fillMode: Image.PreserveAspectCrop
+                            sourceSize: Qt.size(width * 2, height * 2)
+                            asynchronous: true
+                        }
                     }
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: "Dark"
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeSmall
-                        font.bold: ThemeService.isDarkMode
-                        color: ThemeService.isDarkMode ? Config.backgroundColor : Config.textColor
-                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: Config.padding
 
-                    MouseArea {
-                        id: darkMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (!ThemeService.isDarkMode)
-                                ThemeService.setColorScheme("dark");
+                        Text {
+                            Layout.fillWidth: true
+                            text: "Colors follow your wallpaper"
+                            font.family: Config.font
+                            font.pixelSize: Config.fontSizeSmall
+                            font.bold: true
+                            color: Config.textColor
+                            wrapMode: Text.Wrap
+                        }
+
+                        PaletteDots {
+                            colors: [Config.accentColor, Config.successColor, Config.warningColor, Config.errorColor]
                         }
                     }
                 }
 
-                Rectangle {
+                ActionButton {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 36
-                    radius: Config.radius
-                    color: !ThemeService.isDarkMode ? Config.accentColor : (lightMouse.containsMouse ? Config.surface1Color : Config.surface0Color)
-                    border.width: 1
-                    border.color: !ThemeService.isDarkMode ? Config.accentColor : Config.surface1Color
-
-                    Behavior on color {
-                        ColorAnimation { duration: Config.animDurationShort }
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "Light"
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeSmall
-                        font.bold: !ThemeService.isDarkMode
-                        color: !ThemeService.isDarkMode ? Config.backgroundColor : Config.textColor
-                    }
-
-                    MouseArea {
-                        id: lightMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (ThemeService.isDarkMode)
-                                ThemeService.setColorScheme("light");
-                        }
+                    size: Config.fontSizeIconSmall * 2
+                    icon: "󰸉"
+                    text: "Change wallpaper"
+                    onClicked: {
+                        root.closeWindow();
+                        WallpaperService.toggle();
                     }
                 }
             }
+        }
 
-            // Separator
+        // ========== PRESETS ==========
+        Card {
+            id: presetsCard
+
+            Layout.fillWidth: true
+
+            CardHeader {
+                id: presetsHeader
+                icon: "󰉦"
+                title: "Presets"
+                subtitle: ThemeService.displayThemes.length + (ThemeService.isDarkMode ? " dark" : " light") + " themes"
+            }
+
+            Flickable {
+                id: list
+
+                readonly property real maxHeight: Math.max(root.thumbHeight * 2, root.availableHeight - top.implicitHeight - main.spacing - presetsCard.padding * 2 - presetsHeader.implicitHeight - presetsCard.spacing)
+
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.min(grid.implicitHeight, maxHeight)
+                contentHeight: grid.implicitHeight
+                boundsBehavior: Flickable.StopAtBounds
+                clip: true
+
+                ScrollBar.vertical: ScrollBar {
+                    policy: ScrollBar.AsNeeded
+
+                    contentItem: Rectangle {
+                        implicitWidth: Math.round(Config.padding * 2 / 3)
+                        radius: width / 2
+                        color: Config.surface2Color
+                        opacity: parent.active ? 0.8 : 0
+                    }
+                }
+
+                GridLayout {
+                    id: grid
+
+                    width: list.width
+                    columns: 2
+                    columnSpacing: Config.spacing
+                    rowSpacing: Config.spacing
+
+                    Repeater {
+                        model: ThemeService.displayThemes
+
+                        ThemeTile {}
+                    }
+                }
+            }
+        }
+    }
+
+    // ========================================================================
+    // INLINE COMPONENTS
+    // ========================================================================
+
+    component SectionLabel: Text {
+        font.family: Config.font
+        font.pixelSize: Config.fontSizeSmall
+        font.bold: true
+        color: Config.subtextColor
+    }
+
+    component PaletteDots: Row {
+        id: dots
+
+        property var colors: []
+
+        spacing: Math.round(Config.padding / 2)
+
+        Repeater {
+            model: dots.colors.filter(c => c !== undefined && c !== "")
+
             Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 1
-                color: Config.surface1Color
+                required property var modelData
+                width: Config.padding * 2
+                height: width
+                radius: width / 2
+                color: modelData
+                border.width: 1
+                border.color: Qt.alpha(Config.textColor, 0.15)
+            }
+        }
+    }
+
+    // Wallpaper thumbnail with the theme name and its palette
+    component ThemeTile: Item {
+        id: tile
+
+        required property string modelData
+        readonly property var preview: root.previews[modelData] ?? {}
+        readonly property var palette: preview.palette ?? {}
+        readonly property bool isCurrent: !root.auto && modelData === ThemeService.currentThemeName
+
+        Layout.fillWidth: true
+        implicitHeight: root.thumbHeight + footer.implicitHeight + Config.padding * 2
+        opacity: root.auto && !tileMouse.containsMouse ? 0.55 : 1
+        scale: tileMouse.pressed ? 0.97 : 1
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Config.animDurationShort
+            }
+        }
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: Config.animDurationShort
+            }
+        }
+
+        ClippingRectangle {
+            anchors.fill: parent
+            radius: Config.radiusLarge
+            color: tileMouse.containsMouse ? Config.surface2Color : Config.surface1Color
+
+            Image {
+                width: parent.width
+                height: root.thumbHeight
+                // Only loaded while the page is open
+                source: root.visible && tile.preview.wallpaper ? "file://" + ThemeService.wallpaperDir + "/" + tile.preview.wallpaper : ""
+                fillMode: Image.PreserveAspectCrop
+                sourceSize: Qt.size(width * 2, height * 2)
+                asynchronous: true
             }
 
-            // Auto mode indicator
+            RowLayout {
+                id: footer
+
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.margins: Config.padding + Config.padding / 2
+                spacing: Config.padding
+
+                Text {
+                    Layout.fillWidth: true
+                    text: tile.preview.name ?? tile.modelData
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    font.bold: tile.isCurrent
+                    color: tile.isCurrent ? Config.accentColor : Config.textColor
+                    elide: Text.ElideRight
+                }
+
+                PaletteDots {
+                    colors: [tile.palette.accent, tile.palette.success, tile.palette.warning, tile.palette.error]
+                }
+            }
+        }
+
+        // Selection outline and check, above the clipped content
+        Rectangle {
+            anchors.fill: parent
+            radius: Config.radiusLarge
+            color: "transparent"
+            border.width: tile.isCurrent ? 2 : 0
+            border.color: Config.accentColor
+        }
+
+        Rectangle {
+            visible: tile.isCurrent
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.margins: Config.padding
+            width: Config.fontSizeLarge + Config.padding
+            height: width
+            radius: width / 2
+            color: Config.accentColor
+
             Text {
-                visible: ThemeService.isAutoMode
-                Layout.fillWidth: true
-                Layout.leftMargin: 10
-                Layout.rightMargin: 10
-                text: "Colors are generated from your wallpaper. Change wallpaper to update."
+                anchors.centerIn: parent
+                text: "󰄬"
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
-                color: Config.subtextColor
-                wrapMode: Text.WordWrap
+                font.bold: true
+                color: Config.textReverseColor
             }
+        }
 
-            // Theme grid
-            GridLayout {
-                Layout.fillWidth: true
-                Layout.margins: 10
-                columns: 2
-                columnSpacing: 10
-                rowSpacing: 10
-                opacity: ThemeService.isAutoMode ? 0.5 : 1.0
-
-                Behavior on opacity {
-                    NumberAnimation { duration: Config.animDurationShort }
-                }
-
-                Repeater {
-                    model: ThemeService.displayThemes
-
-                    delegate: Rectangle {
-                        id: card
-
-                        required property string modelData
-                        required property int index
-
-                        readonly property bool isCurrent: !ThemeService.isAutoMode && modelData === ThemeService.currentThemeName
-                        readonly property var preview: ThemeService.themePreviews[modelData] || {}
-                        readonly property var previewPalette: preview.palette || {}
-                        readonly property string displayName: preview.name || modelData
-
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 76
-                        radius: Config.radius
-                        color: cardMouse.containsMouse ? Config.surface1Color : Config.surface0Color
-                        border.width: isCurrent ? 2 : 1
-                        border.color: isCurrent ? Config.accentColor : (cardMouse.containsMouse ? Config.surface2Color : Config.surface1Color)
-
-                        Behavior on color {
-                            ColorAnimation { duration: Config.animDurationShort }
-                        }
-                        Behavior on border.color {
-                            ColorAnimation { duration: Config.animDurationShort }
-                        }
-
-                        ColumnLayout {
-                            anchors.fill: parent
-                            anchors.margins: 10
-                            spacing: 8
-
-                            Text {
-                                text: card.displayName
-                                font.family: Config.font
-                                font.pixelSize: Config.fontSizeNormal
-                                font.bold: card.isCurrent
-                                color: card.isCurrent ? Config.accentColor : Config.textColor
-                                elide: Text.ElideRight
-                                Layout.fillWidth: true
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: 5
-
-                                Repeater {
-                                    model: [
-                                        card.previewPalette.background || "#1a1b26",
-                                        card.previewPalette.accent || "#7aa2f7",
-                                        card.previewPalette.success || "#9ece6a",
-                                        card.previewPalette.warning || "#e0af68",
-                                        card.previewPalette.error || "#f7768e"
-                                    ]
-
-                                    delegate: Rectangle {
-                                        required property string modelData
-                                        width: 14
-                                        height: 14
-                                        radius: 7
-                                        color: modelData
-                                        border.width: 1
-                                        border.color: Qt.alpha(Config.textColor, 0.15)
-                                    }
-                                }
-
-                                Item { Layout.fillWidth: true }
-                            }
-                        }
-
-                        MouseArea {
-                            id: cardMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (!card.isCurrent) {
-                                    ThemeService.setPresetMode(card.modelData);
-                                }
-                            }
-                        }
-                    }
-                }
+        MouseArea {
+            id: tileMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: tile.isCurrent ? Qt.ArrowCursor : Qt.PointingHandCursor
+            onClicked: {
+                if (!tile.isCurrent)
+                    ThemeService.setPresetMode(tile.modelData);
             }
         }
     }

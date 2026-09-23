@@ -47,11 +47,8 @@ Singleton {
         if (count === 0)
             return "On";
 
-        if (count === 1) {
-            // If there is only 1, return its name
-            const dev = connectedDevices[0];
-            return dev.alias || dev.name || "Unknown";
-        }
+        if (count === 1)
+            return deviceName(connectedDevices[0]);
 
         // If there is more than 1, return the count
         return count + " devices";
@@ -83,8 +80,8 @@ Singleton {
                 return 1;
 
             // Finally, alphabetical order by name
-            const nameA = (a.alias || a.name || "").toLowerCase();
-            const nameB = (b.alias || b.name || "").toLowerCase();
+            const nameA = root.deviceName(a).toLowerCase();
+            const nameB = root.deviceName(b).toLowerCase();
             return nameA.localeCompare(nameB);
         });
     }
@@ -177,36 +174,62 @@ Singleton {
         }
     }
 
-    // Function to get icons based on the actual device type
+    // Device kind from the BlueZ icon property or, failing that, its name
+    function deviceKind(device): var {
+        const iconProp = (device?.icon || "").toLowerCase();
+        const name = (device?.name || device?.deviceName || "").toLowerCase();
+        const has = keys => keys.some(k => iconProp.includes(k) || name.includes(k));
+
+        if (has(["headset", "headphone", "audio", "airpod", "buds", "wh-", "wf-", "jbl", "soundcore", "speaker"]))
+            return {
+                "icon": "",
+                "label": "Audio"
+            };
+        if (has(["mouse"]))
+            return {
+                "icon": "󰍽",
+                "label": "Mouse"
+            };
+        if (has(["keyboard"]))
+            return {
+                "icon": "",
+                "label": "Keyboard"
+            };
+        if (has(["phone", "android", "iphone", "redmi", "galaxy", "pixel"]))
+            return {
+                "icon": "",
+                "label": "Phone"
+            };
+        if (has(["gamepad", "joystick", "controller"]))
+            return {
+                "icon": "",
+                "label": "Controller"
+            };
+        if (has(["computer", "laptop"]))
+            return {
+                "icon": "󰌢",
+                "label": "Computer"
+            };
+        if (has(["tv"]))
+            return {
+                "icon": "󰔂",
+                "label": "TV"
+            };
+        return {
+            "icon": "",
+            "label": "Device"
+        };
+    }
+
     function getDeviceIcon(device) {
-        if (!device)
-            return ""; // Default Bluetooth
+        return deviceKind(device).icon;
+    }
 
-        // 1. Try to get the official BlueZ icon property and name
-        const iconProp = (device.icon || "").toLowerCase();
-        const name = (device.name || device.alias || "").toLowerCase();
+    function deviceName(device): string {
+        return device?.name || device?.deviceName || device?.address || "Unknown";
+    }
 
-        const safeName = name || "";
-
-        // 2. Audio keyword list
-        const audioKeywords = ["headset", "headphone", "airpod", "buds", "freebuds", "wh-", "wf-", "jbl", "audio", "soundcore"];
-
-        // Check if it is audio by technical property OR by name
-        if (iconProp.includes("headset") || iconProp.includes("audio") || audioKeywords.some(k => name.includes(k)))
-            return "";
-        if (iconProp.includes("mouse") || safeName.includes("mouse"))
-            return "󰍽";
-        if (iconProp.includes("keyboard") || safeName.includes("keyboard"))
-            return "";
-        if (iconProp.includes("phone") || safeName.includes("phone") || name.includes("android") || name.includes("iphone"))
-            return "";
-        if (iconProp.includes("gamepad") || iconProp.includes("joystick") || name.includes("controller"))
-            return "";
-        if (iconProp.includes("computer") || iconProp.includes("laptop") || name.includes("pc"))
-            return " ";
-        if (iconProp.includes("tv") || safeName.includes("tv"))
-            return " ";
-
-        return ""; // Default
+    function isKnown(device): bool {
+        return device.paired || device.trusted;
     }
 }

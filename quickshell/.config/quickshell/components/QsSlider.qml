@@ -18,8 +18,12 @@ Item {
     signal moved(real newValue)
     signal iconClicked
 
+    readonly property int size: Config.fontSizeIconSmall * 2
+    readonly property int trackHeight: size - Config.spacing
+    readonly property int innerRadius: Math.round(Config.padding / 3)
+
     // Component size
-    implicitHeight: 40
+    implicitHeight: size
     Layout.fillWidth: true
 
     Behavior on fillColor {
@@ -30,7 +34,7 @@ Item {
 
     RowLayout {
         anchors.fill: parent
-        spacing: 10
+        spacing: Config.spacing
 
         // --- THE ICON BUTTON ---
         Rectangle {
@@ -83,9 +87,9 @@ Item {
 
             // Layout magic: Takes up all remaining width
             Layout.fillWidth: true
-            Layout.preferredHeight: parent.height - 6
+            Layout.preferredHeight: parent.height - Config.padding
 
-            readonly property real handleGap: 5
+            readonly property real handleGap: Math.round(Config.padding * 2 / 3)
             readonly property real visualPos: (root.value - root.from) / (root.to - root.from)
 
             // Inner container for the scale animation
@@ -106,17 +110,17 @@ Item {
                     anchors.left: parent.left
 
                     width: Math.max(0, (sliderContainer.visualPos * parent.width) - sliderContainer.handleGap)
-                    height: 28
+                    height: root.trackHeight
                     color: root.fillColor
 
                     topLeftRadius: Config.radius
                     bottomLeftRadius: Config.radius
-                    topRightRadius: 2
-                    bottomRightRadius: 2
+                    topRightRadius: root.innerRadius
+                    bottomRightRadius: root.innerRadius
 
                     Behavior on width {
                         NumberAnimation {
-                            duration: 80
+                            duration: Config.animDurationShort
                             easing.type: Easing.OutQuad
                         }
                     }
@@ -129,17 +133,17 @@ Item {
                     anchors.right: parent.right
 
                     width: Math.max(0, ((1 - sliderContainer.visualPos) * parent.width) - sliderContainer.handleGap)
-                    height: 28
+                    height: root.trackHeight
                     color: Config.surface2Color
 
-                    topLeftRadius: 2
-                    bottomLeftRadius: 2
+                    topLeftRadius: root.innerRadius
+                    bottomLeftRadius: root.innerRadius
                     topRightRadius: Config.radius
                     bottomRightRadius: Config.radius
 
                     Behavior on width {
                         NumberAnimation {
-                            duration: 80
+                            duration: Config.animDurationShort
                             easing.type: Easing.OutQuad
                         }
                     }
@@ -150,7 +154,7 @@ Item {
                     id: handle
                     width: 3.5
                     height: parent.height
-                    radius: 2
+                    radius: root.innerRadius
                     color: root.fillColor
 
                     x: (sliderContainer.visualPos * parent.width) - (width / 2)
@@ -160,33 +164,8 @@ Item {
 
                     Behavior on x {
                         NumberAnimation {
-                            duration: 80
+                            duration: Config.animDurationShort
                             easing.type: Easing.OutQuad
-                        }
-                    }
-                }
-
-                // Percentage Text
-                Text {
-                    visible: root.showPercentage
-                    anchors.bottom: handle.top
-                    anchors.bottomMargin: 1
-                    anchors.horizontalCenter: handle.horizontalCenter
-
-                    text: Math.round(((root.value - root.from) / (root.to - root.from)) * 100) + "%"
-
-                    font.family: Config.font
-                    font.bold: true
-                    font.pixelSize: Config.fontSizeNormal
-
-                    // Smart color
-                    property bool isCovered: fill.width > (parent.width / 2)
-                    color: Config.textColor
-
-                    opacity: (sliderMouse.containsMouse || sliderMouse.pressed) ? 1.0 : 0.0
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Config.animDuration
                         }
                     }
                 }
@@ -219,6 +198,26 @@ Item {
                     else
                         root.moved(Math.max(root.from, root.value - step));
                 }
+            }
+        }
+
+        // Value, fixed width so the track doesn't move while it changes
+        Text {
+            visible: root.showPercentage
+            Layout.preferredWidth: valueMetrics.width
+            horizontalAlignment: Text.AlignRight
+            text: Math.round(sliderContainer.visualPos * 100) + "%"
+            font.family: Config.font
+            font.pixelSize: Config.fontSizeSmall
+            font.bold: true
+            color: Config.subtextColor
+
+            TextMetrics {
+                id: valueMetrics
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeSmall
+                font.bold: true
+                text: "100%"
             }
         }
     }
