@@ -79,6 +79,7 @@ BarButton {
 
     SystemMonitorWindow {
         id: monitorWindow
+        anchorItem: root
         visible: false
     }
 }

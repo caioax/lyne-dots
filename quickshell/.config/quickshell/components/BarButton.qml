@@ -13,7 +13,7 @@ Rectangle {
     signal rightClicked
 
     implicitWidth: (contentItem?.implicitWidth ?? 0) + (Config.padding * 2)
-    implicitHeight: Config.barHeight - 10
+    implicitHeight: Config.barButtonHeight
     radius: height / 2
 
     color: (active || hovered) ? Config.surface1Color : Qt.alpha(Config.surface1Color, 0)

@@ -13,9 +13,6 @@ import "../calendar/"
 Scope {
     id: root
 
-    readonly property int gapIn: 5
-    readonly property int gapOut: 15
-
     Variants {
         model: Quickshell.screens
 
@@ -24,21 +21,13 @@ Scope {
 
             property bool enableAutoHide: Config.barAutoHide
 
-            // NameSpace
             WlrLayershell.namespace: "qs_modules"
 
-            // --- BAR CONFIGURATION ---
-            implicitHeight: StateService.get("bar.height", 30)
+            implicitHeight: Config.barHeight
             color: "transparent"
             screen: modelData
 
-            // Overlay ensures it stays above games/fullscreen
-            // WlrLayershell.layer: WlrLayer.Overlay
-
-            // Set the exclusion mode
             exclusionMode: enableAutoHide ? ExclusionMode.Ignore : ExclusionMode.Normal
-
-            // Ensure reserved area size when in Normal mode
             exclusiveZone: enableAutoHide ? 0 : height
 
             anchors {
@@ -47,17 +36,14 @@ Scope {
                 right: true
             }
 
-            // --- AUTOHIDE LOGIC ---
-            // If mouse is hovering, margin is 0 (show everything).
-            // Otherwise, margin is -29 (hide, leaving 1px at the top to catch the mouse).
+            // --- AUTOHIDE ---
+            // Slides up leaving 1px at the top edge to catch the mouse
             margins.top: {
                 if (WindowManagerService.anyModuleOpen || !enableAutoHide || mouseSensor.hovered)
                     return 0;
-
-                return (-1 * (height - 1));
+                return -(height - 1);
             }
 
-            // Smooth window movement animation
             Behavior on margins.top {
                 NumberAnimation {
                     duration: Config.animDurationLong
@@ -65,48 +51,81 @@ Scope {
                 }
             }
 
-            // --- MOUSE SENSOR ---
-            // Covers the entire window. Since the window never "disappears" (only moves off-screen),
-            // the remaining 1px still detects the mouse.
+            // Covers the whole window, so the remaining 1px still detects the mouse
             HoverHandler {
                 id: mouseSensor
             }
 
-            Rectangle {
-                id: barContent
+            // Transparent strip; each group of items is a floating island
+            Item {
                 anchors.fill: parent
-                color: Config.backgroundTransparentColor
+                anchors.leftMargin: Config.spacing
+                anchors.rightMargin: Config.spacing
 
-                // --- LEFT ---
-                RowLayout {
+                // --- LEFT: launcher, workspaces, active window ---
+                BarIsland {
                     anchors.left: parent.left
-                    anchors.leftMargin: root.gapOut
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: root.gapIn
+
+                    BarButton {
+                        contentItem: launcherIcon
+                        implicitWidth: implicitHeight
+                        active: LauncherService.visible
+                        onClicked: LauncherService.toggle()
+
+                        Text {
+                            id: launcherIcon
+                            anchors.centerIn: parent
+                            text: "󰣇"
+                            font.family: Config.font
+                            font.pixelSize: Config.fontSizeLarge
+                            color: Config.accentColor
+                        }
+                    }
+
+                    Workspaces {
+                        Layout.leftMargin: Math.round(Config.padding / 2)
+                        Layout.rightMargin: Math.round(Config.padding / 2)
+                    }
+
+                    BarDivider {
+                        visible: activeWindow.visible
+                    }
+
+                    ActiveWindow {
+                        id: activeWindow
+                        Layout.rightMargin: Config.padding
+                    }
+                }
+
+                // --- CENTER: clock, date, weather ---
+                BarIsland {
+                    anchors.centerIn: parent
 
                     CalendarButton {}
-                    SystemMonitorButton {}
-                    ActiveWindow {}
                 }
 
-                // --- CENTER ---
-                RowLayout {
-                    anchors.centerIn: parent
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: root.gapIn
-
-                    Workspaces {}
-                }
-
-                // --- RIGHT ---
+                // --- RIGHT: media, tray, CPU, quick settings ---
                 RowLayout {
                     anchors.right: parent.right
-                    anchors.rightMargin: root.gapOut
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: root.gapIn
+                    spacing: Config.spacing
 
-                    TrayWidget {}
-                    QuickSettingsButton {}
+                    MediaIsland {
+                        onOpenRequested: quickSettings.toggleWindow()
+                    }
+
+                    BarIsland {
+                        TrayWidget {}
+
+                        SystemMonitorButton {}
+
+                        BarDivider {}
+
+                        QuickSettingsButton {
+                            id: quickSettings
+                        }
+                    }
                 }
             }
         }

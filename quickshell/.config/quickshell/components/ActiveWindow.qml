@@ -2,13 +2,15 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Widgets
 import qs.config
 
 Item {
     id: root
 
-    property int maxWidth: 400
+    property int maxWidth: Config.fontSizeNormal * 18
 
     // Internal state to force clearing
     property bool windowExists: Hyprland.activeToplevel !== null
@@ -36,17 +38,22 @@ Item {
         }
     }
 
-    implicitWidth: windowExists ? content.implicitWidth : 0
+    readonly property string appId: Hyprland.activeToplevel?.wayland?.appId ?? ""
+    readonly property string appIcon: appId !== "" ? Quickshell.iconPath(appId, true) : ""
+
+    implicitWidth: windowExists && windowTitle !== "" ? content.implicitWidth : 0
     implicitHeight: content.implicitHeight
 
-    visible: opacity > 0
-    opacity: windowExists ? 1.0 : 0.0
+    visible: implicitWidth > 0
+    opacity: windowExists ? 1 : 0
+    clip: true
 
     Behavior on opacity {
         NumberAnimation {
             duration: Config.animDuration
         }
     }
+
     Behavior on implicitWidth {
         NumberAnimation {
             duration: Config.animDuration
@@ -56,18 +63,21 @@ Item {
 
     RowLayout {
         id: content
-        spacing: 6
-        anchors.fill: parent
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: Config.padding
+
+        IconImage {
+            visible: root.appIcon !== ""
+            implicitSize: Config.fontSizeNormal
+            source: root.appIcon
+        }
 
         Text {
-            id: titleText
-            text: root.windowTitle !== "" ? "  " + root.windowTitle : ""
-            color: Config.surface3Color
+            text: root.windowTitle
+            color: Config.subtextColor
             font.family: Config.font
-            font.pixelSize: Config.fontSizeNormal
+            font.pixelSize: Config.fontSizeSmall
             elide: Text.ElideRight
-
-            Layout.fillWidth: true
             Layout.maximumWidth: root.maxWidth
         }
     }

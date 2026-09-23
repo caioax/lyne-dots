@@ -6,7 +6,7 @@ import qs.services
 
 RowLayout {
     id: root
-    spacing: 5
+    spacing: Math.round(Config.padding / 2)
 
     // Drawer state
     property bool isOpen: false
@@ -27,8 +27,8 @@ RowLayout {
 
         clip: true
 
-        Layout.preferredHeight: 30
-        Layout.preferredWidth: root.isOpen ? (iconsRow.implicitWidth + 5) : 0
+        Layout.preferredHeight: Config.barButtonHeight
+        Layout.preferredWidth: root.isOpen ? iconsRow.implicitWidth + Config.padding : 0
 
         Behavior on Layout.preferredWidth {
             NumberAnimation {
@@ -47,11 +47,11 @@ RowLayout {
         // Drawer content
         Row {
             id: iconsRow
-            spacing: 3
+            spacing: Math.round(Config.padding / 2)
             anchors.verticalCenter: parent.verticalCenter
 
             anchors.right: parent.right
-            anchors.rightMargin: root.isOpen ? 5 : -iconsRow.implicitWidth
+            anchors.rightMargin: root.isOpen ? Config.padding : -iconsRow.implicitWidth
 
             Behavior on anchors.rightMargin {
                 NumberAnimation {
@@ -67,8 +67,8 @@ RowLayout {
                     id: trayDelegate
                     required property var modelData
 
-                    implicitWidth: 24
-                    implicitHeight: 24
+                    implicitWidth: Config.barButtonHeight
+                    implicitHeight: Config.barButtonHeight
                     radius: width / 2
                     color: mouseArea.containsMouse ? Config.surface1Color : "transparent"
 
@@ -76,12 +76,12 @@ RowLayout {
                     Image {
                         id: trayIcon
                         anchors.centerIn: parent
-                        width: 18
-                        height: 18
+                        width: Config.fontSizeIconSmall
+                        height: Config.fontSizeIconSmall
                         source: TrayService.getIconSource(trayDelegate.modelData.icon)
                         fillMode: Image.PreserveAspectFit
                         asynchronous: true
-                        sourceSize: Qt.size(32, 32)
+                        sourceSize: Qt.size(Config.fontSizeIconSmall * 2, Config.fontSizeIconSmall * 2)
                         smooth: true
                         visible: status === Image.Ready
                     }
@@ -89,11 +89,11 @@ RowLayout {
                     // Fallback when primary icon fails (e.g. pixmap-based icons from nm-applet)
                     Image {
                         anchors.centerIn: parent
-                        width: 18
-                        height: 18
+                        width: Config.fontSizeIconSmall
+                        height: Config.fontSizeIconSmall
                         source: "image://icon/application-default-icon"
                         fillMode: Image.PreserveAspectFit
-                        sourceSize: Qt.size(32, 32)
+                        sourceSize: Qt.size(Config.fontSizeIconSmall * 2, Config.fontSizeIconSmall * 2)
                         smooth: true
                         visible: trayIcon.status === Image.Error
                     }
@@ -117,7 +117,7 @@ RowLayout {
                                     // 2. Configures the shared menu
                                     sharedMenu.rootMenuHandle = trayDelegate.modelData.menu;
                                     sharedMenu.anchorX = globalPos.x;
-                                    sharedMenu.anchorY = globalPos.y + 5;
+                                    sharedMenu.anchorY = globalPos.y + Config.padding;
 
                                     // 3. Opens the menu
                                     sharedMenu.open();
@@ -135,8 +135,8 @@ RowLayout {
         id: toggleBtn
 
         visible: TrayService.hasItems
-        Layout.preferredWidth: 24
-        Layout.preferredHeight: 24
+        Layout.preferredWidth: Config.barButtonHeight
+        Layout.preferredHeight: Config.barButtonHeight
         radius: width / 2
 
         color: (toggleMouse.containsMouse) ? Config.surface1Color : "transparent"
@@ -152,8 +152,8 @@ RowLayout {
             anchors.centerIn: parent
             text: "󰅁"
             font.family: Config.font
-            font.pixelSize: Config.fontSizeIconSmall
-            color: Config.textColor
+            font.pixelSize: Config.fontSizeNormal
+            color: Config.subtextColor
 
             scale: root.isOpen ? -1 : 1
 

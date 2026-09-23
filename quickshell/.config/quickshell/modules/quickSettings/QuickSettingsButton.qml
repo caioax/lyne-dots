@@ -12,7 +12,11 @@ BarButton {
 
     active: quickSettingsWindow.visible
     contentItem: iconsLayout
-    onClicked: quickSettingsWindow.visible = !quickSettingsWindow.visible
+    onClicked: toggleWindow()
+
+    function toggleWindow() {
+        quickSettingsWindow.visible = !quickSettingsWindow.visible;
+    }
     onRightClicked: NotificationService.toggleDnd()
 
     // `qs ipc call notifications toggleWindow` opens it on the focused monitor only
@@ -21,7 +25,7 @@ BarButton {
 
         function onWindowToggleRequested() {
             if (root.QsWindow.window?.screen?.name === Hyprland.focusedMonitor?.name)
-                quickSettingsWindow.visible = !quickSettingsWindow.visible;
+                root.toggleWindow();
         }
     }
 
@@ -86,6 +90,7 @@ BarButton {
 
     QuickSettingsWindow {
         id: quickSettingsWindow
+        anchorItem: root
         visible: false
     }
 }

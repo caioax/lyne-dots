@@ -13,6 +13,8 @@ PanelWindow {
     property int popupWidth: 380
     property int popupMaxHeight: 700
     property string anchorSide: "left"
+    // Bar button to open under: the popup centers on it, kept inside the screen
+    property Item anchorItem: null
     property string moduleName: ""
     property real contentImplicitHeight: 0
 
@@ -27,16 +29,37 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     WlrLayershell.exclusiveZone: -1
 
+    readonly property bool anchored: anchorItem !== null
+
+    // Horizontal center of anchorItem on the screen. Re-evaluated whenever the
+    // popup opens (mapToItem isn't reactive to the bar layout moving)
+    readonly property real anchorCenterX: {
+        visible;
+        if (!anchorItem)
+            return 0;
+        return anchorItem.mapToItem(null, anchorItem.width / 2, 0).x;
+    }
+
+    // Keeps the visible popup at least Config.spacing from the screen edges,
+    // the same gap the bar islands use
+    readonly property real edgeMargin: Config.spacing - screenMargin
+
     anchors {
         top: true
-        left: anchorSide === "left"
-        right: anchorSide === "right"
+        left: anchored || anchorSide === "left"
+        right: !anchored && anchorSide === "right"
     }
 
     margins {
-        top: Config.barHeight + 10
-        left: anchorSide === "left" ? 10 : 0
-        right: anchorSide === "right" ? 10 : 0
+        top: Config.barHeight + Config.spacing
+        left: {
+            if (anchored) {
+                const maxLeft = (screen?.width ?? implicitWidth) - implicitWidth - edgeMargin;
+                return Math.max(edgeMargin, Math.min(anchorCenterX - implicitWidth / 2, maxLeft));
+            }
+            return anchorSide === "left" ? edgeMargin : 0;
+        }
+        right: !anchored && anchorSide === "right" ? edgeMargin : 0
     }
 
     implicitWidth: popupWidth + (screenMargin * 2)
@@ -115,7 +138,7 @@ PanelWindow {
             border.color: Config.surface2Color
             clip: true
 
-            transformOrigin: root.anchorSide === "left" ? Item.TopLeft : Item.TopRight
+            transformOrigin: root.anchored ? Item.Top : root.anchorSide === "left" ? Item.TopLeft : Item.TopRight
 
             property bool showState: visible && !root.isClosing && root.isOpening
 

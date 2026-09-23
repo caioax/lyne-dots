@@ -10,11 +10,11 @@ Item {
     id: root
 
     // --- Sizing Properties ---
-    readonly property int itemWidth: 15
-    readonly property int itemHeight: 15
-    readonly property int activeWidth: 30
-    readonly property int activeHeight: 18
-    readonly property int itemSpacing: 4
+    readonly property int itemWidth: Config.fontSizeSmall + Math.round(Config.padding / 2)
+    readonly property int itemHeight: itemWidth
+    readonly property int activeWidth: itemWidth * 2
+    readonly property int activeHeight: Config.fontSizeSmall + Config.padding
+    readonly property int itemSpacing: Math.round(Config.padding * 2 / 3)
     readonly property int visibleCount: 9
     readonly property int totalWorkspaces: 99
 
@@ -51,7 +51,7 @@ Item {
     readonly property real itemStep: itemWidth + itemSpacing
 
     implicitWidth: isSpecialWorkspace ? specialIndicator.width : viewportWidth
-    implicitHeight: activeHeight + 4
+    implicitHeight: activeHeight + itemSpacing
 
     // --- Special Workspaces Config ---
     readonly property var specialWorkspaces: ({
@@ -98,18 +98,22 @@ Item {
 
     // --- Scroll Logic ---
     readonly property int targetIndex: relativeActiveId - 1
-    readonly property real targetScrollX: {
-        let centerOffset = Math.floor(visibleCount / 2);
-        let maxScrollIndex = totalWorkspaces - visibleCount;
-        let firstVisible = Math.max(0, Math.min(targetIndex - centerOffset, maxScrollIndex));
-        return firstVisible * itemStep;
+
+    // The strip only scrolls when the active workspace leaves the visible
+    // window, so switching among 1-9 never moves the other pills
+    property int firstVisible: 0
+    onTargetIndexChanged: {
+        if (targetIndex < firstVisible)
+            firstVisible = targetIndex;
+        else if (targetIndex > firstVisible + visibleCount - 1)
+            firstVisible = Math.min(targetIndex - visibleCount + 1, totalWorkspaces - visibleCount);
     }
 
-    property real animatedScrollX: targetScrollX
+    property real animatedScrollX: firstVisible * itemStep
     Behavior on animatedScrollX {
         NumberAnimation {
-            duration: Config.animDurationLong
-            easing.type: Easing.OutQuint
+            duration: Config.animDuration
+            easing.type: Easing.OutCubic
         }
     }
 
@@ -170,7 +174,7 @@ Item {
         opacity: root.isSpecialWorkspace ? (specialHover.hovered ? 0.8 : 1.0) : 0
 
         scale: root.isSpecialWorkspace ? 1.0 : 0.9
-        property int yOffset: root.isSpecialWorkspace ? 0 : 5
+        property int yOffset: root.isSpecialWorkspace ? 0 : Config.padding
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: yOffset
 
@@ -286,19 +290,23 @@ Item {
                     color: isActive ? Config.accentColor : (!isEmpty ? Config.surface3Color : Qt.alpha(Config.surface2Color, 0.65))
                     opacity: !isActive ? (workspaceHover.hovered ? 0.8 : 1.0) : 1
 
+                    // Same timing as the strip scroll, so pill and strip move together
                     Behavior on x {
                         NumberAnimation {
-                            duration: Config.animDurationShort
+                            duration: Config.animDuration
+                            easing.type: Easing.OutCubic
                         }
                     }
                     Behavior on width {
                         NumberAnimation {
-                            duration: Config.animDurationShort
+                            duration: Config.animDuration
+                            easing.type: Easing.OutCubic
                         }
                     }
                     Behavior on height {
                         NumberAnimation {
-                            duration: Config.animDurationShort
+                            duration: Config.animDuration
+                            easing.type: Easing.OutCubic
                         }
                     }
                     Behavior on color {

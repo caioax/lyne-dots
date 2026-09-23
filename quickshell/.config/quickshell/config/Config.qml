@@ -48,6 +48,9 @@ Singleton {
     // ========================================================================
     readonly property int barHeight: getState("bar.height", 32)
     readonly property bool barAutoHide: getState("bar.autoHide", true)
+    // Floating islands inside the bar and the buttons inside them
+    readonly property int barIslandHeight: barHeight - padding
+    readonly property int barButtonHeight: barIslandHeight - Math.round(padding * 2 / 3)
 
     readonly property int radiusSmall: getState("geometry.radiusSmall", 5)
     readonly property int radius: getState("geometry.radius", 10)

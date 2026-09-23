@@ -57,6 +57,14 @@ Singleton {
 
     Component.onCompleted: refresh(false)
 
+    // Keeps the bar's temperature fresh (one request per maxAge)
+    Timer {
+        interval: root.maxAge
+        running: true
+        repeat: true
+        onTriggered: root.refresh(false)
+    }
+
     Connections {
         target: StateService
         function onStateLoaded() {
