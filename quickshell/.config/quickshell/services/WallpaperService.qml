@@ -442,7 +442,12 @@ Singleton {
     Process {
         id: addWallpapersProc
         command: ["bash", "-c", `
-            files=$(kdialog --multiple --getopenfilename ~ "Image Files (*.png *.jpg *.jpeg *.webp *.gif)")
+            if command -v zenity >/dev/null; then
+                files=$(zenity --file-selection --multiple --separator=$'\\n' --title="Add Wallpapers" --filename="$HOME/" --file-filter="Image Files | *.png *.jpg *.jpeg *.webp *.gif")
+            else
+                notify-send "Wallpaper" "Install zenity to add wallpapers"
+                files=""
+            fi
             if [ -n "$files" ]; then
                 mkdir -p "${root.wallpaperDir}"
                 echo "$files" | while read -r file; do

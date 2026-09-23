@@ -15,6 +15,9 @@ QUICKSHELL_PACKAGES=(
 
     # Additional Qt6 modules
     "qt6-imageformats" # Additional image formats
+
+    # Dialogs
+    "zenity" # File picker for adding wallpapers
 )
 
 # AUR packages

@@ -61,7 +61,7 @@ Scope {
             // Smooth window movement animation
             Behavior on margins.top {
                 NumberAnimation {
-                    duration: Config.animDuration
+                    duration: Config.animDurationLong
                     easing.type: Easing.OutExpo
                 }
             }

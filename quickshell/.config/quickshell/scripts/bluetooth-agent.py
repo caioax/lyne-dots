@@ -28,7 +28,7 @@ def close_quick_settings():
             print(f"wtype error: {e}")
     else:
         # The menu is NOT open. Do nothing.
-        # The script proceeds directly to open the kdialog.
+        # The script proceeds directly to open the zenity dialog.
         pass
 
 class Agent(dbus.service.Object):
@@ -50,7 +50,7 @@ class Agent(dbus.service.Object):
         # For older keyboards that require manual PIN entry
         try:
             output = subprocess.check_output(
-                ["kdialog", "--title", "Bluetooth", "--inputbox", "Enter the device PIN:"]
+                ["zenity", "--entry", "--title=Bluetooth", "--text=Enter the device PIN:"]
             )
             return output.decode().strip()
         except subprocess.CalledProcessError:
@@ -65,7 +65,7 @@ class Agent(dbus.service.Object):
         message = f"Device wants to pair.\nPIN: {passkey:06d}\nConfirm?"
         try:
             subprocess.check_call(
-                ["kdialog", "--title", "Bluetooth Pairing", "--yesno", message]
+                ["zenity", "--question", "--title=Bluetooth Pairing", f"--text={message}"]
             )
             return
         except subprocess.CalledProcessError:
@@ -77,7 +77,7 @@ class Agent(dbus.service.Object):
 
         try:
             subprocess.check_call(
-                ["kdialog", "--title", "Bluetooth", "--yesno", "Authorize pairing with this device?"]
+                ["zenity", "--question", "--title=Bluetooth", "--text=Authorize pairing with this device?"]
             )
             return
         except:
