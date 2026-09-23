@@ -87,4 +87,5 @@ Singleton {
     readonly property int notifImageSize: getState("notifications.imageSize", 40)
     readonly property int notifTimeout: getState("notifications.timeout", 5000)
     readonly property int notifSpacing: getState("notifications.spacing", 10)
+    readonly property int notifMaxPopups: getState("notifications.maxPopups", 4)
 }

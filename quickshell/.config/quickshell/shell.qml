@@ -9,6 +9,7 @@ import qs.services
 import "./modules/bar/"
 import "./modules/power/"
 import "./modules/screenshot/"
+import "./modules/notifications/"
 import qs.config
 
 ShellRoot {
@@ -79,17 +80,8 @@ ShellRoot {
     // Bar - always active (main component)
     Bar {}
 
-    // Notifications
-    Loader {
-        id: notificationLoader
-        active: NotificationService.activePopupCount > 0 || NotificationService.popups.length > 0
-        source: "./modules/notifications/NotificationOverlay.qml"
-
-        onStatusChanged: {
-            if (status === Loader.Ready)
-                console.log("[Shell] NotificationOverlay loaded");
-        }
-    }
+    // Notifications (the window only maps while there are popups)
+    NotificationOverlay {}
 
     // Lock Screen
     Loader {

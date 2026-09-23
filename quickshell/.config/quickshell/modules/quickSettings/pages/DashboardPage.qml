@@ -12,27 +12,35 @@ import "../../notifications/"
 Item {
     id: root
 
+    // Height the page may use; the notification list scrolls within what's left
+    property real availableHeight: 0
+    readonly property bool hasNotifications: NotificationService.count > 0
+
+    // Sizes shared by the header controls
+    readonly property int avatarSize: Config.fontSizeLarge * 3
+    readonly property int controlSize: Config.fontSizeIconSmall * 2
+
     signal closeWindow
 
     Layout.fillWidth: true
-    implicitHeight: main.implicitHeight
+    implicitHeight: main.implicitHeight + (hasNotifications ? notifSeparator.anchors.topMargin + 1 + notifList.anchors.topMargin + notifList.implicitHeight : 0)
 
     ColumnLayout {
         id: main
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        spacing: 12
+        spacing: Config.padding * 2
 
         // HEADER (Profile and Info)
         RowLayout {
             Layout.fillWidth: true
-            spacing: 12
+            spacing: Config.padding * 2
 
             // Avatar / System Icon
             Rectangle {
-                Layout.preferredWidth: 48
-                Layout.preferredHeight: 48
+                Layout.preferredWidth: root.avatarSize
+                Layout.preferredHeight: root.avatarSize
                 radius: Config.radiusLarge
                 gradient: Gradient {
                     GradientStop {
@@ -57,7 +65,7 @@ Item {
             // Welcome Text
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 2
+                spacing: Math.round(Config.padding / 3)
 
                 Text {
                     text: Quickshell.env("USER")
@@ -82,15 +90,15 @@ Item {
             // Battery indicator (only shows if battery is present)
             Rectangle {
                 visible: BatteryService.hasBattery
-                Layout.preferredHeight: 36
-                Layout.preferredWidth: batteryContent.implicitWidth + 16
+                Layout.preferredHeight: root.controlSize
+                Layout.preferredWidth: batteryContent.implicitWidth + Config.spacing * 2
                 radius: Config.radius
                 color: Config.surface1Color
 
                 RowLayout {
                     id: batteryContent
                     anchors.centerIn: parent
-                    spacing: 6
+                    spacing: Config.padding
 
                     Text {
                         text: BatteryService.getBatteryIcon()
@@ -119,6 +127,7 @@ Item {
 
             // Theme color
             ActionButton {
+                size: root.controlSize
                 icon: "󰏘"
                 textColor: Config.accentColor
                 hoverTextColor: Config.accentColor
@@ -129,8 +138,8 @@ Item {
             ClearButton {
                 icon: "⏻"
 
-                Layout.preferredWidth: 36
-                Layout.preferredHeight: 36
+                Layout.preferredWidth: root.controlSize
+                Layout.preferredHeight: root.controlSize
 
                 onClicked: {
                     root.closeWindow();
@@ -162,8 +171,8 @@ Item {
         // BUTTON GRID
         GridLayout {
             columns: 2
-            columnSpacing: 10
-            rowSpacing: 10
+            columnSpacing: Config.spacing
+            rowSpacing: Config.spacing
             Layout.fillWidth: true
 
             // WI-FI BUTTON
@@ -232,7 +241,7 @@ Item {
         // SLIDERS
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 12
+            spacing: Config.padding * 2
             Layout.topMargin: 1
 
             QsSlider {
@@ -254,5 +263,26 @@ Item {
                 onIconClicked: BrightnessService.toggleBrightness()
             }
         }
+    }
+
+    // ========== NOTIFICATIONS ==========
+    Rectangle {
+        id: notifSeparator
+        visible: root.hasNotifications
+        anchors.top: main.bottom
+        anchors.topMargin: main.spacing
+        width: parent.width
+        height: 1
+        color: Config.surface1Color
+    }
+
+    NotificationList {
+        id: notifList
+        visible: root.hasNotifications
+        anchors.top: notifSeparator.bottom
+        anchors.topMargin: main.spacing
+        width: parent.width
+        maxHeight: root.availableHeight - main.implicitHeight - main.spacing * 2 - 1
+        onActionTriggered: root.closeWindow()
     }
 }

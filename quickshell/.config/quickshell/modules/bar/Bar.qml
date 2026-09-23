@@ -7,7 +7,6 @@ import qs.config
 import qs.services
 import "../../components/"
 import "../quickSettings/"
-import "../notifications/"
 import "../systemMonitor/"
 import "../calendar/"
 
@@ -108,7 +107,6 @@ Scope {
 
                     TrayWidget {}
                     QuickSettingsButton {}
-                    NotificationButton {}
                 }
             }
         }

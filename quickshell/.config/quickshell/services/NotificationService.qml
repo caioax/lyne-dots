@@ -2,6 +2,7 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Notifications
 import qs.config
 
@@ -9,51 +10,106 @@ Singleton {
     id: root
 
     // ========================================================================
-    // DND (DO NOT DISTURB)
+    // STATE
     // ========================================================================
 
-    property bool dndEnabled: false
+    // Newest first. Items are snapshots, so they outlive the D-Bus object
+    property list<NotifData> list: []
+    readonly property list<NotifData> popups: list.filter(n => n.popup)
 
-    function toggleDnd() {
-        dndEnabled = !dndEnabled;
-        
-        if (dndEnabled) {
-            // When DND is enabled, remove all active popups
-            for (let i = 0; i < notifications.length; i++) {
-                if (notifications[i] && notifications[i].popup) {
-                    notifications[i].popup = false;
-                    notifications[i].tickTimer.stop();
-                }
-            }
+    // App names ordered by their most recent notification (history groups)
+    readonly property var groupNames: {
+        const names = [];
+        for (const n of list) {
+            if (!names.includes(n.appName))
+                names.push(n.appName);
         }
+        return names;
     }
 
-    function setDnd(enabled: bool) {
-        if (dndEnabled !== enabled) {
-            dndEnabled = enabled;
-            if (enabled) {
-                // Remove active popups
-                for (let i = 0; i < notifications.length; i++) {
-                    if (notifications[i] && notifications[i].popup) {
-                        notifications[i].popup = false;
-                        notifications[i].tickTimer.stop();
-                    }
-                }
-            }
-        }
-    }
-
-    // ========================================================================
-    // NOTIFICATION LISTS
-    // ========================================================================
-
-    readonly property list<NotifWrapper> notifications: []
-    readonly property list<NotifWrapper> popups: notifications.filter(n => n && n.popup)
-
-    readonly property int count: notifications.length
+    readonly property int count: list.length
     readonly property int activePopupCount: popups.length
 
-    property int hoveredNotificationId: -1
+    property bool dndEnabled: StateService.get("notifications.dnd", false)
+
+    signal windowToggleRequested
+
+    Connections {
+        target: StateService
+
+        function onStateLoaded() {
+            root.dndEnabled = StateService.get("notifications.dnd", false);
+        }
+    }
+
+    // ========================================================================
+    // DND
+    // ========================================================================
+
+    function setDnd(enabled: bool) {
+        if (dndEnabled === enabled)
+            return;
+        dndEnabled = enabled;
+        StateService.set("notifications.dnd", enabled);
+        if (enabled) {
+            for (const n of popups) {
+                if (n.urgency !== NotificationUrgency.Critical)
+                    n.hidePopup();
+            }
+        }
+    }
+
+    function toggleDnd() {
+        setDnd(!dndEnabled);
+    }
+
+    // ========================================================================
+    // PUBLIC FUNCTIONS
+    // ========================================================================
+
+    function notificationsOf(appName: string): var {
+        return list.filter(n => n.appName === appName);
+    }
+
+    function dismissGroup(appName: string) {
+        for (const n of notificationsOf(appName))
+            n.close();
+    }
+
+    function clearAll() {
+        for (const n of list.slice())
+            n.close();
+    }
+
+    // "now", "5m", "2h", "3d" — re-evaluated every second through TimeService
+    function relativeTime(time: date): string {
+        const minutes = Math.floor((TimeService.date.getTime() - time.getTime()) / 60000);
+        if (minutes < 1)
+            return "now";
+        if (minutes < 60)
+            return minutes + "m";
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24)
+            return hours + "h";
+        return Math.floor(hours / 24) + "d";
+    }
+
+    function iconSource(icon: string): string {
+        if (icon === "")
+            return "";
+        if (icon.startsWith("/"))
+            return "file://" + icon;
+        if (icon.includes("://"))
+            return icon;
+        return Quickshell.iconPath(icon, true);
+    }
+
+    // Keep at most notifMaxPopups on screen, hiding the oldest ones first
+    function trimPopups() {
+        const visible = popups.filter(n => !n.exiting);
+        for (let i = Config.notifMaxPopups; i < visible.length; i++)
+            visible[i].hidePopup();
+    }
 
     // ========================================================================
     // NOTIFICATION SERVER
@@ -69,219 +125,255 @@ Singleton {
         bodyImagesSupported: true
         bodyMarkupSupported: true
         imageSupported: true
+        inlineReplySupported: true
         persistenceSupported: true
 
         onNotification: notif => {
-            console.log("[Notif] Received:", notif.appName, "-", notif.summary);
-
             notif.tracked = true;
 
-            // If DND is active, don't show popup but still keep in history
-            const showPopup = !root.dndEnabled;
-
-            const wrapper = notifComponent.createObject(root, {
-                "popup": showPopup,
+            const critical = notif.urgency === NotificationUrgency.Critical;
+            const data = notifComponent.createObject(root, {
                 "notification": notif
             });
 
-            if (wrapper) {
-                root.notifications.push(wrapper);
-                
-                // Only start the lifecycle (timer) if not in DND
-                if (showPopup) {
-                    wrapper.startLifecycle();
-                }
-                
-                console.log("[Notif] Wrapper created. Total:", root.notifications.length, "Popups:", root.popups.length, "DND:", root.dndEnabled);
-            }
-        }
-    }
+            root.list = [data, ...root.list];
 
-    // ========================================================================
-    // WRAPPER COMPONENT
-    // ========================================================================
-
-    component NotifWrapper: QtObject {
-        id: wrapper
-
-        property bool popup: false
-
-        // ====== TICK TIMER SYSTEM (for real pause) ======
-        property int totalTime: Config.notifTimeout
-        property int remainingTime: Config.notifTimeout
-
-        // Progress from 0.0 to 1.0 (for the progress bar in the Card)
-        property real progress: 0.0
-
-        // Timer that decrements every 50ms
-        readonly property Timer tickTimer: Timer {
-            interval: 50
-            repeat: true
-            running: false
-
-            onTriggered: {
-                if (wrapper.remainingTime > 0) {
-                    wrapper.remainingTime -= interval;
-                    wrapper.progress = 1.0 - (wrapper.remainingTime / wrapper.totalTime);
-
-                    if (wrapper.remainingTime <= 0) {
-                        wrapper.remainingTime = 0;
-                        wrapper.progress = 1.0;
-                        stop();
-                        wrapper.popup = false;
-                        console.log("[Notif] Timer expired for:", wrapper.notifId);
-                    }
-                }
-            }
-        }
-
-        function startLifecycle() {
-            remainingTime = totalTime;
-            progress = 0.0;
-            tickTimer.start();
-        }
-
-        // Pause the timer on hover
-        property bool isPaused: root.hoveredNotificationId === (notification ? notification.id : -1)
-
-        onIsPausedChanged: {
-            if (isPaused) {
-                if (tickTimer.running) {
-                    tickTimer.stop();
-                    console.log("[Notif] Paused:", notifId, "- Remaining:", remainingTime, "ms - Progress:", progress.toFixed(2));
-                }
-            } else {
-                if (popup && remainingTime > 0 && !tickTimer.running) {
-                    tickTimer.start();
-                    console.log("[Notif] Resumed:", notifId, "- Remaining:", remainingTime, "ms");
-                } else if (popup && remainingTime <= 0) {
-                    popup = false;
-                }
-            }
-        }
-
-        // Timestamp
-        readonly property date time: new Date()
-        readonly property string timeStr: {
-            const now = new Date();
-            const diff = now.getTime() - time.getTime();
-            const minutes = Math.floor(diff / 60000);
-
-            if (minutes < 1)
-                return "now";
-            if (minutes < 60)
-                return minutes + "m ago";
-
-            const hours = Math.floor(minutes / 60);
-            if (hours < 24)
-                return hours + "h ago";
-
-            return Math.floor(hours / 24) + "d ago";
-        }
-
-        required property Notification notification
-
-        readonly property int notifId: notification ? notification.id : -1
-        readonly property string summary: notification ? (notification.summary || "") : ""
-        readonly property string body: notification ? (notification.body || "") : ""
-        readonly property string appIcon: notification ? (notification.appIcon || "") : ""
-        readonly property string appName: notification ? (notification.appName || "System") : "System"
-        readonly property string image: notification ? (notification.image || "") : ""
-        readonly property int urgency: notification ? notification.urgency : 0
-        readonly property bool isUrgent: urgency === 2
-        readonly property var actions: notification ? (notification.actions || []) : []
-        readonly property bool hasActions: actions && actions.length > 0
-
-        readonly property Connections conn: Connections {
-            target: wrapper.notification ? wrapper.notification.Retainable : null
-
-            function onDropped(): void {
-                console.log("[Notif] Dropped:", wrapper.notifId);
-                wrapper.tickTimer.stop();
-                root.notifications = root.notifications.filter(w => w !== wrapper);
-            }
-
-            function onAboutToDestroy(): void {
-                wrapper.tickTimer.stop();
-                wrapper.destroy();
-            }
+            // Notifications restored after a reload go straight to history
+            if (!notif.lastGeneration && (critical || !root.dndEnabled))
+                data.showPopup();
+            else if (data.isTransient)
+                data.close();
         }
     }
 
     Component {
         id: notifComponent
-        NotifWrapper {}
+        NotifData {}
     }
 
     // ========================================================================
-    // PUBLIC FUNCTIONS
+    // NOTIFICATION DATA
     // ========================================================================
 
-    function setHovered(notifId) {
-        hoveredNotificationId = notifId;
-    }
+    component NotifData: QtObject {
+        id: notif
 
-    function clearHovered() {
-        hoveredNotificationId = -1;
-    }
+        required property Notification notification
 
-    function expireNotification(notifId) {
-        for (let i = 0; i < notifications.length; i++) {
-            if (notifications[i].notifId === notifId) {
-                notifications[i].popup = false;
-                notifications[i].tickTimer.stop();
-                break;
+        readonly property date time: new Date()
+        property bool popup: false
+        // Popup is playing its exit animation; `popup` turns false right after
+        property bool exiting: false
+        property bool closeAfterExit: false
+        property bool closed: false
+        property bool dropped: false
+
+        // Set by the popup while hovered or typing a reply
+        property bool held: false
+
+        // Snapshot of the D-Bus notification (refreshed when the app replaces it)
+        property int notifId: -1
+        property string appName: ""
+        property string appIcon: ""
+        property string summary: ""
+        property string body: ""
+        property string image: ""
+        property int urgency: NotificationUrgency.Normal
+        property bool resident: false
+        property bool isTransient: false
+        property bool hasActionIcons: false
+        property bool hasInlineReply: false
+        property string inlineReplyPlaceholder: ""
+        property real expireTimeout: 0
+        property var actions: []
+        property int progressValue: -1
+
+        readonly property bool isCritical: urgency === NotificationUrgency.Critical
+        readonly property var defaultAction: actions.find(a => a.identifier === "default") ?? null
+        readonly property var buttonActions: actions.filter(a => a.identifier !== "default" && a.text !== "")
+
+        // Popup lifetime in ms; 0 means it stays until dismissed
+        readonly property int timeout: {
+            if (isCritical)
+                return 0;
+            if (expireTimeout > 0)
+                return expireTimeout;
+            return Config.notifTimeout;
+        }
+
+        // 1 → 0 while the popup is on screen (drives the timeout bar)
+        property real timeLeft: 1
+
+        readonly property NumberAnimation expireAnim: NumberAnimation {
+            target: notif
+            property: "timeLeft"
+            from: 1
+            to: 0
+            duration: notif.timeout
+            paused: running && notif.held
+            onFinished: notif.hidePopup()
+        }
+
+        readonly property Timer exitTimer: Timer {
+            interval: Config.animDuration
+            onTriggered: notif.finishExit()
+        }
+
+        function showPopup() {
+            exitTimer.stop();
+            exiting = false;
+            popup = true;
+            expireAnim.stop();
+            timeLeft = 1;
+            if (timeout > 0)
+                expireAnim.start();
+            root.trimPopups();
+        }
+
+        function hidePopup() {
+            if (!popup || exiting)
+                return;
+            expireAnim.stop();
+            exiting = true;
+            exitTimer.restart();
+        }
+
+        function finishExit() {
+            exiting = false;
+            popup = false;
+            if (isTransient || closeAfterExit)
+                close();
+        }
+
+        function invokeAction(action) {
+            action.invoke();
+            if (!resident)
+                close();
+            else
+                hidePopup();
+        }
+
+        // Click on the notification body: default action if the app offers one
+        function activate() {
+            if (defaultAction)
+                invokeAction(defaultAction);
+            else
+                hidePopup();
+        }
+
+        function sendReply(text: string) {
+            notification?.sendInlineReply(text);
+            if (!resident)
+                close();
+        }
+
+        function close() {
+            if (closed)
+                return;
+            // Let the popup slide out first
+            if (popup) {
+                closeAfterExit = true;
+                hidePopup();
+                return;
+            }
+            closed = true;
+            expireAnim.stop();
+            popup = false;
+            root.list = root.list.filter(n => n !== notif);
+            if (!dropped)
+                notification?.dismiss();
+            // Delayed so delegates showing it are gone before it becomes null
+            destroy(Config.animDurationLong);
+        }
+
+        function refresh() {
+            notifId = notification.id;
+            appName = notification.appName || "System";
+            summary = notification.summary || "";
+            body = notification.body || "";
+
+            // `notify-send -i` arrives as image://icon/<name or path>: a themed
+            // name is really an icon, a path is a real image
+            let img = notification.image || "";
+            let iconHint = "";
+            if (img.startsWith("image://icon/")) {
+                const name = img.slice("image://icon/".length);
+                img = name.startsWith("/") ? "file://" + name : "";
+                iconHint = name.startsWith("/") ? "" : name;
+            }
+            image = img;
+
+            const candidates = [iconHint, notification.appIcon, notification.desktopEntry, appName.toLowerCase()];
+            appIcon = candidates.find(c => c && root.iconSource(c) !== "") ?? "";
+            urgency = notification.urgency;
+            resident = notification.resident;
+            isTransient = notification.transient;
+            hasActionIcons = notification.hasActionIcons;
+            hasInlineReply = notification.hasInlineReply;
+            inlineReplyPlaceholder = notification.inlineReplyPlaceholder || "";
+            expireTimeout = notification.expireTimeout;
+            actions = notification.actions.map(a => ({
+                        "identifier": a.identifier,
+                        "text": a.text,
+                        "invoke": () => a.invoke()
+                    }));
+
+            const value = notification.hints?.value;
+            progressValue = value !== undefined ? Math.max(0, Math.min(100, value)) : -1;
+        }
+
+        readonly property Connections conn: Connections {
+            target: notif.notification
+
+            // The app replaced the notification (same id): refresh and show it again
+            function onSummaryChanged() {
+                notif.replaced();
+            }
+            function onBodyChanged() {
+                notif.replaced();
+            }
+            function onHintsChanged() {
+                notif.replaced();
+            }
+
+            // Closed by the app, expired or dismissed elsewhere
+            function onClosed() {
+                notif.dropped = true;
+                notif.close();
             }
         }
-    }
 
-    function removeNotification(notifId) {
-        for (let i = 0; i < notifications.length; i++) {
-            if (notifications[i].notifId === notifId) {
-                const wrapper = notifications[i];
-                wrapper.popup = false;
-                wrapper.tickTimer.stop();
-                if (wrapper.notification) {
-                    wrapper.notification.dismiss();
-                }
-                break;
-            }
+        function replaced() {
+            // Several properties change in one update; handle it once
+            Qt.callLater(() => {
+                if (closed)
+                    return;
+                refresh();
+                if (popup || (!root.dndEnabled || isCritical))
+                    showPopup();
+            });
         }
-    }
 
-    function clearAll() {
-        const toRemove = notifications.slice();
-        for (const wrapper of toRemove) {
-            if (wrapper) {
-                wrapper.tickTimer.stop();
-                if (wrapper.notification) {
-                    wrapper.notification.dismiss();
-                }
-            }
-        }
+        Component.onCompleted: refresh()
     }
 
     // ========================================================================
-    // ICON HELPER
+    // IPC — qs ipc call notifications <function>
     // ========================================================================
 
-    function getIconSource(appIcon, image) {
-        if (image && image !== "") {
-            if (image.startsWith("/"))
-                return "file://" + image;
-            if (image.startsWith("file://") || image.startsWith("image://"))
-                return image;
-            return image;
+    IpcHandler {
+        target: "notifications"
+
+        function toggleWindow(): void {
+            root.windowToggleRequested();
         }
 
-        if (appIcon && appIcon !== "") {
-            if (appIcon.startsWith("/"))
-                return "file://" + appIcon;
-            if (appIcon.startsWith("file://") || appIcon.startsWith("image://"))
-                return appIcon;
-            return "image://icon/" + appIcon;
+        function toggleDnd(): void {
+            root.toggleDnd();
         }
 
-        return "";
+        function clear(): void {
+            root.clearAll();
+        }
     }
 }
