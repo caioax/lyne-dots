@@ -17,16 +17,9 @@ Rectangle {
     border.width: 1
     border.color: Config.surface1Color
 
-    Behavior on implicitWidth {
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Easing.OutCubic
-        }
-    }
-
-    // Pinned to the left: while the island's width animates, the items stay
-    // put instead of sliding around a moving center
-    clip: true
+    // No width animation here: the items (tray drawer, CPU details, window
+    // title) already animate their own size, and a second, lagging animation
+    // on the island made the items at the far edge wobble
 
     RowLayout {
         id: row

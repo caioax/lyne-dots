@@ -1,70 +1,70 @@
 {
-  "system": {
-    "editor": "nvim",
-    "aurHelper": "yay"
-  },
-  "theme": {
-    "name": "tokyonight",
-    "mode": "preset",
-    "scheme": "dark"
-  },
-  "wallpaper": {
-    "current": "~/.local/wallpapers/themes/tokyonight/theme-tokyonight.jpg",
-    "dynamic": true,
-    "favorites": []
-  },
-  "nightLight": {
-    "enabled": false,
-    "intensity": 0.5
-  },
-  "bar": {
-    "autoHide": false,
-    "height": 30
-  },
-  "opacity": {
-    "background": 0.9
-  },
-  "geometry": {
-    "radiusSmall": 5,
-    "radius": 10,
-    "radiusLarge": 15,
-    "spacing": 8,
-    "padding": 6
-  },
-  "typography": {
-    "font": "Caskaydia Cove Nerd Font",
-    "sizeSmall": 12,
-    "sizeNormal": 14,
-    "sizeLarge": 16,
-    "iconSmall": 18,
-    "icon": 22,
-    "iconLarge": 28
-  },
-  "animations": {
-    "short": 100,
-    "normal": 200,
-    "long": 400,
-    "screenshot": true
-  },
-  "profile": {
-    "avatar": ""
-  },
-  "notifications": {
-    "width": 350,
-    "imageSize": 40,
-    "timeout": 5000,
-    "spacing": 10,
-    "maxPopups": 4,
-    "dnd": false
-  },
-  "idle": {
-    "caffeine": false,
-    "dpmsEnabled": true,
-    "mediaInhibit": true,
-    "lockTimeout": 600,
-    "dpmsTimeout": 300
-  },
-  "weather": {
-    "city": ""
-  }
+    "system": {
+        "editor": "nvim",
+        "aurHelper": "yay"
+    },
+    "theme": {
+        "name": "tokyonight",
+        "mode": "preset",
+        "scheme": "dark"
+    },
+    "wallpaper": {
+        "current": "~/.local/wallpapers/themes/tokyonight/theme-tokyonight.jpg",
+        "dynamic": true,
+        "favorites": []
+    },
+    "nightLight": {
+        "enabled": false,
+        "intensity": 0.5
+    },
+    "bar": {
+        "autoHide": false,
+        "height": 33
+    },
+    "opacity": {
+        "background": 0.9
+    },
+    "geometry": {
+        "radiusSmall": 5,
+        "radius": 10,
+        "radiusLarge": 15,
+        "spacing": 8,
+        "padding": 6
+    },
+    "typography": {
+        "font": "Caskaydia Cove Nerd Font",
+        "sizeSmall": 12,
+        "sizeNormal": 14,
+        "sizeLarge": 16,
+        "iconSmall": 18,
+        "icon": 22,
+        "iconLarge": 28
+    },
+    "animations": {
+        "short": 100,
+        "normal": 200,
+        "long": 400,
+        "screenshot": true
+    },
+    "profile": {
+        "avatar": ""
+    },
+    "notifications": {
+        "width": 350,
+        "imageSize": 40,
+        "timeout": 5000,
+        "spacing": 10,
+        "maxPopups": 4,
+        "dnd": false
+    },
+    "idle": {
+        "caffeine": false,
+        "dpmsEnabled": true,
+        "mediaInhibit": true,
+        "lockTimeout": 600,
+        "dpmsTimeout": 300
+    },
+    "weather": {
+        "city": ""
+    }
 }
