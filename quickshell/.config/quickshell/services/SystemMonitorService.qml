@@ -4,55 +4,175 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.config
 
 Singleton {
     id: root
 
     // ========================================================================
-    // CPU PROPERTIES
+    // SETTINGS
     // ========================================================================
 
-    readonly property int cpuUsage: internal.cpuUsage
-    readonly property int cpuTemp: internal.cpuTemp
+    readonly property int interval: 2000
+    readonly property int historyLength: 60 // samples (2 minutes at 2s)
+
+    // Expensive collectors (GPU, processes, disk) only run while at least one
+    // monitor popup is open. Popups call acquire()/release() on visibility.
+    property int _watchers: 0
+    readonly property bool detailed: _watchers > 0
+
+    function acquire() {
+        _watchers++;
+    }
+
+    function release() {
+        _watchers = Math.max(0, _watchers - 1);
+    }
+
+    onDetailedChanged: {
+        if (!detailed) {
+            // Samples taken minutes apart would render as a continuous line / a
+            // long-window CPU average, so start fresh on the next open
+            gpuHistory = [];
+            internal.prevProcTicks = {};
+            internal.prevProcTime = 0;
+            return;
+        }
+        updateDisk.running = true;
+        root._pollDetailed();
+        // A second process sample shortly after opening gives real CPU deltas
+        // without waiting a full interval
+        warmupTimer.restart();
+    }
+
+    // ========================================================================
+    // SYSTEM INFO
+    // ========================================================================
+
+    readonly property string hostname: hostnameFile.text().trim()
+    readonly property string kernel: kernelFile.text().trim()
+    property string uptime: "0m" // e.g. "2d 5h" or "3h 12m"
+
+    // ========================================================================
+    // CPU
+    // ========================================================================
+
     readonly property string cpuIcon: "󰻠"
+    property string cpuName: ""
+    property int cpuUsage: 0
+    property int cpuTemp: 0
+    property var coreUsages: []   // per-thread usage, 0-100
+    property real cpuFreq: 0      // GHz (average over all threads)
+    property real loadAvg: 0
+    property var cpuHistory: []
 
     // ========================================================================
-    // GPU PROPERTIES
+    // GPU
     // ========================================================================
 
-    readonly property int gpuUsage: internal.gpuUsage
-    readonly property int gpuTemp: internal.gpuTemp
     readonly property string gpuIcon: "󰢮"
-    readonly property string gpuType: internal.gpuType // "nvidia", "amd", "intel", "unknown"
+    property string gpuType: "unknown" // "nvidia", "amd", "intel", "unknown"
+    property string gpuName: ""
+    property bool gpuSleeping: false   // dGPU runtime-suspended (we don't wake it)
+    property int gpuUsage: 0
+    property int gpuTemp: 0
+    property real gpuMemUsed: 0        // bytes
+    property real gpuMemTotal: 0       // bytes
+    property real gpuPower: -1         // watts, -1 when unavailable
+    property var gpuHistory: []
 
     // ========================================================================
-    // RAM PROPERTIES
+    // MEMORY
     // ========================================================================
 
-    readonly property int ramUsage: internal.ramUsage
-    readonly property string ramUsed: internal.ramUsed   // GiB, e.g. "5.2"
-    readonly property string ramTotal: internal.ramTotal  // GiB, e.g. "15.8"
+    property int memUsage: 0
+    property real memUsed: 0     // bytes
+    property real memTotal: 0    // bytes
+    property real swapUsed: 0    // bytes
+    property real swapTotal: 0   // bytes
+    property var memHistory: []
 
     // ========================================================================
-    // DISK PROPERTIES
+    // DISK
     // ========================================================================
 
-    readonly property int diskUsage: internal.diskUsage
-    readonly property string diskUsed: internal.diskUsed   // GiB
-    readonly property string diskTotal: internal.diskTotal  // GiB
+    property var disks: [] // [{ mount, used, total, usage }]
 
     // ========================================================================
-    // NETWORK PROPERTIES
+    // NETWORK
     // ========================================================================
 
-    readonly property string networkDown: internal.networkDown // e.g. "1.2 MB/s"
-    readonly property string networkUp: internal.networkUp     // e.g. "340 KB/s"
+    property string netInterface: ""
+    property real netDown: 0      // bytes/s
+    property real netUp: 0        // bytes/s
+    property real netDownTotal: 0 // bytes since shell start
+    property real netUpTotal: 0
+    property var netDownHistory: []
+    property var netUpHistory: []
 
     // ========================================================================
-    // UPTIME
+    // PROCESSES
     // ========================================================================
 
-    readonly property string uptime: internal.uptime // e.g. "2d 5h" or "3h 12m"
+    // Grouped by name: [{ name, count, cpu, mem }]
+    property var processes: []
+    property string processSort: "cpu" // "cpu" | "mem"
+
+    // ========================================================================
+    // HELPERS
+    // ========================================================================
+
+    function formatBytes(bytes) {
+        if (bytes >= 1099511627776)
+            return (bytes / 1099511627776).toFixed(1) + " TiB";
+        if (bytes >= 1073741824)
+            return (bytes / 1073741824).toFixed(1) + " GiB";
+        if (bytes >= 1048576)
+            return (bytes / 1048576).toFixed(0) + " MiB";
+        if (bytes >= 1024)
+            return (bytes / 1024).toFixed(0) + " KiB";
+        return Math.round(bytes) + " B";
+    }
+
+    function formatSpeed(bytesPerSec) {
+        if (bytesPerSec >= 1048576)
+            return (bytesPerSec / 1048576).toFixed(1) + " MB/s";
+        if (bytesPerSec >= 1024)
+            return (bytesPerSec / 1024).toFixed(0) + " KB/s";
+        return Math.round(bytesPerSec) + " B/s";
+    }
+
+    function formatGiB(bytes) {
+        return (bytes / 1073741824).toFixed(1);
+    }
+
+    function usageColor(usage) {
+        if (usage >= 90)
+            return Config.errorColor;
+        if (usage >= 70)
+            return Config.warningColor;
+        return Config.accentColor;
+    }
+
+    function tempColor(temp) {
+        if (temp >= 85)
+            return Config.errorColor;
+        if (temp >= 70)
+            return Config.warningColor;
+        return Config.successColor;
+    }
+
+    function _push(history, value) {
+        const next = history.length >= historyLength ? history.slice(1) : history.slice();
+        next.push(value);
+        return next;
+    }
+
+    function _cleanCpuName(name) {
+        // "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz" -> "Core i7-11800H"
+        // "AMD Ryzen 7 5800X 8-Core Processor"              -> "Ryzen 7 5800X"
+        return name.replace(/\(R\)|\(TM\)|\bCPU\b|@.*$|\d+-Core Processor/gi, "").replace(/^\d+\w\w Gen /i, "").replace(/^(Intel|AMD)\s+/i, "").replace(/\s+/g, " ").trim();
+    }
 
     // ========================================================================
     // INTERNAL STATE
@@ -61,287 +181,368 @@ Singleton {
     QtObject {
         id: internal
 
-        // CPU
-        property int cpuUsage: 0
-        property int cpuTemp: 0
+        property var prevCpu: []          // [{ total, idle }] index 0 = aggregate
+        property real prevRx: -1
+        property real prevTx: -1
+        property real prevNetTime: 0
+        property var prevProcTicks: ({})  // pid -> ticks
+        property real prevProcTime: 0
+        property int cpuCount: 1
 
-        // GPU
-        property int gpuUsage: 0
-        property int gpuTemp: 0
-        property string gpuType: "unknown"
-
-        // CPU calculation state
-        property real prevTotal: 0
-        property real prevIdle: 0
-
-        // RAM
-        property int ramUsage: 0
-        property string ramUsed: "0"
-        property string ramTotal: "0"
-
-        // Disk
-        property int diskUsage: 0
-        property string diskUsed: "0"
-        property string diskTotal: "0"
-
-        // Network
-        property string networkDown: "0 B/s"
-        property string networkUp: "0 B/s"
-        property real prevRx: 0
-        property real prevTx: 0
-
-        // Uptime
-        property string uptime: "0m"
+        // Sensor paths resolved at startup
+        property string cpuTempPath: ""
+        property string nvidiaPciPath: ""
+        property string amdBusyPath: ""
+        property string amdTempPath: ""
+        property string amdVramUsedPath: ""
+        property string amdVramTotalPath: ""
+        property string intelFreqPath: ""
+        property string intelFreqMaxPath: ""
     }
 
     // ========================================================================
-    // INITIALIZATION
-    // ========================================================================
-
-    Component.onCompleted: {
-        detectGpu.running = true;
-        updateCpuUsage.running = true;
-        updateCpuTemp.running = true;
-        updateRam.running = true;
-        updateDisk.running = true;
-        updateNetwork.running = true;
-        updateUptime.running = true;
-    }
-
-    // ========================================================================
-    // UPDATE TIMER
+    // TIMERS
     // ========================================================================
 
     Timer {
-        interval: 2000
+        interval: root.interval
         running: true
         repeat: true
+        triggeredOnStart: true
         onTriggered: {
-            updateCpuUsage.running = true;
-            updateCpuTemp.running = true;
-            updateRam.running = true;
-            updateNetwork.running = true;
-            updateUptime.running = true;
+            statFile.reload();
+            meminfoFile.reload();
+            netFile.reload();
+            uptimeFile.reload();
+            if (internal.cpuTempPath !== "")
+                cpuTempFile.reload();
 
-            if (internal.gpuType === "nvidia") {
-                updateNvidiaGpu.running = true;
-            } else if (internal.gpuType === "amd") {
-                updateAmdGpuUsage.running = true;
-                updateAmdGpuTemp.running = true;
-            } else if (internal.gpuType === "intel") {
-                updateIntelGpuTemp.running = true;
-            }
+            if (root.detailed)
+                root._pollDetailed();
         }
     }
 
-    // Disk updates less frequently (every 30s)
     Timer {
         interval: 30000
-        running: true
+        running: root.detailed
         repeat: true
         onTriggered: updateDisk.running = true
     }
 
-    // ========================================================================
-    // HELPER FUNCTIONS
-    // ========================================================================
+    Timer {
+        id: warmupTimer
+        interval: 600
+        onTriggered: updateProcesses.running = true
+    }
 
-    function _formatBytes(bytes) {
-        if (bytes >= 1073741824) {
-            return (bytes / 1073741824).toFixed(1) + " GB/s";
-        } else if (bytes >= 1048576) {
-            return (bytes / 1048576).toFixed(1) + " MB/s";
-        } else if (bytes >= 1024) {
-            return (bytes / 1024).toFixed(0) + " KB/s";
+    function _pollDetailed() {
+        cpuinfoFile.reload();
+        loadavgFile.reload();
+        if (!updateProcesses.running)
+            updateProcesses.running = true;
+
+        switch (gpuType) {
+        case "nvidia":
+            if (internal.nvidiaPciPath !== "")
+                nvidiaPowerFile.reload();
+            else if (!updateNvidia.running)
+                updateNvidia.running = true;
+            break;
+        case "amd":
+            amdBusyFile.reload();
+            amdTempFile.reload();
+            amdVramUsedFile.reload();
+            amdVramTotalFile.reload();
+            break;
+        case "intel":
+            intelFreqFile.reload();
+            intelFreqMaxFile.reload();
+            break;
         }
-        return bytes.toFixed(0) + " B/s";
-    }
-
-    function _formatGiB(bytes) {
-        return (bytes / 1073741824).toFixed(1);
     }
 
     // ========================================================================
-    // GPU DETECTION
+    // HARDWARE DETECTION (runs once)
     // ========================================================================
 
     Process {
-        id: detectGpu
-        command: ["bash", "-c", `
-            if command -v nvidia-smi &>/dev/null && nvidia-smi &>/dev/null; then
-                echo "nvidia"
-            elif [ -f /sys/class/drm/card0/device/gpu_busy_percent ] || [ -f /sys/class/drm/card1/device/gpu_busy_percent ]; then
-                echo "amd"
-            elif [ -d /sys/class/drm/card0/gt ] || ls /sys/class/drm/card*/device/hwmon/hwmon*/temp1_input 2>/dev/null | head -1; then
-                echo "intel"
-            else
-                echo "unknown"
+        running: true
+        command: ["sh", "-c", `
+            for h in /sys/class/hwmon/hwmon*; do
+                case "$(cat "$h/name" 2>/dev/null)" in
+                    coretemp|k10temp|zenpower|cpu_thermal) echo "cpuTemp=$h/temp1_input"; break ;;
+                esac
+            done
+            for z in /sys/class/thermal/thermal_zone*; do
+                case "$(cat "$z/type" 2>/dev/null)" in
+                    x86_pkg_temp|TCPU|cpu*) echo "cpuTempFallback=$z/temp"; break ;;
+                esac
+            done
+
+            if command -v nvidia-smi >/dev/null 2>&1; then
+                echo "gpu=nvidia"
+                for d in /sys/bus/pci/devices/*; do
+                    [ "$(cat "$d/vendor" 2>/dev/null)" = "0x10de" ] || continue
+                    case "$(cat "$d/class" 2>/dev/null)" in
+                        0x03*) echo "nvidiaPci=$d"; break ;;
+                    esac
+                done
+            elif busy=$(ls /sys/class/drm/card*/device/gpu_busy_percent 2>/dev/null | head -1) && [ -n "$busy" ]; then
+                d=\${busy%/gpu_busy_percent}
+                echo "gpu=amd"
+                echo "amdBusy=$busy"
+                echo "amdTemp=$(ls "$d"/hwmon/hwmon*/temp1_input 2>/dev/null | head -1)"
+                echo "amdVramUsed=$d/mem_info_vram_used"
+                echo "amdVramTotal=$d/mem_info_vram_total"
+                echo "gpuName=$(cat "$d/product_name" 2>/dev/null || echo "AMD Radeon")"
+            elif freq=$(ls /sys/class/drm/card*/gt_act_freq_mhz 2>/dev/null | head -1) && [ -n "$freq" ]; then
+                echo "gpu=intel"
+                echo "intelFreq=$freq"
+                echo "intelFreqMax=\${freq%/gt_act_freq_mhz}/gt_RP0_freq_mhz"
+                echo "gpuName=Intel Graphics"
             fi
         `]
         stdout: SplitParser {
-            onRead: data => {
-                const type = data.trim();
-                internal.gpuType = type;
-                console.log("[SystemMonitor] Detected GPU type:", type);
+            onRead: line => {
+                const i = line.indexOf("=");
+                if (i < 0)
+                    return;
+                const key = line.slice(0, i);
+                const value = line.slice(i + 1).trim();
 
-                if (type === "nvidia") {
-                    updateNvidiaGpu.running = true;
-                } else if (type === "amd") {
-                    updateAmdGpuUsage.running = true;
-                    updateAmdGpuTemp.running = true;
-                } else if (type === "intel") {
-                    updateIntelGpuTemp.running = true;
+                switch (key) {
+                case "cpuTemp":
+                    internal.cpuTempPath = value;
+                    break;
+                case "cpuTempFallback":
+                    if (internal.cpuTempPath === "")
+                        internal.cpuTempPath = value;
+                    break;
+                case "gpu":
+                    root.gpuType = value;
+                    console.log("[SystemMonitor] Detected GPU type:", value);
+                    break;
+                case "gpuName":
+                    root.gpuName = value;
+                    break;
+                case "nvidiaPci":
+                    internal.nvidiaPciPath = value;
+                    break;
+                case "amdBusy":
+                    internal.amdBusyPath = value;
+                    break;
+                case "amdTemp":
+                    internal.amdTempPath = value;
+                    break;
+                case "amdVramUsed":
+                    internal.amdVramUsedPath = value;
+                    break;
+                case "amdVramTotal":
+                    internal.amdVramTotalPath = value;
+                    break;
+                case "intelFreq":
+                    internal.intelFreqPath = value;
+                    break;
+                case "intelFreqMax":
+                    internal.intelFreqMaxPath = value;
+                    break;
                 }
             }
         }
     }
 
     // ========================================================================
-    // CPU MONITORING
+    // STATIC FILES
     // ========================================================================
 
-    Process {
-        id: updateCpuUsage
-        command: ["bash", "-c", "head -1 /proc/stat"]
-        stdout: SplitParser {
-            onRead: data => {
-                const parts = data.trim().split(/\s+/);
-                if (parts.length >= 5) {
-                    const user = parseFloat(parts[1]) || 0;
-                    const nice = parseFloat(parts[2]) || 0;
-                    const system = parseFloat(parts[3]) || 0;
-                    const idle = parseFloat(parts[4]) || 0;
-                    const iowait = parseFloat(parts[5]) || 0;
-                    const irq = parseFloat(parts[6]) || 0;
-                    const softirq = parseFloat(parts[7]) || 0;
-                    const steal = parseFloat(parts[8]) || 0;
-
-                    const total = user + nice + system + idle + iowait + irq + softirq + steal;
-                    const idleTime = idle + iowait;
-
-                    if (internal.prevTotal > 0) {
-                        const totalDiff = total - internal.prevTotal;
-                        const idleDiff = idleTime - internal.prevIdle;
-
-                        if (totalDiff > 0) {
-                            const usage = Math.round(((totalDiff - idleDiff) / totalDiff) * 100);
-                            internal.cpuUsage = Math.max(0, Math.min(100, usage));
-                        }
-                    }
-
-                    internal.prevTotal = total;
-                    internal.prevIdle = idleTime;
-                }
-            }
-        }
+    FileView {
+        id: hostnameFile
+        path: "/proc/sys/kernel/hostname"
     }
 
-    Process {
-        id: updateCpuTemp
-        command: ["bash", "-c", `
-            for zone in /sys/class/thermal/thermal_zone*/temp; do
-                type_file="\${zone%/temp}/type"
-                if [ -f "$type_file" ]; then
-                    type=$(cat "$type_file" 2>/dev/null)
-                    if [[ "$type" == *"cpu"* ]] || [[ "$type" == *"x86_pkg"* ]] || [[ "$type" == *"coretemp"* ]]; then
-                        cat "$zone" 2>/dev/null
-                        exit 0
-                    fi
-                fi
-            done
-            cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null || echo "0"
-        `]
-        stdout: SplitParser {
-            onRead: data => {
-                const temp = parseInt(data.trim());
-                if (!isNaN(temp)) {
-                    internal.cpuTemp = Math.round(temp / 1000);
-                }
-            }
-        }
+    FileView {
+        id: kernelFile
+        path: "/proc/sys/kernel/osrelease"
     }
 
     // ========================================================================
-    // RAM MONITORING
+    // CPU
     // ========================================================================
 
-    Process {
-        id: updateRam
-        command: ["bash", "-c", "free -b | awk '/Mem:/{print $2,$3}'"]
-        stdout: SplitParser {
-            onRead: data => {
-                const parts = data.trim().split(/\s+/);
-                if (parts.length >= 2) {
-                    const total = parseFloat(parts[0]);
-                    const used = parseFloat(parts[1]);
-                    if (total > 0) {
-                        internal.ramUsage = Math.round((used / total) * 100);
-                        internal.ramUsed = root._formatGiB(used);
-                        internal.ramTotal = root._formatGiB(total);
-                    }
-                }
+    FileView {
+        id: statFile
+        path: "/proc/stat"
+        onLoaded: {
+            const lines = text().split("\n");
+            const prev = internal.prevCpu;
+            const next = [];
+            const usages = [];
+
+            for (const line of lines) {
+                if (!line.startsWith("cpu"))
+                    break;
+                const f = line.split(/\s+/);
+                let total = 0;
+                for (let i = 1; i <= 8; i++)
+                    total += parseInt(f[i]) || 0;
+                const idle = (parseInt(f[4]) || 0) + (parseInt(f[5]) || 0);
+                const idx = next.length;
+                next.push({ total, idle });
+
+                const p = prev[idx];
+                const dt = p ? total - p.total : 0;
+                usages.push(dt > 0 ? Math.max(0, Math.min(100, Math.round((1 - (idle - p.idle) / dt) * 100))) : 0);
             }
+
+            internal.prevCpu = next;
+            internal.cpuCount = Math.max(1, next.length - 1);
+            if (prev.length === 0)
+                return;
+
+            root.cpuUsage = usages[0];
+            root.coreUsages = usages.slice(1);
+            root.cpuHistory = root._push(root.cpuHistory, usages[0]);
+        }
+    }
+
+    FileView {
+        id: cpuTempFile
+        path: internal.cpuTempPath
+        onLoaded: {
+            const t = parseInt(text());
+            if (!isNaN(t))
+                root.cpuTemp = Math.round(t / 1000);
+        }
+    }
+
+    FileView {
+        id: cpuinfoFile
+        path: "/proc/cpuinfo"
+        onLoaded: {
+            const data = text();
+            if (root.cpuName === "") {
+                const m = data.match(/^model name\s*:\s*(.+)$/m);
+                if (m)
+                    root.cpuName = root._cleanCpuName(m[1]);
+            }
+            const re = /^cpu MHz\s*:\s*([\d.]+)/gm;
+            let sum = 0, count = 0, m;
+            while ((m = re.exec(data)) !== null) {
+                sum += parseFloat(m[1]);
+                count++;
+            }
+            if (count > 0)
+                root.cpuFreq = sum / count / 1000;
+        }
+    }
+
+    FileView {
+        id: loadavgFile
+        path: "/proc/loadavg"
+        onLoaded: root.loadAvg = parseFloat(text().split(" ")[0]) || 0
+    }
+
+    // ========================================================================
+    // MEMORY
+    // ========================================================================
+
+    FileView {
+        id: meminfoFile
+        path: "/proc/meminfo"
+        onLoaded: {
+            const data = text();
+            const kb = key => {
+                const m = data.match(new RegExp("^" + key + ":\\s*(\\d+)", "m"));
+                return m ? parseInt(m[1]) * 1024 : 0;
+            };
+
+            const total = kb("MemTotal");
+            if (total <= 0)
+                return;
+
+            root.memTotal = total;
+            root.memUsed = total - kb("MemAvailable");
+            root.memUsage = Math.round(root.memUsed / total * 100);
+            root.swapTotal = kb("SwapTotal");
+            root.swapUsed = root.swapTotal - kb("SwapFree");
+            root.memHistory = root._push(root.memHistory, root.memUsage);
         }
     }
 
     // ========================================================================
-    // DISK MONITORING
+    // DISK
     // ========================================================================
 
     Process {
         id: updateDisk
-        command: ["bash", "-c", "df -B1 / | awk 'NR==2{print $2,$3}'"]
-        stdout: SplitParser {
-            onRead: data => {
-                const parts = data.trim().split(/\s+/);
-                if (parts.length >= 2) {
-                    const total = parseFloat(parts[0]);
-                    const used = parseFloat(parts[1]);
-                    if (total > 0) {
-                        internal.diskUsage = Math.round((used / total) * 100);
-                        internal.diskUsed = root._formatGiB(used);
-                        internal.diskTotal = root._formatGiB(total);
-                    }
+        command: ["df", "-B1", "--output=source,target,size,used", "-x", "tmpfs", "-x", "devtmpfs", "-x", "efivarfs", "-x", "overlay", "-x", "squashfs"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                // Keep "/" plus "/home" when it lives on another device
+                const rows = text.trim().split("\n").slice(1).map(l => l.trim().split(/\s+/));
+                const rootFs = rows.find(r => r[1] === "/");
+                const home = rows.find(r => r[1] === "/home");
+                const result = [];
+
+                for (const r of [rootFs, home]) {
+                    if (!r || (r === home && rootFs && home[0] === rootFs[0]))
+                        continue;
+                    const total = parseFloat(r[2]);
+                    const used = parseFloat(r[3]);
+                    if (total > 0)
+                        result.push({ mount: r[1], used, total, usage: Math.round(used / total * 100) });
                 }
+                root.disks = result;
             }
         }
     }
 
     // ========================================================================
-    // NETWORK MONITORING
+    // NETWORK
     // ========================================================================
 
-    Process {
-        id: updateNetwork
-        command: ["bash", "-c", `
-            rx=0; tx=0
-            for iface in /sys/class/net/*/; do
-                name=$(basename "$iface")
-                [ "$name" = "lo" ] && continue
-                [ -f "$iface/statistics/rx_bytes" ] || continue
-                rx=$((rx + $(cat "$iface/statistics/rx_bytes")))
-                tx=$((tx + $(cat "$iface/statistics/tx_bytes")))
-            done
-            echo "$rx $tx"
-        `]
-        stdout: SplitParser {
-            onRead: data => {
-                const parts = data.trim().split(/\s+/);
-                if (parts.length >= 2) {
-                    const rx = parseFloat(parts[0]);
-                    const tx = parseFloat(parts[1]);
+    FileView {
+        id: netFile
+        path: "/proc/net/dev"
+        onLoaded: {
+            const now = Date.now();
+            let rx = 0, tx = 0, busiest = "", busiestBytes = -1;
 
-                    if (internal.prevRx > 0) {
-                        const rxDelta = (rx - internal.prevRx) / 2; // per second (2s interval)
-                        const txDelta = (tx - internal.prevTx) / 2;
-                        internal.networkDown = root._formatBytes(Math.max(0, rxDelta));
-                        internal.networkUp = root._formatBytes(Math.max(0, txDelta));
-                    }
-
-                    internal.prevRx = rx;
-                    internal.prevTx = tx;
+            for (const line of text().split("\n").slice(2)) {
+                const sep = line.indexOf(":");
+                if (sep < 0)
+                    continue;
+                const name = line.slice(0, sep).trim();
+                if (/^(lo|docker|veth|br-|virbr|vnet)/.test(name))
+                    continue;
+                const f = line.slice(sep + 1).trim().split(/\s+/);
+                const r = parseFloat(f[0]) || 0;
+                const t = parseFloat(f[8]) || 0;
+                rx += r;
+                tx += t;
+                if (r + t > busiestBytes) {
+                    busiestBytes = r + t;
+                    busiest = name;
                 }
             }
+
+            root.netInterface = busiest;
+
+            if (internal.prevRx >= 0) {
+                const secs = Math.max(0.001, (now - internal.prevNetTime) / 1000);
+                const dRx = Math.max(0, rx - internal.prevRx);
+                const dTx = Math.max(0, tx - internal.prevTx);
+                root.netDown = dRx / secs;
+                root.netUp = dTx / secs;
+                root.netDownTotal += dRx;
+                root.netUpTotal += dTx;
+                root.netDownHistory = root._push(root.netDownHistory, root.netDown);
+                root.netUpHistory = root._push(root.netUpHistory, root.netUp);
+            }
+
+            internal.prevRx = rx;
+            internal.prevTx = tx;
+            internal.prevNetTime = now;
         }
     }
 
@@ -349,123 +550,187 @@ Singleton {
     // UPTIME
     // ========================================================================
 
-    Process {
-        id: updateUptime
-        command: ["bash", "-c", "awk '{print int($1)}' /proc/uptime"]
-        stdout: SplitParser {
-            onRead: data => {
-                const totalSeconds = parseInt(data.trim());
-                if (isNaN(totalSeconds)) return;
+    FileView {
+        id: uptimeFile
+        path: "/proc/uptime"
+        onLoaded: {
+            const total = parseInt(text());
+            if (isNaN(total))
+                return;
 
-                const days = Math.floor(totalSeconds / 86400);
-                const hours = Math.floor((totalSeconds % 86400) / 3600);
-                const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const days = Math.floor(total / 86400);
+            const hours = Math.floor((total % 86400) / 3600);
+            const minutes = Math.floor((total % 3600) / 60);
 
-                if (days > 0) {
-                    internal.uptime = days + "d " + hours + "h";
-                } else if (hours > 0) {
-                    internal.uptime = hours + "h " + minutes + "m";
-                } else {
-                    internal.uptime = minutes + "m";
-                }
-            }
+            if (days > 0)
+                root.uptime = days + "d " + hours + "h";
+            else if (hours > 0)
+                root.uptime = hours + "h " + minutes + "m";
+            else
+                root.uptime = minutes + "m";
         }
     }
 
     // ========================================================================
-    // NVIDIA GPU MONITORING
+    // PROCESSES
     // ========================================================================
 
     Process {
-        id: updateNvidiaGpu
-        command: ["nvidia-smi", "--query-gpu=utilization.gpu,temperature.gpu", "--format=csv,noheader,nounits"]
-        stdout: SplitParser {
-            onRead: data => {
-                const parts = data.trim().split(",").map(s => s.trim());
-                if (parts.length >= 2) {
-                    const usage = parseInt(parts[0]);
-                    const temp = parseInt(parts[1]);
+        id: updateProcesses
+        command: ["sh", "-c", "cat /proc/[0-9]*/stat 2>/dev/null"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const now = Date.now();
+                const prevTicks = internal.prevProcTicks;
+                const hasPrev = internal.prevProcTime > 0;
+                // CLK_TCK is 100 on Linux; normalize to whole-system percentage
+                const tickBudget = Math.max(0.001, (now - internal.prevProcTime) / 1000) * 100 * internal.cpuCount;
+                const ticks = {};
+                const groups = {};
 
-                    if (!isNaN(usage)) internal.gpuUsage = usage;
-                    if (!isNaN(temp)) internal.gpuTemp = temp;
+                for (const line of text.split("\n")) {
+                    const open = line.indexOf("(");
+                    const close = line.lastIndexOf(")");
+                    if (open < 0 || close < 0)
+                        continue;
+
+                    const pid = line.slice(0, open).trim();
+                    const f = line.slice(close + 2).split(" ");
+                    // f[n] is field n+3 of proc(5): ppid=4, utime=14, stime=15, rss=24
+                    if (pid === "2" || f[1] === "2")
+                        continue; // kernel threads
+
+                    const t = (parseInt(f[11]) || 0) + (parseInt(f[12]) || 0);
+                    ticks[pid] = t;
+
+                    const name = line.slice(open + 1, close);
+                    const g = groups[name] ?? (groups[name] = { name, count: 0, cpu: 0, mem: 0 });
+                    g.count++;
+                    g.mem += (parseInt(f[21]) || 0) * 4096;
+                    if (hasPrev && prevTicks[pid] !== undefined)
+                        g.cpu += Math.max(0, t - prevTicks[pid]) / tickBudget * 100;
                 }
+
+                internal.prevProcTicks = ticks;
+                internal.prevProcTime = now;
+
+                const key = root.processSort;
+                root.processes = Object.values(groups).sort((a, b) => b[key] - a[key]).slice(0, 6);
             }
         }
     }
 
+    onProcessSortChanged: {
+        const key = processSort;
+        processes = processes.slice().sort((a, b) => b[key] - a[key]);
+    }
+
     // ========================================================================
-    // AMD GPU MONITORING
+    // NVIDIA
     // ========================================================================
 
+    // Reading runtime_status doesn't wake the card; nvidia-smi would, so we only
+    // query it when the dGPU is already awake.
+    FileView {
+        id: nvidiaPowerFile
+        path: internal.nvidiaPciPath !== "" ? internal.nvidiaPciPath + "/power/runtime_status" : ""
+        onLoaded: {
+            const status = text().trim();
+            root.gpuSleeping = status === "suspended" || status === "suspending";
+            if (root.gpuSleeping) {
+                root.gpuUsage = 0;
+                root.gpuHistory = root._push(root.gpuHistory, 0);
+            } else if (!updateNvidia.running) {
+                updateNvidia.running = true;
+            }
+        }
+        onLoadFailed: {
+            if (!updateNvidia.running)
+                updateNvidia.running = true;
+        }
+    }
+
     Process {
-        id: updateAmdGpuUsage
-        command: ["bash", "-c", `
-            for card in /sys/class/drm/card*/device/gpu_busy_percent; do
-                if [ -f "$card" ]; then
-                    cat "$card" 2>/dev/null
-                    exit 0
-                fi
-            done
-            echo "0"
-        `]
+        id: updateNvidia
+        command: ["nvidia-smi", "--query-gpu=name,utilization.gpu,temperature.gpu,memory.used,memory.total,power.draw", "--format=csv,noheader,nounits"]
         stdout: SplitParser {
             onRead: data => {
-                const usage = parseInt(data.trim());
+                const f = data.split(",").map(s => s.trim());
+                if (f.length < 6)
+                    return;
+
+                root.gpuName = f[0].replace(/^NVIDIA\s+/, "").replace(/^GeForce\s+/, "");
+                const usage = parseInt(f[1]);
+                const temp = parseInt(f[2]);
+                const power = parseFloat(f[5]);
+
                 if (!isNaN(usage)) {
-                    internal.gpuUsage = usage;
+                    root.gpuUsage = usage;
+                    root.gpuHistory = root._push(root.gpuHistory, usage);
                 }
-            }
-        }
-    }
-
-    Process {
-        id: updateAmdGpuTemp
-        command: ["bash", "-c", `
-            for hwmon in /sys/class/drm/card*/device/hwmon/hwmon*/temp1_input; do
-                if [ -f "$hwmon" ]; then
-                    cat "$hwmon" 2>/dev/null
-                    exit 0
-                fi
-            done
-            cat /sys/class/drm/card0/device/hwmon/hwmon*/temp1_input 2>/dev/null || echo "0"
-        `]
-        stdout: SplitParser {
-            onRead: data => {
-                const temp = parseInt(data.trim());
-                if (!isNaN(temp)) {
-                    internal.gpuTemp = Math.round(temp / 1000);
-                }
+                if (!isNaN(temp))
+                    root.gpuTemp = temp;
+                root.gpuMemUsed = (parseFloat(f[3]) || 0) * 1048576;
+                root.gpuMemTotal = (parseFloat(f[4]) || 0) * 1048576;
+                root.gpuPower = isNaN(power) ? -1 : power;
             }
         }
     }
 
     // ========================================================================
-    // INTEL GPU MONITORING
+    // AMD
     // ========================================================================
 
-    Process {
-        id: updateIntelGpuTemp
-        command: ["bash", "-c", `
-            for zone in /sys/class/thermal/thermal_zone*/temp; do
-                type_file="\${zone%/temp}/type"
-                if [ -f "$type_file" ]; then
-                    type=$(cat "$type_file" 2>/dev/null)
-                    if [[ "$type" == *"gpu"* ]] || [[ "$type" == *"pch"* ]]; then
-                        cat "$zone" 2>/dev/null
-                        exit 0
-                    fi
-                fi
-            done
-            cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null || echo "0"
-        `]
-        stdout: SplitParser {
-            onRead: data => {
-                const temp = parseInt(data.trim());
-                if (!isNaN(temp)) {
-                    internal.gpuTemp = Math.round(temp / 1000);
-                }
-            }
+    FileView {
+        id: amdBusyFile
+        path: internal.amdBusyPath
+        onLoaded: {
+            const usage = parseInt(text());
+            if (isNaN(usage))
+                return;
+            root.gpuUsage = usage;
+            root.gpuHistory = root._push(root.gpuHistory, usage);
         }
     }
 
+    FileView {
+        id: amdTempFile
+        path: internal.amdTempPath
+        onLoaded: root.gpuTemp = Math.round((parseInt(text()) || 0) / 1000)
+    }
+
+    FileView {
+        id: amdVramUsedFile
+        path: internal.amdVramUsedPath
+        onLoaded: root.gpuMemUsed = parseFloat(text()) || 0
+    }
+
+    FileView {
+        id: amdVramTotalFile
+        path: internal.amdVramTotalPath
+        onLoaded: root.gpuMemTotal = parseFloat(text()) || 0
+    }
+
+    // ========================================================================
+    // INTEL (no utilization counter without root; frequency is the best proxy)
+    // ========================================================================
+
+    FileView {
+        id: intelFreqFile
+        path: internal.intelFreqPath
+    }
+
+    FileView {
+        id: intelFreqMaxFile
+        path: internal.intelFreqMaxPath
+        onLoaded: {
+            const cur = parseInt(intelFreqFile.text());
+            const max = parseInt(text());
+            if (isNaN(cur) || !(max > 0))
+                return;
+            const usage = Math.round(cur / max * 100);
+            root.gpuUsage = usage;
+            root.gpuHistory = root._push(root.gpuHistory, usage);
+        }
+    }
 }

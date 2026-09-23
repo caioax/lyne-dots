@@ -18,6 +18,9 @@ QUICKSHELL_PACKAGES=(
 
     # Dialogs
     "zenity" # File picker for adding wallpapers
+
+    # System monitor
+    "mission-center" # Detailed view opened from the system monitor popup
 )
 
 # AUR packages
