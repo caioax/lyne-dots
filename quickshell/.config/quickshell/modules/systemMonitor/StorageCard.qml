@@ -3,8 +3,9 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services
+import "../../components/"
 
-MonitorCard {
+Card {
     id: root
 
     readonly property var primary: SystemMonitorService.disks[0] ?? null

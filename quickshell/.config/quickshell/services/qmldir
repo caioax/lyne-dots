@@ -20,3 +20,5 @@ singleton ClipboardService ClipboardService.qml
 singleton ThemeService ThemeService.qml
 singleton IdleService IdleService.qml
 singleton LockService LockService.qml
+singleton HolidayService HolidayService.qml
+singleton WeatherService WeatherService.qml

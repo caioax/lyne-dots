@@ -58,5 +58,8 @@
     "mediaInhibit": true,
     "lockTimeout": 600,
     "dpmsTimeout": 300
+  },
+  "weather": {
+    "city": ""
   }
 }

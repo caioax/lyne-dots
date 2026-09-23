@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 
-// Rounded surface used by every section of the system monitor
+// Rounded surface used by the sections of popups (system monitor, calendar...)
 Rectangle {
     id: root
 

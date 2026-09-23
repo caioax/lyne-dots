@@ -7,7 +7,7 @@ import "../../components/"
 
 // CPU / GPU card: usage ring, name, big percentage and a history graph.
 // Extra rows (chips, per-core bars) go into the default slot.
-MonitorCard {
+Card {
     id: root
 
     required property string icon
