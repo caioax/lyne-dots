@@ -111,9 +111,7 @@ Scope {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Config.spacing
 
-                    MediaIsland {
-                        onOpenRequested: quickSettings.toggleWindow()
-                    }
+                    MediaIsland {}
 
                     BarIsland {
                         TrayWidget {}

@@ -45,9 +45,11 @@ Singleton {
     readonly property real volume: activePlayer?.volume ?? 0
 
     // --- POSITION TRACKING ---
+    readonly property int positionInterval: 500
+
     Timer {
         running: root.hasPlayer && root.isPlaying && root.positionSupported
-        interval: 500
+        interval: root.positionInterval
         repeat: true
         triggeredOnStart: true
         onTriggered: {

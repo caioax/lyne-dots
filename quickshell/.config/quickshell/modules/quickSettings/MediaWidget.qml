@@ -10,6 +10,8 @@ Rectangle {
     id: root
 
     property bool dismissed: false
+    // Shows the ✕ (while paused) that hides the card until something plays
+    property bool dismissible: true
     readonly property bool hasProgress: MprisService.positionSupported && MprisService.length > 0
 
     function formatTime(seconds: real): string {
@@ -70,7 +72,7 @@ Rectangle {
 
     // --- DISMISS BUTTON ---
     Rectangle {
-        visible: !MprisService.isPlaying
+        visible: root.dismissible && !MprisService.isPlaying
         z: 10
         anchors.top: parent.top
         anchors.right: parent.right
