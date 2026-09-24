@@ -15,6 +15,7 @@ ColumnLayout {
         ToggleRow {
             label: "Do not disturb"
             description: "Silence popups; notifications still go to the history"
+            resettable: false
             checked: NotificationService.dndEnabled
             onToggled: value => NotificationService.setDnd(value)
         }
