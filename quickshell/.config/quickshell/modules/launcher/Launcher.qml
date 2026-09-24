@@ -38,9 +38,13 @@ PanelWindow {
         LauncherService.hide();
     }
 
-    function launchSelected() {
-        panel.forceActiveFocus();
-        LauncherService.launchSelected();
+    function activateSelected() {
+        // Only the Enter that really closes the launcher moves the focus
+        // (a power action may just ask for confirmation)
+        const item = LauncherService.entries[LauncherService.selectedIndex];
+        if (!item?.confirm || LauncherService.pendingConfirm === item.id)
+            panel.forceActiveFocus();
+        LauncherService.activateSelected();
     }
 
     // Keys the search field passes on: navigation, launch and close. The
@@ -65,7 +69,7 @@ PanelWindow {
             break;
         case Qt.Key_Return:
         case Qt.Key_Enter:
-            launchSelected();
+            activateSelected();
             break;
         case Qt.Key_Down:
             // From the tiles: the row below, or the first app of the list
@@ -96,11 +100,18 @@ PanelWindow {
             if (selected + 1 < favorites)
                 LauncherService.move(1);
             break;
+        // Tab navigates like the arrows; with Ctrl it switches modes
         case Qt.Key_Tab:
-            LauncherService.move(1);
+            if (ctrl)
+                LauncherService.cycleMode(1);
+            else
+                LauncherService.move(1);
             break;
         case Qt.Key_Backtab:
-            LauncherService.move(-1);
+            if (ctrl)
+                LauncherService.cycleMode(-1);
+            else
+                LauncherService.move(-1);
             break;
         case Qt.Key_PageDown:
             LauncherService.move(results.maxRows);
@@ -176,7 +187,10 @@ PanelWindow {
                 SearchField {
                     id: search
 
-                    count: LauncherService.entries.length
+                    count: LauncherService.mode.id === "calc" ? 0 : LauncherService.entries.length
+                    icon: LauncherService.mode.icon
+                    chip: LauncherService.mode.id === "apps" ? "" : LauncherService.mode.label
+                    placeholder: LauncherService.mode.placeholder
                     onTextChanged: LauncherService.query = text
                     onKeyPressed: event => root.handleKey(event)
                     Component.onCompleted: Qt.callLater(() => {
@@ -248,11 +262,26 @@ PanelWindow {
                     }
 
                     KeyHint {
+                        keys: "ctrl ⇥"
+                        label: "mode"
+                    }
+
+                    KeyHint {
                         keys: "esc"
                         label: search.text !== "" ? "clear" : "close"
                     }
                 }
             }
+        }
+    }
+
+    // Tab switches modes by rewriting the query's prefix: mirror it back
+    Connections {
+        target: LauncherService
+
+        function onQueryChanged() {
+            if (search.text !== LauncherService.query)
+                search.text = LauncherService.query;
         }
     }
 

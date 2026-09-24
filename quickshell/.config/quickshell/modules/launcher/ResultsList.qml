@@ -31,7 +31,7 @@ ListView {
     clip: true
     spacing: Math.round(Config.padding / 2)
     boundsBehavior: Flickable.StopAtBounds
-    model: LauncherService.filteredApps
+    model: LauncherService.results
     // No animation while keeping the selection in view, so the mouse
     // doesn't land on a moving row
     onSelectedRowChanged: {
@@ -44,14 +44,14 @@ ListView {
         height: root.rowHeight
         selected: index === root.selectedRow
         showDescription: root.showDescription
-        // First click selects the app, a click on the selected one opens it
+        // First click selects, a click on the selected one opens / runs it
         onActivated: {
             if (!selected) {
                 LauncherService.select(index + root.offset);
                 return;
             }
             root.launched();
-            LauncherService.launch(modelData);
+            LauncherService.activate(modelData);
         }
         onMenuRequested: anchor => root.menuRequested(anchor, modelData)
     }
@@ -60,23 +60,51 @@ ListView {
         id: scrollBar
     }
 
+    // Empty state for the current mode
+    readonly property var emptyState: {
+        const mode = LauncherService.mode.id;
+        const term = LauncherService.term;
+        if (mode === "calc") {
+            if (LauncherService.calcError !== "")
+                return {
+                    icon: "\u{f0028}",
+                    text: LauncherService.calcError
+                };
+            return {
+                icon: "\u{f00ec}",
+                text: term === "" ? "Type an expression, e.g. 2^10 or 5 km to mi" : "Calculating…"
+            };
+        }
+        if (term !== "")
+            return {
+                icon: "\u{f0980}",
+                text: "No " + (mode === "actions" ? "actions" : "apps") + " match \"" + term + "\""
+            };
+        return {
+            icon: "\u{f003b}",
+            text: "No apps found"
+        };
+    }
+
     Column {
         anchors.centerIn: parent
+        width: parent.width - Config.padding * 4
         visible: root.count === 0
         spacing: Config.spacing
 
-        // md-magnify-close / md-apps
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: LauncherService.query !== "" ? "\u{f0980}" : "\u{f003b}"
+            text: root.emptyState.icon
             font.family: Config.font
             font.pixelSize: Config.fontSizeIconLarge
             color: Config.mutedColor
         }
 
         Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: LauncherService.query !== "" ? "No apps match \"" + LauncherService.query + "\"" : "No apps found"
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+            text: root.emptyState.text
             font.family: Config.font
             font.pixelSize: Config.fontSizeNormal
             color: Config.subtextColor

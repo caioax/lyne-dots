@@ -4,9 +4,10 @@ import QtQuick.Layouts
 import qs.config
 import qs.services
 
-// One app of the results list: icon box, name and description. The selected
-// row gets the accent outline and the ⏎ hint. Clicks go out as `activated`;
-// the ⋮ button (on hover) and right click ask for the app menu
+// One result: an app (icon) or an action / calculator result (glyph), with
+// name and description. The selected row gets the accent outline and the ⏎
+// hint. Clicks go out as `activated`; for apps, the ⋮ button (on hover) and
+// right click ask for the app menu
 Item {
     id: root
 
@@ -16,7 +17,10 @@ Item {
     property bool showDescription: true
     // A HoverHandler keeps reporting hover while over the ⋮ button
     readonly property bool hovered: rowHover.hovered
-    readonly property string description: modelData?.comment || modelData?.genericName || ""
+    readonly property bool isApp: LauncherService.isApp(modelData)
+    // Waiting for a second Enter (power actions)
+    readonly property bool confirming: !isApp && LauncherService.pendingConfirm === modelData.id
+    readonly property string description: confirming ? "Press Enter again to confirm" : modelData?.comment || modelData?.genericName || ""
 
     signal activated
     signal menuRequested(Item anchor)
@@ -50,10 +54,10 @@ Item {
         cursorShape: Qt.PointingHandCursor
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: event => {
-            if (event.button === Qt.RightButton)
-                root.menuRequested(menuButton);
-            else
+            if (event.button !== Qt.RightButton)
                 root.activated();
+            else if (root.isApp)
+                root.menuRequested(menuButton);
         }
     }
 
@@ -69,11 +73,21 @@ Item {
             radius: Config.radiusLarge
             color: root.selected ? Config.surface2Color : Config.surface1Color
 
+            Text {
+                anchors.centerIn: parent
+                visible: !root.isApp
+                text: root.modelData?.glyph ?? ""
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeIcon
+                color: root.confirming ? Config.warningColor : Config.accentColor
+            }
+
             Image {
                 anchors.centerIn: parent
+                visible: root.isApp
                 width: Config.fontSizeIconLarge
                 height: width
-                source: "image://icon/" + (root.modelData?.icon || "application-x-executable")
+                source: root.isApp ? "image://icon/" + (root.modelData?.icon || "application-x-executable") : ""
                 sourceSize: Qt.size(width, height)
                 fillMode: Image.PreserveAspectFit
             }
@@ -102,13 +116,14 @@ Item {
                 elide: Text.ElideRight
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
-                color: Config.subtextColor
+                font.bold: root.confirming
+                color: root.confirming ? Config.warningColor : Config.subtextColor
             }
         }
 
         MenuButton {
             id: menuButton
-            visible: root.hovered
+            visible: root.isApp && root.hovered
             onClicked: root.menuRequested(menuButton)
         }
 

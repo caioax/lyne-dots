@@ -4,13 +4,17 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
 
-// Pill search input: icon, text field, result count and a clear button.
+// Pill search input: icon, optional mode chip, text field, result count and a
+// clear button.
 // Keys the field doesn't use itself are passed on through `keyPressed`
 Rectangle {
     id: root
 
     property alias text: input.text
     property string placeholder: "Search apps…"
+    property string icon: "\u{f0349}"
+    // Shown as a chip before the text when not empty
+    property string chip: ""
     property int count: 0
     readonly property bool focused: input.activeFocus
 
@@ -39,9 +43,8 @@ Rectangle {
         anchors.rightMargin: Config.padding * 2
         spacing: Config.spacing
 
-        // md-magnify
         Text {
-            text: "\u{f0349}"
+            text: root.icon
             font.family: Config.font
             font.pixelSize: Config.fontSizeIconSmall
             color: root.focused ? Config.accentColor : Config.subtextColor
@@ -50,6 +53,24 @@ Rectangle {
                 ColorAnimation {
                     duration: Config.animDurationShort
                 }
+            }
+        }
+
+        Rectangle {
+            visible: root.chip !== ""
+            implicitWidth: chipText.implicitWidth + Config.padding * 3
+            implicitHeight: chipText.implicitHeight + Config.padding
+            radius: height / 2
+            color: Qt.alpha(Config.accentColor, 0.15)
+
+            Text {
+                id: chipText
+                anchors.centerIn: parent
+                text: root.chip
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeSmall
+                font.bold: true
+                color: Config.accentColor
             }
         }
 

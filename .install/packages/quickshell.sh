@@ -21,6 +21,9 @@ QUICKSHELL_PACKAGES=(
 
     # System monitor
     "mission-center" # Detailed view opened from the system monitor popup
+
+    # Launcher
+    "libqalculate" # qalc, for the launcher's calculator mode (=)
 )
 
 # AUR packages
