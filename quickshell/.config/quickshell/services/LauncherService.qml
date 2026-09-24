@@ -18,8 +18,10 @@ Singleton {
     // Index into `entries` (favorites first, then the results)
     property int selectedIndex: 0
 
-    // Runs .desktop entries marked Terminal=true (same as the SUPER+Return bind)
-    readonly property string terminal: "kitty"
+    // Runs .desktop entries marked Terminal=true
+    readonly property string terminal: StateService.get("launcher.terminal", "kitty") || "kitty"
+    // Most used apps first; off keeps the list alphabetical
+    readonly property bool rankByUsage: StateService.get("launcher.rankByUsage", true)
 
     // Persisted app ids. Usage is a list of { id, count, last } (not a map:
     // lyne's state sync keeps lists whole but drops keys missing from defaults)
@@ -126,7 +128,7 @@ Singleton {
             return [];
         const pinned = new Set(favorites);
         // Usage and pins break ties within a tier
-        return _search(appIndex, id => 15 * Math.log2(1 + (scores[id] ?? 0)) + (pinned.has(id) ? 25 : 0));
+        return _search(appIndex, id => (rankByUsage ? 15 * Math.log2(1 + (scores[id] ?? 0)) : 0) + (pinned.has(id) ? 25 : 0));
     }
 
     // Apps below the favorites: most used first, then alphabetical. While
@@ -135,7 +137,8 @@ Singleton {
         if (term !== "")
             return appMatches.map(m => m.item);
 
-        const byRank = (a, b) => (scores[appId(b)] ?? 0) - (scores[appId(a)] ?? 0) || (a.name || "").localeCompare(b.name || "");
+        const byName = (a, b) => (a.name || "").localeCompare(b.name || "");
+        const byRank = (a, b) => (rankByUsage ? (scores[appId(b)] ?? 0) - (scores[appId(a)] ?? 0) : 0) || byName(a, b);
         const pinned = new Set(favorites);
         return apps.filter(app => !pinned.has(appId(app))).sort(byRank);
     }
@@ -320,6 +323,31 @@ Singleton {
 
     function unhideApp(id: string) {
         StateService.set("launcher.hidden", hidden.filter(h => h !== id));
+    }
+
+    // Moves a favorite `delta` places in the tiles' order
+    function moveFavorite(id: string, delta: int) {
+        const from = favorites.indexOf(id);
+        const to = from + delta;
+        if (from === -1 || to < 0 || to >= favorites.length)
+            return;
+        const list = [...favorites];
+        list.splice(from, 1);
+        list.splice(to, 0, id);
+        StateService.set("launcher.favorites", list);
+    }
+
+    function unpin(id: string) {
+        StateService.set("launcher.favorites", favorites.filter(f => f !== id));
+    }
+
+    function clearUsage() {
+        StateService.set("launcher.usage", []);
+    }
+
+    // Desktop entry for an id, hidden or not (null once uninstalled)
+    function entryById(id: string): var {
+        return DesktopEntries.applications.values.find(app => appId(app) === id) ?? null;
     }
 
     // ========================================================================

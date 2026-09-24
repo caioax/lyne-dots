@@ -222,7 +222,8 @@ PanelWindow {
                     id: results
 
                     // Leaves room for the favorites above
-                    maxRows: favoritesGrid.count > 0 ? 5 : 7
+                    maxRows: Math.max(3, StateService.get("launcher.rows", 7) - (favoritesGrid.count > 0 ? 2 : 0))
+                    showDescription: StateService.get("launcher.showDescriptions", true)
 
                     // Animated copy of the height the list wants
                     property real shownHeight: implicitHeight

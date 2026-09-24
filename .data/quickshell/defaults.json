@@ -27,7 +27,11 @@
     "launcher": {
         "favorites": [],
         "hidden": [],
-        "usage": []
+        "usage": [],
+        "showDescriptions": true,
+        "rankByUsage": true,
+        "rows": 7,
+        "terminal": "kitty"
     },
     "opacity": {
         "background": 0.9

@@ -26,6 +26,7 @@ FloatingWindow {
             layout: layoutPage,
             typography: typographyPage,
             bar: barPage,
+            launcher: launcherPage,
             notifications: notificationsPage,
             windows: windowsPage,
             input: inputPage,
@@ -49,6 +50,11 @@ FloatingWindow {
     Component {
         id: themePage
         ThemePage {}
+    }
+
+    Component {
+        id: launcherPage
+        LauncherPage {}
     }
 
     Component {

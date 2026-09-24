@@ -52,6 +52,13 @@ Singleton {
             category: "Shell"
         },
         {
+            id: "launcher",
+            label: "Launcher",
+            icon: "\u{f003b}",
+            description: "Search, favorites, hidden apps and usage ranking",
+            category: "Shell"
+        },
+        {
             id: "notifications",
             label: "Notifications",
             icon: "\u{f009a}",
