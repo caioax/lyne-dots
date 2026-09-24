@@ -40,6 +40,8 @@ Item {
         Rectangle {
             id: iconBtn
 
+            visible: root.icon !== ""
+
             // Set the size: full component height and width equal to height (square)
             Layout.fillHeight: true
             Layout.preferredWidth: height

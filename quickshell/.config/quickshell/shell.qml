@@ -10,6 +10,7 @@ import "./modules/bar/"
 import "./modules/power/"
 import "./modules/screenshot/"
 import "./modules/notifications/"
+import "./modules/settings/"
 import qs.config
 
 ShellRoot {
@@ -242,6 +243,13 @@ ShellRoot {
         }
     }
 
+    // Settings window (imported statically: Quickshell only resolves the
+    // pages/ and rows/ directories through static imports)
+    Loader {
+        active: SettingsService.visible
+        sourceComponent: SettingsWindow {}
+    }
+
     // Actions requested from the UI (Quick Settings shortcuts)
     Connections {
         target: ShortcutService
@@ -366,6 +374,14 @@ ShellRoot {
         description: "Lock screen"
 
         onPressed: IdleService.lock()
+    }
+
+    // Shortcut: Settings
+    GlobalShortcut {
+        name: "settings"
+        description: "Settings"
+
+        onPressed: SettingsService.toggle()
     }
 
     // Shortcut: Keybinds Help

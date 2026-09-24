@@ -40,6 +40,9 @@ Card {
         case "lock":
             IdleService.lock();
             break;
+        case "settings":
+            SettingsService.open("");
+            break;
         }
     }
 
@@ -239,6 +242,10 @@ Card {
                 {
                     "icon": "󰌾",
                     "action": "lock"
+                },
+                {
+                    "icon": "󰒓",
+                    "action": "settings"
                 }
             ]
 

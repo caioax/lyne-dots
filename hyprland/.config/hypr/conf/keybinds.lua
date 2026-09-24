@@ -131,3 +131,4 @@ hl.bind(mainMod .. " + End",   hl.dsp.global("quickshell:power_menu")) -- Power 
 hl.bind(mainMod .. " + Space", hl.dsp.global("quickshell:app_launcher")) -- Launcher
 hl.bind(mainMod .. " + B",     hl.dsp.global("quickshell:wallpaper_picker")) -- Wallpaper Picker
 hl.bind(mainMod .. " + slash", hl.dsp.global("quickshell:keybinds_help")) -- Keybinds Help
+hl.bind(mainMod .. " + I",     hl.dsp.global("quickshell:settings")) -- Settings

@@ -64,3 +64,13 @@ hl.window_rule({
     center = true,
     pin    = true,
 })
+
+-- Quickshell settings window
+hl.window_rule({
+    name  = "quickshell-settings-float",
+    match = { class = "^(org\\.quickshell)$", title = "^(Settings)$" },
+
+    float  = true,
+    size   = {960, 680},
+    center = true,
+})
