@@ -27,7 +27,11 @@ ListView {
     signal launched
     signal menuRequested(Item anchor, var app)
 
-    implicitHeight: count === 0 ? emptyHeight : Math.min(count, maxRows) * (rowHeight + spacing) - spacing
+    // Set when a layout gives the list its height (sidebar, grid): maxRows
+    // then follows the height, so it can't feed the implicit height
+    property bool fills: false
+
+    implicitHeight: count === 0 || fills ? emptyHeight : Math.min(count, maxRows) * (rowHeight + spacing) - spacing
     clip: true
     spacing: Math.round(Config.padding / 2)
     boundsBehavior: Flickable.StopAtBounds

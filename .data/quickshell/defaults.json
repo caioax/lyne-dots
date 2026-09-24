@@ -22,7 +22,8 @@
         "height": 33,
         "style": "docked",
         "position": "top",
-        "margin": 8
+        "margin": 8,
+        "attachPopups": false
     },
     "launcher": {
         "favorites": [],

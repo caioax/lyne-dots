@@ -30,6 +30,23 @@ PanelWindow {
     readonly property bool barOnBottom: Config.barOnBottom
     // Distance from the bar's screen edge to just past the bar
     readonly property int barGap: Config.barReservedHeight + Config.spacing
+    // Grow out of the bar (or the screen edge) instead of floating near it
+    readonly property bool attachable: dropdown || sidebar || atBar
+    // Same switch as the bar popups (Settings › Bar › Attach to the bar)
+    readonly property bool attached: attachable && StateService.get("bar.attachPopups", false)
+    // With a docked bar the panel attaches below it; islands and floating
+    // bars have no continuous edge, so it attaches to the screen edge
+    readonly property real attachLine: Config.barIslands || Config.barFloating ? 0 : Config.barHeight
+    // Flush sides of the attached panel, the one it slides out of first
+    readonly property var attachedEdges: {
+        const barEdge = barOnBottom ? "bottom" : "top";
+        if (sidebar)
+            return [position, "top", "bottom"];
+        if (dropdown)
+            return [barEdge, "left"];
+        return [barEdge];
+    }
+
     // Next to a bar at the bottom the panel is upside down: search by the
     // bar, the list growing upward with the best match right above it
     readonly property bool reversed: atBar && barOnBottom
@@ -246,44 +263,62 @@ PanelWindow {
         onClicked: root.hide()
     }
 
-    AnimatedPopup {
-        id: popup
+    // Where the panel goes and how big it is. The floating templates sit a
+    // gap away from the bar; attached ones touch the bar (or the screen edge)
+    // and grow out of it. Sidebar and grid have a fixed size; the others
+    // follow their content and are anchored by the edge facing the bar, so
+    // they only grow away from it while typing
+    Item {
+        id: frame
 
-        // Width of the floating templates
-        readonly property int panelWidth: Config.fontSizeNormal * (root.style === "spotlight" ? 40 : 32)
+        readonly property int margin: root.grid ? Config.padding * 4 : Config.padding * 2
+        readonly property real contentHeight: column.implicitHeight + margin * 2
+        // Distance from the bar's screen edge to the panel
+        readonly property real edgeOffset: root.attached ? root.attachLine : root.barGap
+        // Space the sidebar leaves at the screen edges when floating
+        readonly property real inset: root.attached ? 0 : Config.spacing
 
-        // Sidebar and grid have a fixed size; the others follow their content
-        // and are anchored by the edge facing the bar, so they only grow away
-        // from it while typing
         width: {
             if (root.grid)
                 return root.width;
-            return panelWidth;
+            return Config.fontSizeNormal * (root.style === "spotlight" ? 40 : 32);
         }
         height: {
             if (root.grid)
                 return root.height;
             if (root.sidebar)
-                return root.height - root.barGap - Config.spacing;
-            return panel.implicitHeight;
+                return root.height - edgeOffset - inset;
+            return contentHeight;
         }
         x: {
             if (root.grid)
                 return 0;
             if (root.sidebar)
-                return root.position === "right" ? root.width - width - Config.spacing : Config.spacing;
+                return root.position === "right" ? root.width - width - inset : inset;
             // Under the bar's launcher button, the first item on its left
             if (root.dropdown)
-                return Config.barMargin + Config.spacing;
+                return root.attached ? 0 : Config.barMargin + Config.spacing;
             return Math.round((root.width - width) / 2);
         }
         y: {
             if (root.grid)
                 return 0;
-            if (root.sidebar || root.atBar)
-                return root.barOnBottom ? root.height - root.barGap - (root.sidebar ? height : panel.implicitHeight) : root.barGap;
+            if (root.sidebar)
+                return root.barOnBottom ? inset : edgeOffset;
+            if (root.atBar)
+                return root.barOnBottom ? root.height - edgeOffset - height : edgeOffset;
             return Math.round(root.height / 5);
         }
+    }
+
+    AnimatedPopup {
+        id: popup
+
+        visible: !root.attached
+        x: frame.x
+        y: frame.y
+        width: frame.width
+        height: frame.height
         transformOrigin: {
             if (root.grid)
                 return Item.Center;
@@ -294,181 +329,199 @@ PanelWindow {
             return root.atBar && root.barOnBottom ? Item.Bottom : Item.Top;
         }
         fromScale: root.grid ? 1.03 : Config.animPopupFromScale
-        shown: LauncherService.visible
+        shown: LauncherService.visible && !root.attached
 
         Rectangle {
-            id: panel
-
-            readonly property int margin: root.grid ? Config.padding * 4 : Config.padding * 2
+            id: floatingPanel
 
             anchors.fill: parent
-            implicitHeight: column.implicitHeight + margin * 2
             // Concentric with the rows inside the margin
-            radius: root.grid ? 0 : Config.radiusLarge + margin
+            radius: root.grid ? 0 : Config.radiusLarge + frame.margin
             color: root.grid ? Qt.alpha(Config.backgroundColor, Math.min(0.95, Config.backgroundOpacity + 0.05)) : Config.backgroundTransparentColor
             border.width: root.grid ? 0 : 1
             border.color: Config.surface2Color
+        }
+    }
 
-            // Swallow clicks so they don't reach the closing MouseArea; in
-            // the grid template, clicks on the empty backdrop close
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    if (root.grid)
-                        root.hide();
-                }
+    AttachedPanel {
+        id: attachedPanel
+
+        visible: root.attached
+        x: frame.x
+        y: frame.y
+        width: frame.width
+        height: frame.height
+        edges: root.attachedEdges
+        radius: Config.radiusLarge + frame.margin
+        shown: LauncherService.visible && root.attached
+    }
+
+    // The content, inside whichever panel is in use
+    Item {
+        id: panel
+
+        parent: root.attached ? attachedPanel.body : floatingPanel
+        anchors.fill: parent
+
+        // Swallow clicks so they don't reach the closing MouseArea; in
+        // the grid template, clicks on the empty backdrop close
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                if (root.grid)
+                    root.hide();
+            }
+        }
+
+        // A one-column grid so the rows can be reordered (`reversed`)
+        GridLayout {
+            id: column
+
+            // Row of each part, top to bottom
+            readonly property var rows: root.reversed ? ({
+                    footer: 0,
+                    separator: 1,
+                    resultsLabel: 2,
+                    results: 3,
+                    favoritesLabel: 4,
+                    favorites: 5,
+                    search: 6
+                }) : ({
+                    search: 0,
+                    favoritesLabel: 1,
+                    favorites: 2,
+                    resultsLabel: 3,
+                    results: 4,
+                    separator: 5,
+                    footer: 6
+                })
+
+            columns: 1
+            rowSpacing: Config.spacing
+
+            // The grid template keeps its content to a readable column
+            width: root.grid ? Math.min(parent.width - frame.margin * 2, Config.fontSizeNormal * 72) : parent.width - frame.margin * 2
+            x: Math.round((parent.width - width) / 2)
+            y: root.grid ? Math.round(parent.height / 10) : frame.margin
+            height: root.grid ? parent.height - y - frame.margin : root.sidebar ? parent.height - frame.margin * 2 : implicitHeight
+
+            SearchField {
+                id: search
+
+                Layout.row: column.rows.search
+                Layout.maximumWidth: root.grid ? Config.fontSizeNormal * 40 : -1
+                Layout.alignment: Qt.AlignHCenter
+                count: LauncherService.mode.id === "calc" ? 0 : LauncherService.entries.length
+                icon: LauncherService.mode.icon
+                chip: LauncherService.mode.id === "apps" ? "" : LauncherService.mode.label
+                placeholder: LauncherService.mode.placeholder
+                onTextChanged: LauncherService.query = text
+                onKeyPressed: event => root.handleKey(event)
+                Component.onCompleted: Qt.callLater(() => {
+                    if (LauncherService.visible)
+                        focusInput();
+                })
             }
 
-            // A one-column grid so the rows can be reordered (`reversed`)
-            GridLayout {
-                id: column
+            SectionLabel {
+                Layout.row: column.rows.favoritesLabel
+                visible: favoritesGrid.count > 0
+                text: "Favorites"
+            }
 
-                // Row of each part, top to bottom
-                readonly property var rows: root.reversed ? ({
-                        footer: 0,
-                        separator: 1,
-                        resultsLabel: 2,
-                        results: 3,
-                        favoritesLabel: 4,
-                        favorites: 5,
-                        search: 6
-                    }) : ({
-                        search: 0,
-                        favoritesLabel: 1,
-                        favorites: 2,
-                        resultsLabel: 3,
-                        results: 4,
-                        separator: 5,
-                        footer: 6
-                    })
+            FavoritesGrid {
+                id: favoritesGrid
 
-                columns: 1
-                rowSpacing: Config.spacing
+                Layout.row: column.rows.favorites
+                Layout.fillWidth: true
+                visible: count > 0
+                columns: root.grid ? root.gridColumns : root.style === "spotlight" ? 6 : 5
+                onLaunched: panel.forceActiveFocus()
+                onMenuRequested: (anchor, app) => menu.openAt(anchor, app)
+            }
 
-                // The grid template keeps its content to a readable column
-                width: root.grid ? Math.min(parent.width - panel.margin * 2, Config.fontSizeNormal * 72) : parent.width - panel.margin * 2
-                x: Math.round((parent.width - width) / 2)
-                y: root.grid ? Math.round(parent.height / 10) : panel.margin
-                height: root.grid ? parent.height - y - panel.margin : root.sidebar ? parent.height - panel.margin * 2 : implicitHeight
+            SectionLabel {
+                Layout.row: column.rows.resultsLabel
+                visible: favoritesGrid.count > 0 && LauncherService.results.length > 0
+                text: LauncherService.mode.id === "apps" ? "Apps" : LauncherService.mode.label
+            }
 
-                SearchField {
-                    id: search
+            ResultsGrid {
+                id: resultsGrid
 
-                    Layout.row: column.rows.search
-                    Layout.maximumWidth: root.grid ? Config.fontSizeNormal * 40 : -1
-                    Layout.alignment: Qt.AlignHCenter
-                    count: LauncherService.mode.id === "calc" ? 0 : LauncherService.entries.length
-                    icon: LauncherService.mode.icon
-                    chip: LauncherService.mode.id === "apps" ? "" : LauncherService.mode.label
-                    placeholder: LauncherService.mode.placeholder
-                    onTextChanged: LauncherService.query = text
-                    onKeyPressed: event => root.handleKey(event)
-                    Component.onCompleted: Qt.callLater(() => {
-                        if (LauncherService.visible)
-                            focusInput();
-                    })
-                }
+                Layout.row: column.rows.results
+                visible: root.tileResults
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                columns: root.gridColumns
+                onLaunched: panel.forceActiveFocus()
+                onMenuRequested: (anchor, app) => menu.openAt(anchor, app)
+            }
 
-                SectionLabel {
-                    Layout.row: column.rows.favoritesLabel
-                    visible: favoritesGrid.count > 0
-                    text: "Favorites"
-                }
+            ResultsList {
+                id: results
 
-                FavoritesGrid {
-                    id: favoritesGrid
+                Layout.row: column.rows.results
+                verticalLayoutDirection: root.reversed ? ListView.BottomToTop : ListView.TopToBottom
+                // Sidebar and grid fill the height they have
+                fills: root.sidebar || root.grid
 
-                    Layout.row: column.rows.favorites
-                    Layout.fillWidth: true
-                    visible: count > 0
-                    columns: root.grid ? root.gridColumns : root.style === "spotlight" ? 6 : 5
-                    onLaunched: panel.forceActiveFocus()
-                    onMenuRequested: (anchor, app) => menu.openAt(anchor, app)
-                }
+                visible: !root.tileResults
+                // Leaves room for the favorites above
+                maxRows: fills ? Math.max(1, Math.floor(height / (rowHeight + spacing))) : Math.max(3, StateService.get("launcher.rows", 7) - (favoritesGrid.count > 0 ? 2 : 0))
+                showDescription: StateService.get("launcher.showDescriptions", true)
 
-                SectionLabel {
-                    Layout.row: column.rows.resultsLabel
-                    visible: favoritesGrid.count > 0 && LauncherService.results.length > 0
-                    text: LauncherService.mode.id === "apps" ? "Apps" : LauncherService.mode.label
-                }
+                // Animated copy of the height the list wants
+                property real shownHeight: implicitHeight
 
-                ResultsGrid {
-                    id: resultsGrid
-
-                    Layout.row: column.rows.results
-                    visible: root.tileResults
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    columns: root.gridColumns
-                    onLaunched: panel.forceActiveFocus()
-                    onMenuRequested: (anchor, app) => menu.openAt(anchor, app)
-                }
-
-                ResultsList {
-                    id: results
-
-                    Layout.row: column.rows.results
-                    verticalLayoutDirection: root.reversed ? ListView.BottomToTop : ListView.TopToBottom
-                    // Sidebar and grid fill the height they have
-                    readonly property bool fills: root.sidebar || root.grid
-
-                    visible: !root.tileResults
-                    // Leaves room for the favorites above
-                    maxRows: fills ? Math.max(1, Math.floor(height / (rowHeight + spacing))) : Math.max(3, StateService.get("launcher.rows", 7) - (favoritesGrid.count > 0 ? 2 : 0))
-                    showDescription: StateService.get("launcher.showDescriptions", true)
-
-                    // Animated copy of the height the list wants
-                    property real shownHeight: implicitHeight
-
-                    Behavior on shownHeight {
-                        NumberAnimation {
-                            duration: Config.animDuration
-                            easing.type: Easing.OutCubic
-                        }
+                Behavior on shownHeight {
+                    NumberAnimation {
+                        duration: Config.animDuration
+                        easing.type: Easing.OutCubic
                     }
-
-                    Layout.fillWidth: true
-                    Layout.maximumWidth: root.grid ? Config.fontSizeNormal * 40 : -1
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
-                    Layout.fillHeight: fills
-                    Layout.preferredHeight: fills ? -1 : shownHeight
-                    onLaunched: panel.forceActiveFocus()
-                    onMenuRequested: (anchor, app) => menu.openAt(anchor, app)
                 }
 
-                Rectangle {
-                    Layout.row: column.rows.separator
-                    Layout.fillWidth: true
-                    implicitHeight: 1
-                    color: Config.surface1Color
+                Layout.fillWidth: true
+                Layout.maximumWidth: root.grid ? Config.fontSizeNormal * 40 : -1
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                Layout.fillHeight: fills
+                Layout.preferredHeight: fills ? -1 : shownHeight
+                onLaunched: panel.forceActiveFocus()
+                onMenuRequested: (anchor, app) => menu.openAt(anchor, app)
+            }
+
+            Rectangle {
+                Layout.row: column.rows.separator
+                Layout.fillWidth: true
+                implicitHeight: 1
+                color: Config.surface1Color
+            }
+
+            RowLayout {
+                Layout.row: column.rows.footer
+                Layout.leftMargin: Config.padding
+                Layout.rightMargin: Config.padding
+                Layout.alignment: root.grid ? Qt.AlignHCenter : Qt.AlignLeft
+                spacing: Config.spacing * 2
+
+                KeyHint {
+                    keys: root.tileResults || favoritesGrid.count > 0 ? "↑↓←→" : "↑↓"
+                    label: "navigate"
                 }
 
-                RowLayout {
-                    Layout.row: column.rows.footer
-                    Layout.leftMargin: Config.padding
-                    Layout.rightMargin: Config.padding
-                    Layout.alignment: root.grid ? Qt.AlignHCenter : Qt.AlignLeft
-                    spacing: Config.spacing * 2
+                KeyHint {
+                    keys: "⏎"
+                    label: "open"
+                }
 
-                    KeyHint {
-                        keys: root.tileResults || favoritesGrid.count > 0 ? "↑↓←→" : "↑↓"
-                        label: "navigate"
-                    }
+                KeyHint {
+                    keys: "ctrl ⇥"
+                    label: "mode"
+                }
 
-                    KeyHint {
-                        keys: "⏎"
-                        label: "open"
-                    }
-
-                    KeyHint {
-                        keys: "ctrl ⇥"
-                        label: "mode"
-                    }
-
-                    KeyHint {
-                        keys: "esc"
-                        label: search.text !== "" ? "clear" : "close"
-                    }
+                KeyHint {
+                    keys: "esc"
+                    label: search.text !== "" ? "clear" : "close"
                 }
             }
         }

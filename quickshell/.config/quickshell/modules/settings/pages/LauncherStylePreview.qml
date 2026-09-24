@@ -3,10 +3,11 @@ import QtQuick
 import Quickshell.Widgets
 import qs.config
 import qs.services
+import "../../../components/"
 
 // Miniature desktop showing one launcher template over the current
 // wallpaper, with the bar on its configured edge and the launcher in the
-// position saved for that template
+// position saved for that template (attached to the bar when that's on)
 ClippingRectangle {
     id: root
 
@@ -24,6 +25,11 @@ ClippingRectangle {
     readonly property bool grid: value === "grid"
     readonly property bool sidebar: value === "sidebar"
     readonly property bool atBar: value === "dropdown" || (value === "spotlight" && position === "bar")
+    // Same rules as the launcher: attached panels touch the bar, or the
+    // screen edge when the bar has no continuous edge
+    readonly property bool attached: StateService.get("bar.attachPopups", false) && (atBar || sidebar)
+    readonly property real edgeOffset: attached ? (Config.barIslands || Config.barFloating ? 0 : barHeight) : barGap
+    readonly property real inset: attached ? 0 : unit * 0.4
 
     radius: Config.radius
     color: Config.surface2Color
@@ -53,7 +59,27 @@ ClippingRectangle {
         }
     }
 
-    // The launcher panel
+    AttachedPanel {
+        visible: root.attached
+        x: panel.x
+        y: panel.y
+        width: panel.width
+        height: panel.height
+        edges: {
+            const barEdge = root.barOnBottom ? "bottom" : "top";
+            if (root.sidebar)
+                return [root.position, "top", "bottom"];
+            if (root.value === "dropdown")
+                return [barEdge, "left"];
+            return [barEdge];
+        }
+        color: Config.backgroundColor
+        radius: root.unit * 0.6
+        filletSize: root.unit * 0.6
+        shown: true
+    }
+
+    // The launcher panel (only its content when attached)
     Rectangle {
         id: panel
 
@@ -70,28 +96,30 @@ ClippingRectangle {
             if (root.grid)
                 return parent.height;
             if (root.sidebar)
-                return parent.height - root.barGap - root.unit * 0.4;
+                return parent.height - root.edgeOffset - root.inset;
             return root.unit * 6;
         }
         x: {
             if (root.grid)
                 return 0;
             if (root.sidebar)
-                return root.position === "right" ? parent.width - width - root.unit * 0.4 : root.unit * 0.4;
+                return root.position === "right" ? parent.width - width - root.inset : root.inset;
             if (root.value === "dropdown")
-                return root.unit * 0.4;
+                return root.inset;
             return (parent.width - width) / 2;
         }
         y: {
             if (root.grid)
                 return 0;
-            if (root.sidebar || root.atBar)
-                return root.barOnBottom ? parent.height - root.barGap - height : root.barGap;
+            if (root.sidebar)
+                return root.barOnBottom ? root.inset : root.edgeOffset;
+            if (root.atBar)
+                return root.barOnBottom ? parent.height - root.edgeOffset - height : root.edgeOffset;
             return parent.height / 5;
         }
         radius: root.grid ? 0 : root.unit * 0.6
-        color: root.grid ? Qt.alpha(Config.backgroundColor, 0.9) : Config.backgroundColor
-        border.width: root.grid ? 0 : 1
+        color: root.attached ? "transparent" : root.grid ? Qt.alpha(Config.backgroundColor, 0.9) : Config.backgroundColor
+        border.width: root.grid || root.attached ? 0 : 1
         border.color: Config.surface2Color
 
         // Search field

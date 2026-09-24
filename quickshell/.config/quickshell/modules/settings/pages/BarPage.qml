@@ -36,6 +36,12 @@ ColumnLayout {
                 BarStylePreview {}
             }
         }
+
+        ToggleRow {
+            label: "Attach to the bar"
+            description: (Config.barIslands || Config.barFloating ? "Popups grow out of the screen edge with rounded joins (the bar has no continuous edge in its current style)" : "Popups grow out of the bar with rounded joins") + ": Quick Settings, calendar, system monitor, the player and the launcher (dropdown, sidebar and spotlight next to the bar)"
+            path: "bar.attachPopups"
+        }
     }
 
     SettingsGroup {

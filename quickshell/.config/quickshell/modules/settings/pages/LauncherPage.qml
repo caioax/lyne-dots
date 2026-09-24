@@ -80,6 +80,26 @@ ColumnLayout {
                 }
             ]
         }
+
+        // Only the templates that sit against the bar or a screen edge. The
+        // switch is shared with the bar popups, so it lives in the Bar page
+        SettingRow {
+            id: attachRow
+
+            readonly property bool on: StateService.get("bar.attachPopups", false)
+
+            visible: LauncherService.style === "dropdown" || LauncherService.style === "sidebar" || (LauncherService.style === "spotlight" && LauncherService.position === "bar")
+            label: on ? "Attached to the bar" : "Floating"
+            description: "Follows Attach to the bar in the Bar settings, like the bar popups"
+
+            ActionButton {
+                icon: "\u{f1513}"
+                text: "Bar settings"
+                size: root.buttonSize
+                baseColor: attachRow.controlColor
+                onClicked: SettingsService.open("bar")
+            }
+        }
     }
 
     SettingsGroup {
