@@ -43,14 +43,22 @@ PanelWindow {
         LauncherService.launchSelected();
     }
 
-    // Keys the search field passes on: list navigation, launch and close
+    // Keys the search field passes on: navigation, launch and close. The
+    // selection runs through the favorite tiles (a grid: arrows move in 2D)
+    // and then the list
     function handleKey(event) {
         const ctrl = event.modifiers & Qt.ControlModifier;
+        const favorites = LauncherService.favoriteCount;
+        const selected = LauncherService.selectedIndex;
+        const inTiles = selected < favorites;
+        const columns = favoritesGrid.columns;
 
         switch (event.key) {
         case Qt.Key_Escape:
-            // First Escape clears the search, the second one closes
-            if (search.text !== "")
+            // Closes the menu, then clears the search, then the launcher
+            if (menu.opened)
+                menu.close();
+            else if (search.text !== "")
                 search.text = "";
             else
                 hide();
@@ -60,10 +68,37 @@ PanelWindow {
             launchSelected();
             break;
         case Qt.Key_Down:
+            // From the tiles: the row below, or the first app of the list
+            if (inTiles)
+                LauncherService.select(Math.min(selected + columns, favorites));
+            else
+                LauncherService.move(1);
+            break;
+        case Qt.Key_Up:
+            if (inTiles) {
+                if (selected >= columns)
+                    LauncherService.move(-columns);
+            } else if (selected === favorites && favorites > 0) {
+                // Back up to the first tile of the last row
+                LauncherService.select(Math.floor((favorites - 1) / columns) * columns);
+            } else {
+                LauncherService.move(-1);
+            }
+            break;
+        case Qt.Key_Left:
+            if (!inTiles)
+                return;
+            LauncherService.move(-1);
+            break;
+        case Qt.Key_Right:
+            if (!inTiles)
+                return;
+            if (selected + 1 < favorites)
+                LauncherService.move(1);
+            break;
         case Qt.Key_Tab:
             LauncherService.move(1);
             break;
-        case Qt.Key_Up:
         case Qt.Key_Backtab:
             LauncherService.move(-1);
             break;
@@ -141,7 +176,7 @@ PanelWindow {
                 SearchField {
                     id: search
 
-                    count: LauncherService.filteredApps.length
+                    count: LauncherService.entries.length
                     onTextChanged: LauncherService.query = text
                     onKeyPressed: event => root.handleKey(event)
                     Component.onCompleted: Qt.callLater(() => {
@@ -150,8 +185,30 @@ PanelWindow {
                     })
                 }
 
+                SectionLabel {
+                    visible: favoritesGrid.count > 0
+                    text: "Favorites"
+                }
+
+                FavoritesGrid {
+                    id: favoritesGrid
+
+                    Layout.fillWidth: true
+                    visible: count > 0
+                    onLaunched: panel.forceActiveFocus()
+                    onMenuRequested: (anchor, app) => menu.openAt(anchor, app)
+                }
+
+                SectionLabel {
+                    visible: favoritesGrid.count > 0 && results.count > 0
+                    text: "Apps"
+                }
+
                 ResultsList {
                     id: results
+
+                    // Leaves room for the favorites above
+                    maxRows: favoritesGrid.count > 0 ? 5 : 7
 
                     // Animated copy of the height the list wants
                     property real shownHeight: implicitHeight
@@ -166,6 +223,7 @@ PanelWindow {
                     Layout.fillWidth: true
                     Layout.preferredHeight: shownHeight
                     onLaunched: panel.forceActiveFocus()
+                    onMenuRequested: (anchor, app) => menu.openAt(anchor, app)
                 }
 
                 Rectangle {
@@ -196,6 +254,45 @@ PanelWindow {
                 }
             }
         }
+    }
+
+    // App menu: pin to the favorites or hide from the launcher
+    ContextMenu {
+        id: menu
+
+        readonly property bool isFavorite: target ? LauncherService.isFavorite(target) : false
+
+        items: [
+            {
+                label: menu.isFavorite ? "Unpin from favorites" : "Pin to favorites",
+                icon: menu.isFavorite ? "\u{f0404}" : "\u{f0403}",
+                action: "pin"
+            },
+            {
+                label: "Hide from launcher",
+                icon: "\u{f0209}",
+                action: "hide"
+            }
+        ]
+
+        onTriggered: (action, app) => {
+            if (action === "pin")
+                LauncherService.toggleFavorite(app);
+            else if (action === "hide")
+                LauncherService.hideApp(app);
+        }
+    }
+
+    component SectionLabel: Text {
+        Layout.leftMargin: Config.padding
+        Layout.topMargin: Config.padding
+        text: ""
+        font.family: Config.font
+        font.pixelSize: Config.fontSizeSmall
+        font.bold: true
+        font.letterSpacing: 1
+        font.capitalization: Font.AllUppercase
+        color: Config.accentColor
     }
 
     // Deactivated as soon as the service hides (not tied to window

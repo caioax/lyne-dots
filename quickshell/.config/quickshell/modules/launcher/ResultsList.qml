@@ -6,8 +6,9 @@ import qs.config
 import qs.services
 import "../../components/"
 
-// Scrollable list of AppRows following LauncherService's selection. Its
-// implicit height fits up to `maxRows` rows (or the empty state)
+// Scrollable list of AppRows following LauncherService's selection (which
+// counts the favorites first). Its implicit height fits up to `maxRows` rows
+// (or the empty state)
 ListView {
     id: root
 
@@ -18,46 +19,41 @@ ListView {
     // Rows leave room for the scrollbar when the list scrolls
     readonly property int rowWidth: width - (contentHeight > height ? scrollBar.width + Config.padding : 0)
 
+    readonly property int offset: LauncherService.favoriteCount
+    // Selected row, -1 while a favorite is selected. Not ListView's
+    // currentIndex, which snaps back to 0 on its own
+    readonly property int selectedRow: LauncherService.selectedIndex - offset
+
     signal launched
+    signal menuRequested(Item anchor, var app)
 
     implicitHeight: count === 0 ? emptyHeight : Math.min(count, maxRows) * (rowHeight + spacing) - spacing
     clip: true
     spacing: Math.round(Config.padding / 2)
     boundsBehavior: Flickable.StopAtBounds
     model: LauncherService.filteredApps
-    currentIndex: LauncherService.selectedIndex
-
     // No animation while keeping the selection in view, so the mouse
     // doesn't land on a moving row
-    onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
-
-    highlightFollowsCurrentItem: false
-    highlight: Rectangle {
-        width: root.rowWidth
-        height: root.rowHeight
-        y: root.currentItem?.y ?? 0
-        radius: Config.radiusLarge
-        color: Config.surface1Color
-        border.width: 1
-        border.color: Qt.alpha(Config.accentColor, 0.6)
-
-        Behavior on y {
-            NumberAnimation {
-                duration: Config.animDurationShort
-                easing.type: Easing.OutCubic
-            }
-        }
+    onSelectedRowChanged: {
+        if (selectedRow >= 0)
+            positionViewAtIndex(selectedRow, ListView.Contain);
     }
 
     delegate: AppRow {
         width: root.rowWidth
         height: root.rowHeight
-        selected: index === LauncherService.selectedIndex
+        selected: index === root.selectedRow
         showDescription: root.showDescription
+        // First click selects the app, a click on the selected one opens it
         onActivated: {
+            if (!selected) {
+                LauncherService.select(index + root.offset);
+                return;
+            }
             root.launched();
             LauncherService.launch(modelData);
         }
+        onMenuRequested: anchor => root.menuRequested(anchor, modelData)
     }
 
     ScrollBar.vertical: QsScrollBar {

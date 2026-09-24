@@ -4,7 +4,8 @@ import QtQuick.Layouts
 import qs.config
 
 // One app of the results list: icon box, name and description. The selected
-// row gets the accent outline and the ⏎ hint; clicking launches it
+// row gets the accent outline and the ⏎ hint. Clicks go out as `activated`;
+// the ⋮ button (on hover) and right click ask for the app menu
 Item {
     id: root
 
@@ -12,25 +13,46 @@ Item {
     required property int index
     property bool selected: false
     property bool showDescription: true
-    readonly property bool hovered: mouse.containsMouse
+    // A HoverHandler keeps reporting hover while over the ⋮ button
+    readonly property bool hovered: rowHover.hovered
     readonly property string description: modelData?.comment || modelData?.genericName || ""
 
     signal activated
+    signal menuRequested(Item anchor)
 
     readonly property int iconBoxSize: Config.fontSizeIconLarge + Config.padding * 2
 
     implicitHeight: iconBoxSize + Config.padding * 2
 
-    // Hover background; the selection is drawn by the list's highlight
     Rectangle {
         anchors.fill: parent
         radius: Config.radiusLarge
-        color: root.hovered && !root.selected ? Config.surface0Color : "transparent"
+        color: root.selected ? Config.surface1Color : root.hovered ? Config.surface0Color : "transparent"
+        border.width: root.selected ? 1 : 0
+        border.color: Qt.alpha(Config.accentColor, 0.6)
 
         Behavior on color {
             ColorAnimation {
                 duration: Config.animDurationShort
             }
+        }
+    }
+
+    HoverHandler {
+        id: rowHover
+    }
+
+    MouseArea {
+        id: mouse
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: event => {
+            if (event.button === Qt.RightButton)
+                root.menuRequested(menuButton);
+            else
+                root.activated();
         }
     }
 
@@ -81,9 +103,15 @@ Item {
             }
         }
 
+        MenuButton {
+            id: menuButton
+            visible: root.hovered
+            onClicked: root.menuRequested(menuButton)
+        }
+
         // md-keyboard-return
         Text {
-            visible: root.selected
+            visible: root.selected && !menuButton.visible
             text: "\u{f0311}"
             font.family: Config.font
             font.pixelSize: Config.fontSizeIconSmall
@@ -91,11 +119,4 @@ Item {
         }
     }
 
-    MouseArea {
-        id: mouse
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: root.activated()
-    }
 }

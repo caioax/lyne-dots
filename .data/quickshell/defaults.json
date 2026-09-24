@@ -24,6 +24,11 @@
         "position": "top",
         "margin": 8
     },
+    "launcher": {
+        "favorites": [],
+        "hidden": [],
+        "usage": []
+    },
     "opacity": {
         "background": 0.9
     },
