@@ -33,7 +33,7 @@ PanelWindow {
     // Grow out of the bar (or the screen edge) instead of floating near it
     readonly property bool attachable: dropdown || sidebar || atBar
     // Same switch as the bar popups (Settings › Bar › Attach to the bar)
-    readonly property bool attached: attachable && StateService.get("bar.attachPopups", false)
+    readonly property bool attached: attachable && StateService.get("bar.attachPopups", true)
     // With a docked bar the panel attaches below it; islands and floating
     // bars have no continuous edge, so it attaches to the screen edge
     readonly property real attachLine: Config.barIslands || Config.barFloating ? 0 : Config.barHeight
@@ -46,6 +46,22 @@ PanelWindow {
             return [barEdge, "left"];
         return [barEdge];
     }
+
+    // Templates next to the bar keep an auto-hiding bar shown while open,
+    // like the bar popups do
+    readonly property bool holdsBar: LauncherService.visible && (atBar || sidebar)
+    onHoldsBarChanged: {
+        if (holdsBar)
+            WindowManagerService.registerOpen("Launcher");
+        else
+            WindowManagerService.registerClose("Launcher");
+    }
+    // Created already open, so the change handler doesn't run for it
+    Component.onCompleted: {
+        if (holdsBar)
+            WindowManagerService.registerOpen("Launcher");
+    }
+    Component.onDestruction: WindowManagerService.registerClose("Launcher")
 
     // Next to a bar at the bottom the panel is upside down: search by the
     // bar, the list growing upward with the best match right above it

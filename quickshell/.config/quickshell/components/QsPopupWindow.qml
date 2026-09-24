@@ -49,7 +49,7 @@ PanelWindow {
     readonly property bool upward: Config.barOnBottom
 
     // --- Attached look ---
-    readonly property bool attached: StateService.get("bar.attachPopups", false)
+    readonly property bool attached: StateService.get("bar.attachPopups", true)
     // Docked bars: just below the bar; islands and floating bars have no
     // continuous edge, so the popup grows out of the screen edge
     readonly property real attachLine: Config.barIslands || Config.barFloating ? 0 : Config.barHeight

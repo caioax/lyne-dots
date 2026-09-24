@@ -20,10 +20,10 @@
     "bar": {
         "autoHide": false,
         "height": 33,
-        "style": "docked",
+        "style": "docked-corners",
         "position": "top",
         "margin": 8,
-        "attachPopups": false
+        "attachPopups": true
     },
     "launcher": {
         "favorites": [],
@@ -33,7 +33,7 @@
         "rankByUsage": true,
         "rows": 7,
         "terminal": "kitty",
-        "style": "spotlight",
+        "style": "sidebar",
         "position": "center"
     },
     "opacity": {

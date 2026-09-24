@@ -51,7 +51,7 @@ Singleton {
     // Screen edge the bar sits on: "top" or "bottom"
     readonly property bool barOnBottom: getState("bar.position", "top") === "bottom"
     // Layout template: "islands", "docked", "floating" or "docked-corners"
-    readonly property string barStyle: getState("bar.style", "docked")
+    readonly property string barStyle: getState("bar.style", "docked-corners")
     readonly property bool barIslands: barStyle === "islands"
     readonly property bool barFloating: barStyle === "floating"
     readonly property bool barCorners: barStyle === "docked-corners"

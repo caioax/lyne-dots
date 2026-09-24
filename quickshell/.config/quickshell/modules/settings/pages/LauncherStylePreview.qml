@@ -27,7 +27,7 @@ ClippingRectangle {
     readonly property bool atBar: value === "dropdown" || (value === "spotlight" && position === "bar")
     // Same rules as the launcher: attached panels touch the bar, or the
     // screen edge when the bar has no continuous edge
-    readonly property bool attached: StateService.get("bar.attachPopups", false) && (atBar || sidebar)
+    readonly property bool attached: StateService.get("bar.attachPopups", true) && (atBar || sidebar)
     readonly property real edgeOffset: attached ? (Config.barIslands || Config.barFloating ? 0 : barHeight) : barGap
     readonly property real inset: attached ? 0 : unit * 0.4
 

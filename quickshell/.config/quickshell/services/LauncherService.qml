@@ -29,8 +29,8 @@ Singleton {
     readonly property var hidden: StateService.get("launcher.hidden", [])
     readonly property var usage: StateService.get("launcher.usage", [])
 
-    // Layout template: "spotlight", "dropdown", "sidebar" or "grid"
-    readonly property string style: StateService.get("launcher.style", "spotlight")
+    // Layout template: "sidebar" (default), "spotlight", "dropdown" or "grid"
+    readonly property string style: StateService.get("launcher.style", "sidebar")
     // Where the template sits, when it has a choice: spotlight "center" or
     // "bar" (next to the bar), sidebar "left" or "right". Falls back to the
     // template's first option when the saved one belongs to another template

@@ -47,7 +47,7 @@ PanelWindow {
 
     // --- Attached look (bar.attachPopups): grows out of the bar, holding
     // the card, like the other bar popups (see QsPopupWindow) ---
-    readonly property bool attached: StateService.get("bar.attachPopups", false)
+    readonly property bool attached: StateService.get("bar.attachPopups", true)
     readonly property real attachLine: Config.barIslands || Config.barFloating ? 0 : Config.barHeight
     readonly property real filletSize: Config.radiusLarge
     // Space between the attached panel and the card

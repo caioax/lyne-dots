@@ -86,7 +86,7 @@ ColumnLayout {
         SettingRow {
             id: attachRow
 
-            readonly property bool on: StateService.get("bar.attachPopups", false)
+            readonly property bool on: StateService.get("bar.attachPopups", true)
 
             visible: LauncherService.style === "dropdown" || LauncherService.style === "sidebar" || (LauncherService.style === "spotlight" && LauncherService.position === "bar")
             label: on ? "Attached to the bar" : "Floating"
