@@ -28,7 +28,9 @@ Rectangle {
     readonly property bool hovered: rowHover.hovered
     // Background for controls inside the row, so they stay visible on hover
     readonly property color controlColor: hovered ? Config.surface2Color : Config.surface1Color
-    readonly property bool modified: path !== "" && !StateService.isDefault(path)
+    // false for quick on/off switches (e.g. caffeine) where "reset" is noise
+    property bool resettable: true
+    readonly property bool modified: resettable && path !== "" && !StateService.isDefault(path)
     readonly property int rowPadding: Config.padding * 2
 
     signal resetRequested

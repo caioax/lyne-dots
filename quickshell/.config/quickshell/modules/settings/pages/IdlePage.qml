@@ -83,6 +83,7 @@ ColumnLayout {
             label: "Caffeine"
             description: "Keep the screen on and never lock automatically"
             path: "idle.caffeine"
+            resettable: false
         }
 
         ToggleRow {
