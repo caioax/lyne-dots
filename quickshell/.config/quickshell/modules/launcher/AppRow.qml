@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.services
 
 // One app of the results list: icon box, name and description. The selected
 // row gets the accent outline and the ⏎ hint. Clicks go out as `activated`;
@@ -84,7 +85,9 @@ Item {
 
             Text {
                 width: parent.width
-                text: root.modelData?.name ?? ""
+                // Chars matched by the search in accent
+                text: LauncherService.highlightedName(root.modelData, Config.accentColor)
+                textFormat: Text.StyledText
                 elide: Text.ElideRight
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeNormal

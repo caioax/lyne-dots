@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "fuzzy.js" as Fuzzy
 
 Singleton {
     id: root
@@ -59,7 +60,7 @@ Singleton {
 
     // Pinned apps, shown as tiles above the list while nothing is typed
     readonly property var favoriteApps: {
-        if (query !== "")
+        if (query.trim() !== "")
             return [];
         const byId = {};
         for (const app of apps)
@@ -67,32 +68,93 @@ Singleton {
         return favorites.map(id => byId[id]).filter(app => app !== undefined);
     }
 
-    // The list below the favorites: most used first, then alphabetical. While
-    // searching, name matches come before description matches
+    // Prepared search fields per app (see fuzzy.js). Only the name and the
+    // command allow scattered letters; the rest must contain the term
+    readonly property var searchIndex: apps.map(app => ({
+                app: app,
+                id: appId(app),
+                name: Fuzzy.prepare(app.name || ""),
+                command: Fuzzy.prepare(_commandName(app)),
+                generic: Fuzzy.prepare(app.genericName || ""),
+                keywords: (app.keywords || []).map(k => Fuzzy.prepare(k)),
+                comment: Fuzzy.prepare(app.comment || "")
+            }))
+
+    // Search results: [{ app, positions }] best first, where positions are
+    // the matched chars of the name (for highlighting)
+    readonly property var matches: {
+        const terms = Fuzzy.normalize(query.trim()).text.split(/\s+/).filter(t => t !== "");
+        if (terms.length === 0)
+            return [];
+
+        const pinned = new Set(favorites);
+        const results = [];
+
+        for (const entry of searchIndex) {
+            let total = 0;
+            let positions = [];
+            let matched = true;
+
+            // Every term must match some field; the best field counts
+            for (const term of terms) {
+                const name = Fuzzy.score(term, entry.name, true);
+                // [result, weight]
+                const candidates = [
+                    [name, 1],
+                    [Fuzzy.score(term, entry.command, true), 0.7],
+                    [Fuzzy.score(term, entry.generic, false), 0.6],
+                    [Fuzzy.score(term, entry.comment, false), 0.35],
+                    ...entry.keywords.map(k => [Fuzzy.score(term, k, false), 0.6])
+                ];
+                let best = null;
+                for (const [result, weight] of candidates) {
+                    if (result && (!best || result.score * weight > best.value))
+                        best = {
+                            value: result.score * weight,
+                            fromName: result === name,
+                            positions: result.positions
+                        };
+                }
+                if (!best) {
+                    matched = false;
+                    break;
+                }
+                total += best.value;
+                if (best.fromName)
+                    positions = positions.concat(best.positions);
+            }
+            if (!matched)
+                continue;
+
+            // Usage and pins break ties within a tier
+            total += 15 * Math.log2(1 + (scores[entry.id] ?? 0)) + (pinned.has(entry.id) ? 25 : 0);
+            results.push({
+                app: entry.app,
+                score: total,
+                positions: positions
+            });
+        }
+
+        return results.sort((a, b) => b.score - a.score || (a.app.name || "").localeCompare(b.app.name || ""));
+    }
+
+    // Matched name chars per app id, for highlighting
+    readonly property var namePositions: {
+        const map = {};
+        for (const m of matches)
+            map[appId(m.app)] = m.positions;
+        return map;
+    }
+
+    // The list below the favorites: most used first, then alphabetical.
+    // While searching, the fuzzy matches best first
     readonly property var filteredApps: {
+        if (query.trim() !== "")
+            return matches.map(m => m.app);
+
         const byRank = (a, b) => (scores[appId(b)] ?? 0) - (scores[appId(a)] ?? 0) || (a.name || "").localeCompare(b.name || "");
-
-        if (query === "") {
-            const pinned = new Set(favorites);
-            return apps.filter(app => !pinned.has(appId(app))).sort(byRank);
-        }
-
-        const q = query.toLowerCase();
-        const nameMatches = [];
-        const descMatches = [];
-
-        for (const app of apps) {
-            const name = (app.name || "").toLowerCase();
-            const comment = (app.comment || "").toLowerCase();
-            const genericName = (app.genericName || "").toLowerCase();
-
-            if (name.includes(q))
-                nameMatches.push(app);
-            else if (comment.includes(q) || genericName.includes(q))
-                descMatches.push(app);
-        }
-
-        return [...nameMatches.sort(byRank), ...descMatches.sort(byRank)];
+        const pinned = new Set(favorites);
+        return apps.filter(app => !pinned.has(appId(app))).sort(byRank);
     }
 
     readonly property int favoriteCount: favoriteApps.length
@@ -105,6 +167,25 @@ Singleton {
 
     function appId(app): string {
         return app?.id || app?.execString || app?.name || "";
+    }
+
+    // App name as styled text with the chars matched by the search in accent
+    function highlightedName(app, color): string {
+        const name = app?.name ?? "";
+        const positions = new Set(namePositions[appId(app)] ?? []);
+        const escape = c => c === "&" ? "&amp;" : c === "<" ? "&lt;" : c === ">" ? "&gt;" : c;
+        let out = "";
+        for (let i = 0; i < name.length; i++)
+            out += positions.has(i) ? "<b><font color=\"" + color + "\">" + escape(name[i]) + "</font></b>" : escape(name[i]);
+        return out;
+    }
+
+    // Executable name, or the last part of the id, so "code" finds VS Code
+    function _commandName(app): string {
+        const words = (app.execString || "").split(/\s+/).filter(w => w !== "env" && !w.includes("="));
+        const exec = (words[0] || "").split("/").pop();
+        const idTail = (app.id || "").split(".").pop();
+        return exec === idTail ? exec : exec + " " + idTail;
     }
 
     function show() {
