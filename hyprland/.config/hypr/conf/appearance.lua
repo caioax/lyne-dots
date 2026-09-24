@@ -4,6 +4,10 @@
 
 -- Refer to https://wiki.hypr.land/Configuring/Basics/Variables/
 
+-- Some values here are overridden by local/settings.lua, generated from the
+-- Quickshell settings window (Hyprland pages). Change those there, or in the
+-- "hyprland" block of state.json.
+
 hl.config({
     general = {
         gaps_in  = 5,

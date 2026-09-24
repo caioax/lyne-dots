@@ -14,7 +14,7 @@ Singleton {
 
     // Sidebar entries, grouped by category in this order. Each id needs a
     // component in SettingsWindow.pageComponents
-    readonly property var categories: ["Appearance", "Shell", "System"]
+    readonly property var categories: ["Appearance", "Shell", "Hyprland", "System"]
     readonly property var pages: [
         {
             id: "theme",
@@ -50,6 +50,20 @@ Singleton {
             icon: "\u{f009a}",
             description: "Popups, timeout and do not disturb",
             category: "Shell"
+        },
+        {
+            id: "windows",
+            label: "Windows",
+            icon: "\u{f05b2}",
+            description: "Gaps, borders, tiling and effects. Saved to hypr/local/settings.lua",
+            category: "Hyprland"
+        },
+        {
+            id: "input",
+            label: "Input",
+            icon: "\u{f037d}",
+            description: "Mouse, keyboard repeat and touchpad. Saved to hypr/local/settings.lua",
+            category: "Hyprland"
         },
         {
             id: "idle",

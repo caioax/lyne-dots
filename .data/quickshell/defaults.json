@@ -66,5 +66,39 @@
     },
     "weather": {
         "city": ""
+    },
+    "hyprland": {
+        "general": {
+            "gaps_in": 5,
+            "gaps_out": 5,
+            "border_size": 2,
+            "layout": "dwindle"
+        },
+        "decoration": {
+            "rounding": 7,
+            "inactive_opacity": 1.0,
+            "blur": {
+                "enabled": true,
+                "size": 8,
+                "passes": 2
+            },
+            "shadow": {
+                "enabled": true
+            }
+        },
+        "animations": {
+            "enabled": true
+        },
+        "input": {
+            "sensitivity": 0,
+            "force_no_accel": true,
+            "repeat_delay": 250,
+            "repeat_rate": 25,
+            "touchpad": {
+                "natural_scroll": false,
+                "tap_to_click": true,
+                "disable_while_typing": true
+            }
+        }
     }
 }

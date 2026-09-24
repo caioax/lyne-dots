@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Hyprland
 import qs.services
 import qs.config
 
@@ -226,9 +227,23 @@ Singleton {
         console.log("[Theme] Theme applied:", data.name || themeName);
     }
 
+    // Last colors sent to Hyprland; they only live in memory (hyprctl eval),
+    // so they are sent again whenever Hyprland reloads its config
+    property var _hyprColors: null
+
+    Connections {
+        target: Hyprland
+
+        function onRawEvent(event) {
+            if (event.name === "configreloaded" && root._hyprColors)
+                root._applyHyprland(root._hyprColors);
+        }
+    }
+
     function _applyHyprland(hyprColors) {
         if (!hyprColors)
             return;
+        _hyprColors = hyprColors;
 
         const cmds = [];
         if (hyprColors.activeBorder)

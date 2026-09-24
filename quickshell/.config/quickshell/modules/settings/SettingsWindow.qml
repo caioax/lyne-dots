@@ -25,10 +25,23 @@ FloatingWindow {
             typography: typographyPage,
             bar: barPage,
             notifications: notificationsPage,
+            windows: windowsPage,
+            input: inputPage,
             idle: idlePage,
             profile: profilePage,
             about: aboutPage
         })
+
+    // Scrolls the sidebar so the given nav item is fully visible
+    function showNavItem(item: Item) {
+        const y = item.mapToItem(navColumn, 0, 0).y;
+        // Room above for a category title, so the first page shows its heading
+        const headroom = Config.fontSizeSmall * 2 + Config.padding;
+        if (y - headroom < navFlick.contentY)
+            navFlick.contentY = Math.max(0, y - headroom);
+        else if (y + item.height > navFlick.contentY + navFlick.height)
+            navFlick.contentY = y + item.height - navFlick.height;
+    }
 
     Component {
         id: themePage
@@ -53,6 +66,16 @@ FloatingWindow {
     Component {
         id: notificationsPage
         NotificationsPage {}
+    }
+
+    Component {
+        id: windowsPage
+        WindowsPage {}
+    }
+
+    Component {
+        id: inputPage
+        InputPage {}
     }
 
     Component {
@@ -136,60 +159,66 @@ FloatingWindow {
                     }
                 }
 
-                Repeater {
-                    model: SettingsService.categories
+                // Scrolls when the pages don't fit the window height
+                Flickable {
+                    id: navFlick
+
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    contentHeight: navColumn.implicitHeight
+                    boundsBehavior: Flickable.StopAtBounds
 
                     ColumnLayout {
-                        id: category
+                        id: navColumn
 
-                        required property string modelData
-
-                        Layout.fillWidth: true
-                        spacing: Math.round(Config.padding / 3)
-
-                        Text {
-                            Layout.leftMargin: Config.padding
-                            Layout.bottomMargin: Config.padding
-                            text: category.modelData.toUpperCase()
-                            font.family: Config.font
-                            font.pixelSize: Config.fontSizeSmall
-                            font.bold: true
-                            font.letterSpacing: 1
-                            color: Config.subtextColor
-                        }
+                        width: navFlick.width
+                        spacing: Config.spacing
 
                         Repeater {
-                            model: SettingsService.pages.filter(p => p.category === category.modelData)
+                            model: SettingsService.categories
 
-                            Rectangle {
-                                id: navItem
+                            ColumnLayout {
+                                id: category
 
-                                required property var modelData
-                                readonly property bool active: SettingsService.currentPage === modelData.id
+                                required property string modelData
 
                                 Layout.fillWidth: true
-                                implicitHeight: navRow.implicitHeight + Config.padding * 2
-                                radius: Config.radiusLarge
-                                color: active ? Qt.alpha(Config.accentColor, 0.15) : navMouse.containsMouse ? Config.surface1Color : "transparent"
+                                spacing: Math.round(Config.padding / 3)
 
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: Config.animDurationShort
-                                    }
+                                Text {
+                                    Layout.leftMargin: Config.padding
+                                    Layout.bottomMargin: Config.padding
+                                    text: category.modelData.toUpperCase()
+                                    font.family: Config.font
+                                    font.pixelSize: Config.fontSizeSmall
+                                    font.bold: true
+                                    font.letterSpacing: 1
+                                    color: Config.subtextColor
                                 }
 
-                                RowLayout {
-                                    id: navRow
-
-                                    anchors.fill: parent
-                                    anchors.margins: Config.padding
-                                    spacing: Config.spacing + Config.padding
+                                Repeater {
+                                    model: SettingsService.pages.filter(p => p.category === category.modelData)
 
                                     Rectangle {
-                                        implicitWidth: root.boxSize
-                                        implicitHeight: root.boxSize
+                                        id: navItem
+
+                                        required property var modelData
+                                        readonly property bool active: SettingsService.currentPage === modelData.id
+
+                                onActiveChanged: {
+                                    if (active)
+                                        Qt.callLater(root.showNavItem, navItem);
+                                }
+                                Component.onCompleted: {
+                                    if (active)
+                                        Qt.callLater(root.showNavItem, navItem);
+                                }
+
+                                        Layout.fillWidth: true
+                                        implicitHeight: navRow.implicitHeight + Config.padding * 2
                                         radius: Config.radiusLarge
-                                        color: navItem.active ? Config.accentColor : Config.surface1Color
+                                        color: active ? Qt.alpha(Config.accentColor, 0.15) : navMouse.containsMouse ? Config.surface1Color : "transparent"
 
                                         Behavior on color {
                                             ColorAnimation {
@@ -197,40 +226,57 @@ FloatingWindow {
                                             }
                                         }
 
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: navItem.modelData.icon
-                                            font.family: Config.font
-                                            font.pixelSize: Config.fontSizeLarge
-                                            color: navItem.active ? Config.textReverseColor : Config.textColor
+                                        RowLayout {
+                                            id: navRow
+
+                                            anchors.fill: parent
+                                            anchors.margins: Config.padding
+                                            spacing: Config.spacing + Config.padding
+
+                                            Rectangle {
+                                                implicitWidth: root.boxSize
+                                                implicitHeight: root.boxSize
+                                                radius: Config.radiusLarge
+                                                color: navItem.active ? Config.accentColor : Config.surface1Color
+
+                                                Behavior on color {
+                                                    ColorAnimation {
+                                                        duration: Config.animDurationShort
+                                                    }
+                                                }
+
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: navItem.modelData.icon
+                                                    font.family: Config.font
+                                                    font.pixelSize: Config.fontSizeLarge
+                                                    color: navItem.active ? Config.textReverseColor : Config.textColor
+                                                }
+                                            }
+
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: navItem.modelData.label
+                                                elide: Text.ElideRight
+                                                font.family: Config.font
+                                                font.pixelSize: Config.fontSizeNormal
+                                                font.bold: navItem.active
+                                                color: navItem.active ? Config.accentColor : Config.textColor
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            id: navMouse
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: SettingsService.currentPage = navItem.modelData.id
                                         }
                                     }
-
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: navItem.modelData.label
-                                        elide: Text.ElideRight
-                                        font.family: Config.font
-                                        font.pixelSize: Config.fontSizeNormal
-                                        font.bold: navItem.active
-                                        color: navItem.active ? Config.accentColor : Config.textColor
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: navMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: SettingsService.currentPage = navItem.modelData.id
                                 }
                             }
                         }
                     }
-                }
-
-                Item {
-                    Layout.fillHeight: true
                 }
             }
         }

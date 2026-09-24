@@ -25,6 +25,9 @@ ShellRoot {
     // Ensure IdleService singleton loads
     property bool _idleReady: IdleService.caffeineEnabled
 
+    // Keeps hypr/local/settings.lua in sync with state.json
+    property string _hyprlandSettings: HyprlandSettingsService.lua
+
     // Idle Monitors
     IdleMonitor {
         timeout: IdleService.lockTimeout

@@ -2,6 +2,10 @@
 ---- INPUT ----
 -------------
 
+-- Some values here are overridden by local/settings.lua, generated from the
+-- Quickshell settings window (Hyprland pages). Change those there, or in the
+-- "hyprland" block of state.json.
+
 hl.config({
     input = {
         kb_layout  = "us",
