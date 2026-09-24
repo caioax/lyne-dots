@@ -428,6 +428,8 @@ ColumnLayout {
                 GridLayout {
                     id: grid
 
+                    readonly property real cellWidth: (width - columnSpacing * (root.columns - 1)) / root.columns
+
                     visible: root.shown.length > 0
                     Layout.fillWidth: true
                     columns: root.columns
@@ -441,7 +443,7 @@ ColumnLayout {
                             required property string modelData
 
                             Layout.fillWidth: true
-                            Layout.preferredWidth: (grid.width - grid.columnSpacing * (root.columns - 1)) / root.columns
+                            Layout.preferredWidth: grid.cellWidth
                             path: modelData
                             current: root.themesTab ? false : modelData === WallpaperService.currentWallpaper
                             badge: root.themesTab && modelData === root.themeActive ? "\u{f012c} Active" : ""
@@ -450,6 +452,17 @@ ColumnLayout {
                             onActivated: root.activate(modelData)
                             onSelectToggled: root.toggleSelected(modelData)
                             onMenuRequested: anchor => menu.openAt(anchor, modelData)
+                        }
+                    }
+
+                    // Fills the first row when there are fewer tiles than
+                    // columns, so a lone tile keeps its size
+                    Repeater {
+                        model: Math.max(0, root.columns - root.shown.length)
+
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: grid.cellWidth
                         }
                     }
                 }

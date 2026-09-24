@@ -100,9 +100,15 @@ Singleton {
     // Theme wallpaper folder operations
     function addToTheme(sourcePath: string, themeName: string) {
         const dest = themeWallpaperDir + "/" + themeName + "/";
-        addToThemeProc.command = ["bash", "-c", "mkdir -p '" + dest + "' && cp '" + sourcePath + "' '" + dest + "'"];
-        addToThemeProc._themeName = themeName;
-        addToThemeProc.running = true;
+        // Prints "missing" when the theme's wallpaper is unset or its file is
+        // gone, so the copy becomes the theme's wallpaper
+        const current = themeWallpaperPath(themeName);
+        // One process per call, so quick successive adds don't overwrite each other
+        addToThemeComponent.createObject(root, {
+            command: ["bash", "-c", "mkdir -p '" + dest + "' && cp '" + sourcePath + "' '" + dest + "' && { [ -n '" + current + "' ] && [ -f '" + current + "' ] || echo missing; }"],
+            themeName: themeName,
+            dest: dest + fileName(sourcePath)
+        });
     }
 
     function setActiveThemeWallpaper(wallpaperPath: string, themeName: string) {
@@ -323,17 +329,35 @@ Singleton {
         }
     }
 
-    Process {
-        id: addToThemeProc
-        property string _themeName: ""
+    Component {
+        id: addToThemeComponent
 
-        onExited: exitCode => {
-            if (exitCode === 0) {
-                console.log("[Wallpaper] Added wallpaper to theme:", _themeName);
-                if (root.themeWallpapersFor === _themeName)
-                    root.refreshThemeWallpapers(_themeName);
-            } else {
-                console.error("[Wallpaper] Failed to add wallpaper to theme");
+        Process {
+            id: proc
+
+            property string themeName
+            property string dest
+            property bool adopt: false
+
+            running: true
+            stdout: SplitParser {
+                onRead: data => {
+                    if (data.trim() === "missing")
+                        proc.adopt = true;
+                }
+            }
+
+            onExited: exitCode => {
+                if (exitCode === 0) {
+                    console.log("[Wallpaper] Added wallpaper to theme:", themeName);
+                    if (adopt)
+                        root.setActiveThemeWallpaper(dest, themeName);
+                    if (root.themeWallpapersFor === themeName)
+                        root.refreshThemeWallpapers(themeName);
+                } else {
+                    console.error("[Wallpaper] Failed to add wallpaper to theme");
+                }
+                destroy();
             }
         }
     }
