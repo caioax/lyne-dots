@@ -48,7 +48,7 @@ Singleton {
             id: "bar",
             label: "Bar",
             icon: "\u{f1513}",
-            description: "Template, size and behaviour of the top bar",
+            description: "Template, position, size and behaviour of the bar",
             category: "Shell"
         },
         {

@@ -56,7 +56,7 @@ Scope {
 
             // Position: bottom-center of the screen
             anchors.bottom: true
-            margins.bottom: 80
+            margins.bottom: 80 + (Config.barOnBottom ? Config.barReservedHeight : 0)
             exclusionMode: ExclusionMode.Ignore
 
             WlrLayershell.layer: WlrLayer.Overlay

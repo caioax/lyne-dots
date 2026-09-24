@@ -5,7 +5,8 @@ import qs.config
 import qs.services
 import "../../../components/"
 
-// Miniature desktop showing one bar style over the current wallpaper
+// Miniature desktop showing one bar style over the current wallpaper, on the
+// screen edge the bar is set to
 ClippingRectangle {
     id: root
 
@@ -20,7 +21,9 @@ ClippingRectangle {
     readonly property real barHeight: unit * 2
     readonly property real margin: floating ? unit * 0.6 : 0
     readonly property real groupHeight: islands ? barHeight * 0.8 : barHeight
-    readonly property real groupY: margin + (barHeight - groupHeight) / 2
+    readonly property real cornerSize: corners ? unit * 3 : 0
+    readonly property real barY: Config.barOnBottom ? height - margin - barHeight : margin
+    readonly property real groupY: barY + (barHeight - groupHeight) / 2
 
     radius: Config.radius
     color: Config.surface2Color
@@ -36,9 +39,9 @@ ClippingRectangle {
     // A window below the bar
     Rectangle {
         x: root.unit
-        y: root.margin + root.barHeight + root.unit * 0.8
+        y: Config.barOnBottom ? root.unit : root.barY + root.barHeight + root.unit * 0.8
         width: parent.width - root.unit * 2
-        height: parent.height - y - root.unit
+        height: parent.height - root.barHeight - root.margin - root.unit * 1.8
         radius: Config.radiusSmall
         color: Qt.alpha(Config.surface0Color, 0.9)
         border.width: 1
@@ -48,7 +51,7 @@ ClippingRectangle {
     Rectangle {
         visible: !root.islands
         x: root.margin
-        y: root.margin
+        y: root.barY
         width: parent.width - root.margin * 2
         height: root.barHeight
         radius: root.floating ? height / 2 : 0
@@ -56,15 +59,17 @@ ClippingRectangle {
     }
 
     ConcaveCorner {
-        y: root.barHeight
-        size: root.corners ? root.unit * 3 : 0
+        y: Config.barOnBottom ? root.barY - size : root.barHeight
+        size: root.cornerSize
+        flipped: Config.barOnBottom
         color: Config.backgroundColor
     }
 
     ConcaveCorner {
         x: parent.width - width
-        y: root.barHeight
-        size: root.corners ? root.unit * 3 : 0
+        y: Config.barOnBottom ? root.barY - size : root.barHeight
+        size: root.cornerSize
+        flipped: Config.barOnBottom
         color: Config.backgroundColor
         mirrored: true
     }

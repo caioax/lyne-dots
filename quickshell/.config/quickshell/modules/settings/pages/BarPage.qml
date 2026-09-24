@@ -41,6 +41,24 @@ ColumnLayout {
     SettingsGroup {
         title: "Layout"
 
+        SelectRow {
+            label: "Position"
+            description: "Screen edge the bar sits on"
+            path: "bar.position"
+            options: [
+                {
+                    label: "Top",
+                    icon: "\u{f1513}",
+                    value: "top"
+                },
+                {
+                    label: "Bottom",
+                    icon: "\u{f10a9}",
+                    value: "bottom"
+                }
+            ]
+        }
+
         SliderRow {
             label: "Height"
             description: "Height of the bar; the islands and buttons follow it"
@@ -66,7 +84,7 @@ ColumnLayout {
 
         ToggleRow {
             label: "Auto hide"
-            description: "Hide the bar until the pointer reaches the top edge of the screen"
+            description: "Hide the bar until the pointer reaches its edge of the screen"
             path: "bar.autoHide"
         }
     }

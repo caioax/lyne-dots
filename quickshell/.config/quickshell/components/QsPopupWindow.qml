@@ -44,14 +44,19 @@ PanelWindow {
     // the same gap the bar islands use
     readonly property real edgeMargin: Config.spacing - screenMargin
 
+    // Opens toward the middle of the screen from the bar's edge
+    readonly property bool upward: Config.barOnBottom
+
     anchors {
-        top: true
+        top: !upward
+        bottom: upward
         left: anchored || anchorSide === "left"
         right: !anchored && anchorSide === "right"
     }
 
     margins {
-        top: Config.barReservedHeight + Config.spacing
+        top: upward ? 0 : Config.barReservedHeight + Config.spacing
+        bottom: upward ? Config.barReservedHeight + Config.spacing : 0
         left: {
             if (anchored) {
                 const maxLeft = (screen?.width ?? implicitWidth) - implicitWidth - edgeMargin;
@@ -131,14 +136,21 @@ PanelWindow {
             width: root.popupWidth
             height: Math.min(root.popupMaxHeight, root.contentImplicitHeight + 32)
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
+            anchors.top: root.upward ? undefined : parent.top
+            anchors.bottom: root.upward ? parent.bottom : undefined
             color: Config.backgroundTransparentColor
             radius: Config.radiusLarge
             border.width: 1.0
             border.color: Config.surface2Color
             clip: true
 
-            transformOrigin: root.anchored ? Item.Top : root.anchorSide === "left" ? Item.TopLeft : Item.TopRight
+            transformOrigin: {
+                if (root.anchored)
+                    return root.upward ? Item.Bottom : Item.Top;
+                if (root.anchorSide === "left")
+                    return root.upward ? Item.BottomLeft : Item.TopLeft;
+                return root.upward ? Item.BottomRight : Item.TopRight;
+            }
 
             property bool showState: visible && !root.isClosing && root.isOpening
 

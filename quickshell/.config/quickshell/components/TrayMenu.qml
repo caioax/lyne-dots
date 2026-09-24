@@ -29,13 +29,17 @@ PanelWindow {
     WlrLayershell.exclusiveZone: -1
 
     // Positions where the mouse clicked (or icon)
+    // With the bar at the bottom the menu opens upward from it (a layer
+    // doesn't know its own position, so anchorY only works from the top)
     anchors {
         left: true
-        top: true
+        top: !Config.barOnBottom
+        bottom: Config.barOnBottom
     }
     margins {
         left: Math.min(root.screen.width - implicitWidth - 10, root.anchorX)
-        top: Math.min(root.screen.height - implicitHeight - 10, root.anchorY)
+        top: Config.barOnBottom ? 0 : Math.min(root.screen.height - implicitHeight - 10, root.anchorY)
+        bottom: Config.barOnBottom ? Config.barReservedHeight + Config.padding : 0
     }
 
     // --- NAVIGATION SYSTEM ---

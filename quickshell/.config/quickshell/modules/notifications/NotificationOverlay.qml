@@ -51,7 +51,7 @@ PanelWindow {
     }
 
     margins {
-        top: Config.barReservedHeight + Config.spacing
+        top: Config.barOnBottom ? Config.spacing : Config.barReservedHeight + Config.spacing
         right: Config.spacing
     }
 

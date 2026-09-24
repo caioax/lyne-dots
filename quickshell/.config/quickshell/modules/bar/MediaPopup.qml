@@ -44,12 +44,14 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
     anchors {
-        top: true
+        top: !Config.barOnBottom
+        bottom: Config.barOnBottom
         left: true
     }
 
     margins {
-        top: Config.barReservedHeight
+        top: Config.barOnBottom ? 0 : Config.barReservedHeight
+        bottom: Config.barOnBottom ? Config.barReservedHeight : 0
         left: {
             const maxLeft = (screen?.width ?? implicitWidth) - implicitWidth - Config.spacing;
             return Math.max(Config.spacing, Math.min(anchorCenterX - implicitWidth / 2, maxLeft));
@@ -70,7 +72,8 @@ PanelWindow {
 
         width: parent.width
         dismissible: false
-        y: root.open ? Config.spacing : 0
+        // Slides away from the bar while opening
+        y: Config.barOnBottom ? (root.open ? 0 : Config.spacing) : (root.open ? Config.spacing : 0)
         opacity: root.open ? 1 : 0
         border.width: 1
         border.color: Config.surface2Color

@@ -34,14 +34,21 @@ Scope {
             exclusiveZone: enableAutoHide ? 0 : Config.barReservedHeight
 
             anchors {
-                top: true
+                top: !Config.barOnBottom
+                bottom: Config.barOnBottom
                 left: true
                 right: true
             }
 
+            // Top edge of the bar inside the window: at the bottom of the
+            // screen the corners hang above it and the margin goes below
+            readonly property int barY: Config.barOnBottom ? Config.barCornerSize : Config.barMargin
+            // Corners touch the side of the bar facing the screen
+            readonly property int cornerY: Config.barOnBottom ? 0 : Config.barHeight
+
             // --- AUTOHIDE ---
             // The content slides out of the window; only a 1px strip at the
-            // top edge keeps taking input to bring it back
+            // screen edge keeps taking input to bring it back
             readonly property bool shown: WindowManagerService.anyModuleOpen || !enableAutoHide || mouseSensor.hovered
 
             HoverHandler {
@@ -51,6 +58,11 @@ Scope {
             // Only the bar takes input, so the corners hanging under it click
             // through to the windows below
             mask: Region {
+                y: {
+                    if (!Config.barOnBottom)
+                        return 0;
+                    return bar.shown ? Config.barCornerSize : bar.height - 1;
+                }
                 width: bar.width
                 height: bar.shown ? Config.barReservedHeight : 1
             }
@@ -60,7 +72,7 @@ Scope {
 
                 width: parent.width
                 height: parent.height
-                y: bar.shown ? 0 : -height
+                y: bar.shown ? 0 : Config.barOnBottom ? height : -height
 
                 Behavior on y {
                     NumberAnimation {
@@ -71,15 +83,17 @@ Scope {
 
                 ConcaveCorner {
                     x: 0
-                    y: Config.barHeight
+                    y: bar.cornerY
                     size: Config.barCornerSize
+                    flipped: Config.barOnBottom
                     color: Config.backgroundTransparentColor
                 }
 
                 ConcaveCorner {
                     x: parent.width - width
-                    y: Config.barHeight
+                    y: bar.cornerY
                     size: Config.barCornerSize
+                    flipped: Config.barOnBottom
                     color: Config.backgroundTransparentColor
                     mirrored: true
                 }
@@ -88,7 +102,7 @@ Scope {
                     id: barArea
 
                     x: Config.barMargin
-                    y: Config.barMargin
+                    y: bar.barY
                     width: parent.width - Config.barMargin * 2
                     height: Config.barHeight
 

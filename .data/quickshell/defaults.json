@@ -21,6 +21,7 @@
         "autoHide": false,
         "height": 33,
         "style": "docked",
+        "position": "top",
         "margin": 8
     },
     "opacity": {
