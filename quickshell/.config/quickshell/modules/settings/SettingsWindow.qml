@@ -21,7 +21,8 @@ FloatingWindow {
     // statically: Quickshell only resolves directories it can reach that way
     readonly property var pageComponents: ({
             bar: barPage,
-            notifications: notificationsPage
+            notifications: notificationsPage,
+            idle: idlePage
         })
 
     Component {
@@ -32,6 +33,11 @@ FloatingWindow {
     Component {
         id: notificationsPage
         NotificationsPage {}
+    }
+
+    Component {
+        id: idlePage
+        IdlePage {}
     }
 
     title: "Settings"

@@ -9,46 +9,22 @@ import Quickshell.Wayland
 Singleton {
     id: root
 
-    // Helper function to shorten the service call
-    function getState(path, fallback) {
-        return StateService.get(path, fallback);
-    }
-    function setState(path, value) {
-        StateService.set(path, value);
-    }
-
     // ========================================================================
-    // PROPERTIES
+    // PROPERTIES (bound to state.json, edited from Quick Settings / Settings)
     // ========================================================================
 
-    property bool caffeineEnabled: getState("idle.caffeine", false)
-    property bool dpmsEnabled: getState("idle.dpmsEnabled", true)
-    property bool mediaInhibit: getState("idle.mediaInhibit", true)
-    property int lockTimeout: getState("idle.lockTimeout", 600)
-    property int dpmsTimeout: getState("idle.dpmsTimeout", 300)
+    readonly property bool caffeineEnabled: StateService.get("idle.caffeine", false)
+    readonly property bool dpmsEnabled: StateService.get("idle.dpmsEnabled", true)
+    readonly property bool mediaInhibit: StateService.get("idle.mediaInhibit", true)
+    // Seconds; 0 disables the automatic lock
+    readonly property int lockTimeout: StateService.get("idle.lockTimeout", 600)
+    readonly property int dpmsTimeout: StateService.get("idle.dpmsTimeout", 300)
 
     // True when any MPRIS player reports playing state (browser video, mpv, etc.)
     readonly property bool mediaPlaying: mediaInhibit && MprisService.anyPlaying
 
     // True when systemd-logind reports active "idle" block inhibitors
     property bool systemInhibited: false
-
-    // ========================================================================
-    // STATE PERSISTENCE
-    // ========================================================================
-
-    Connections {
-        target: StateService
-
-        function onStateLoaded() {
-            root.caffeineEnabled = root.getState("idle.caffeine", false);
-            root.dpmsEnabled = root.getState("idle.dpmsEnabled", true);
-            root.mediaInhibit = root.getState("idle.mediaInhibit", true);
-            root.lockTimeout = root.getState("idle.lockTimeout", 600);
-            root.dpmsTimeout = root.getState("idle.dpmsTimeout", 300);
-            console.log("[Idle] Loaded state - caffeine:", root.caffeineEnabled, "dpms:", root.dpmsEnabled, "mediaInhibit:", root.mediaInhibit, "lockTimeout:", root.lockTimeout + "s", "dpmsTimeout:", root.dpmsTimeout + "s");
-        }
-    }
 
     // ========================================================================
     // IDLE INHIBITOR (CAFFEINE)
@@ -117,8 +93,7 @@ Singleton {
     }
 
     function toggleCaffeine() {
-        caffeineEnabled = !caffeineEnabled;
-        root.setState("idle.caffeine", caffeineEnabled);
+        StateService.set("idle.caffeine", !caffeineEnabled);
         console.log("[Idle] Caffeine:", caffeineEnabled);
     }
 

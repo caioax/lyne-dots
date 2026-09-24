@@ -14,7 +14,7 @@ Singleton {
 
     // Sidebar entries, grouped by category in this order. Each id needs a
     // component in SettingsWindow.pageComponents
-    readonly property var categories: ["Shell"]
+    readonly property var categories: ["Shell", "System"]
     readonly property var pages: [
         {
             id: "bar",
@@ -29,6 +29,13 @@ Singleton {
             icon: "\u{f009a}",
             description: "Popups, timeout and do not disturb",
             category: "Shell"
+        },
+        {
+            id: "idle",
+            label: "Idle",
+            icon: "\u{f04b2}",
+            description: "Screen lock, screen off and what keeps the system awake",
+            category: "System"
         }
     ]
 

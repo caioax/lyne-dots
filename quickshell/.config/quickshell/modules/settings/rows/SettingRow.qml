@@ -39,9 +39,18 @@ Rectangle {
     bottomLeftRadius: last ? Config.radiusLarge : Config.radiusSmall
     bottomRightRadius: last ? Config.radiusLarge : Config.radiusSmall
 
+    // Disabled rows (e.g. depending on a switched off option) fade out
+    opacity: enabled ? 1 : 0.4
+
     Behavior on color {
         ColorAnimation {
             duration: Config.animDurationShort
+        }
+    }
+
+    Behavior on opacity {
+        NumberAnimation {
+            duration: Config.animDuration
         }
     }
 
