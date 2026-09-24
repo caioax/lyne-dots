@@ -30,6 +30,9 @@ PanelWindow {
     readonly property bool barOnBottom: Config.barOnBottom
     // Distance from the bar's screen edge to just past the bar
     readonly property int barGap: Config.barReservedHeight + Config.spacing
+    // Next to a bar at the bottom the panel is upside down: search by the
+    // bar, the list growing upward with the best match right above it
+    readonly property bool reversed: atBar && barOnBottom
 
     // Apps as tiles in the grid template (actions and results stay a list)
     readonly property bool tileResults: grid && LauncherService.mode.id === "apps" && LauncherService.results.length > 0
@@ -89,7 +92,12 @@ PanelWindow {
         ].filter(s => s.count > 0);
     }
 
+    // `step` is the key's direction: 1 = Down, -1 = Up
     function moveVertical(step: int) {
+        if (reversed) {
+            moveVerticalReversed(step);
+            return;
+        }
         const list = sections();
         const selected = LauncherService.selectedIndex;
         const i = list.findIndex(s => selected >= s.start && selected < s.start + s.count);
@@ -113,6 +121,31 @@ PanelWindow {
             const previous = list[i - 1];
             LauncherService.select(previous.start + Math.floor((previous.count - 1) / previous.columns) * previous.columns);
         }
+    }
+
+    // Upside-down panel: the results (item 0 at the bottom) sit above the
+    // favorites, which keep their rows top to bottom
+    function moveVerticalReversed(step: int) {
+        const favorites = LauncherService.favoriteCount;
+        const count = LauncherService.results.length;
+        const selected = LauncherService.selectedIndex;
+        const columns = favoritesGrid.columns;
+
+        if (selected < favorites) {
+            const target = selected + step * columns;
+            if (target >= 0 && target < favorites)
+                LauncherService.select(target);
+            else if (step < 0 && count > 0)
+                // Up from the top row of tiles: the result right above
+                LauncherService.select(favorites);
+            return;
+        }
+        // In the list, Up goes to the next result and Down to the previous
+        const target = selected - step;
+        if (target >= favorites && target < favorites + count)
+            LauncherService.select(target);
+        else if (target < favorites && favorites > 0)
+            LauncherService.select(0);
     }
 
     function moveHorizontal(step: int): bool {
@@ -286,19 +319,42 @@ PanelWindow {
                 }
             }
 
-            ColumnLayout {
+            // A one-column grid so the rows can be reordered (`reversed`)
+            GridLayout {
                 id: column
+
+                // Row of each part, top to bottom
+                readonly property var rows: root.reversed ? ({
+                        footer: 0,
+                        separator: 1,
+                        resultsLabel: 2,
+                        results: 3,
+                        favoritesLabel: 4,
+                        favorites: 5,
+                        search: 6
+                    }) : ({
+                        search: 0,
+                        favoritesLabel: 1,
+                        favorites: 2,
+                        resultsLabel: 3,
+                        results: 4,
+                        separator: 5,
+                        footer: 6
+                    })
+
+                columns: 1
+                rowSpacing: Config.spacing
 
                 // The grid template keeps its content to a readable column
                 width: root.grid ? Math.min(parent.width - panel.margin * 2, Config.fontSizeNormal * 72) : parent.width - panel.margin * 2
                 x: Math.round((parent.width - width) / 2)
                 y: root.grid ? Math.round(parent.height / 10) : panel.margin
                 height: root.grid ? parent.height - y - panel.margin : root.sidebar ? parent.height - panel.margin * 2 : implicitHeight
-                spacing: Config.spacing
 
                 SearchField {
                     id: search
 
+                    Layout.row: column.rows.search
                     Layout.maximumWidth: root.grid ? Config.fontSizeNormal * 40 : -1
                     Layout.alignment: Qt.AlignHCenter
                     count: LauncherService.mode.id === "calc" ? 0 : LauncherService.entries.length
@@ -314,6 +370,7 @@ PanelWindow {
                 }
 
                 SectionLabel {
+                    Layout.row: column.rows.favoritesLabel
                     visible: favoritesGrid.count > 0
                     text: "Favorites"
                 }
@@ -321,6 +378,7 @@ PanelWindow {
                 FavoritesGrid {
                     id: favoritesGrid
 
+                    Layout.row: column.rows.favorites
                     Layout.fillWidth: true
                     visible: count > 0
                     columns: root.grid ? root.gridColumns : root.style === "spotlight" ? 6 : 5
@@ -329,6 +387,7 @@ PanelWindow {
                 }
 
                 SectionLabel {
+                    Layout.row: column.rows.resultsLabel
                     visible: favoritesGrid.count > 0 && LauncherService.results.length > 0
                     text: LauncherService.mode.id === "apps" ? "Apps" : LauncherService.mode.label
                 }
@@ -336,6 +395,7 @@ PanelWindow {
                 ResultsGrid {
                     id: resultsGrid
 
+                    Layout.row: column.rows.results
                     visible: root.tileResults
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -347,6 +407,8 @@ PanelWindow {
                 ResultsList {
                     id: results
 
+                    Layout.row: column.rows.results
+                    verticalLayoutDirection: root.reversed ? ListView.BottomToTop : ListView.TopToBottom
                     // Sidebar and grid fill the height they have
                     readonly property bool fills: root.sidebar || root.grid
 
@@ -375,12 +437,14 @@ PanelWindow {
                 }
 
                 Rectangle {
+                    Layout.row: column.rows.separator
                     Layout.fillWidth: true
                     implicitHeight: 1
                     color: Config.surface1Color
                 }
 
                 RowLayout {
+                    Layout.row: column.rows.footer
                     Layout.leftMargin: Config.padding
                     Layout.rightMargin: Config.padding
                     Layout.alignment: root.grid ? Qt.AlignHCenter : Qt.AlignLeft
