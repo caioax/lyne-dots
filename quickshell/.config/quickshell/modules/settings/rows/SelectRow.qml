@@ -13,11 +13,14 @@ SettingRow {
     required property var options
     property var value: path !== "" ? StateService.get(path, StateService.getDefault(path, options[0].value)) : options[0].value
 
+    // Width of each option; raise it for long labels
+    property real segmentWidth: Config.fontSizeNormal * 6
+
     signal selected(var value)
 
     SegmentedControl {
         Layout.fillWidth: false
-        Layout.preferredWidth: Config.fontSizeNormal * 6 * root.options.length
+        Layout.preferredWidth: root.segmentWidth * root.options.length
         options: root.options
         currentIndex: Math.max(0, root.options.findIndex(o => o.value === root.value))
         onSelected: index => {

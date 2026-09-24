@@ -11,8 +11,18 @@ ColumnLayout {
     property string title
     default property alias rows: rowsLayout.data
 
+    // Rows already watched for visibility changes
+    property var _watched: []
+
     function _updateEnds() {
-        const visibleRows = Array.from(rowsLayout.children).filter(c => c.visible && c.first !== undefined);
+        const children = Array.from(rowsLayout.children);
+        children.forEach(c => {
+            if (!_watched.includes(c)) {
+                _watched.push(c);
+                c.visibleChanged.connect(_updateEnds);
+            }
+        });
+        const visibleRows = children.filter(c => c.visible && c.first !== undefined);
         visibleRows.forEach((row, i) => {
             row.first = i === 0;
             row.last = i === visibleRows.length - 1;

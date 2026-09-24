@@ -10,12 +10,33 @@ Singleton {
     id: root
 
     property bool visible: false
-    property string currentPage: "bar"
+    property string currentPage: "theme"
 
     // Sidebar entries, grouped by category in this order. Each id needs a
     // component in SettingsWindow.pageComponents
-    readonly property var categories: ["Shell", "System"]
+    readonly property var categories: ["Appearance", "Shell", "System"]
     readonly property var pages: [
+        {
+            id: "theme",
+            label: "Theme",
+            icon: "\u{f03d8}",
+            description: "Color palette, light or dark mode and wallpaper",
+            category: "Appearance"
+        },
+        {
+            id: "layout",
+            label: "Layout",
+            icon: "\u{f0607}",
+            description: "Corners, spacing, transparency and motion",
+            category: "Appearance"
+        },
+        {
+            id: "typography",
+            label: "Typography",
+            icon: "\u{f06d6}",
+            description: "Interface font and text and icon sizes",
+            category: "Appearance"
+        },
         {
             id: "bar",
             label: "Bar",

@@ -20,10 +20,28 @@ FloatingWindow {
     // Page id (SettingsService.pages) -> component. Pages are imported
     // statically: Quickshell only resolves directories it can reach that way
     readonly property var pageComponents: ({
+            theme: themePage,
+            layout: layoutPage,
+            typography: typographyPage,
             bar: barPage,
             notifications: notificationsPage,
             idle: idlePage
         })
+
+    Component {
+        id: themePage
+        ThemePage {}
+    }
+
+    Component {
+        id: layoutPage
+        LayoutPage {}
+    }
+
+    Component {
+        id: typographyPage
+        TypographyPage {}
+    }
 
     Component {
         id: barPage
