@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
@@ -10,12 +9,11 @@ import qs.services
 import qs.config
 import "../../components/"
 
+// App launcher window. Created on open and destroyed after the exit
+// animation by the keepAlive Loader in shell.qml, so every open starts fresh
 PanelWindow {
     id: root
 
-    // Always visible while the outer Loader (shell.qml) keeps this component alive.
-    // The outer Loader uses a keepAlive timer so exit animations finish before
-    // this PanelWindow is destroyed.
     visible: true
 
     anchors {
@@ -27,431 +25,181 @@ PanelWindow {
 
     WlrLayershell.namespace: "qs_modules"
     WlrLayershell.layer: WlrLayer.Overlay
-    // Release exclusive keyboard grab as soon as the service hides, so the exit
-    // animation doesn't block other windows from receiving input.
+    // Release the keyboard as soon as the service hides, so the exit
+    // animation doesn't block other windows from receiving input
     WlrLayershell.keyboardFocus: LauncherService.visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
     color: "transparent"
 
     function hide() {
-        // Move focus away from the TextField before hiding to avoid the Wayland
-        // text-input warning: "Try to disable surface X with focusing surface Y"
-        launcherPanel.forceActiveFocus();
+        // Move focus off the TextField first to avoid the Wayland text-input
+        // warning "Try to disable surface X with focusing surface Y"
+        panel.forceActiveFocus();
         LauncherService.hide();
     }
 
-    // Click on background closes
+    function launchSelected() {
+        panel.forceActiveFocus();
+        LauncherService.launchSelected();
+    }
+
+    // Keys the search field passes on: list navigation, launch and close
+    function handleKey(event) {
+        const ctrl = event.modifiers & Qt.ControlModifier;
+
+        switch (event.key) {
+        case Qt.Key_Escape:
+            // First Escape clears the search, the second one closes
+            if (search.text !== "")
+                search.text = "";
+            else
+                hide();
+            break;
+        case Qt.Key_Return:
+        case Qt.Key_Enter:
+            launchSelected();
+            break;
+        case Qt.Key_Down:
+        case Qt.Key_Tab:
+            LauncherService.move(1);
+            break;
+        case Qt.Key_Up:
+        case Qt.Key_Backtab:
+            LauncherService.move(-1);
+            break;
+        case Qt.Key_PageDown:
+            LauncherService.move(results.maxRows);
+            break;
+        case Qt.Key_PageUp:
+            LauncherService.move(-results.maxRows);
+            break;
+        case Qt.Key_Home:
+            LauncherService.selectFirst();
+            break;
+        case Qt.Key_End:
+            LauncherService.selectLast();
+            break;
+        case Qt.Key_J:
+        case Qt.Key_N:
+            if (!ctrl)
+                return;
+            LauncherService.move(1);
+            break;
+        case Qt.Key_K:
+        case Qt.Key_P:
+            if (!ctrl)
+                return;
+            LauncherService.move(-1);
+            break;
+        default:
+            return;
+        }
+        event.accepted = true;
+    }
+
+    // Click outside the panel closes
     MouseArea {
         anchors.fill: parent
         onClicked: root.hide()
     }
 
-    // AnimatedPopup drives the entry/exit scale+opacity animation.
-    // The content Rectangle is rebuilt fresh every open because the outer
-    // Loader (shell.qml) destroys and recreates the whole window.
+    // Anchored by its top edge, so the panel only grows or shrinks downward
+    // while typing
     AnimatedPopup {
-        id: launcherAnim
-        anchors.centerIn: parent
-        width: 520
-        // Follow the content's animated height so the popup frame matches exactly
-        height: launcherPanel.height
+        x: Math.round((parent.width - width) / 2)
+        y: Math.round(parent.height / 5)
+        width: panel.width
+        height: panel.height
+        transformOrigin: Item.Top
         shown: LauncherService.visible
 
         Rectangle {
-            id: launcherPanel
-            width: 520
+            id: panel
 
-            // Dynamic height based on content
-            property int listHeight: Math.min(420, appList.contentHeight + 12)
-            property int totalHeight: listHeight + searchBar.height + 32
+            readonly property int margin: Config.padding * 2
 
-            height: totalHeight
-            radius: Config.radiusLarge
+            width: Config.fontSizeNormal * 40
+            height: column.implicitHeight + margin * 2
+            // Concentric with the rows inside the margin
+            radius: Config.radiusLarge + margin
             color: Config.backgroundTransparentColor
-            border.color: Qt.alpha(Config.accentColor, 0.2)
             border.width: 1
+            border.color: Config.surface2Color
 
-            // Smooth height animation as the app list grows/shrinks
-            Behavior on height {
-                NumberAnimation {
-                    duration: Config.animDuration
-                    easing.type: Easing.OutCubic
-                }
+            // Swallow clicks so they don't reach the closing MouseArea
+            MouseArea {
+                anchors.fill: parent
             }
 
             ColumnLayout {
+                id: column
+
                 anchors.fill: parent
-                anchors.margins: Config.spacing + 4
+                anchors.margins: panel.margin
                 spacing: Config.spacing
 
-                // Search bar
-                Rectangle {
-                    id: searchBar
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 48
-                    radius: Config.radius
-                    color: Config.surface0Color
-                    border.width: searchInput.activeFocus ? 2 : 0
-                    border.color: Config.accentColor
+                SearchField {
+                    id: search
 
-                    Behavior on border.width {
-                        NumberAnimation {
-                            duration: Config.animDurationShort
-                        }
-                    }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: Config.spacing + 6
-                        anchors.rightMargin: Config.spacing + 6
-                        spacing: Config.spacing
-
-                        Text {
-                            text: ""
-                            font.family: Config.font
-                            font.pixelSize: Config.fontSizeNormal
-                            color: searchInput.activeFocus ? Config.accentColor : Config.subtextColor
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Config.animDurationShort
-                                }
-                            }
-                        }
-
-                        TextField {
-                            id: searchInput
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-
-                            color: Config.textColor
-                            font.family: Config.font
-                            font.pixelSize: Config.fontSizeLarge
-                            verticalAlignment: TextInput.AlignVCenter
-                            selectByMouse: true
-                            placeholderText: "Search apps..."
-                            placeholderTextColor: Config.mutedColor
-                            background: null
-
-                            onTextChanged: LauncherService.query = text
-
-                            Keys.onEscapePressed: root.hide()
-
-                            Keys.onReturnPressed: {
-                                launcherPanel.forceActiveFocus();
-                                LauncherService.launchSelected();
-                            }
-
-                            Keys.onUpPressed: {
-                                if (LauncherService.selectedIndex > 0)
-                                    LauncherService.selectedIndex--;
-                            }
-
-                            Keys.onDownPressed: {
-                                if (LauncherService.selectedIndex < LauncherService.filteredApps.length - 1)
-                                    LauncherService.selectedIndex++;
-                            }
-
-                            Keys.onTabPressed: event => {
-                                if (LauncherService.selectedIndex < LauncherService.filteredApps.length - 1)
-                                    LauncherService.selectedIndex++;
-                                event.accepted = true;
-                            }
-
-                            Keys.onPressed: event => {
-                                const isBacktab = event.key === Qt.Key_Backtab;
-                                const isShiftTab = event.key === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier);
-
-                                if (isBacktab || isShiftTab) {
-                                    if (LauncherService.selectedIndex > 0)
-                                        LauncherService.selectedIndex--;
-                                    event.accepted = true;
-                                }
-                            }
-
-                            Component.onCompleted: {
-                                LauncherService.query = "";
-                                LauncherService.selectedIndex = 0;
-                                Qt.callLater(() => {
-                                    if (LauncherService.visible) {
-                                        forceActiveFocus();
-                                    }
-                                });
-                            }
-                        }
-
-                        // Results counter
-                        Rectangle {
-                            visible: LauncherService.filteredApps.length > 0
-                            Layout.preferredWidth: countText.implicitWidth + 12
-                            Layout.preferredHeight: 22
-                            radius: height / 2
-                            color: Config.surface1Color
-
-                            Text {
-                                id: countText
-                                anchors.centerIn: parent
-                                text: LauncherService.filteredApps.length
-                                font.family: Config.font
-                                font.pixelSize: Config.fontSizeSmall
-                                color: Config.subtextColor
-                            }
-                        }
-
-                        // Clear button
-                        Rectangle {
-                            visible: searchInput.text
-                            Layout.preferredWidth: 28
-                            Layout.preferredHeight: 28
-                            radius: height / 2
-                            color: clearMouse.containsMouse ? Config.surface2Color : "transparent"
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Config.animDurationShort
-                                }
-                            }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "󰅖"
-                                font.family: Config.font
-                                font.pixelSize: Config.fontSizeSmall
-                                color: Config.subtextColor
-                            }
-
-                            MouseArea {
-                                id: clearMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    searchInput.text = "";
-                                    searchInput.forceActiveFocus();
-                                }
-                            }
-                        }
-                    }
+                    count: LauncherService.filteredApps.length
+                    onTextChanged: LauncherService.query = text
+                    onKeyPressed: event => root.handleKey(event)
+                    Component.onCompleted: Qt.callLater(() => {
+                        if (LauncherService.visible)
+                            focusInput();
+                    })
                 }
 
-                // Separator
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 1
-                    color: Config.surface1Color
-                }
+                ResultsList {
+                    id: results
 
-                // App list
-                ListView {
-                    id: appList
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    // Animated copy of the height the list wants
+                    property real shownHeight: implicitHeight
 
-                    clip: true
-                    spacing: 4
-                    model: LauncherService.filteredApps
-                    currentIndex: LauncherService.selectedIndex
-
-                    // Add/remove item animations
-                    add: Transition {
+                    Behavior on shownHeight {
                         NumberAnimation {
-                            property: "opacity"
-                            from: 0
-                            to: 1
-                            duration: Config.animDurationShort
-                        }
-                        NumberAnimation {
-                            property: "scale"
-                            from: 0.8
-                            to: 1
-                            duration: Config.animDurationShort
-                            easing.type: Easing.OutBack
-                        }
-                    }
-
-                    remove: Transition {
-                        NumberAnimation {
-                            property: "opacity"
-                            to: 0
-                            duration: Config.animDurationShort
-                        }
-                        NumberAnimation {
-                            property: "scale"
-                            to: 0.8
-                            duration: Config.animDurationShort
-                        }
-                    }
-
-                    displaced: Transition {
-                        NumberAnimation {
-                            property: "y"
                             duration: Config.animDuration
                             easing.type: Easing.OutCubic
                         }
                     }
 
-                    // Custom highlight
-                    highlightFollowsCurrentItem: false
-                    highlight: Rectangle {
-                        width: appList.width
-                        height: 56
-                        radius: Config.radius
-                        color: Config.surface2Color
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: shownHeight
+                    onLaunched: panel.forceActiveFocus()
+                }
 
-                        y: appList.currentItem ? appList.currentItem.y : 0
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 1
+                    color: Config.surface1Color
+                }
 
-                        Behavior on y {
-                            NumberAnimation {
-                                duration: Config.animDurationShort
-                                easing.type: Easing.OutCubic
-                            }
-                        }
+                RowLayout {
+                    Layout.leftMargin: Config.padding
+                    Layout.rightMargin: Config.padding
+                    spacing: Config.spacing * 2
+
+                    KeyHint {
+                        keys: "↑↓"
+                        label: "navigate"
                     }
 
-                    delegate: Item {
-                        id: delegateItem
-                        required property int index
-                        required property var modelData
-
-                        width: appList.width
-                        height: 56
-
-                        property bool isSelected: index === LauncherService.selectedIndex
-                        property bool isHovered: delegateMouse.containsMouse
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 12
-                            anchors.rightMargin: 12
-                            spacing: 14
-
-                            // Icon with background
-                            Rectangle {
-                                Layout.preferredWidth: 40
-                                Layout.preferredHeight: 40
-                                radius: Config.radiusSmall
-                                color: Config.surface0Color
-
-                                Image {
-                                    anchors.centerIn: parent
-                                    width: 32
-                                    height: 32
-                                    source: {
-                                        const icon = delegateItem.modelData?.icon ?? "";
-                                        return icon ? "image://icon/" + icon : "image://icon/application-x-executable";
-                                    }
-                                    sourceSize: Qt.size(32, 32)
-                                    fillMode: Image.PreserveAspectFit
-                                    smooth: true
-                                }
-                            }
-
-                            // Texts
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 2
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: delegateItem.modelData?.name ?? ""
-                                    color: delegateItem.isSelected ? Config.textColor : Config.textColor
-                                    font.family: Config.font
-                                    font.pixelSize: Config.fontSizeNormal
-                                    font.weight: delegateItem.isSelected ? Font.DemiBold : Font.Normal
-                                    elide: Text.ElideRight
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: delegateItem.modelData?.comment || delegateItem.modelData?.genericName || ""
-                                    color: Config.subtextColor
-                                    font.family: Config.font
-                                    font.pixelSize: Config.fontSizeSmall
-                                    elide: Text.ElideRight
-                                    visible: text !== ""
-                                }
-                            }
-
-                            // Selection indicator
-                            Text {
-                                visible: delegateItem.isSelected
-                                text: "󰌑"
-                                color: Config.accentColor
-                                font.family: Config.font
-                                font.pixelSize: Config.fontSizeSmall
-                            }
-                        }
-
-                        MouseArea {
-                            id: delegateMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (delegateItem.isSelected) {
-                                    // Second click: opens the app
-                                    launcherPanel.forceActiveFocus();
-                                    LauncherService.launch(delegateItem.modelData);
-                                } else {
-                                    // First click: selects
-                                    LauncherService.selectedIndex = delegateItem.index;
-                                }
-                            }
-                        }
+                    KeyHint {
+                        keys: "⏎"
+                        label: "open"
                     }
 
-                    // Empty state
-                    Column {
-                        anchors.centerIn: parent
-                        spacing: Config.spacing
-                        visible: appList.count === 0
-                        opacity: visible ? 1 : 0
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Config.animDurationShort
-                            }
-                        }
-
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: LauncherService.query ? "󰅖" : "󰑓"
-                            font.family: Config.font
-                            font.pixelSize: Config.fontSizeIconLarge
-                            color: Config.mutedColor
-
-                            RotationAnimator on rotation {
-                                from: 0
-                                to: 360
-                                duration: 1000
-                                loops: Animation.Infinite
-                                running: !LauncherService.query && appList.count === 0
-                            }
-                        }
-
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: LauncherService.query ? "No results" : "Loading..."
-                            color: Config.subtextColor
-                            font.family: Config.font
-                            font.pixelSize: Config.fontSizeNormal
-                        }
+                    KeyHint {
+                        keys: "esc"
+                        label: search.text !== "" ? "clear" : "close"
                     }
-
-                    // Auto-scroll when navigating (no animation to avoid affecting mouse)
-                    onCurrentIndexChanged: {
-                        positionViewAtIndex(currentIndex, ListView.Contain);
-                    }
-
-                    // Smooth scroll
-                    ScrollBar.vertical: QsScrollBar {}
                 }
             }
         }
     }
 
-    // Focus grab — deactivated as soon as the service hides (not tied to window
-    // visibility) so the exit animation doesn't keep stealing keyboard focus.
+    // Deactivated as soon as the service hides (not tied to window
+    // visibility) so the exit animation doesn't keep stealing focus
     HyprlandFocusGrab {
         windows: [root]
         active: LauncherService.visible

@@ -11,6 +11,7 @@ import "./modules/power/"
 import "./modules/screenshot/"
 import "./modules/notifications/"
 import "./modules/settings/"
+import "./modules/launcher/"
 import qs.config
 
 ShellRoot {
@@ -150,7 +151,7 @@ ShellRoot {
         property bool _keepAlive: false
 
         active: _shown || _keepAlive
-        source: "./modules/launcher/Launcher.qml"
+        sourceComponent: Launcher {}
 
         on_ShownChanged: {
             if (!_shown) {

@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 
 Singleton {
     id: root
@@ -14,6 +15,9 @@ Singleton {
     property bool visible: false
     property string query: ""
     property int selectedIndex: 0
+
+    // Runs .desktop entries marked Terminal=true (same as the SUPER+Return bind)
+    readonly property string terminal: "kitty"
 
     // Incremented on each open to force re-evaluation of the app list
     property int _refreshToken: 0
@@ -100,7 +104,12 @@ Singleton {
         cmd = cmd.replace(/%[uUfFdDnNickvm]/g, "").trim();
         cmd = cmd.replace(/\s+/g, " "); // Remove extra spaces
 
-        Quickshell.execDetached(["sh", "-c", cmd]);
+        // Start in the entry's Path= (or home) instead of the shell's cwd.
+        // execDetached here only takes an argv, so the cd goes in the script
+        const dir = entry.workingDirectory || Quickshell.env("HOME");
+        const script = "cd '" + dir.replace(/'/g, "'\\''") + "' 2>/dev/null; " + cmd;
+        const command = entry.runInTerminal ? [terminal, "-e", "sh", "-c", script] : ["sh", "-c", script];
+        Quickshell.execDetached(command);
         hide();
     }
 
@@ -114,20 +123,38 @@ Singleton {
     // NAVIGATION
     // ========================================================================
 
-    function navigateUp() {
-        if (selectedIndex > 0) {
-            selectedIndex--;
-        }
+    // Moves the selection by `delta` rows, clamped to the list
+    function move(delta: int) {
+        const last = filteredApps.length - 1;
+        selectedIndex = Math.max(0, Math.min(last, selectedIndex + delta));
     }
 
-    function navigateDown() {
-        if (selectedIndex < filteredApps.length - 1) {
-            selectedIndex++;
-        }
+    function selectFirst() {
+        selectedIndex = 0;
+    }
+
+    function selectLast() {
+        selectedIndex = Math.max(0, filteredApps.length - 1);
     }
 
     // Reset selectedIndex when query changes
     onQueryChanged: {
         selectedIndex = 0;
+    }
+
+    IpcHandler {
+        target: "launcher"
+
+        function open(): void {
+            root.show();
+        }
+
+        function close(): void {
+            root.hide();
+        }
+
+        function toggle(): void {
+            root.toggle();
+        }
     }
 }
