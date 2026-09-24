@@ -19,7 +19,9 @@
     },
     "bar": {
         "autoHide": false,
-        "height": 33
+        "height": 33,
+        "style": "docked",
+        "margin": 8
     },
     "opacity": {
         "background": 0.9

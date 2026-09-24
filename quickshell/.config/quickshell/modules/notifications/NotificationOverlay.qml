@@ -51,12 +51,12 @@ PanelWindow {
     }
 
     margins {
-        top: Config.barHeight + Config.spacing
+        top: Config.barReservedHeight + Config.spacing
         right: Config.spacing
     }
 
     implicitWidth: Config.notifWidth
-    implicitHeight: screen ? screen.height - Config.barHeight - Config.spacing * 2 : 0
+    implicitHeight: screen ? screen.height - Config.barReservedHeight - Config.spacing * 2 : 0
     color: "transparent"
 
     // Only the cards take input; the rest of the column clicks through

@@ -49,7 +49,7 @@ PanelWindow {
     }
 
     margins {
-        top: Config.barHeight
+        top: Config.barReservedHeight
         left: {
             const maxLeft = (screen?.width ?? implicitWidth) - implicitWidth - Config.spacing;
             return Math.max(Config.spacing, Math.min(anchorCenterX - implicitWidth / 2, maxLeft));

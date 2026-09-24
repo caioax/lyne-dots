@@ -48,6 +48,17 @@ Singleton {
     // ========================================================================
     readonly property int barHeight: getState("bar.height", 32)
     readonly property bool barAutoHide: getState("bar.autoHide", true)
+    // Layout template: "islands", "docked", "floating" or "docked-corners"
+    readonly property string barStyle: getState("bar.style", "docked")
+    readonly property bool barIslands: barStyle === "islands"
+    readonly property bool barFloating: barStyle === "floating"
+    readonly property bool barCorners: barStyle === "docked-corners"
+    // Gap between a floating bar and the screen edges
+    readonly property int barMargin: barFloating ? getState("bar.margin", 8) : 0
+    // Size of the concave corners hanging under a docked bar
+    readonly property int barCornerSize: barCorners ? radiusLarge : 0
+    // Screen space taken by the bar: popups and the exclusive zone start below it
+    readonly property int barReservedHeight: barHeight + barMargin
     // Floating islands inside the bar and the buttons inside them
     readonly property int barIslandHeight: barHeight - padding
     readonly property int barButtonHeight: barIslandHeight - Math.round(padding * 2 / 3)

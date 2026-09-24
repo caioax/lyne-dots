@@ -51,7 +51,7 @@ PanelWindow {
     }
 
     margins {
-        top: Config.barHeight + Config.spacing
+        top: Config.barReservedHeight + Config.spacing
         left: {
             if (anchored) {
                 const maxLeft = (screen?.width ?? implicitWidth) - implicitWidth - edgeMargin;
