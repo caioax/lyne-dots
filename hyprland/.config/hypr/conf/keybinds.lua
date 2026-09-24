@@ -129,6 +129,6 @@ hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("lyne reload")) -- Reload
 hl.bind("Print",             hl.dsp.global("quickshell:take_screenshot")) -- Screenshot
 hl.bind(mainMod .. " + End",   hl.dsp.global("quickshell:power_menu")) -- Power menu
 hl.bind(mainMod .. " + Space", hl.dsp.global("quickshell:app_launcher")) -- Launcher
-hl.bind(mainMod .. " + B",     hl.dsp.global("quickshell:wallpaper_picker")) -- Wallpaper Picker
+hl.bind(mainMod .. " + B",     hl.dsp.global("quickshell:wallpaper_picker")) -- Wallpapers (Settings)
 hl.bind(mainMod .. " + slash", hl.dsp.global("quickshell:keybinds_help")) -- Keybinds Help
 hl.bind(mainMod .. " + I",     hl.dsp.global("quickshell:settings")) -- Settings

@@ -70,16 +70,7 @@ QsPopupWindow {
         }
 
         // ==========================
-        // PAGE 5: THEME
-        // ==========================
-        ThemePage {
-            availableHeight: root.popupMaxHeight - 32
-            onBackRequested: pageStack.currentIndex = 0
-            onCloseWindow: root.closeWindow()
-        }
-
-        // ==========================
-        // PAGE 6: SOUND
+        // PAGE 5: SOUND
         // ==========================
         SoundPage {
             onBackRequested: pageStack.currentIndex = 0

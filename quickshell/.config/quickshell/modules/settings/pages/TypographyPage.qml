@@ -39,6 +39,15 @@ ColumnLayout {
         return best.value;
     }
 
+    // Called by SettingsWindow before Escape closes the window
+    function handleEscape(): bool {
+        if (fontPicker.opened) {
+            fontPicker.close();
+            return true;
+        }
+        return false;
+    }
+
     spacing: Config.spacing * 3
 
     FontPicker {

@@ -12,16 +12,11 @@ Card {
     id: root
 
     signal closeWindow
-    signal openTheme
 
     readonly property int avatarSize: Config.fontSizeLarge * 3
     readonly property int controlSize: Config.fontSizeIconSmall * 2
 
     function runShortcut(action: string) {
-        if (action === "theme") {
-            root.openTheme();
-            return;
-        }
         root.closeWindow();
         switch (action) {
         case "screenshot":
@@ -32,7 +27,10 @@ Card {
             ClipboardService.toggle();
             break;
         case "wallpaper":
-            WallpaperService.toggle();
+            SettingsService.open("wallpaper");
+            break;
+        case "theme":
+            SettingsService.open("theme");
             break;
         case "keybinds":
             ShortcutService.keybindsRequested();

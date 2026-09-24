@@ -24,6 +24,13 @@ Singleton {
             category: "Appearance"
         },
         {
+            id: "wallpaper",
+            label: "Wallpaper",
+            icon: "\u{f0e09}",
+            description: "Your wallpaper library and the wallpaper of each theme",
+            category: "Appearance"
+        },
+        {
             id: "layout",
             label: "Layout",
             icon: "\u{f0607}",

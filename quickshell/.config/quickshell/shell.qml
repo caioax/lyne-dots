@@ -167,30 +167,6 @@ ShellRoot {
         source: "./modules/osd/OsdOverlay.qml"
     }
 
-    // Wallpaper Picker — keepAlive lets the exit animation finish before destroying the component
-    Loader {
-        id: wallpaperLoader
-
-        property bool _shown: WallpaperService.pickerVisible
-        property bool _keepAlive: false
-
-        active: _shown || _keepAlive
-        source: "./modules/wallpaper/WallpaperPicker.qml"
-
-        on_ShownChanged: {
-            if (!_shown) {
-                _keepAlive = true;
-                wallpaperExitTimer.restart();
-            }
-        }
-
-        Timer {
-            id: wallpaperExitTimer
-            interval: Config.animDurationLong
-            onTriggered: wallpaperLoader._keepAlive = false
-        }
-    }
-
     // Clipboard History — keepAlive lets the exit animation finish before destroying the component
     Loader {
         id: clipboardLoader
@@ -358,9 +334,9 @@ ShellRoot {
     // Shortcut: Wallpaper Picker
     GlobalShortcut {
         name: "wallpaper_picker"
-        description: "Wallpaper picker"
+        description: "Wallpaper settings"
 
-        onPressed: WallpaperService.toggle()
+        onPressed: SettingsService.open("wallpaper")
     }
 
     // Shortcut: Clipboard History

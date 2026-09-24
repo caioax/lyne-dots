@@ -21,77 +21,18 @@ Singleton {
     // PROPERTIES
     // ========================================================================
 
-    property bool pickerVisible: false
     property string currentWallpaper: getState("wallpaper.current", "")
     property var wallpapers: []
-    property var selectedWallpapers: []
-    property bool confirmDelete: false
     property bool dynamicWallpaper: getState("wallpaper.dynamic", true)
-
-    // Search and filtering
-    property string searchQuery: ""
-    property string currentCategory: "all" // "all" | "favorites" | "themes"
-    property string themeFilter: "" // specific theme name when browsing theme wallpapers
     property var favorites: getState("wallpaper.favorites", [])
 
-    // Theme wallpapers (files inside themes/{themeName}/)
+    // Files inside themes/{themeWallpapersFor}/ (see refreshThemeWallpapers)
     property var themeWallpapers: []
+    property string themeWallpapersFor: ""
 
     readonly property string wallpaperDir: Quickshell.env("HOME") + "/.local/wallpapers"
     readonly property string themeWallpaperDir: wallpaperDir + "/themes"
     readonly property string themesConfigDir: Quickshell.env("HOME") + "/.local/themes"
-    readonly property int selectedCount: selectedWallpapers.length
-
-    // Active wallpaper paths per theme (for the Themes overview)
-    readonly property var activeThemeWallpapers: {
-        const result = [];
-        const themes = ThemeService.availableThemes;
-        const previews = ThemeService.themePreviews;
-        for (let i = 0; i < themes.length; i++) {
-            const name = themes[i];
-            const preview = previews[name];
-            if (preview && preview.wallpaper) {
-                result.push(wallpaperDir + "/" + preview.wallpaper);
-            }
-        }
-        return result;
-    }
-
-    // Filtered wallpaper list based on search + category
-    readonly property var filteredWallpapers: {
-        let list;
-
-        if (currentCategory === "themes" && themeFilter) {
-            // Show wallpapers from the theme's folder
-            list = root.themeWallpapers;
-        } else if (currentCategory === "themes") {
-            // Overview: return theme names (delegate resolves to wallpaper paths)
-            const themes = ThemeService.availableThemes;
-            const previews = ThemeService.themePreviews;
-            list = [];
-            for (let i = 0; i < themes.length; i++) {
-                const preview = previews[themes[i]];
-                if (preview && preview.wallpaper)
-                    list.push(themes[i]);
-            }
-        } else {
-            list = root.wallpapers;
-
-            if (currentCategory === "favorites")
-                list = list.filter(w => favorites.includes(relativePath(w)));
-        }
-
-        // Search filter
-        if (searchQuery) {
-            const q = searchQuery.toLowerCase();
-            if (currentCategory === "themes" && !themeFilter)
-                list = list.filter(t => t.toLowerCase().includes(q));
-            else
-                list = list.filter(w => fileName(w).toLowerCase().includes(q));
-        }
-
-        return list;
-    }
 
     // Available transitions in awww
     readonly property var transitions: ["wipe", "wave", "grow", "center", "outer", "any"]
@@ -176,6 +117,7 @@ Singleton {
     }
 
     function refreshThemeWallpapers(themeName: string) {
+        themeWallpapersFor = themeName;
         if (!themeName) {
             themeWallpapers = [];
             return;
@@ -223,54 +165,6 @@ Singleton {
         setState("wallpaper.dynamic", dynamicWallpaper);
     }
 
-    function show() {
-        refreshWallpapers();
-        selectedWallpapers = [];
-        confirmDelete = false;
-        searchQuery = "";
-        currentCategory = "all";
-        themeFilter = "";
-        themeWallpapers = [];
-        pickerVisible = true;
-    }
-
-    function hide() {
-        pickerVisible = false;
-        selectedWallpapers = [];
-        confirmDelete = false;
-    }
-
-    function toggle() {
-        if (pickerVisible)
-            hide();
-        else
-            show();
-    }
-
-    // Selection
-    function isSelected(path: string): bool {
-        return selectedWallpapers.includes(path);
-    }
-
-    function toggleSelection(path: string) {
-        if (isSelected(path)) {
-            selectedWallpapers = selectedWallpapers.filter(w => w !== path);
-        } else {
-            selectedWallpapers = [...selectedWallpapers, path];
-        }
-        confirmDelete = false;
-    }
-
-    function selectOnly(path: string) {
-        selectedWallpapers = [path];
-        confirmDelete = false;
-    }
-
-    function clearSelection() {
-        selectedWallpapers = [];
-        confirmDelete = false;
-    }
-
     // Apply wallpaper
     function setWallpaper(path: string) {
         const transition = transitions[Math.floor(Math.random() * transitions.length)];
@@ -291,14 +185,6 @@ Singleton {
         if (ThemeService.isAutoMode) {
             ThemeService.runMatugen(path);
         }
-
-        hide();
-    }
-
-    function applySelected() {
-        if (selectedWallpapers.length === 1) {
-            setWallpaper(selectedWallpapers[0]);
-        }
     }
 
     function setRandomWallpaper() {
@@ -313,48 +199,30 @@ Singleton {
         setWallpaper(available[randomIndex]);
     }
 
-    // Delete
-    function requestDelete() {
-        if (selectedWallpapers.length === 0)
+    // Delete image files (library or theme folders)
+    function deleteWallpapers(paths) {
+        if (paths.length === 0)
             return;
 
-        if (selectedWallpapers.length === 1) {
-            // Delete directly if only one
-            deleteSelected();
-        } else {
-            // Ask for confirmation if more than one
-            confirmDelete = true;
-        }
-    }
+        wallpapers = wallpapers.filter(w => !paths.includes(w));
+        themeWallpapers = themeWallpapers.filter(w => !paths.includes(w));
+        if (paths.includes(currentWallpaper))
+            currentWallpaper = "";
 
-    function deleteSelected() {
-        if (selectedWallpapers.length === 0)
-            return;
-
-        let rmPaths = [];
-        for (let i = 0; i < selectedWallpapers.length; i++) {
-            const path = selectedWallpapers[i];
-            rmPaths.push("'" + path + "'");
-            root.wallpapers = root.wallpapers.filter(w => w !== path);
-            root.themeWallpapers = root.themeWallpapers.filter(w => w !== path);
-            if (currentWallpaper === path)
-                currentWallpaper = "";
+        const favs = favorites.filter(f => !paths.includes(wallpaperDir + "/" + f));
+        if (favs.length !== favorites.length) {
+            favorites = favs;
+            setState("wallpaper.favorites", favs);
         }
-        deleteWallpaperProc.command = ["sh", "-c", "rm " + rmPaths.join(" ")];
+
+        deleteWallpaperProc.command = ["rm", "-f", "--", ...paths];
         deleteWallpaperProc.running = true;
-
-        selectedWallpapers = [];
-        confirmDelete = false;
-    }
-
-    function cancelDelete() {
-        confirmDelete = false;
     }
 
     // Add
     function addWallpapers() {
-        hide();
-        addWallpapersProc.running = true;
+        if (!addWallpapersProc.running)
+            addWallpapersProc.running = true;
     }
 
     function refreshWallpapers() {
@@ -363,20 +231,6 @@ Singleton {
 
     function getCurrentWallpaper() {
         getCurrentProc.running = true;
-    }
-
-    // ========================================================================
-    // WATCHERS
-    // ========================================================================
-
-    // Refresh theme wallpapers when themeFilter changes
-    onThemeFilterChanged: {
-        if (themeFilter) {
-            refreshThemeWallpapers(themeFilter);
-        } else {
-            themeWallpapers = [];
-        }
-        clearSelection();
     }
 
     // ========================================================================
@@ -463,10 +317,8 @@ Singleton {
         stdout: SplitParser {
             onRead: data => {
                 const result = data.trim();
-                if (result === "done" || result === "cancelled") {
+                if (result === "done")
                     root.refreshWallpapers();
-                    root.show();
-                }
             }
         }
     }
@@ -478,7 +330,7 @@ Singleton {
         onExited: exitCode => {
             if (exitCode === 0) {
                 console.log("[Wallpaper] Added wallpaper to theme:", _themeName);
-                if (root.themeFilter === _themeName)
+                if (root.themeWallpapersFor === _themeName)
                     root.refreshThemeWallpapers(_themeName);
             } else {
                 console.error("[Wallpaper] Failed to add wallpaper to theme");

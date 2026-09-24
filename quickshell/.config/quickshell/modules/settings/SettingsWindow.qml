@@ -21,6 +21,7 @@ FloatingWindow {
     // statically: Quickshell only resolves directories it can reach that way
     readonly property var pageComponents: ({
             theme: themePage,
+            wallpaper: wallpaperPage,
             layout: layoutPage,
             typography: typographyPage,
             bar: barPage,
@@ -46,6 +47,11 @@ FloatingWindow {
     Component {
         id: themePage
         ThemePage {}
+    }
+
+    Component {
+        id: wallpaperPage
+        WallpaperPage {}
     }
 
     Component {
@@ -105,9 +111,15 @@ FloatingWindow {
             SettingsService.close();
     }
 
+    // Pages may use Escape first (close a popup, clear a selection) through
+    // an optional handleEscape(): bool
     Shortcut {
         sequence: "Escape"
-        onActivated: SettingsService.close()
+        onActivated: {
+            if (pageLoader.item?.handleEscape?.())
+                return;
+            SettingsService.close();
+        }
     }
 
     RowLayout {

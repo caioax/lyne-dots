@@ -86,7 +86,7 @@ ColumnLayout {
                 icon: "\u{f0e09}"
                 text: "Change wallpaper"
                 baseColor: wallpaperRow.controlColor
-                onClicked: WallpaperService.toggle()
+                onClicked: SettingsService.currentPage = "wallpaper"
             }
         }
     }

@@ -29,7 +29,6 @@ Item {
         ProfileCard {
             Layout.fillWidth: true
             onCloseWindow: root.closeWindow()
-            onOpenTheme: pageStack.currentIndex = 5
         }
 
         MediaWidget {
@@ -118,7 +117,7 @@ Item {
                     iconSize: Config.fontSizeNormal
                     textColor: Config.subtextColor
                     hoverTextColor: Config.accentColor
-                    onClicked: pageStack.currentIndex = 6
+                    onClicked: pageStack.currentIndex = 5
                 }
             }
 
