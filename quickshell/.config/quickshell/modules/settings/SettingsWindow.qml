@@ -25,7 +25,8 @@ FloatingWindow {
             typography: typographyPage,
             bar: barPage,
             notifications: notificationsPage,
-            idle: idlePage
+            idle: idlePage,
+            profile: profilePage
         })
 
     Component {
@@ -56,6 +57,11 @@ FloatingWindow {
     Component {
         id: idlePage
         IdlePage {}
+    }
+
+    Component {
+        id: profilePage
+        ProfilePage {}
     }
 
     title: "Settings"

@@ -10,19 +10,10 @@ Singleton {
     id: root
 
     // Copy of the chosen picture; empty = distro logo
-    property string avatar: StateService.get("profile.avatar", "")
+    readonly property string avatar: StateService.get("profile.avatar", "")
     readonly property string avatarDir: Quickshell.env("HOME") + "/.local/share/quickshell"
 
-    Connections {
-        target: StateService
-
-        function onStateLoaded() {
-            root.avatar = StateService.get("profile.avatar", "");
-        }
-    }
-
     function setAvatar(path: string) {
-        avatar = path;
         StateService.set("profile.avatar", path);
     }
 

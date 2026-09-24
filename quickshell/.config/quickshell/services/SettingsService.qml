@@ -57,6 +57,13 @@ Singleton {
             icon: "\u{f04b2}",
             description: "Screen lock, screen off and what keeps the system awake",
             category: "System"
+        },
+        {
+            id: "profile",
+            label: "Profile & Region",
+            icon: "\u{f0009}",
+            description: "Profile picture, weather location and default apps",
+            category: "System"
         }
     ]
 

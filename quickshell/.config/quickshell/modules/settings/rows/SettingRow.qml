@@ -5,7 +5,8 @@ import qs.config
 import qs.services
 
 // Base row of a SettingsGroup: label + description on the left, a control on
-// the right (`trailing`) and optionally a full-width control below (`below`).
+// the right (`trailing`), optionally an icon/picture before the label
+// (`leading`) and a full-width control below (`below`).
 // With a state `path`, a reset button shows up while the value differs from
 // defaults.json
 Rectangle {
@@ -21,6 +22,7 @@ Rectangle {
 
     default property alias trailing: trailingRow.data
     property alias below: belowSlot.data
+    property alias leading: leadingRow.data
 
     readonly property bool hovered: rowHover.hovered
     // Background for controls inside the row, so they stay visible on hover
@@ -70,6 +72,13 @@ Rectangle {
         RowLayout {
             width: parent.width
             spacing: Config.spacing
+
+            RowLayout {
+                id: leadingRow
+                visible: children.length > 0
+                Layout.rightMargin: Config.padding
+                spacing: Config.spacing
+            }
 
             Column {
                 Layout.fillWidth: true
