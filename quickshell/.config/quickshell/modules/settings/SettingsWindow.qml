@@ -28,6 +28,7 @@ FloatingWindow {
             notifications: notificationsPage,
             windows: windowsPage,
             input: inputPage,
+            keybinds: keybindsPage,
             idle: idlePage,
             profile: profilePage,
             about: aboutPage
@@ -82,6 +83,11 @@ FloatingWindow {
     Component {
         id: inputPage
         InputPage {}
+    }
+
+    Component {
+        id: keybindsPage
+        KeybindsPage {}
     }
 
     Component {

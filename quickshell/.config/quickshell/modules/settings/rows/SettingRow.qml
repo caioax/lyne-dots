@@ -14,6 +14,7 @@ Rectangle {
 
     property string label
     property string description
+    property color descriptionColor: Config.subtextColor
     property string path
 
     // Set by SettingsGroup: only the ends of a group get the large radius
@@ -104,7 +105,7 @@ Rectangle {
                     wrapMode: Text.WordWrap
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeSmall
-                    color: Config.subtextColor
+                    color: root.descriptionColor
                 }
             }
 

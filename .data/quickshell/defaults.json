@@ -100,5 +100,9 @@
                 "disable_while_typing": true
             }
         }
+    },
+    "keybinds": {
+        "overrides": [],
+        "custom": []
     }
 }

@@ -3,32 +3,31 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
-import qs.services
 
-// ⋮ menu of a wallpaper tile. `items` is a list of { label, icon, action,
-// danger? }; "add-to-theme" swaps the list for the theme names
+// ⋮ menu. `items` is a list of { label, icon, action, danger?, children? };
+// an item with `children` opens them in place, with a back row
 Popup {
     id: root
 
-    property string path
+    // Whatever the menu was opened for (a path, an id...), passed back
+    property var target
     property var items: []
-    property bool pickingTheme: false
+    property var _submenu: null
 
-    signal triggered(string action, string path)
-    signal themePicked(string theme, string path)
+    signal triggered(string action, var target)
 
     // Opens next to `anchor` (the ⋮ button), kept inside the window
-    function openAt(anchor: Item, wallpaperPath: string) {
-        path = wallpaperPath;
-        pickingTheme = false;
+    function openAt(anchor: Item, menuTarget) {
+        target = menuTarget;
+        _submenu = null;
         const pos = anchor.mapToItem(parent, anchor.width, 0);
-        x = Math.min(pos.x - width, parent.width - width - Config.spacing);
+        x = Math.max(Config.spacing, Math.min(pos.x - width, parent.width - width - Config.spacing));
         y = Math.min(pos.y + anchor.height + Config.padding, parent.height - implicitHeight - Config.spacing);
         open();
     }
 
     parent: Overlay.overlay
-    width: Config.fontSizeNormal * 15
+    width: Config.fontSizeNormal * 16
     padding: Math.round(Config.padding / 2)
 
     background: Rectangle {
@@ -41,38 +40,31 @@ Popup {
     contentItem: Column {
         spacing: Math.round(Config.padding / 3)
 
-        // Back from the theme list (md-chevron_left)
+        // Back from a submenu (md-chevron_left)
         MenuItem {
-            visible: root.pickingTheme
-            label: "Add to theme"
+            visible: root._submenu !== null
+            label: root._submenu?.label ?? ""
             icon: "\u{f0141}"
             muted: true
-            onClicked: root.pickingTheme = false
+            onClicked: root._submenu = null
         }
 
         Repeater {
-            model: root.pickingTheme ? ThemeService.availableThemes.map(t => ({
-                        label: ThemeService.themePreviews[t]?.name ?? t,
-                        icon: "\u{f03d8}",
-                        action: t
-                    })) : root.items
+            model: root._submenu ? root._submenu.children : root.items
 
             MenuItem {
                 required property var modelData
 
                 label: modelData.label
-                icon: modelData.icon
+                icon: modelData.icon ?? ""
                 danger: modelData.danger ?? false
                 // md-chevron_right
-                trailingIcon: modelData.action === "add-to-theme" ? "\u{f0142}" : ""
+                trailingIcon: modelData.children ? "\u{f0142}" : ""
                 onClicked: {
-                    if (root.pickingTheme) {
-                        root.themePicked(modelData.action, root.path);
-                        root.close();
-                    } else if (modelData.action === "add-to-theme") {
-                        root.pickingTheme = true;
+                    if (modelData.children) {
+                        root._submenu = modelData;
                     } else {
-                        root.triggered(modelData.action, root.path);
+                        root.triggered(modelData.action, root.target);
                         root.close();
                     }
                 }
@@ -105,6 +97,7 @@ Popup {
             spacing: Config.spacing
 
             Text {
+                visible: item.icon !== ""
                 text: item.icon
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeLarge

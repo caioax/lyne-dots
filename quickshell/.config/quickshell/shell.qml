@@ -28,6 +28,11 @@ ShellRoot {
     // Keeps hypr/local/settings.lua in sync with state.json
     property string _hyprlandSettings: HyprlandSettingsService.lua
 
+    // Recording a shortcut in Settings puts Hyprland in the empty
+    // "lyne_capture" submap. If the shell reloaded or crashed mid-recording,
+    // Hyprland would be left without binds: always leave it on (re)load
+    Component.onCompleted: Quickshell.execDetached(["hyprctl", "dispatch", 'hl.dsp.submap("reset")'])
+
     // Idle Monitors
     IdleMonitor {
         timeout: IdleService.lockTimeout
@@ -191,37 +196,6 @@ ShellRoot {
         }
     }
 
-    // Keybinds Overlay
-    Loader {
-        id: keybindsLoader
-        active: false
-        source: "./modules/keybinds/KeybindsOverlay.qml"
-
-        function toggle() {
-            if (active && item) {
-                item.hide();
-                active = false;
-            } else {
-                active = true;
-            }
-        }
-
-        Connections {
-            target: keybindsLoader.item
-            enabled: keybindsLoader.status === Loader.Ready
-
-            function onShowingChanged() {
-                if (keybindsLoader.item && !keybindsLoader.item.showing)
-                    keybindsLoader.active = false;
-            }
-        }
-
-        onStatusChanged: {
-            if (status === Loader.Ready && item)
-                item.showing = true;
-        }
-    }
-
     // Settings window (imported statically: Quickshell only resolves the
     // pages/ and rows/ directories through static imports)
     Loader {
@@ -235,10 +209,6 @@ ShellRoot {
 
         function onScreenshotRequested() {
             root.screenshotActive = true;
-        }
-
-        function onKeybindsRequested() {
-            keybindsLoader.toggle();
         }
     }
 
@@ -363,11 +333,11 @@ ShellRoot {
         onPressed: SettingsService.toggle()
     }
 
-    // Shortcut: Keybinds Help
+    // Shortcut: Keybinds (settings page)
     GlobalShortcut {
         name: "keybinds_help"
-        description: "Keybinds help"
+        description: "Keybinds settings"
 
-        onPressed: keybindsLoader.toggle()
+        onPressed: SettingsService.open("keybinds")
     }
 }

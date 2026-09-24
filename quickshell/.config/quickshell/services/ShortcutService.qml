@@ -46,7 +46,6 @@ Singleton {
     signal quickSettingsRequested
     signal notificationsRequested
     signal clipboardRequested
-    signal keybindsRequested
 
     // ========================================================================
     // PUBLIC FUNCTIONS
@@ -70,9 +69,6 @@ Singleton {
             break;
         case "clipboard_history":
             clipboardRequested();
-            break;
-        case "keybinds_help":
-            keybindsRequested();
             break;
         default:
             console.warn("[Shortcuts] Unknown shortcut:", shortcutName);

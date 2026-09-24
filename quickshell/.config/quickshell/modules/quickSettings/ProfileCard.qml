@@ -33,7 +33,7 @@ Card {
             SettingsService.open("theme");
             break;
         case "keybinds":
-            ShortcutService.keybindsRequested();
+            SettingsService.open("keybinds");
             break;
         case "lock":
             IdleService.lock();

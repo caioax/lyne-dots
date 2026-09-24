@@ -21,6 +21,29 @@ Singleton {
     readonly property var settings: _merge(StateService.getDefault("hyprland", {}), StateService.get("hyprland", {}))
     readonly property string lua: "hl.config(" + _toLua(settings, 0) + ")\n"
 
+    // Keybinds changed in Settings ([{ id, keys }], keys "" = disabled) and
+    // custom shortcuts ([{ description, command, keys }]). Only written to
+    // the file: binds added by `hyprctl eval` would stack up until a reload
+    readonly property var bindOverrides: StateService.get("keybinds.overrides", [])
+    readonly property var customBinds: StateService.get("keybinds.custom", [])
+    readonly property string bindsLua: {
+        let out = "";
+        if (bindOverrides.length > 0) {
+            out += "\n-- Keybinds changed in Settings (lyne_rebind is defined in conf/binds.lua)\n";
+            out += "if lyne_rebind then\n";
+            for (const o of bindOverrides)
+                out += "    lyne_rebind(" + _luaString(o.id) + ", " + _luaString(o.keys) + ")\n";
+            out += "end\n";
+        }
+        const custom = customBinds.filter(c => c.keys !== "" && c.command !== "");
+        if (custom.length > 0) {
+            out += "\n-- Custom shortcuts\n";
+            for (const c of custom)
+                out += "hl.bind(" + _luaString(c.keys) + ", hl.dsp.exec_cmd(" + _luaString(c.command) + "), { description = " + _luaString(c.description || c.command) + " })\n";
+        }
+        return out;
+    }
+
     // Last `hyprctl eval` error, shown by the settings pages
     property string error: ""
 
@@ -29,6 +52,12 @@ Singleton {
             evalDebounce.restart();
             writeDebounce.restart();
         }
+    }
+
+    // Binds aren't dragged like sliders: write soon after a change
+    onBindsLuaChanged: {
+        if (!StateService.isLoading)
+            bindsDebounce.restart();
     }
 
     // First load (the initial change happens while isLoading) and external
@@ -53,9 +82,14 @@ Singleton {
         return result;
     }
 
+    // Double-quoted Lua string; only the escapes Lua and JSON agree on
+    function _luaString(text: string): string {
+        return '"' + String(text).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n").replace(/\r/g, "\\r") + '"';
+    }
+
     function _toLua(value, depth: int): string {
         if (typeof value === "string")
-            return JSON.stringify(value);
+            return _luaString(value);
         if (typeof value === "boolean" || typeof value === "number")
             return String(value);
         if (value === null || typeof value !== "object")
@@ -69,7 +103,7 @@ Singleton {
         return "{\n" + entries.join("\n") + "\n" + "    ".repeat(depth) + "}";
     }
 
-    readonly property string _fileContent: "-- Managed by Quickshell (Settings > Hyprland). Changes here are overwritten;\n" + "-- edit the values from the settings window or in state.json instead.\n\n" + lua
+    readonly property string _fileContent: "-- Managed by Quickshell (Settings > Hyprland). Changes here are overwritten;\n" + "-- edit the values from the settings window or in state.json instead.\n\n" + lua + bindsLua
 
     // Live: only the in-memory config, no reload
     function applyLive() {
@@ -89,6 +123,12 @@ Singleton {
         id: evalDebounce
         interval: 100
         onTriggered: root.applyLive()
+    }
+
+    Timer {
+        id: bindsDebounce
+        interval: 300
+        onTriggered: root.write()
     }
 
     Timer {

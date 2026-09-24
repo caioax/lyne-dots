@@ -73,6 +73,13 @@ Singleton {
             category: "Hyprland"
         },
         {
+            id: "keybinds",
+            label: "Keybinds",
+            icon: "\u{f030c}",
+            description: "Change, disable or add shortcuts. Saved to hypr/local/settings.lua",
+            category: "Hyprland"
+        },
+        {
             id: "idle",
             label: "Idle",
             icon: "\u{f04b2}",

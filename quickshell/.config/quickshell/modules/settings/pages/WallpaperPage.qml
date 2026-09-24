@@ -122,8 +122,10 @@ ColumnLayout {
         onActivated: root.deleteSelection()
     }
 
-    WallpaperMenu {
+    ContextMenu {
         id: menu
+
+        readonly property bool isFavorite: typeof target === "string" && WallpaperService.isFavorite(target)
 
         items: root.themesTab ? [
             {
@@ -144,14 +146,18 @@ ColumnLayout {
             }
         ] : [
             {
-                label: WallpaperService.isFavorite(menu.path) ? "Remove from favorites" : "Add to favorites",
-                icon: WallpaperService.isFavorite(menu.path) ? "\u{f02d5}" : "\u{f02d1}",
+                label: isFavorite ? "Remove from favorites" : "Add to favorites",
+                icon: isFavorite ? "\u{f02d5}" : "\u{f02d1}",
                 action: "favorite"
             },
             {
                 label: "Add to theme",
                 icon: "\u{f03d8}",
-                action: "add-to-theme"
+                children: ThemeService.availableThemes.map(t => ({
+                            label: ThemeService.themePreviews[t]?.name ?? t,
+                            icon: "\u{f03d8}",
+                            action: "theme:" + t
+                        }))
             },
             {
                 label: "Select",
@@ -167,6 +173,10 @@ ColumnLayout {
         ]
 
         onTriggered: (action, path) => {
+            if (action.startsWith("theme:")) {
+                WallpaperService.addToTheme(path, action.slice(6));
+                return;
+            }
             switch (action) {
             case "apply":
                 WallpaperService.setWallpaper(path);
@@ -182,7 +192,6 @@ ColumnLayout {
                 break;
             }
         }
-        onThemePicked: (theme, path) => WallpaperService.addToTheme(path, theme)
     }
 
     // ================= CURRENT =================
