@@ -21,15 +21,26 @@ if [[ ! -f "$STATE_FILE" ]]; then
     return 0
 fi
 
-# Deep merge: defaults defines structure, old state provides values
+# Deep merge: defaults defines structure, old state provides values.
+# Every non-object value in defaults is a leaf, including false, null and
+# whole arrays (paths(scalars) skipped false/null leaves, so user values like
+# `true` over a `false` default and lists such as favorites were lost).
+# Paths inside arrays are skipped: the user's array replaces the default one.
+# A user value is only kept when its type matches the default (or the default
+# is null), so keys whose type changed between versions get the new default;
+# getpath is wrapped in try for the same reason.
 local MERGED
 MERGED=$(jq -s '
     .[0] as $defaults | .[1] as $old |
-    $defaults | reduce (paths(scalars)) as $p (
-        .; if ($old | getpath($p)) != null
-           then setpath($p; $old | getpath($p))
-           else .
-           end
+    $defaults | reduce (
+        paths(type != "object") | select(all(.[]; type == "string"))
+    ) as $p (
+        .; ($old | try getpath($p) catch null) as $value
+           | ($defaults | getpath($p)) as $default
+           | if $value != null and ($default == null or ($value | type) == ($default | type))
+             then setpath($p; $value)
+             else .
+             end
     )
 ' "$DEFAULTS_FILE" "$STATE_FILE")
 
