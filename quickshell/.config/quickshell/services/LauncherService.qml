@@ -29,6 +29,17 @@ Singleton {
     readonly property var hidden: StateService.get("launcher.hidden", [])
     readonly property var usage: StateService.get("launcher.usage", [])
 
+    // Layout template: "spotlight", "dropdown", "sidebar" or "grid"
+    readonly property string style: StateService.get("launcher.style", "spotlight")
+    // Where the template sits, when it has a choice: spotlight "center" or
+    // "bar" (next to the bar), sidebar "left" or "right". Falls back to the
+    // template's first option when the saved one belongs to another template
+    readonly property var positions: ({
+            spotlight: ["center", "bar"],
+            sidebar: ["left", "right"]
+        })
+    readonly property string position: positionFor(style)
+
     // Usage keeps at most this many apps, the least recently used go first
     readonly property int usageLimit: 200
 
@@ -206,6 +217,13 @@ Singleton {
     // ========================================================================
     // PUBLIC FUNCTIONS
     // ========================================================================
+
+    // Saved position if the template offers it, else its first option
+    function positionFor(template: string): string {
+        const options = positions[template] ?? [];
+        const saved = StateService.get("launcher.position", "center");
+        return options.includes(saved) ? saved : options[0] ?? "";
+    }
 
     // Apps have no `run`; actions and calculator results do
     function isApp(item): bool {

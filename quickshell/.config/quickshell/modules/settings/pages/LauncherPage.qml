@@ -14,6 +14,75 @@ ColumnLayout {
     spacing: Config.spacing * 3
 
     SettingsGroup {
+        title: "Layout"
+
+        TemplatePicker {
+            label: "Template"
+            description: "How the launcher opens"
+            path: "launcher.style"
+            options: [
+                {
+                    label: "Spotlight",
+                    value: "spotlight"
+                },
+                {
+                    label: "Dropdown",
+                    value: "dropdown"
+                },
+                {
+                    label: "Sidebar",
+                    value: "sidebar"
+                },
+                {
+                    label: "Grid",
+                    value: "grid"
+                }
+            ]
+            preview: Component {
+                LauncherStylePreview {}
+            }
+        }
+
+        // Only the templates with a choice of place
+        SelectRow {
+            visible: LauncherService.style === "spotlight"
+            label: "Position"
+            description: "In the upper third of the screen, or right next to the bar"
+            path: "launcher.position"
+            value: LauncherService.position
+            segmentWidth: Config.fontSizeNormal * 8
+            options: [
+                {
+                    label: "Center",
+                    value: "center"
+                },
+                {
+                    label: "Near the bar",
+                    value: "bar"
+                }
+            ]
+        }
+
+        SelectRow {
+            visible: LauncherService.style === "sidebar"
+            label: "Side"
+            description: "Screen edge the sidebar opens on"
+            path: "launcher.position"
+            value: LauncherService.position
+            options: [
+                {
+                    label: "Left",
+                    value: "left"
+                },
+                {
+                    label: "Right",
+                    value: "right"
+                }
+            ]
+        }
+    }
+
+    SettingsGroup {
         title: "Search"
 
         ToggleRow {

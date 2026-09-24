@@ -1,0 +1,173 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import Quickshell.Widgets
+import qs.config
+import qs.services
+
+// Miniature desktop showing one launcher template over the current
+// wallpaper, with the bar on its configured edge and the launcher in the
+// position saved for that template
+ClippingRectangle {
+    id: root
+
+    // Launcher template: "spotlight", "dropdown", "sidebar" or "grid"
+    property string value
+    readonly property string position: LauncherService.positionFor(value)
+
+    // Everything is sized from the thumbnail height
+    readonly property real unit: height / 12
+    readonly property real barHeight: unit * 1.4
+    readonly property bool barOnBottom: Config.barOnBottom
+    // Room between the bar's edge and a launcher next to it
+    readonly property real barGap: barHeight + unit * 0.6
+
+    readonly property bool grid: value === "grid"
+    readonly property bool sidebar: value === "sidebar"
+    readonly property bool atBar: value === "dropdown" || (value === "spotlight" && position === "bar")
+
+    radius: Config.radius
+    color: Config.surface2Color
+
+    Image {
+        anchors.fill: parent
+        source: WallpaperService.currentWallpaper !== "" ? "file://" + WallpaperService.currentWallpaper : ""
+        fillMode: Image.PreserveAspectCrop
+        sourceSize: Qt.size(width * 2, height * 2)
+        asynchronous: true
+    }
+
+    // The bar, as a docked strip
+    Rectangle {
+        width: parent.width
+        height: root.barHeight
+        y: root.barOnBottom ? parent.height - height : 0
+        color: Config.backgroundColor
+
+        Rectangle {
+            x: root.unit * 0.6
+            anchors.verticalCenter: parent.verticalCenter
+            width: root.unit * 0.6
+            height: width
+            radius: width / 2
+            color: Config.accentColor
+        }
+    }
+
+    // The launcher panel
+    Rectangle {
+        id: panel
+
+        readonly property real rowHeight: root.unit * 0.9
+
+        width: {
+            if (root.grid)
+                return parent.width;
+            if (root.sidebar)
+                return parent.width * 0.3;
+            return parent.width * (root.value === "spotlight" ? 0.45 : 0.36);
+        }
+        height: {
+            if (root.grid)
+                return parent.height;
+            if (root.sidebar)
+                return parent.height - root.barGap - root.unit * 0.4;
+            return root.unit * 6;
+        }
+        x: {
+            if (root.grid)
+                return 0;
+            if (root.sidebar)
+                return root.position === "right" ? parent.width - width - root.unit * 0.4 : root.unit * 0.4;
+            if (root.value === "dropdown")
+                return root.unit * 0.4;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (root.grid)
+                return 0;
+            if (root.sidebar || root.atBar)
+                return root.barOnBottom ? parent.height - root.barGap - height : root.barGap;
+            return parent.height / 5;
+        }
+        radius: root.grid ? 0 : root.unit * 0.6
+        color: root.grid ? Qt.alpha(Config.backgroundColor, 0.9) : Config.backgroundColor
+        border.width: root.grid ? 0 : 1
+        border.color: Config.surface2Color
+
+        // Search field
+        Rectangle {
+            id: searchPill
+            x: root.grid ? (parent.width - width) / 2 : root.unit * 0.4
+            y: root.grid ? root.unit * 1.2 : root.unit * 0.4
+            width: root.grid ? parent.width * 0.4 : parent.width - root.unit * 0.8
+            height: root.unit * 0.9
+            radius: height / 2
+            color: Config.surface1Color
+        }
+
+        // Grid: apps as tiles
+        Grid {
+            visible: root.grid
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: searchPill.y + searchPill.height + root.unit * 0.8
+            columns: 7
+            spacing: root.unit * 0.55
+
+            Repeater {
+                model: 21
+
+                Rectangle {
+                    required property int index
+                    width: root.unit * 0.9
+                    height: width
+                    radius: width / 3
+                    color: index === 0 ? Config.accentColor : Config.surface3Color
+                }
+            }
+        }
+
+        // Others: a list of rows, the first one selected
+        Column {
+            visible: !root.grid
+            x: root.unit * 0.4
+            y: searchPill.y + searchPill.height + root.unit * 0.3
+            width: parent.width - root.unit * 0.8
+            height: parent.height - y - root.unit * 0.3
+            spacing: root.unit * 0.2
+            clip: true
+
+            Repeater {
+                model: 12
+
+                Rectangle {
+                    id: row
+                    required property int index
+                    width: parent.width
+                    height: panel.rowHeight
+                    radius: height / 3
+                    color: index === 0 ? Config.surface1Color : "transparent"
+                    border.width: index === 0 ? 1 : 0
+                    border.color: Qt.alpha(Config.accentColor, 0.6)
+
+                    Rectangle {
+                        x: root.unit * 0.2
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.height * 0.6
+                        height: width
+                        radius: width / 3
+                        color: row.index === 0 ? Config.accentColor : Config.surface3Color
+                    }
+
+                    Rectangle {
+                        x: parent.height
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width * (row.index % 2 ? 0.45 : 0.6)
+                        height: root.unit * 0.3
+                        radius: height / 2
+                        color: Config.surface3Color
+                    }
+                }
+            }
+        }
+    }
+}

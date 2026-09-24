@@ -31,7 +31,9 @@
         "showDescriptions": true,
         "rankByUsage": true,
         "rows": 7,
-        "terminal": "kitty"
+        "terminal": "kitty",
+        "style": "spotlight",
+        "position": "center"
     },
     "opacity": {
         "background": 0.9

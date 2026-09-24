@@ -55,7 +55,7 @@ Singleton {
             id: "launcher",
             label: "Launcher",
             icon: "\u{f003b}",
-            description: "Search, favorites, hidden apps and usage ranking",
+            description: "Template, search, favorites, hidden apps and usage ranking",
             category: "Shell"
         },
         {
