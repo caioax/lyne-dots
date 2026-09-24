@@ -64,6 +64,13 @@ Singleton {
             icon: "\u{f0009}",
             description: "Profile picture, weather location and default apps",
             category: "System"
+        },
+        {
+            id: "about",
+            label: "About",
+            icon: "\u{f02fd}",
+            description: "Dotfiles version, updates and system information",
+            category: "System"
         }
     ]
 

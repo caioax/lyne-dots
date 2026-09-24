@@ -17,6 +17,7 @@ Rectangle {
     property string path
 
     // Set by SettingsGroup: only the ends of a group get the large radius
+    readonly property bool isSettingRow: true
     property bool first: true
     property bool last: true
 

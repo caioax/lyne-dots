@@ -26,7 +26,8 @@ FloatingWindow {
             bar: barPage,
             notifications: notificationsPage,
             idle: idlePage,
-            profile: profilePage
+            profile: profilePage,
+            about: aboutPage
         })
 
     Component {
@@ -62,6 +63,11 @@ FloatingWindow {
     Component {
         id: profilePage
         ProfilePage {}
+    }
+
+    Component {
+        id: aboutPage
+        AboutPage {}
     }
 
     title: "Settings"

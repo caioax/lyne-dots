@@ -11,21 +11,14 @@ ColumnLayout {
     property string title
     default property alias rows: rowsLayout.data
 
-    // Rows already watched for visibility changes
-    property var _watched: []
+    // Reading `visible` of each child in a binding tracks visibility changes
+    // (and rows added later, e.g. by Repeaters) without manual connections
+    readonly property var _visibleRows: Array.from(rowsLayout.children).filter(c => c.visible && c.isSettingRow === true)
 
-    function _updateEnds() {
-        const children = Array.from(rowsLayout.children);
-        children.forEach(c => {
-            if (!_watched.includes(c)) {
-                _watched.push(c);
-                c.visibleChanged.connect(_updateEnds);
-            }
-        });
-        const visibleRows = children.filter(c => c.visible && c.first !== undefined);
-        visibleRows.forEach((row, i) => {
+    on_VisibleRowsChanged: {
+        _visibleRows.forEach((row, i) => {
             row.first = i === 0;
-            row.last = i === visibleRows.length - 1;
+            row.last = i === _visibleRows.length - 1;
         });
     }
 
@@ -48,8 +41,5 @@ ColumnLayout {
 
         Layout.fillWidth: true
         spacing: Math.round(Config.padding / 3)
-
-        onChildrenChanged: root._updateEnds()
-        Component.onCompleted: root._updateEnds()
     }
 }
