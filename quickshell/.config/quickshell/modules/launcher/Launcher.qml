@@ -66,7 +66,8 @@ PanelWindow {
 
     // Cover the bar too, so every template can place itself from the edges
     exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: "qs_modules"
+    // Attached: blur like the bar (wallpaper only) so both share one tint
+    WlrLayershell.namespace: attached ? "qs_attached" : "qs_modules"
     WlrLayershell.layer: WlrLayer.Overlay
     // Release the keyboard as soon as the service hides, so the exit
     // animation doesn't block other windows from receiving input

@@ -39,7 +39,8 @@ PanelWindow {
         return anchorItem.mapToItem(null, anchorItem.width / 2, 0).x;
     }
 
-    WlrLayershell.namespace: "qs_modules"
+    // Attached: blur like the bar (wallpaper only) so both share one tint
+    WlrLayershell.namespace: attached ? "qs_attached" : "qs_modules"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.exclusiveZone: -1
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None

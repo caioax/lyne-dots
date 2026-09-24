@@ -23,7 +23,9 @@ Scope {
 
             property bool enableAutoHide: Config.barAutoHide
 
-            WlrLayershell.namespace: "qs_modules"
+            // Blurs only the wallpaper (xray, see hypr appearance.lua), the
+            // same as the panels attached to it, so they share one tint
+            WlrLayershell.namespace: "qs_attached"
 
             // The concave corners hang below the reserved area
             implicitHeight: Config.barReservedHeight + Config.barCornerSize

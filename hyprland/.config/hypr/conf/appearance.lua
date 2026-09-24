@@ -99,6 +99,18 @@ hl.layer_rule({
     no_anim      = true,
 })
 
+-- The bar and the panels attached to it (bar.attachPopups) blur only the
+-- wallpaper (xray), so they share one tint whatever window is behind them
+hl.layer_rule({
+    name  = "attached",
+    match = { namespace = "qs_attached" },
+
+    blur         = true,
+    ignore_alpha = 0.5,
+    no_anim      = true,
+    xray         = true,
+})
+
 hl.layer_rule({
     name  = "power",
     match = { namespace = "qs_powerOverlay" },

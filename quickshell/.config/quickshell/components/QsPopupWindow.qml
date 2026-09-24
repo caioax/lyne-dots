@@ -28,7 +28,8 @@ PanelWindow {
 
     readonly property int screenMargin: 5
 
-    WlrLayershell.namespace: "qs_modules"
+    // Attached: blur like the bar (wallpaper only) so both share one tint
+    WlrLayershell.namespace: attached ? "qs_attached" : "qs_modules"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     WlrLayershell.exclusiveZone: -1
