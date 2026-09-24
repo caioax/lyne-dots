@@ -137,7 +137,7 @@ Popup {
             currentIndex: 0
             highlightMoveDuration: 0
 
-            ScrollBar.vertical: ScrollBar {}
+            ScrollBar.vertical: QsScrollBar {}
 
             delegate: Rectangle {
                 id: item

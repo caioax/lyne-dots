@@ -17,6 +17,7 @@ ColumnLayout {
 
     readonly property bool canExpand: expanded || summaryText.truncated || bodyText.truncated
     readonly property bool replyFocused: reply.inputFocused
+    readonly property bool replyWantsKeyboard: reply.wantsKeyboard
     readonly property color tint: notif.isCritical ? Config.errorColor : Config.accentColor
 
     // An action was invoked or a reply was sent

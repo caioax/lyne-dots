@@ -11,6 +11,7 @@ Item {
     required property var modelData
     readonly property var notif: modelData
     readonly property color tint: notif.isCritical ? Config.errorColor : Config.accentColor
+    readonly property bool wantsKeyboard: content.replyWantsKeyboard
 
     // 1 = off screen to the right, 0 = in place. Slides in on creation and
     // out while the service plays the exit (notif.exiting)

@@ -9,6 +9,9 @@ Rectangle {
 
     property string placeholder: "Reply"
     readonly property bool inputFocused: input.activeFocus
+    // Clicking the field gives it focus even while its window has no
+    // keyboard; the popup overlay uses this to ask for keyboard focus
+    readonly property bool wantsKeyboard: input.focus
 
     signal submitted(string text)
 
@@ -49,6 +52,11 @@ Rectangle {
             clip: true
             onAccepted: root.submit()
             Keys.onEscapePressed: focus = false
+            // Clicking another window takes the keyboard away: drop the request
+            onActiveFocusChanged: {
+                if (!activeFocus)
+                    focus = false;
+            }
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter

@@ -11,6 +11,18 @@ PanelWindow {
     id: root
 
     readonly property bool hasPopups: NotificationService.activePopupCount > 0
+    // Popup whose inline reply field was clicked (null when destroyed)
+    property Item keyboardOwner: null
+    // Exclusive takes the keyboard right away (OnDemand would only get it on
+    // a second click); then OnDemand, so clicking another window takes it back
+    property bool keyboardGrabbed: false
+    onKeyboardOwnerChanged: keyboardGrabbed = false
+
+    Timer {
+        running: root.keyboardOwner !== null && !root.keyboardGrabbed
+        interval: Config.animDurationShort
+        onTriggered: root.keyboardGrabbed = true
+    }
 
     screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
 
@@ -29,8 +41,9 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "qs_notifications"
     WlrLayershell.exclusiveZone: -1
-    // Keyboard only when the inline reply field is clicked
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    // No keyboard by default so new popups never steal focus (that closed
+    // bar menus and unfocused windows); only while a reply field is in use
+    WlrLayershell.keyboardFocus: !keyboardOwner ? WlrKeyboardFocus.None : keyboardGrabbed ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.Exclusive
 
     anchors {
         top: true
@@ -65,7 +78,15 @@ PanelWindow {
         }
 
         delegate: NotificationPopup {
+            id: popup
+
             width: list.width
+            onWantsKeyboardChanged: {
+                if (wantsKeyboard)
+                    root.keyboardOwner = popup;
+                else if (root.keyboardOwner === popup)
+                    root.keyboardOwner = null;
+            }
         }
 
         add: Transition {

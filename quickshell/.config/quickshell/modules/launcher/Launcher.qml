@@ -444,22 +444,7 @@ PanelWindow {
                     }
 
                     // Smooth scroll
-                    ScrollBar.vertical: ScrollBar {
-                        policy: ScrollBar.AsNeeded
-
-                        contentItem: Rectangle {
-                            implicitWidth: 4
-                            radius: 2
-                            color: Config.surface2Color
-                            opacity: parent.active ? 1 : 0
-
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Config.animDurationShort
-                                }
-                            }
-                        }
-                    }
+                    ScrollBar.vertical: QsScrollBar {}
                 }
             }
         }

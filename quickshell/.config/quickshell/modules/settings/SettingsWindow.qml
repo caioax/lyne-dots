@@ -6,6 +6,7 @@ import Quickshell
 import qs.config
 import qs.services
 import "./pages/"
+import "../../components/"
 
 // Settings app: sidebar with the pages of SettingsService on the left, the
 // current page on the right. A regular window (floated by a Hyprland rule)
@@ -109,7 +110,7 @@ FloatingWindow {
     implicitWidth: 960
     implicitHeight: 680
     minimumSize: Qt.size(720, 480)
-    color: Config.backgroundColor
+    color: Config.backgroundTransparentColor
     visible: true
 
     onVisibleChanged: {
@@ -236,7 +237,7 @@ FloatingWindow {
                                         Layout.fillWidth: true
                                         implicitHeight: navRow.implicitHeight + Config.padding * 2
                                         radius: Config.radiusLarge
-                                        color: active ? Qt.alpha(Config.accentColor, 0.15) : navMouse.containsMouse ? Config.surface1Color : "transparent"
+                                        color: active ? Qt.alpha(Config.accentColor, 0.15) : navMouse.containsMouse ? Config.surface1Color : Qt.alpha(Config.surface1Color, 0)
 
                                         Behavior on color {
                                             ColorAnimation {
@@ -341,9 +342,7 @@ FloatingWindow {
                 contentHeight: pageLoader.implicitHeight + Config.padding * 4
                 boundsBehavior: Flickable.StopAtBounds
 
-                ScrollBar.vertical: ScrollBar {
-                    policy: flick.contentHeight > flick.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
-                }
+                ScrollBar.vertical: QsScrollBar {}
 
                 Loader {
                     id: pageLoader

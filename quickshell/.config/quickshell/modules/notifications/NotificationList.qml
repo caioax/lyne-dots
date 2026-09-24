@@ -66,16 +66,7 @@ Item {
         boundsBehavior: Flickable.StopAtBounds
         clip: true
 
-        ScrollBar.vertical: ScrollBar {
-            policy: ScrollBar.AsNeeded
-
-            contentItem: Rectangle {
-                implicitWidth: Math.round(Config.padding * 2 / 3)
-                radius: width / 2
-                color: Config.surface2Color
-                opacity: parent.active ? 0.8 : 0
-            }
-        }
+        ScrollBar.vertical: QsScrollBar {}
 
         Column {
             id: groups
