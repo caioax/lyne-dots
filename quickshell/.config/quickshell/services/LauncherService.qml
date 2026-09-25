@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.config
 import "fuzzy.js" as Fuzzy
 
 Singleton {
@@ -31,14 +32,18 @@ Singleton {
 
     // Layout template: "sidebar" (default), "spotlight", "dropdown" or "grid"
     readonly property string style: StateService.get("launcher.style", "sidebar")
-    // Where the template sits, when it has a choice: spotlight "center" or
-    // "bar" (next to the bar), sidebar "left" or "right". Falls back to the
-    // template's first option when the saved one belongs to another template
+    // Where the template sits, when it has a choice: spotlight "center",
+    // "top" or "bottom" (against that screen edge, or the bar when it's
+    // there), sidebar "left" or "right". Falls back to the template's first
+    // option when the saved one belongs to another template
     readonly property var positions: ({
-            spotlight: ["center", "bar"],
+            spotlight: ["center", "top", "bottom"],
             sidebar: ["left", "right"]
         })
     readonly property string position: positionFor(style)
+    // Search field "top", "bottom", or "auto": by the bottom edge when the
+    // panel hangs from it, so it stays put and the list grows away from it
+    readonly property string order: StateService.get("launcher.order", "auto")
 
     // Usage keeps at most this many apps, the least recently used go first
     readonly property int usageLimit: 200
@@ -221,8 +226,24 @@ Singleton {
     // Saved position if the template offers it, else its first option
     function positionFor(template: string): string {
         const options = positions[template] ?? [];
-        const saved = StateService.get("launcher.position", "center");
+        let saved = StateService.get("launcher.position", "center");
+        // Spotlight "bar" (next to the bar) became the bar's edge
+        if (saved === "bar")
+            saved = Config.barOnBottom ? "bottom" : "top";
         return options.includes(saved) ? saved : options[0] ?? "";
+    }
+
+    // Whether the template in that position hangs from the bottom edge:
+    // dropdown and sidebar follow the bar, spotlight its own position
+    function atBottomEdge(template: string, position: string): bool {
+        if (template === "spotlight")
+            return position === "bottom";
+        return (template === "dropdown" || template === "sidebar") && Config.barOnBottom;
+    }
+
+    // Upside-down panel: search at the bottom, the list growing upward
+    function isReversed(template: string, position: string): bool {
+        return order === "bottom" || (order === "auto" && atBottomEdge(template, position));
     }
 
     // Apps have no `run`; actions and calculator results do

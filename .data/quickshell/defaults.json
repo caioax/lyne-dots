@@ -34,7 +34,8 @@
         "rows": 7,
         "terminal": "kitty",
         "style": "sidebar",
-        "position": "center"
+        "position": "center",
+        "order": "auto"
     },
     "opacity": {
         "background": 0.9

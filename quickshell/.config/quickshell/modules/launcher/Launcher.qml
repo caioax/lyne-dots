@@ -13,7 +13,8 @@ import "../../components/"
 // animation by the keepAlive Loader in shell.qml, so every open starts fresh.
 // The window covers the screen; the panel's place and shape come from the
 // template (LauncherService.style / position):
-//   spotlight  centered panel, in the upper third or next to the bar
+//   spotlight  centered panel, in the upper third or against the top or
+//              bottom edge (the bar, when it's there)
 //   dropdown   compact panel hanging from the bar's launcher button
 //   sidebar    full-height panel on the left or right edge
 //   grid       fullscreen, the apps as tiles
@@ -25,13 +26,16 @@ PanelWindow {
     readonly property bool grid: style === "grid"
     readonly property bool sidebar: style === "sidebar"
     readonly property bool dropdown: style === "dropdown"
-    // Opens from the bar's edge (dropdown, spotlight next to the bar)
-    readonly property bool atBar: dropdown || (style === "spotlight" && position === "bar")
     readonly property bool barOnBottom: Config.barOnBottom
+    readonly property string barEdge: barOnBottom ? "bottom" : "top"
+    // Screen edge a spotlight hangs from, "" in the center
+    readonly property string spotlightEdge: style === "spotlight" && position !== "center" ? position : ""
+    // Opens from the bar's edge (dropdown, spotlight on the bar's side)
+    readonly property bool atBar: dropdown || spotlightEdge === barEdge
     // Distance from the bar's screen edge to just past the bar
     readonly property int barGap: Config.barReservedHeight + Config.spacing
     // Grow out of the bar (or the screen edge) instead of floating near it
-    readonly property bool attachable: dropdown || sidebar || atBar
+    readonly property bool attachable: dropdown || sidebar || spotlightEdge !== ""
     // Same switch as the bar popups (Settings › Bar › Attach to the bar)
     readonly property bool attached: attachable && StateService.get("bar.attachPopups", true)
     // With a docked bar the panel attaches below it; islands and floating
@@ -39,12 +43,11 @@ PanelWindow {
     readonly property real attachLine: Config.barIslands || Config.barFloating ? 0 : Config.barHeight
     // Flush sides of the attached panel, the one it slides out of first
     readonly property var attachedEdges: {
-        const barEdge = barOnBottom ? "bottom" : "top";
         if (sidebar)
             return [position, "top", "bottom"];
         if (dropdown)
             return [barEdge, "left"];
-        return [barEdge];
+        return [spotlightEdge];
     }
 
     // Templates next to the bar keep an auto-hiding bar shown while open,
@@ -63,9 +66,10 @@ PanelWindow {
     }
     Component.onDestruction: WindowManagerService.registerClose("Launcher")
 
-    // Next to a bar at the bottom the panel is upside down: search by the
-    // bar, the list growing upward with the best match right above it
-    readonly property bool reversed: atBar && barOnBottom
+    // Upside down (Settings › Launcher › Search bar, or hanging from the
+    // bottom edge in auto): search at the bottom, the list growing upward
+    // with the best match right above it
+    readonly property bool reversed: LauncherService.isReversed(style, position)
 
     // Apps as tiles in the grid template (actions and results stay a list)
     readonly property bool tileResults: grid && LauncherService.mode.id === "apps" && LauncherService.results.length > 0
@@ -107,79 +111,67 @@ PanelWindow {
         LauncherService.activateSelected();
     }
 
-    // The selection runs through two sections: the favorite tiles, then the
-    // results (a list, or tiles in the grid template). Arrows move in 2D
-    // inside a section and cross into the other one at its edge
+    // The selection runs through two sections: the favorite tiles and the
+    // results (a list, or tiles in the grid template), listed as drawn, top
+    // to bottom. Arrows move in 2D inside a section and cross into the other
+    // one at its edge
     function sections(): var {
         const favorites = LauncherService.favoriteCount;
-        return [
+        const list = [
             {
                 start: 0,
                 count: favorites,
-                columns: favoritesGrid.columns
+                columns: favoritesGrid.columns,
+                flipped: false
             },
             {
                 start: favorites,
                 count: LauncherService.results.length,
-                columns: tileResults ? resultsGrid.columns : 1
+                columns: tileResults ? resultsGrid.columns : 1,
+                // Upside down, the list draws its first item at the bottom
+                flipped: reversed && !tileResults
             }
         ].filter(s => s.count > 0);
+        // Upside down, the results sit above the favorites
+        return reversed ? list.reverse() : list;
+    }
+
+    // Item at a place of a section on screen (0 = top left), and back: the
+    // same mapping both ways
+    function itemAt(section, place: int): int {
+        return section.start + (section.flipped ? section.count - 1 - place : place);
+    }
+
+    function placeOf(section, index: int): int {
+        return itemAt(section, index - section.start) - section.start;
     }
 
     // `step` is the key's direction: 1 = Down, -1 = Up
     function moveVertical(step: int) {
-        if (reversed) {
-            moveVerticalReversed(step);
-            return;
-        }
         const list = sections();
         const selected = LauncherService.selectedIndex;
         const i = list.findIndex(s => selected >= s.start && selected < s.start + s.count);
         if (i === -1)
             return;
         const section = list[i];
-        const target = selected + step * section.columns;
-        if (target >= section.start && target < section.start + section.count) {
-            LauncherService.select(target);
+        const place = placeOf(section, selected);
+        const target = place + step * section.columns;
+        if (target >= 0 && target < section.count) {
+            LauncherService.select(itemAt(section, target));
             return;
         }
         // Past the last row: next section's first item, or this section's
         // last item when the last row is shorter than the one above
         if (step > 0) {
             if (i + 1 < list.length)
-                LauncherService.select(list[i + 1].start);
-            else if (Math.floor((selected - section.start) / section.columns) < Math.floor((section.count - 1) / section.columns))
-                LauncherService.select(section.start + section.count - 1);
+                LauncherService.select(itemAt(list[i + 1], 0));
+            else if (Math.floor(place / section.columns) < Math.floor((section.count - 1) / section.columns))
+                LauncherService.select(itemAt(section, section.count - 1));
         } else if (i > 0) {
             // Up into the previous section: first item of its last row
             const previous = list[i - 1];
-            LauncherService.select(previous.start + Math.floor((previous.count - 1) / previous.columns) * previous.columns);
+            LauncherService.select(itemAt(previous, Math.floor((previous.count - 1) / previous.columns) * previous.columns));
         }
-    }
-
-    // Upside-down panel: the results (item 0 at the bottom) sit above the
-    // favorites, which keep their rows top to bottom
-    function moveVerticalReversed(step: int) {
-        const favorites = LauncherService.favoriteCount;
-        const count = LauncherService.results.length;
-        const selected = LauncherService.selectedIndex;
-        const columns = favoritesGrid.columns;
-
-        if (selected < favorites) {
-            const target = selected + step * columns;
-            if (target >= 0 && target < favorites)
-                LauncherService.select(target);
-            else if (step < 0 && count > 0)
-                // Up from the top row of tiles: the result right above
-                LauncherService.select(favorites);
-            return;
-        }
-        // In the list, Up goes to the next result and Down to the previous
-        const target = selected - step;
-        if (target >= favorites && target < favorites + count)
-            LauncherService.select(target);
-        else if (target < favorites && favorites > 0)
-            LauncherService.select(0);
     }
 
     function moveHorizontal(step: int): bool {
@@ -292,7 +284,7 @@ PanelWindow {
         readonly property real contentHeight: column.implicitHeight + margin * 2
         // Distance from the bar's screen edge to the panel
         readonly property real edgeOffset: root.attached ? root.attachLine : root.barGap
-        // Space the sidebar leaves at the screen edges when floating
+        // Space left at a screen edge without the bar when floating
         readonly property real inset: root.attached ? 0 : Config.spacing
 
         width: {
@@ -322,8 +314,12 @@ PanelWindow {
                 return 0;
             if (root.sidebar)
                 return root.barOnBottom ? inset : edgeOffset;
-            if (root.atBar)
+            if (root.dropdown)
                 return root.barOnBottom ? root.height - edgeOffset - height : edgeOffset;
+            if (root.spotlightEdge !== "") {
+                const offset = root.atBar ? edgeOffset : inset;
+                return root.spotlightEdge === "bottom" ? root.height - offset - height : offset;
+            }
             return Math.round(root.height / 5);
         }
     }
@@ -343,7 +339,7 @@ PanelWindow {
                 return root.position === "right" ? Item.Right : Item.Left;
             if (root.dropdown)
                 return root.barOnBottom ? Item.BottomLeft : Item.TopLeft;
-            return root.atBar && root.barOnBottom ? Item.Bottom : Item.Top;
+            return root.spotlightEdge === "bottom" ? Item.Bottom : Item.Top;
         }
         fromScale: root.grid ? 1.03 : Config.animPopupFromScale
         shown: LauncherService.visible && !root.attached
@@ -353,7 +349,7 @@ PanelWindow {
 
             anchors.fill: parent
             // Concentric with the rows inside the margin
-            radius: root.grid ? 0 : Config.radiusLarge + frame.margin
+            radius: root.grid ? 0 : Config.radiusLarge
             color: root.grid ? Qt.alpha(Config.backgroundColor, Math.min(0.95, Config.backgroundOpacity + 0.05)) : Config.backgroundTransparentColor
             border.width: root.grid ? 0 : 1
             border.color: Config.surface2Color

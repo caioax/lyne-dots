@@ -47,18 +47,21 @@ ColumnLayout {
         SelectRow {
             visible: LauncherService.style === "spotlight"
             label: "Position"
-            description: "In the upper third of the screen, or right next to the bar"
+            description: "Against the top or bottom edge (the bar, when it's there), or in the upper third"
             path: "launcher.position"
             value: LauncherService.position
-            segmentWidth: Config.fontSizeNormal * 8
             options: [
+                {
+                    label: "Top",
+                    value: "top"
+                },
                 {
                     label: "Center",
                     value: "center"
                 },
                 {
-                    label: "Near the bar",
-                    value: "bar"
+                    label: "Bottom",
+                    value: "bottom"
                 }
             ]
         }
@@ -88,7 +91,7 @@ ColumnLayout {
 
             readonly property bool on: StateService.get("bar.attachPopups", true)
 
-            visible: LauncherService.style === "dropdown" || LauncherService.style === "sidebar" || (LauncherService.style === "spotlight" && LauncherService.position === "bar")
+            visible: LauncherService.style === "dropdown" || LauncherService.style === "sidebar" || (LauncherService.style === "spotlight" && LauncherService.position !== "center")
             label: on ? "Attached to the bar" : "Floating"
             description: "Follows Attach to the bar in the Bar settings, like the bar popups"
 
@@ -99,6 +102,26 @@ ColumnLayout {
                 baseColor: attachRow.controlColor
                 onClicked: SettingsService.open("bar")
             }
+        }
+
+        SelectRow {
+            label: "Search bar"
+            description: "Auto puts it at the bottom when the launcher opens from the bottom edge"
+            path: "launcher.order"
+            options: [
+                {
+                    label: "Top",
+                    value: "top"
+                },
+                {
+                    label: "Bottom",
+                    value: "bottom"
+                },
+                {
+                    label: "Auto",
+                    value: "auto"
+                }
+            ]
         }
     }
 
