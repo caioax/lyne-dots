@@ -73,6 +73,13 @@ Singleton {
             category: "Shell"
         },
         {
+            id: "power",
+            label: "Power",
+            icon: "\u{f0425}",
+            description: "Power menu template, countdown and actions",
+            category: "Shell"
+        },
+        {
             id: "notifications",
             label: "Notifications",
             icon: "\u{f009a}",

@@ -29,6 +29,7 @@ FloatingWindow {
             launcher: launcherPage,
             clipboard: clipboardPage,
             dashboard: dashboardPage,
+            power: powerPage,
             notifications: notificationsPage,
             windows: windowsPage,
             input: inputPage,
@@ -57,6 +58,11 @@ FloatingWindow {
     Component {
         id: launcherPage
         LauncherPage {}
+    }
+
+    Component {
+        id: powerPage
+        PowerPage {}
     }
 
     Component {

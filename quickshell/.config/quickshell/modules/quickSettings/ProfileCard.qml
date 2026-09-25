@@ -205,7 +205,7 @@ Card {
             Layout.preferredHeight: root.controlSize
             onClicked: {
                 root.closeWindow();
-                PowerService.showOverlay();
+                PowerService.show();
             }
         }
     }

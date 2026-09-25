@@ -105,16 +105,11 @@ ShellRoot {
         }
     }
 
-    // Power Overlay
-    Loader {
-        id: powerLoader
-        active: PowerService.overlayVisible
-        source: "./modules/power/PowerOverlay.qml"
+    // Power menu (dims every monitor, the menu on the focused one)
+    LazyLoader {
+        active: PowerService.visible
 
-        onStatusChanged: {
-            if (status === Loader.Ready)
-                console.log("[Shell] PowerOverlay loaded");
-        }
+        PowerOverlay {}
     }
 
     // Screenshot Manager
@@ -210,8 +205,7 @@ ShellRoot {
         description: "Power menu"
 
         onPressed: {
-            console.log("[Shell] Power menu requested");
-            PowerService.showOverlay();
+            PowerService.toggle();
         }
     }
 

@@ -79,6 +79,12 @@
         "long": 400,
         "screenshot": true
     },
+    "power": {
+        "style": "card",
+        "side": "right",
+        "countdown": 5,
+        "hiddenActions": []
+    },
     "profile": {
         "avatar": ""
     },

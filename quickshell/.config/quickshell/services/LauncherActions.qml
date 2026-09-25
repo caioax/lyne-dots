@@ -6,63 +6,28 @@ import Quickshell
 
 // Shell actions for the launcher's ">" mode. Each item is
 // { id, name, comment, glyph, keywords, run, confirm? }; `confirm` asks for a
-// second Enter (power actions). Toggles name the state they switch to
+// second Enter. Toggles name the state they switch to
 Singleton {
     id: root
 
-    readonly property var power: [
-        {
-            id: "lock",
-            name: "Lock screen",
-            comment: "Lock the session",
-            glyph: "\u{f033e}",
-            keywords: ["lock"],
-            run: () => PowerService.lock()
-        },
-        {
-            id: "suspend",
-            name: "Suspend",
-            comment: "Sleep, keeping the session in memory",
-            glyph: "\u{f0904}",
-            keywords: ["sleep"],
-            run: () => PowerService.suspend()
-        },
-        {
-            id: "logout",
-            name: "Log out",
-            comment: "End the Hyprland session",
-            glyph: "\u{f0343}",
-            keywords: ["exit", "sign out"],
-            confirm: true,
-            run: () => PowerService.logout()
-        },
-        {
-            id: "reboot",
-            name: "Reboot",
-            comment: "Restart the computer",
-            glyph: "\u{f0709}",
-            keywords: ["restart"],
-            confirm: true,
-            run: () => PowerService.reboot()
-        },
-        {
-            id: "shutdown",
-            name: "Shut down",
-            comment: "Power off the computer",
-            glyph: "\u{f0425}",
-            keywords: ["power off", "poweroff"],
-            confirm: true,
-            run: () => PowerService.shutdown()
-        },
-        {
-            id: "power-menu",
-            name: "Power menu",
-            comment: "Open the power overlay",
-            glyph: "\u{f0426}",
-            keywords: ["session"],
-            run: () => PowerService.showOverlay()
-        }
-    ]
+    // Destructive ones count down in the power menu (PowerService.request)
+    readonly property var power: PowerService.availableActions.map(a => ({
+                id: a.id,
+                name: a.name,
+                comment: a.comment,
+                glyph: a.glyph,
+                keywords: a.keywords,
+                run: () => PowerService.request(a.id)
+            })).concat([
+            {
+                id: "power-menu",
+                name: "Power menu",
+                comment: "Lock, suspend, log out, reboot or shut down",
+                glyph: "\u{f0426}",
+                keywords: ["session"],
+                run: () => PowerService.show()
+            }
+        ])
 
     readonly property var tools: [
         {

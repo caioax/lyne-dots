@@ -19,10 +19,6 @@ Singleton {
                 name: "take_screenshot",
                 description: "Screenshot (region/window/screen)"
             },
-            power: {
-                name: "power_menu",
-                description: "Power menu (shutdown/reboot/etc)"
-            },
             quickSettings: {
                 name: "quick_settings",
                 description: "Quick settings"
@@ -42,7 +38,6 @@ Singleton {
     // ========================================================================
 
     signal screenshotRequested
-    signal powerMenuRequested
     signal quickSettingsRequested
     signal notificationsRequested
     signal clipboardRequested
@@ -57,9 +52,6 @@ Singleton {
         switch (shortcutName) {
         case "take_screenshot":
             screenshotRequested();
-            break;
-        case "power_menu":
-            powerMenuRequested();
             break;
         case "quick_settings":
             quickSettingsRequested();

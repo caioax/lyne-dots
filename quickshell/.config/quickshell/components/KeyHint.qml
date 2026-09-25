@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 
-// Keycap + what it does, for the launcher footer
+// Keycap + what it does, for footers (launcher, power menu)
 RowLayout {
     id: root
 
