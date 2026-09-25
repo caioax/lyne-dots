@@ -24,7 +24,7 @@ Card {
             screenshotDelay.restart();
             break;
         case "clipboard":
-            ClipboardService.toggle();
+            LauncherService.showMode("clipboard");
             break;
         case "wallpaper":
             SettingsService.open("wallpaper");

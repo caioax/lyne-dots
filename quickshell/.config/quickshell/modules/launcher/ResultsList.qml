@@ -79,10 +79,27 @@ ListView {
                 text: term === "" ? "Type an expression, e.g. 2^10 or 5 km to mi" : "Calculating…"
             };
         }
+        if (mode === "clipboard") {
+            if (ClipboardService.missing)
+                return {
+                    icon: "\u{f0028}",
+                    text: "cliphist isn't installed"
+                };
+            if (!ClipboardService.loaded)
+                return {
+                    icon: "\u{f014d}",
+                    text: "Loading…"
+                };
+            if (term === "")
+                return {
+                    icon: "\u{f014d}",
+                    text: "Nothing copied yet"
+                };
+        }
         if (term !== "")
             return {
                 icon: "\u{f0980}",
-                text: "No " + (mode === "actions" ? "actions" : "apps") + " match \"" + term + "\""
+                text: "No " + (mode === "actions" ? "actions" : mode === "clipboard" ? "entries" : "apps") + " match \"" + term + "\""
             };
         return {
             icon: "\u{f003b}",

@@ -71,8 +71,10 @@ PanelWindow {
     // with the best match right above it
     readonly property bool reversed: LauncherService.isReversed(style, position)
 
-    // Apps as tiles in the grid template (actions and results stay a list)
-    readonly property bool tileResults: grid && LauncherService.mode.id === "apps" && LauncherService.results.length > 0
+    // Apps and clipboard entries as tiles in the grid template (actions and
+    // calculator results stay a list)
+    readonly property bool clipboard: LauncherService.modeId === "clipboard"
+    readonly property bool tileResults: grid && (LauncherService.modeId === "apps" || clipboard) && LauncherService.results.length > 0
     readonly property int gridColumns: Math.max(4, Math.floor(column.width / (Config.fontSizeNormal * 9)))
 
     visible: true
@@ -196,13 +198,20 @@ PanelWindow {
 
         switch (event.key) {
         case Qt.Key_Escape:
-            // Closes the menu, then clears the search, then the launcher
+            // Closes the menu, then clears what was typed (keeping the
+            // mode), then the launcher
             if (menu.opened)
                 menu.close();
-            else if (search.text !== "")
-                search.text = "";
+            else if (LauncherService.term !== "")
+                search.text = LauncherService.mode.prefix;
             else
                 hide();
+            break;
+        case Qt.Key_Delete:
+            // Deletes the selected clipboard entry
+            if (!clipboard)
+                return;
+            LauncherService.removeClip(LauncherService.entries[LauncherService.selectedIndex]);
             break;
         case Qt.Key_Return:
         case Qt.Key_Enter:
@@ -430,10 +439,14 @@ PanelWindow {
                 placeholder: LauncherService.mode.placeholder
                 onTextChanged: LauncherService.query = text
                 onKeyPressed: event => root.handleKey(event)
-                Component.onCompleted: Qt.callLater(() => {
-                    if (LauncherService.visible)
-                        focusInput();
-                })
+                Component.onCompleted: {
+                    // Opened in a mode (SUPER+V): its prefix is already set
+                    text = LauncherService.query;
+                    Qt.callLater(() => {
+                        if (LauncherService.visible)
+                            focusInput();
+                    });
+                }
             }
 
             SectionLabel {
@@ -511,30 +524,67 @@ PanelWindow {
             }
 
             RowLayout {
+                id: footer
+
                 Layout.row: column.rows.footer
                 Layout.leftMargin: Config.padding
                 Layout.rightMargin: Config.padding
                 Layout.alignment: root.grid ? Qt.AlignHCenter : Qt.AlignLeft
                 spacing: Config.spacing * 2
 
+                // Hints that don't fit hide, least important first, instead
+                // of widening the whole panel (narrow templates)
+                readonly property real room: column.width - Config.padding * 2
+                readonly property var shown: {
+                    const byImportance = [closeHint, openHint, deleteHint, navigateHint, modeHint];
+                    const list = [];
+                    let used = 0;
+                    for (const hint of byImportance) {
+                        if (!hint.wanted)
+                            continue;
+                        const width = hint.implicitWidth + (list.length > 0 ? spacing : 0);
+                        if (used + width > room)
+                            break;
+                        used += width;
+                        list.push(hint);
+                    }
+                    return list;
+                }
+
                 KeyHint {
+                    id: navigateHint
+                    visible: footer.shown.includes(this)
                     keys: root.tileResults || favoritesGrid.count > 0 ? "↑↓←→" : "↑↓"
                     label: "navigate"
                 }
 
                 KeyHint {
+                    id: openHint
+                    visible: footer.shown.includes(this)
                     keys: "⏎"
-                    label: "open"
+                    label: root.clipboard ? "copy" : "open"
                 }
 
                 KeyHint {
+                    id: deleteHint
+                    visible: footer.shown.includes(this)
+                    wanted: root.clipboard
+                    keys: "del"
+                    label: "delete"
+                }
+
+                KeyHint {
+                    id: modeHint
+                    visible: footer.shown.includes(this)
                     keys: "ctrl ⇥"
                     label: "mode"
                 }
 
                 KeyHint {
+                    id: closeHint
+                    visible: footer.shown.includes(this)
                     keys: "esc"
-                    label: search.text !== "" ? "clear" : "close"
+                    label: LauncherService.term !== "" ? "clear" : "close"
                 }
             }
         }
@@ -554,37 +604,77 @@ PanelWindow {
         }
 
         // Ctrl+Tab switches modes by rewriting the query's prefix: mirror it back
-
         function onQueryChanged() {
             if (search.text !== LauncherService.query)
                 search.text = LauncherService.query;
         }
     }
 
-    // App menu: pin to the favorites or hide from the launcher
+    // Item menu. Apps: pin to the favorites or hide from the launcher;
+    // clipboard entries: copy, open a link, delete
     ContextMenu {
         id: menu
 
-        readonly property bool isFavorite: target ? LauncherService.isFavorite(target) : false
+        readonly property var clipEntry: target?.clip ?? null
+        readonly property bool isFavorite: target && !clipEntry ? LauncherService.isFavorite(target) : false
 
-        items: [
-            {
-                label: menu.isFavorite ? "Unpin from favorites" : "Pin to favorites",
-                icon: menu.isFavorite ? "\u{f0404}" : "\u{f0403}",
-                action: "pin"
-            },
-            {
-                label: "Hide from launcher",
-                icon: "\u{f0209}",
-                action: "hide"
+        items: {
+            if (clipEntry) {
+                const list = [
+                    {
+                        label: "Copy",
+                        icon: "\u{f018f}",
+                        action: "copy"
+                    }
+                ];
+                if (clipEntry.kind === "link")
+                    list.push({
+                        label: "Open link",
+                        icon: "\u{f03cc}",
+                        action: "open"
+                    });
+                list.push({
+                    label: "Delete",
+                    icon: "\u{f01b4}",
+                    action: "delete",
+                    danger: true
+                });
+                return list;
             }
-        ]
+            return [
+                {
+                    label: menu.isFavorite ? "Unpin from favorites" : "Pin to favorites",
+                    icon: menu.isFavorite ? "\u{f0404}" : "\u{f0403}",
+                    action: "pin"
+                },
+                {
+                    label: "Hide from launcher",
+                    icon: "\u{f0209}",
+                    action: "hide"
+                }
+            ];
+        }
 
-        onTriggered: (action, app) => {
-            if (action === "pin")
-                LauncherService.toggleFavorite(app);
-            else if (action === "hide")
-                LauncherService.hideApp(app);
+        onTriggered: (action, item) => {
+            switch (action) {
+            case "pin":
+                LauncherService.toggleFavorite(item);
+                break;
+            case "hide":
+                LauncherService.hideApp(item);
+                break;
+            case "copy":
+                panel.forceActiveFocus();
+                LauncherService.activate(item);
+                break;
+            case "open":
+                panel.forceActiveFocus();
+                LauncherService.openClipLink(item);
+                break;
+            case "delete":
+                LauncherService.removeClip(item);
+                break;
+            }
         }
     }
 

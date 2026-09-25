@@ -173,30 +173,6 @@ ShellRoot {
         source: "./modules/osd/OsdOverlay.qml"
     }
 
-    // Clipboard History — keepAlive lets the exit animation finish before destroying the component
-    Loader {
-        id: clipboardLoader
-
-        property bool _shown: ClipboardService.visible
-        property bool _keepAlive: false
-
-        active: _shown || _keepAlive
-        source: "./modules/clipboard/ClipboardHistory.qml"
-
-        on_ShownChanged: {
-            if (!_shown) {
-                _keepAlive = true;
-                clipboardExitTimer.restart();
-            }
-        }
-
-        Timer {
-            id: clipboardExitTimer
-            interval: Config.animDurationLong
-            onTriggered: clipboardLoader._keepAlive = false
-        }
-    }
-
     // Settings window (imported statically: Quickshell only resolves the
     // pages/ and rows/ directories through static imports)
     Loader {
@@ -315,7 +291,7 @@ ShellRoot {
         name: "clipboard_history"
         description: "Clipboard history"
 
-        onPressed: ClipboardService.toggle()
+        onPressed: LauncherService.toggleMode("clipboard")
     }
 
     // Shortcut: Lock Screen

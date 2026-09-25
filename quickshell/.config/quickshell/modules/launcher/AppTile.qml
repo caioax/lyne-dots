@@ -1,9 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell.Widgets
 import qs.config
+import qs.services
 
-// App as a tile: icon over the name. Same signals as AppRow (clicks go out
-// as `activated`, ⋮ on hover or right click ask for the menu)
+// App (or clipboard entry) as a tile: icon over the name. Copied images show
+// their thumbnail over their size, copied text fills the tile. Same signals
+// as AppRow (clicks go out as `activated`, ⋮ on hover or right click ask for
+// the menu)
 Item {
     id: root
 
@@ -12,6 +16,9 @@ Item {
     property bool selected: false
     readonly property bool hovered: tileHover.hovered
     readonly property int iconSize: Config.fontSizeIconLarge + Config.padding * 2
+    readonly property var clipEntry: modelData?.clip ?? null
+    readonly property string thumbnail: clipEntry?.kind === "image" ? ClipboardService.thumbnails[clipEntry.id] ?? "" : ""
+    readonly property bool textClip: clipEntry !== null && clipEntry.kind !== "image"
 
     signal activated
     signal menuRequested(Item anchor)
@@ -52,28 +59,80 @@ Item {
 
     Column {
         anchors.centerIn: parent
+        visible: !root.textClip
         width: parent.width - Config.padding * 2
         spacing: Config.padding
 
         Image {
             anchors.horizontalCenter: parent.horizontalCenter
+            visible: !root.clipEntry
             width: root.iconSize
             height: width
-            source: "image://icon/" + (root.modelData?.icon || "application-x-executable")
+            source: root.clipEntry ? "" : "image://icon/" + (root.modelData?.icon || "application-x-executable")
             sourceSize: Qt.size(width, height)
             fillMode: Image.PreserveAspectFit
+        }
+
+        // Copied image: its thumbnail (the glyph until it's decoded)
+        ClippingRectangle {
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: root.clipEntry !== null
+            width: parent.width
+            height: root.iconSize
+            radius: Config.radiusLarge
+            color: root.selected ? Config.surface2Color : Config.surface1Color
+
+            Image {
+                anchors.fill: parent
+                visible: root.thumbnail !== ""
+                source: root.thumbnail
+                sourceSize: Qt.size(width * 2, height * 2)
+                fillMode: Image.PreserveAspectCrop
+            }
+
+            Text {
+                anchors.centerIn: parent
+                visible: root.thumbnail === ""
+                text: root.modelData?.glyph ?? ""
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeIcon
+                color: Config.accentColor
+            }
         }
 
         Text {
             id: nameText
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
-            text: root.modelData?.name ?? ""
+            // Images are named by their size
+            text: root.clipEntry?.kind === "image" && root.clipEntry.width > 0 ? root.clipEntry.width + "×" + root.clipEntry.height : root.modelData?.name ?? ""
             elide: Text.ElideRight
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             font.bold: root.selected
             color: Config.textColor
+        }
+    }
+
+    // Copied text: the text itself, as many lines as fit
+    Text {
+        visible: root.textClip
+        anchors.fill: parent
+        anchors.margins: Math.round(Config.padding * 1.5)
+        text: root.modelData?.name ?? ""
+        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+        elide: Text.ElideRight
+        maximumLineCount: Math.max(1, Math.floor(height / metrics.lineSpacing))
+        verticalAlignment: Text.AlignVCenter
+        font.family: Config.font
+        font.pixelSize: Config.fontSizeSmall
+        font.bold: root.selected
+        color: root.clipEntry?.kind === "link" ? Config.accentColor : Config.textColor
+
+        FontMetrics {
+            id: metrics
+            font.family: Config.font
+            font.pixelSize: Config.fontSizeSmall
         }
     }
 

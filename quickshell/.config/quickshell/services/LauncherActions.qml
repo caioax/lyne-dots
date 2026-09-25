@@ -79,7 +79,9 @@ Singleton {
             comment: "Paste something copied earlier",
             glyph: "\u{f014d}",
             keywords: ["paste", "copy"],
-            run: () => ClipboardService.show()
+            // Switches the launcher to its clipboard mode
+            stay: true,
+            run: () => LauncherService.toggleMode("clipboard")
         },
         {
             id: "wallpaper",

@@ -8,6 +8,8 @@ RowLayout {
 
     property string keys
     property string label
+    // Whether the footer should show it, room permitting
+    property bool wanted: true
 
     spacing: Config.padding
 

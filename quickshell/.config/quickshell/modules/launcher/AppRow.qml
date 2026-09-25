@@ -1,13 +1,15 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell.Widgets
 import qs.config
 import qs.services
 
-// One result: an app (icon) or an action / calculator result (glyph), with
-// name and description. The selected row gets the accent outline and the ⏎
-// hint. Clicks go out as `activated`; for apps, the ⋮ button (on hover) and
-// right click ask for the app menu
+// One result: an app (icon), an action / calculator result (glyph) or a
+// clipboard entry (glyph, or a thumbnail for images), with name and
+// description. The selected row gets the accent outline and the ⏎ hint.
+// Clicks go out as `activated`; for apps and clipboard entries, the ⋮
+// button (on hover) and right click ask for the item's menu
 Item {
     id: root
 
@@ -18,6 +20,10 @@ Item {
     // A HoverHandler keeps reporting hover while over the ⋮ button
     readonly property bool hovered: rowHover.hovered
     readonly property bool isApp: LauncherService.isApp(modelData)
+    // ClipboardService entry, for clipboard items
+    readonly property var clipEntry: modelData?.clip ?? null
+    readonly property string thumbnail: clipEntry?.kind === "image" ? ClipboardService.thumbnails[clipEntry.id] ?? "" : ""
+    readonly property bool hasMenu: isApp || clipEntry !== null
     // Waiting for a second Enter (power actions)
     readonly property bool confirming: !isApp && LauncherService.pendingConfirm === modelData.id
     readonly property string description: confirming ? "Press Enter again to confirm" : modelData?.comment || modelData?.genericName || ""
@@ -58,7 +64,7 @@ Item {
         onClicked: event => {
             if (event.button !== Qt.RightButton)
                 root.activated();
-            else if (root.isApp)
+            else if (root.hasMenu)
                 root.menuRequested(menuButton);
         }
     }
@@ -69,15 +75,24 @@ Item {
         anchors.rightMargin: Config.padding * 2
         spacing: Config.spacing + Config.padding
 
-        Rectangle {
-            Layout.preferredWidth: root.iconBoxSize
+        ClippingRectangle {
+            // Images get a wider box, closer to a screenshot's shape
+            Layout.preferredWidth: root.clipEntry?.kind === "image" ? Math.round(root.iconBoxSize * 1.6) : root.iconBoxSize
             Layout.preferredHeight: root.iconBoxSize
             radius: Config.radiusLarge
             color: root.selected ? Config.surface2Color : Config.surface1Color
 
+            Image {
+                anchors.fill: parent
+                visible: root.thumbnail !== ""
+                source: root.thumbnail
+                sourceSize: Qt.size(width * 2, height * 2)
+                fillMode: Image.PreserveAspectCrop
+            }
+
             Text {
                 anchors.centerIn: parent
-                visible: !root.isApp
+                visible: !root.isApp && root.thumbnail === ""
                 text: root.modelData?.glyph ?? ""
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeIcon
@@ -105,6 +120,9 @@ Item {
                 text: LauncherService.highlightedName(root.modelData, Config.accentColor)
                 textFormat: Text.StyledText
                 elide: Text.ElideRight
+                // Copied text without a description line gets two lines
+                wrapMode: root.clipEntry && !descriptionText.visible ? Text.Wrap : Text.NoWrap
+                maximumLineCount: root.clipEntry && !descriptionText.visible ? 2 : 1
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeNormal
                 font.bold: root.selected
@@ -112,6 +130,7 @@ Item {
             }
 
             Text {
+                id: descriptionText
                 width: parent.width
                 visible: root.showDescription && root.description !== ""
                 text: root.description
@@ -125,7 +144,7 @@ Item {
 
         MenuButton {
             id: menuButton
-            visible: root.isApp && root.hovered
+            visible: root.hasMenu && root.hovered
             onClicked: root.menuRequested(menuButton)
         }
 

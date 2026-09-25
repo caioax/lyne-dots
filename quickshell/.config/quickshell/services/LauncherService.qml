@@ -77,9 +77,18 @@ Singleton {
             label: "Calculator",
             icon: "\u{f00ec}",
             placeholder: "Calculate…  (2^10, 5 km to mi, 20% of 150)"
+        },
+        {
+            id: "clipboard",
+            prefix: ";",
+            label: "Clipboard",
+            icon: "\u{f014d}",
+            placeholder: "Search the clipboard…"
         }
     ]
     readonly property var mode: modes.find(m => m.prefix !== "" && query.startsWith(m.prefix)) ?? modes[0]
+    // Changes only when the mode does (`mode` re-evaluates on every key)
+    readonly property string modeId: mode.id
     // The query without the mode prefix
     readonly property string term: query.slice(mode.prefix.length).trim()
 
@@ -201,11 +210,49 @@ Singleton {
     }
 
     // ========================================================================
+    // CLIPBOARD
+    // ========================================================================
+
+    // History entries as launcher items: the preview as the name, a line of
+    // details as the comment; `clip` is the ClipboardService entry
+    readonly property var clipItems: ClipboardService.entries.map(entry => _clipItem(entry))
+
+    readonly property var clipIndex: clipItems.map(item => ({
+                item: item,
+                id: item.id,
+                fields: [_field(item.name, 1, false)]
+            }))
+
+    readonly property var clipMatches: mode.id === "clipboard" ? _search(clipIndex, () => 0) : []
+
+    readonly property var filteredClips: term !== "" ? clipMatches.map(m => m.item) : clipItems
+
+    // Glyph per entry kind
+    readonly property var clipGlyphs: ({
+            text: "\u{f09a8}",
+            link: "\u{f0337}",
+            color: "\u{f03d8}",
+            path: "\u{f024b}",
+            image: "\u{f021f}"
+        })
+
+    // ========================================================================
     // RESULTS
     // ========================================================================
 
     // The list for the current mode
-    readonly property var results: mode.id === "actions" ? filteredActions : mode.id === "calc" ? calcItems : filteredApps
+    readonly property var results: {
+        switch (mode.id) {
+        case "actions":
+            return filteredActions;
+        case "calc":
+            return calcItems;
+        case "clipboard":
+            return filteredClips;
+        default:
+            return filteredApps;
+        }
+    }
 
     readonly property int favoriteCount: favoriteApps.length
     // Everything that can be selected, in keyboard order
@@ -214,7 +261,7 @@ Singleton {
     // Matched name chars per item id, for highlighting
     readonly property var namePositions: {
         const map = {};
-        for (const m of [...appMatches, ...actionMatches])
+        for (const m of [...appMatches, ...actionMatches, ...clipMatches])
             map[m.id] = m.positions;
         return map;
     }
@@ -266,6 +313,18 @@ Singleton {
         return out;
     }
 
+    // Deletes a clipboard entry from the history
+    function removeClip(item) {
+        ClipboardService.remove(item?.clip);
+        _clampSelection();
+    }
+
+    function openClipLink(item) {
+        const text = item?.clip?.text ?? "";
+        Qt.openUrlExternally(/^www\./i.test(text) ? "https://" + text : text);
+        hide();
+    }
+
     // Switches to the next (or previous) mode, keeping what was typed
     function cycleMode(step: int) {
         const index = modes.indexOf(mode);
@@ -274,10 +333,27 @@ Singleton {
     }
 
     function show() {
+        showMode("apps");
+    }
+
+    // Opens in a mode, e.g. "clipboard" (SUPER+V)
+    function showMode(id: string) {
         _refreshToken++;
-        query = "";
+        query = modes.find(m => m.id === id)?.prefix ?? "";
         selectedIndex = 0;
         visible = true;
+        if (id === "clipboard")
+            ClipboardService.refresh();
+    }
+
+    // Closes if open in that mode, else opens (or switches) to it
+    function toggleMode(id: string) {
+        if (visible && modeId === id)
+            hide();
+        else if (visible)
+            query = modes.find(m => m.id === id)?.prefix ?? "";
+        else
+            showMode(id);
     }
 
     function hide() {
@@ -293,13 +369,18 @@ Singleton {
             show();
     }
 
-    // Opens an app, or runs an action / calculator result. Actions marked
-    // `confirm` need a second call while selected
+    // Opens an app, or runs an action / calculator result / clipboard
+    // entry. Actions marked `confirm` need a second call while selected;
+    // `stay` ones run right away and keep the launcher open
     function activate(item) {
         if (!item)
             return;
         if (isApp(item)) {
             launch(item);
+            return;
+        }
+        if (item.stay) {
+            item.run();
             return;
         }
         if (item.confirm && pendingConfirm !== item.id) {
@@ -482,6 +563,19 @@ Singleton {
         return exec === idTail ? exec : exec + " " + idTail;
     }
 
+    function _clipItem(entry): var {
+        const image = entry.kind === "image";
+        const size = entry.width > 0 ? entry.width + "×" + entry.height + "  ·  " : "";
+        return {
+            id: "clip-" + entry.id,
+            name: image ? "Image" : entry.text,
+            comment: image ? size + entry.format.toUpperCase() + "  ·  " + entry.size : entry.kind === "link" ? "Link" : entry.kind === "color" ? "Color" : entry.kind === "path" ? "Path" : "",
+            glyph: clipGlyphs[entry.kind],
+            clip: entry,
+            run: () => ClipboardService.copy(entry)
+        };
+    }
+
     function _recordUsage(id: string) {
         const now = Date.now();
         const previous = usage.find(u => u.id === id);
@@ -566,6 +660,12 @@ Singleton {
             root.calcResult = last;
             root.calcExpression = expression;
         }
+    }
+
+    // The history is read when the clipboard mode opens (not while typing)
+    onModeIdChanged: {
+        if (modeId === "clipboard" && visible)
+            ClipboardService.refresh();
     }
 
     // Reset selection and confirmation when the query or selection changes
