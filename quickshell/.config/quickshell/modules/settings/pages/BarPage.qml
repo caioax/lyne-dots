@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.services
 import "../rows/"
 
 ColumnLayout {
@@ -39,7 +40,7 @@ ColumnLayout {
 
         ToggleRow {
             label: "Attach to the bar"
-            description: (Config.barIslands || Config.barFloating ? "Popups grow out of the screen edge with rounded joins (the bar has no continuous edge in its current style)" : "Popups grow out of the bar with rounded joins") + ": Quick Settings, calendar, system monitor, the player and the launcher (dropdown, sidebar and spotlight next to the bar)"
+            description: (Config.barIslands || Config.barFloating ? "Popups grow out of the screen edge with rounded joins (the bar has no continuous edge in its current style)" : "Popups grow out of the bar with rounded joins") + ": Quick Settings, the dashboard and the launcher (dropdown, sidebar and spotlight next to the bar)"
             path: "bar.attachPopups"
         }
     }
@@ -82,6 +83,31 @@ ColumnLayout {
             from: 0
             to: 24
             format: v => v + "px"
+        }
+    }
+
+    SettingsGroup {
+        title: "Center"
+
+        ToggleRow {
+            label: "Media"
+            description: "Cover and spectrum of what's playing, title on hover; opens the dashboard's Media tab"
+            path: "bar.showMedia"
+            enabled: DashboardService.hasTab("media")
+        }
+
+        ToggleRow {
+            label: "System"
+            description: "CPU usage graph; opens the dashboard's System tab"
+            path: "bar.showSystem"
+            enabled: DashboardService.hasTab("system")
+        }
+
+        ToggleRow {
+            label: "Weather"
+            description: "Its own button for the Weather tab; off, the clock shows the weather"
+            path: "bar.showWeather"
+            enabled: DashboardService.hasTab("weather")
         }
     }
 

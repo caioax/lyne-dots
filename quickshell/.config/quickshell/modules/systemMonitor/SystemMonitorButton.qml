@@ -19,7 +19,8 @@ BarButton {
 
     readonly property string screenName: QsWindow.window?.screen?.name ?? ""
 
-    // Opens the dashboard on its System tab
+    // Opens the dashboard on its System tab; optional (bar.showSystem)
+    visible: Config.barShowSystem && DashboardService.hasTab("system")
     active: DashboardService.screen === screenName && DashboardService.tab === "system"
     contentItem: buttonContent
     onClicked: DashboardService.toggle("system", screenName)

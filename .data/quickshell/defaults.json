@@ -23,7 +23,10 @@
         "style": "docked-corners",
         "position": "top",
         "margin": 8,
-        "attachPopups": true
+        "attachPopups": true,
+        "showMedia": true,
+        "showSystem": false,
+        "showWeather": false
     },
     "clipboard": {
         "storeImages": true,

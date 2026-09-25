@@ -6,13 +6,14 @@ import qs.config
 import qs.services
 import "../../components/"
 
-// Current weather; opens the dashboard on its Weather tab
+// Current weather; opens the dashboard on its Weather tab. Optional
+// (bar.showWeather): otherwise the clock shows the weather
 BarButton {
     id: root
 
     readonly property string screenName: QsWindow.window?.screen?.name ?? ""
 
-    visible: WeatherService.available
+    visible: Config.barShowWeather && DashboardService.hasTab("weather") && WeatherService.available
     active: DashboardService.screen === screenName && DashboardService.tab === "weather"
     contentItem: content
     onClicked: DashboardService.toggle("weather", screenName)

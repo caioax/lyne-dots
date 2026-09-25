@@ -162,33 +162,19 @@ Scope {
                         }
                     }
 
-                    // --- CENTER: everything that opens the dashboard, each
-                    // button on its own tab ---
+                    // --- CENTER: the clock and the optional buttons that
+                    // open the dashboard, in the order of its tabs ---
                     BarIsland {
                         id: center
                         anchors.centerIn: parent
 
-                        MediaButton {
-                            id: media
-                        }
-
-                        BarDivider {
-                            visible: media.visible
-                        }
-
                         CalendarButton {}
 
-                        BarDivider {
-                            visible: weather.visible
-                        }
-
-                        WeatherButton {
-                            id: weather
-                        }
-
-                        BarDivider {}
+                        MediaButton {}
 
                         SystemMonitorButton {}
+
+                        WeatherButton {}
                     }
 
                     DashboardWindow {
