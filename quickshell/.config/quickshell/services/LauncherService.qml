@@ -31,7 +31,7 @@ Singleton {
     readonly property var usage: StateService.get("launcher.usage", [])
 
     // Layout template: "sidebar" (default), "spotlight", "dropdown" or "grid"
-    readonly property string style: StateService.get("launcher.style", "sidebar")
+    readonly property string style: StateService.get("launcher.style", "spotlight")
     // Where the template sits, when it has a choice: spotlight "center",
     // "top" or "bottom" (against that screen edge, or the bar when it's
     // there), sidebar "left" or "right". Falls back to the template's first
@@ -43,7 +43,7 @@ Singleton {
     readonly property string position: positionFor(style)
     // Search field "top", "bottom", or "auto": by the bottom edge when the
     // panel hangs from it, so it stays put and the list grows away from it
-    readonly property string order: StateService.get("launcher.order", "auto")
+    readonly property string order: StateService.get("launcher.order", "top")
 
     // Usage keeps at most this many apps, the least recently used go first
     readonly property int usageLimit: 200
@@ -304,7 +304,7 @@ Singleton {
     // Saved position if the template offers it, else its first option
     function positionFor(template: string): string {
         const options = positions[template] ?? [];
-        let saved = StateService.get("launcher.position", "center");
+        let saved = StateService.get("launcher.position", "bottom");
         // Spotlight "bar" (next to the bar) became the bar's edge
         if (saved === "bar")
             saved = Config.barOnBottom ? "bottom" : "top";

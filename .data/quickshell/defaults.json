@@ -41,9 +41,9 @@
         "rankByUsage": true,
         "rows": 7,
         "terminal": "kitty",
-        "style": "sidebar",
-        "position": "center",
-        "order": "auto"
+        "style": "spotlight",
+        "position": "bottom",
+        "order": "top"
     },
     "dashboard": {
         "overviewLayout": "grid",
