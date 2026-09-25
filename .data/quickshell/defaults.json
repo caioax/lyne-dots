@@ -25,6 +25,10 @@
         "margin": 8,
         "attachPopups": true
     },
+    "clipboard": {
+        "storeImages": true,
+        "maxItems": 750
+    },
     "launcher": {
         "favorites": [],
         "hidden": [],

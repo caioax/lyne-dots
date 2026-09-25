@@ -30,6 +30,13 @@ Singleton {
     // Chars of each entry cliphist returns (its own default is 100)
     readonly property int previewWidth: 300
 
+    // Settings › Clipboard: what the watchers store and how much cliphist
+    // keeps. The watchers run from scripts/cliphist-watch.sh (started by
+    // Hyprland's autostart), restarted here when these change
+    readonly property bool storeImages: StateService.get("clipboard.storeImages", true)
+    readonly property int maxItems: StateService.get("clipboard.maxItems", 750)
+    readonly property string watchScript: Qt.resolvedUrl("../scripts/cliphist-watch.sh").toString().replace("file://", "")
+
     // ========================================================================
     // PUBLIC FUNCTIONS
     // ========================================================================
@@ -57,6 +64,12 @@ Singleton {
         // cliphist delete reads the whole list line from stdin
         Quickshell.execDetached(["sh", "-c", "printf '%s\\n' \"$1\" | cliphist delete", "sh", entry.line]);
         entries = entries.filter(e => e.id !== entry.id);
+    }
+
+    // Starts the watchers again with the current settings
+    function restartWatchers() {
+        console.log("[Clipboard] Restarting the watchers");
+        Quickshell.execDetached([watchScript]);
     }
 
     function wipe() {
@@ -130,6 +143,31 @@ Singleton {
     // ========================================================================
 
     property bool _refreshAgain: false
+
+    // Settings changed: restart once they settle (StateService saves the
+    // file a moment later, and the script reads it). Not on the first load
+    property bool _stateLoaded: false
+    onStoreImagesChanged: _watchersChanged()
+    onMaxItemsChanged: _watchersChanged()
+
+    function _watchersChanged() {
+        if (_stateLoaded)
+            watcherDelay.restart();
+    }
+
+    Connections {
+        target: StateService
+
+        function onStateLoaded() {
+            root._stateLoaded = true;
+        }
+    }
+
+    Timer {
+        id: watcherDelay
+        interval: 1500
+        onTriggered: root.restartWatchers()
+    }
 
     Process {
         id: listProc

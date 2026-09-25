@@ -27,6 +27,7 @@ FloatingWindow {
             typography: typographyPage,
             bar: barPage,
             launcher: launcherPage,
+            clipboard: clipboardPage,
             notifications: notificationsPage,
             windows: windowsPage,
             input: inputPage,
@@ -55,6 +56,11 @@ FloatingWindow {
     Component {
         id: launcherPage
         LauncherPage {}
+    }
+
+    Component {
+        id: clipboardPage
+        ClipboardPage {}
     }
 
     Component {

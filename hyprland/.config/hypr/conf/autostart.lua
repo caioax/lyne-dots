@@ -16,9 +16,9 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("awww-daemon")
     hl.exec_cmd("sleep 1 && " .. vars.scriptPath .. "/Wallpaper/wallpaper-boot.sh")
 
-    -- Cliphist (clipboard history)
-    hl.exec_cmd("wl-paste --type text --watch cliphist store") -- Stores only text data
-    hl.exec_cmd("wl-paste --type image --watch cliphist store") -- Stores only image data
+    -- Cliphist (clipboard history): text and image watchers, with the
+    -- options from Quickshell's Settings › Clipboard
+    hl.exec_cmd(os.getenv("HOME") .. "/.config/quickshell/scripts/cliphist-watch.sh")
 
     -- Open WhatsApp on special workspace
     hl.exec_cmd(vars.scriptPath .. "/WhatsApp-Init/run.sh")

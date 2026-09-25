@@ -59,6 +59,13 @@ Singleton {
             category: "Shell"
         },
         {
+            id: "clipboard",
+            label: "Clipboard",
+            icon: "\u{f014d}",
+            description: "What the history keeps, and clearing it",
+            category: "Shell"
+        },
+        {
             id: "notifications",
             label: "Notifications",
             icon: "\u{f009a}",
