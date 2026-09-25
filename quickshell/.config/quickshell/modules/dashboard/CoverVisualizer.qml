@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Effects
 import qs.config
 import qs.services
 
@@ -19,8 +20,10 @@ Item {
     default property alias content: center.data
 
     readonly property real gap: Config.padding
-    readonly property real barWidth: Math.max(2, Config.padding / 2)
+    readonly property real barWidth: Math.max(3, Config.padding * 0.8)
     readonly property real maxLength: ring - gap
+    // Lifts quiet bands so soft passages still move the ring
+    readonly property real curve: 0.6
 
     implicitWidth: coverSize + ring * 2
     implicitHeight: coverSize + ring * 2
@@ -102,9 +105,19 @@ Item {
         return list;
     }
 
+    // Bars with a soft accent glow behind them
     Item {
         anchors.fill: parent
         opacity: root.running ? 1 : 0
+        layer.enabled: root.running
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Config.accentColor
+            shadowBlur: 0.6
+            shadowOpacity: 0.8
+            shadowHorizontalOffset: 0
+            shadowVerticalOffset: 0
+        }
 
         Behavior on opacity {
             NumberAnimation {
@@ -117,7 +130,7 @@ Item {
 
             Rectangle {
                 required property var modelData
-                readonly property real level: CavaService.values[modelData.band] ?? 0
+                readonly property real level: Math.pow(CavaService.values[modelData.band] ?? 0, root.curve)
 
                 // Stands on its base point, rotated to point outward
                 x: modelData.x - width / 2
@@ -127,7 +140,7 @@ Item {
                 radius: width / 2
                 transformOrigin: Item.Bottom
                 rotation: modelData.angle + 90
-                color: Qt.alpha(Config.accentColor, 0.5 + level * 0.5)
+                color: Qt.alpha(Config.accentColor, 0.75 + level * 0.25)
             }
         }
     }

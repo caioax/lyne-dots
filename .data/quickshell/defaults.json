@@ -44,6 +44,7 @@
     "dashboard": {
         "overviewLayout": "stacked",
         "visualizer": true,
+        "coverBackdrop": true,
         "showGif": true,
         "gif": "",
         "hiddenTabs": [],

@@ -7,10 +7,9 @@ import qs.config
 import qs.services
 import "../../components/"
 
-// Full player in three columns over the blurred cover:
-//   round cover with the cava spectrum around it
-//   track, wavy progress, round controls and volume
-//   the GIF, and the players when there are several
+// Full player over the blurred cover: the round cover with the cava spectrum
+// around it, then the track, wavy progress, round controls and volume, with
+// the GIF floating in the top-right corner beside the track
 Item {
     id: root
 
@@ -18,8 +17,11 @@ Item {
     property bool active: false
 
     readonly property int coverSize: Config.fontSizeIconLarge * 6
-    readonly property int sideWidth: DashboardService.panelWidth >= 840 ? 240 : 180
-    readonly property int gifSize: Config.fontSizeIconLarge * 6
+    readonly property int gifSize: Config.fontSizeIconLarge * 5
+    // Space between the GIF and the right edge
+    readonly property real gifMargin: Config.spacing * 2
+    // Kept free on the right of the track text for the GIF
+    readonly property real gifRoom: gif.visible ? gif.paintedWidth + root.gifMargin + Config.spacing : 0
     // cava only runs while the tab is shown and something plays
     readonly property bool visualizing: active && MprisService.isPlaying
 
@@ -31,10 +33,18 @@ Item {
 
     implicitHeight: MprisService.hasPlayer ? columns.implicitHeight + Config.padding * 4 : empty.implicitHeight + Config.padding * 12
 
+    // Blurred cover, or a plain card (Settings › Dashboard › Media)
     CoverBackdrop {
         anchors.fill: parent
-        visible: MprisService.hasPlayer
+        visible: MprisService.hasPlayer && DashboardService.coverBackdrop
         radius: Config.radiusLarge
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        visible: MprisService.hasPlayer && !DashboardService.coverBackdrop
+        radius: Config.radiusLarge
+        color: Config.cardColor
     }
 
     // ==================== NOTHING PLAYING ====================
@@ -103,7 +113,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             coverSize: root.coverSize
             coverRadius: root.coverSize / 2
-            ring: CavaService.enabled && CavaService.available ? Config.spacing * 3 : Config.spacing
+            ring: CavaService.enabled && CavaService.available ? Config.spacing * 5 : Config.spacing
             running: root.visualizing
 
             ClippingRectangle {
@@ -133,12 +143,14 @@ Item {
 
         // ==================== TRACK + CONTROLS ====================
         ColumnLayout {
+            id: info
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: Config.padding
 
-            // App
+            // App, and a switch between players when there are several
             RowLayout {
+                id: header
                 Layout.fillWidth: true
                 spacing: Config.padding
 
@@ -155,6 +167,12 @@ Item {
                     color: Config.subtextColor
                     elide: Text.ElideRight
                 }
+
+                Repeater {
+                    model: MprisService.players.length > 1 ? MprisService.players : []
+
+                    PlayerButton {}
+                }
             }
 
             Item {
@@ -163,6 +181,7 @@ Item {
 
             Text {
                 Layout.fillWidth: true
+                Layout.rightMargin: root.gifRoom
                 text: MprisService.title
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeIcon
@@ -175,6 +194,7 @@ Item {
 
             Text {
                 Layout.fillWidth: true
+                Layout.rightMargin: root.gifRoom
                 text: MprisService.artist
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeLarge
@@ -184,6 +204,7 @@ Item {
 
             Text {
                 Layout.fillWidth: true
+                Layout.rightMargin: root.gifRoom
                 // Singles repeat the title as the album
                 visible: text !== "" && text !== MprisService.title
                 text: MprisService.album
@@ -198,6 +219,7 @@ Item {
             }
 
             MediaProgress {
+                id: progress
                 Layout.fillWidth: true
                 wavy: true
                 timeFontSize: Config.fontSizeSmall
@@ -241,131 +263,58 @@ Item {
                 }
             }
         }
-
-        // ==================== GIF + PLAYERS ====================
-        ColumnLayout {
-            Layout.preferredWidth: root.sideWidth
-            Layout.fillHeight: true
-            spacing: Config.spacing
-
-            // At most gifSize, centered in the room the other columns leave
-            // (without growing the tab to the GIF's own size)
-            Item {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-
-                MediaGif {
-                    anchors.centerIn: parent
-                    width: Math.min(parent.width, root.gifSize)
-                    height: Math.min(parent.height, root.gifSize)
-                }
-            }
-
-            // Only to switch between several players
-            Rectangle {
-                visible: MprisService.players.length > 1
-                Layout.fillWidth: true
-                implicitHeight: players.implicitHeight + Config.padding * 4
-                radius: Config.radiusLarge
-                color: Config.cardColor
-
-                ColumnLayout {
-                    id: players
-                    anchors.fill: parent
-                    anchors.margins: Config.padding * 2
-                    spacing: Config.padding / 2
-
-                    SectionTitle {
-                        icon: "\u{f04c3}"
-                        text: "Players"
-                    }
-
-                    Repeater {
-                        model: MprisService.players
-
-                        Rectangle {
-                            id: playerRow
-
-                            required property MprisPlayer modelData
-                            readonly property bool current: modelData === MprisService.activePlayer
-
-                            Layout.fillWidth: true
-                            implicitHeight: Config.fontSizeSmall * 2 + Config.padding
-                            radius: Config.radius
-                            color: current ? Qt.alpha(Config.accentColor, 0.15) : rowMouse.containsMouse ? Config.cardHoverColor : Qt.alpha(Config.cardHoverColor, 0)
-                            border.width: current ? 1 : 0
-                            border.color: Qt.alpha(Config.accentColor, 0.6)
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Config.animDurationShort
-                                }
-                            }
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: Config.padding
-                                anchors.rightMargin: Config.padding
-                                spacing: Config.padding
-
-                                PlayerIcon {
-                                    player: playerRow.modelData
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: playerRow.modelData.identity
-                                    font.family: Config.font
-                                    font.pixelSize: Config.fontSizeSmall
-                                    font.bold: playerRow.current
-                                    color: playerRow.current ? Config.textColor : Config.subtextColor
-                                    elide: Text.ElideRight
-                                }
-
-                                Text {
-                                    visible: playerRow.modelData.isPlaying
-                                    text: "\u{f040a}"
-                                    font.family: Config.font
-                                    font.pixelSize: Config.fontSizeSmall
-                                    color: Config.accentColor
-                                }
-                            }
-
-                            MouseArea {
-                                id: rowMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: MprisService.selectPlayer(playerRow.modelData)
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 
-    component SectionTitle: RowLayout {
-        id: section
+    // ==================== GIF ====================
+    // Floats in the top-right corner, beside the track text and clear of the
+    // progress line. Placed by hand (not in the layout) so its size never
+    // grows the tab
+    MediaGif {
+        id: gif
 
-        property string icon
-        property string text
+        readonly property real lineY: columns.y + info.y + progress.y + progress.height / 2
+        // Below the header when it holds the player switches on the right
+        readonly property real topY: columns.y + info.y + (MprisService.players.length > 1 ? header.height + Config.spacing : 0)
 
-        spacing: Config.padding
+        x: columns.x + info.x + info.width - width - root.gifMargin
+        y: topY
+        width: root.gifSize
+        height: Math.max(0, Math.min(root.gifSize, lineY - Config.spacing * 2 - topY))
+        horizontalAlignment: Image.AlignRight
+        verticalAlignment: Image.AlignVCenter
+    }
 
-        Text {
-            text: section.icon
-            font.family: Config.font
-            font.pixelSize: Config.fontSizeNormal
-            color: Config.accentColor
+    // Round switch to one of the players (outlined when it's the current one)
+    component PlayerButton: Rectangle {
+        id: playerButton
+
+        required property MprisPlayer modelData
+        readonly property bool current: modelData === MprisService.activePlayer
+
+        implicitWidth: Config.fontSizeNormal + Config.padding * 2
+        implicitHeight: implicitWidth
+        radius: width / 2
+        color: current ? Qt.alpha(Config.accentColor, 0.15) : buttonMouse.containsMouse ? Config.cardHoverColor : Qt.alpha(Config.cardHoverColor, 0)
+        border.width: current ? 1 : 0
+        border.color: Qt.alpha(Config.accentColor, 0.6)
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Config.animDurationShort
+            }
         }
 
-        Text {
-            text: section.text
-            font.family: Config.font
-            font.pixelSize: Config.fontSizeSmall
-            font.bold: true
-            color: Config.textColor
+        PlayerIcon {
+            anchors.centerIn: parent
+            player: playerButton.modelData
+        }
+
+        MouseArea {
+            id: buttonMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: MprisService.selectPlayer(playerButton.modelData)
         }
     }
 

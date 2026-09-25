@@ -94,8 +94,14 @@ ColumnLayout {
         }
 
         ToggleRow {
+            label: "Cover background"
+            description: "Blurred album cover behind the Media tab instead of a plain card"
+            path: "dashboard.coverBackdrop"
+        }
+
+        ToggleRow {
             label: "GIF"
-            description: "Beside the player in the Media tab; moves while something plays"
+            description: "In the corner of the Media tab; moves while something plays"
             path: "dashboard.showGif"
         }
 

@@ -66,7 +66,10 @@ Singleton {
     readonly property string overviewLayout: StateService.get("dashboard.overviewLayout", "stacked")
     readonly property int panelWidth: overviewLayout === "grid" ? 840 : 720
 
-    // GIF beside the Media tab player (animates while something plays). An empty
+    // Blurred cover behind the Media tab (a plain card when off)
+    readonly property bool coverBackdrop: StateService.get("dashboard.coverBackdrop", true)
+
+    // GIF in the corner of the Media tab (animates while something plays). An empty
     // path means the bundled Capoo (assets/CREDITS.md)
     readonly property bool showGif: StateService.get("dashboard.showGif", true)
     readonly property string gifPath: StateService.get("dashboard.gif", "")
