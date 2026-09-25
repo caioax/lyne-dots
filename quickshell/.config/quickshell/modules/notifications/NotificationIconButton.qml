@@ -14,7 +14,7 @@ Rectangle {
     implicitWidth: Config.fontSizeNormal + Config.padding
     implicitHeight: implicitWidth
     radius: height / 2
-    color: mouseArea.containsMouse ? Config.surface2Color : "transparent"
+    color: mouseArea.containsMouse ? Config.surface2Color : Qt.alpha(Config.surface2Color, 0)
 
     Behavior on color {
         ColorAnimation {

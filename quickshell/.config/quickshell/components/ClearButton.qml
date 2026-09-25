@@ -20,7 +20,7 @@ Rectangle {
     radius: Config.radius
 
     // Transparent background that tints on hover
-    color: mouseArea.containsMouse ? Qt.alpha(baseColor, 0.15) : "transparent"
+    color: mouseArea.containsMouse ? Qt.alpha(baseColor, 0.15) : Qt.alpha(baseColor, 0)
 
     border.width: 1
     border.color: mouseArea.containsMouse ? baseColor : Qt.alpha(Config.surface2Color, 0.5)

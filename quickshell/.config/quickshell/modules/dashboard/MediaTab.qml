@@ -292,7 +292,7 @@ Item {
                             Layout.fillWidth: true
                             implicitHeight: Config.fontSizeSmall * 2 + Config.padding
                             radius: Config.radius
-                            color: current ? Qt.alpha(Config.accentColor, 0.15) : rowMouse.containsMouse ? Config.cardHoverColor : "transparent"
+                            color: current ? Qt.alpha(Config.accentColor, 0.15) : rowMouse.containsMouse ? Config.cardHoverColor : Qt.alpha(Config.cardHoverColor, 0)
                             border.width: current ? 1 : 0
                             border.color: Qt.alpha(Config.accentColor, 0.6)
 

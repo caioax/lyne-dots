@@ -139,7 +139,7 @@ RowLayout {
         Layout.preferredHeight: Config.barButtonHeight
         radius: width / 2
 
-        color: (toggleMouse.containsMouse) ? Config.surface1Color : "transparent"
+        color: toggleMouse.containsMouse ? Config.surface1Color : Qt.alpha(Config.surface1Color, 0)
 
         Behavior on color {
             ColorAnimation {

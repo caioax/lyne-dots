@@ -53,7 +53,7 @@ Item {
                     anchors.fill: parent
                     anchors.margins: Config.padding / 2
                     radius: Config.radius
-                    color: mouse.containsMouse && !tab.current ? Config.cardHoverColor : "transparent"
+                    color: mouse.containsMouse && !tab.current ? Config.cardHoverColor : Qt.alpha(Config.cardHoverColor, 0)
 
                     Behavior on color {
                         ColorAnimation {
@@ -75,7 +75,7 @@ Item {
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: Config.animDuration
+                                duration: Config.animDurationShort
                             }
                         }
                     }
@@ -89,7 +89,7 @@ Item {
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: Config.animDuration
+                                duration: Config.animDurationShort
                             }
                         }
                     }
@@ -113,7 +113,8 @@ Item {
         color: Config.surface1Color
     }
 
-    // Indicator: as wide as the current tab's icon and label
+    // Indicator: as wide as the current tab's icon and label. Quicker than
+    // the pages it points at, so the selection never trails behind them
     Rectangle {
         readonly property Item tab: repeater.count, repeater.itemAt(root.currentIndex)
         readonly property real tabContentWidth: tab?.contentWidth ?? root.tabWidth / 2
@@ -127,15 +128,15 @@ Item {
 
         Behavior on x {
             NumberAnimation {
-                duration: Config.animDurationLong
-                easing.type: Easing.OutExpo
+                duration: Config.animDuration
+                easing.type: Easing.OutCubic
             }
         }
 
         Behavior on width {
             NumberAnimation {
-                duration: Config.animDurationLong
-                easing.type: Easing.OutExpo
+                duration: Config.animDuration
+                easing.type: Easing.OutCubic
             }
         }
     }

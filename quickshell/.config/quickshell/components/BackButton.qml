@@ -28,7 +28,7 @@ Button {
         radius: root.height / 2 // Ensures a perfect circle
 
         // Color changes on hover
-        color: root.hovered ? Config.surface2Color : "transparent"
+        color: root.hovered ? Config.surface2Color : Qt.alpha(Config.surface2Color, 0)
 
         Behavior on color {
             ColorAnimation {

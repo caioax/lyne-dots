@@ -200,7 +200,7 @@ Card {
                                 return Config.accentColor;
                             if (cellMouse.containsMouse)
                                 return Config.surface1Color;
-                            return "transparent";
+                            return Qt.alpha(Config.surface1Color, 0);
                         }
                         border.width: cell.isSelected && !cell.isToday ? 1.5 : 0
                         border.color: Config.accentColor
@@ -338,7 +338,7 @@ Card {
         implicitWidth: Config.fontSizeSmall * 2
         implicitHeight: implicitWidth
         radius: height / 2
-        color: navMouse.containsMouse ? Config.surface1Color : "transparent"
+        color: navMouse.containsMouse ? Config.surface1Color : Qt.alpha(Config.surface1Color, 0)
 
         Behavior on color {
             ColorAnimation {
