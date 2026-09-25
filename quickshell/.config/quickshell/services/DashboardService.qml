@@ -67,10 +67,10 @@ Singleton {
     readonly property int panelWidth: overviewLayout === "grid" ? 840 : 720
 
     // GIF beside the Media tab player (animates while something plays). An empty
-    // path means the bundled bongocat
+    // path means the bundled Capoo (assets/CREDITS.md)
     readonly property bool showGif: StateService.get("dashboard.showGif", true)
     readonly property string gifPath: StateService.get("dashboard.gif", "")
-    readonly property url gifSource: gifPath !== "" ? "file://" + gifPath : Qt.resolvedUrl("../assets/bongocat.gif")
+    readonly property url gifSource: gifPath !== "" ? "file://" + gifPath : Qt.resolvedUrl("../assets/capoo.gif")
     readonly property string gifDir: Quickshell.env("HOME") + "/.local/share/quickshell"
 
     // Screen name the dashboard is open on ("" = closed)

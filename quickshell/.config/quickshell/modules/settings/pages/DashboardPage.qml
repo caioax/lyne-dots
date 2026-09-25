@@ -103,7 +103,7 @@ ColumnLayout {
             id: gifRow
 
             label: "GIF file"
-            description: DashboardService.gifPath !== "" ? "Custom GIF" : "Bongocat (default)"
+            description: DashboardService.gifPath !== "" ? "Custom GIF" : "Capoo (default)"
             path: "dashboard.gif"
             enabled: DashboardService.showGif
 

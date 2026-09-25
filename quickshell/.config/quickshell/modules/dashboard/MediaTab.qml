@@ -19,6 +19,7 @@ Item {
 
     readonly property int coverSize: Config.fontSizeIconLarge * 6
     readonly property int sideWidth: DashboardService.panelWidth >= 840 ? 240 : 180
+    readonly property int gifSize: Config.fontSizeIconLarge * 6
     // cava only runs while the tab is shown and something plays
     readonly property bool visualizing: active && MprisService.isPlaying
 
@@ -247,17 +248,17 @@ Item {
             Layout.fillHeight: true
             spacing: Config.spacing
 
+            // At most gifSize, centered in the room the other columns leave
+            // (without growing the tab to the GIF's own size)
             Item {
-                Layout.fillHeight: true
-            }
-
-            MediaGif {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Config.fontSizeIconLarge * 4
-            }
-
-            Item {
                 Layout.fillHeight: true
+
+                MediaGif {
+                    anchors.centerIn: parent
+                    width: Math.min(parent.width, root.gifSize)
+                    height: Math.min(parent.height, root.gifSize)
+                }
             }
 
             // Only to switch between several players

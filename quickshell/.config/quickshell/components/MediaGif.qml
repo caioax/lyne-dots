@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.services
 
-// The dashboard's GIF (bongocat unless another was picked in Settings),
+// The dashboard's GIF (Capoo unless another was picked in Settings),
 // moving only while something plays
 AnimatedImage {
     visible: DashboardService.showGif && MprisService.hasPlayer
