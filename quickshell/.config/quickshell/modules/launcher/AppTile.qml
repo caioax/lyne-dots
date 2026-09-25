@@ -21,7 +21,9 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: Config.radiusLarge
-        color: root.selected ? Config.surface1Color : root.hovered ? Config.surface0Color : "transparent"
+        // Rest is a see-through surface0, not "transparent" (black at alpha
+        // 0), so the hover fade doesn't pass through a dark tint
+        color: root.selected ? Config.surface1Color : root.hovered ? Config.surface0Color : Qt.alpha(Config.surface0Color, 0)
         border.width: root.selected ? 1 : 0
         border.color: Qt.alpha(Config.accentColor, 0.6)
 
