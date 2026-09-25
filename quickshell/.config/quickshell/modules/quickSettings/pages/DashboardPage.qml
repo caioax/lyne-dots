@@ -31,10 +31,6 @@ Item {
             onCloseWindow: root.closeWindow()
         }
 
-        MediaWidget {
-            Layout.fillWidth: true
-        }
-
         // ========== TOGGLES ==========
         Card {
             Layout.fillWidth: true
