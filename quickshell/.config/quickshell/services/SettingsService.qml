@@ -66,6 +66,13 @@ Singleton {
             category: "Shell"
         },
         {
+            id: "dashboard",
+            label: "Dashboard",
+            icon: "\u{f056e}",
+            description: "The panel under the bar clock: overview, system and more",
+            category: "Shell"
+        },
+        {
             id: "notifications",
             label: "Notifications",
             icon: "\u{f009a}",

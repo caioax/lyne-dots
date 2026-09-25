@@ -41,6 +41,9 @@
         "position": "center",
         "order": "auto"
     },
+    "dashboard": {
+        "overviewLayout": "stacked"
+    },
     "opacity": {
         "background": 0.9
     },

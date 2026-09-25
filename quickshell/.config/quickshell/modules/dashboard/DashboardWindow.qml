@@ -13,7 +13,7 @@ QsPopupWindow {
 
     readonly property bool wanted: DashboardService.screen !== "" && DashboardService.screen === (screen?.name ?? "")
 
-    popupWidth: 720
+    popupWidth: DashboardService.panelWidth
     popupMaxHeight: screen ? screen.height - Config.barReservedHeight - Config.spacing * 2 : 900
     anchorSide: "left"
     moduleName: "Dashboard"

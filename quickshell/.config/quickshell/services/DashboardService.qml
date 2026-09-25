@@ -26,6 +26,11 @@ Singleton {
     ]
     readonly property string defaultTab: "overview"
 
+    // Overview template: "stacked" (cards in rows, the Quick Settings player)
+    // or "grid" (three columns with a tall player, wider panel)
+    readonly property string overviewLayout: StateService.get("dashboard.overviewLayout", "stacked")
+    readonly property int panelWidth: overviewLayout === "grid" ? 840 : 720
+
     // Screen name the dashboard is open on ("" = closed)
     property string screen: ""
     property string tab: defaultTab
