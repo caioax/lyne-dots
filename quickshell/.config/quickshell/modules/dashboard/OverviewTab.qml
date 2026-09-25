@@ -83,6 +83,8 @@ GridLayout {
         Layout.columnSpan: 2
         visible: !root.grid && MprisService.hasPlayer
         dismissible: false
+        openable: true
+        onOpenRequested: DashboardService.tab = "media"
     }
 
     ResourcesCard {

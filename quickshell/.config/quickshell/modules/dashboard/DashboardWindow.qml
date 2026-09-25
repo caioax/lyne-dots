@@ -120,6 +120,7 @@ QsPopupWindow {
     // One per DashboardService.tabs id
     readonly property var tabComponents: ({
             overview: overviewComponent,
+            media: mediaComponent,
             system: systemComponent
         })
 
@@ -130,6 +131,15 @@ QsPopupWindow {
 
         OverviewTab {
             active: root.visible && DashboardService.tab === "overview"
+        }
+    }
+
+    Component {
+        id: mediaComponent
+
+        MediaTab {
+            active: root.visible && DashboardService.tab === "media"
+            onCloseRequested: root.closeWindow()
         }
     }
 

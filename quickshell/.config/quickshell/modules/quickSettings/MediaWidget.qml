@@ -12,6 +12,10 @@ Rectangle {
     property bool dismissed: false
     // Shows the ✕ (while paused) that hides the card until something plays
     property bool dismissible: true
+    // Clicking the cover emits openRequested (to show the full player)
+    property bool openable: false
+
+    signal openRequested
 
     visible: MprisService.hasPlayer && !dismissed
 
@@ -29,37 +33,9 @@ Rectangle {
     color: Config.cardColor
 
     // --- BLURRED BACKGROUND ---
-    Item {
+    CoverBackdrop {
         anchors.fill: parent
-        layer.enabled: true
-        layer.effect: OpacityMask {
-            maskSource: Rectangle {
-                width: root.width
-                height: root.height
-                radius: Config.radiusLarge
-            }
-        }
-
-        Image {
-            id: bgSource
-            anchors.fill: parent
-            source: MprisService.artUrl
-            fillMode: Image.PreserveAspectCrop
-            visible: false
-        }
-
-        FastBlur {
-            anchors.fill: parent
-            source: bgSource
-            radius: 48
-            opacity: 0.35
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            color: "#000000"
-            opacity: 0.3
-        }
+        radius: Config.radiusLarge
     }
 
     // --- DISMISS BUTTON ---
@@ -158,6 +134,13 @@ Rectangle {
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeIconLarge
                     color: Config.subtextColor
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: root.openable
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.openRequested()
                 }
             }
 

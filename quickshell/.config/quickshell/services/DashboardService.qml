@@ -19,6 +19,11 @@ Singleton {
             icon: "\u{f056e}"
         },
         {
+            id: "media",
+            label: "Media",
+            icon: "\u{f075a}"
+        },
+        {
             id: "system",
             label: "System",
             icon: "\u{f035b}"

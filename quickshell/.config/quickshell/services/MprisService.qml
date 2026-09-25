@@ -18,7 +18,9 @@ Singleton {
     readonly property string title: activePlayer?.trackTitle ?? "Unknown"
     readonly property string artist: activePlayer?.trackArtist ?? "Unknown"
     readonly property string artUrl: activePlayer?.trackArtUrl ?? ""
+    readonly property string album: activePlayer?.trackAlbum ?? ""
     readonly property string identity: activePlayer?.identity ?? ""
+    readonly property bool canRaise: activePlayer?.canRaise ?? false
 
     // --- PLAYBACK STATE ---
     readonly property bool isPlaying: activePlayer?.isPlaying ?? false
@@ -43,6 +45,7 @@ Singleton {
 
     // --- VOLUME ---
     readonly property real volume: activePlayer?.volume ?? 0
+    readonly property bool volumeSupported: activePlayer?.volumeSupported ?? false
 
     // --- POSITION TRACKING ---
     readonly property int positionInterval: 500
@@ -73,7 +76,12 @@ Singleton {
         delegate: QtObject {
             required property MprisPlayer modelData
             property bool isPlaying: modelData.isPlaying ?? false
-            onIsPlayingChanged: root.updateActivePlayer()
+            // The player that starts playing takes over
+            onIsPlayingChanged: {
+                if (isPlaying)
+                    root.activePlayer = modelData;
+                root.updateActivePlayer();
+            }
         }
 
         onObjectAdded: root.updateActivePlayer()
@@ -81,6 +89,9 @@ Singleton {
     }
 
     // --- DECISION LOGIC ---
+    // The active player stays until another one starts playing or the user
+    // picks one (selectPlayer); when it goes away, a playing one (or the
+    // first) takes its place
     function updateActivePlayer() {
         const rawList = Mpris.players.values;
 
@@ -90,17 +101,33 @@ Singleton {
             return;
         }
 
-        const playing = rawList.find(p => p.isPlaying);
-
-        if (playing) {
-            root.activePlayer = playing;
-        } else if (!root.activePlayer || !rawList.includes(root.activePlayer)) {
-            root.activePlayer = rawList[0];
-        }
+        if (!root.activePlayer || !rawList.includes(root.activePlayer))
+            root.activePlayer = rawList.find(p => p.isPlaying) ?? rawList[0];
 
         // Update ordered list (active first)
         const others = rawList.filter(p => p !== root.activePlayer);
         root.orderedPlayers = [root.activePlayer].concat(others);
+    }
+
+    function selectPlayer(player: MprisPlayer) {
+        if (!player || player === activePlayer)
+            return;
+        activePlayer = player;
+        updateActivePlayer();
+    }
+
+    // Icon of the player's app (from its desktop entry), "" when unknown
+    function playerIcon(player: MprisPlayer): string {
+        if (!player)
+            return "";
+        const entry = DesktopEntries.heuristicLookup(player.desktopEntry || player.identity);
+        return entry?.icon ? Quickshell.iconPath(entry.icon, true) : "";
+    }
+
+    // Brings the player's window to the front
+    function raise() {
+        if (activePlayer?.canRaise)
+            activePlayer.raise();
     }
 
     // --- CONTROLS ---

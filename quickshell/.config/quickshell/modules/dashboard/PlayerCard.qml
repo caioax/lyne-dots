@@ -7,7 +7,8 @@ import qs.services
 import "../../components/"
 
 // Tall player for the grid Overview: cover on top, then the track, progress
-// and controls. The wheel changes the player's volume
+// and controls. The wheel changes the player's volume; the cover opens the
+// Media tab
 Card {
     id: root
 
@@ -35,6 +36,13 @@ Card {
             font.family: Config.font
             font.pixelSize: Config.fontSizeIconLarge * 2
             color: Config.subtextColor
+        }
+
+        // Opens the Media tab
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: DashboardService.tab = "media"
         }
     }
 

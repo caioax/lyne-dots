@@ -120,6 +120,12 @@ PanelWindow {
         x: root.attached ? root.inset : root.bodyX - root.windowLeft
         width: root.popupWidth - (root.attached ? root.inset * 2 : 0)
         dismissible: false
+        // The cover opens the dashboard's Media tab on this screen
+        openable: true
+        onOpenRequested: {
+            root.open = false;
+            DashboardService.open("media", root.screen?.name || DashboardService.focusedScreen());
+        }
         // Floating: slides away from the bar while opening (the attached
         // panel slides by itself)
         y: {
