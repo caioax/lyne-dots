@@ -18,7 +18,7 @@ Item {
     readonly property int iconSize: Config.fontSizeIconLarge + Config.padding * 2
     readonly property var clipEntry: modelData?.clip ?? null
     readonly property string thumbnail: clipEntry?.kind === "image" ? ClipboardService.thumbnails[clipEntry.id] ?? "" : ""
-    readonly property bool textClip: clipEntry !== null && clipEntry.kind !== "image"
+    readonly property bool textClip: clipEntry !== null && clipEntry.kind !== "image" && clipEntry.kind !== "color"
 
     signal activated
     signal menuRequested(Item anchor)
@@ -73,14 +73,17 @@ Item {
             fillMode: Image.PreserveAspectFit
         }
 
-        // Copied image: its thumbnail (the glyph until it's decoded)
+        // Copied image: its thumbnail (the glyph until it's decoded);
+        // copied color: a swatch
         ClippingRectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             visible: root.clipEntry !== null
             width: parent.width
             height: root.iconSize
             radius: Config.radiusLarge
-            color: root.selected ? Config.surface2Color : Config.surface1Color
+            color: root.clipEntry?.kind === "color" ? root.clipEntry.color : root.selected ? Config.surface2Color : Config.surface1Color
+            border.width: root.clipEntry?.kind === "color" ? 1 : 0
+            border.color: Config.surface2Color
 
             Image {
                 anchors.fill: parent
@@ -92,7 +95,7 @@ Item {
 
             Text {
                 anchors.centerIn: parent
-                visible: root.thumbnail === ""
+                visible: root.thumbnail === "" && root.clipEntry?.kind !== "color"
                 text: root.modelData?.glyph ?? ""
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeIcon

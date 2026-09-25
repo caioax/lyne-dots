@@ -8,9 +8,9 @@ import Quickshell.Io
 // Clipboard history from cliphist: data and actions only (the launcher's
 // clipboard mode shows it). Read on demand, never polled.
 //
-// Each entry: { id, line, text, kind, format, size, width, height }, newest
-// first. `kind` is "image", "link", "color", "path" or "text"; the image
-// fields are only set for images
+// Each entry: { id, line, text, kind, format, size, width, height, color },
+// newest first. `kind` is "image", "link", "color", "path" or "text"; the
+// image fields are only set for images, `color` for colors
 Singleton {
     id: root
 
@@ -88,12 +88,41 @@ Singleton {
             entry.height = Number(binary[4] ?? 0);
         } else if (/^(https?|ftp):\/\/\S+$|^www\.\S+\.\S+$/i.test(text)) {
             entry.kind = "link";
-        } else if (/^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$|^(?:rgba?|hsla?)\([\d\s.,%\/]+\)$/i.test(text)) {
+        } else if (parseColor(text) !== null) {
             entry.kind = "color";
+            entry.color = parseColor(text);
         } else if (/^(?:~|\/|file:\/\/)\S*$/.test(text)) {
             entry.kind = "path";
         }
         return entry;
+    }
+
+    // CSS color ("#rgb", "#rrggbbaa", "rgb(…)", "hsl(…)") as a QML color,
+    // or null when the text isn't one
+    function parseColor(text: string): var {
+        const hex = text.match(/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i);
+        if (hex) {
+            let digits = hex[1];
+            if (digits.length <= 4)
+                digits = digits.split("").map(c => c + c).join("");
+            const channel = i => parseInt(digits.slice(i, i + 2), 16) / 255;
+            return Qt.rgba(channel(0), channel(2), channel(4), digits.length === 8 ? channel(6) : 1);
+        }
+
+        // Numbers split by commas, spaces or "/" (alpha), percents allowed
+        const fn = text.match(/^(rgba?|hsla?)\(\s*([^)]*)\)$/i);
+        if (!fn)
+            return null;
+        const parts = fn[2].split(/\s*[,\/]\s*|\s+/).filter(p => p !== "");
+        if (parts.length < 3 || parts.length > 4 || parts.some(p => !/^-?[\d.]+(%|deg)?$/.test(p)))
+            return null;
+        const value = (p, scale) => p.endsWith("%") ? parseFloat(p) / 100 : parseFloat(p) / scale;
+        const alpha = parts.length === 4 ? value(parts[3], 1) : 1;
+        const clamp = v => Math.max(0, Math.min(1, v));
+        if (fn[1].toLowerCase().startsWith("rgb"))
+            return Qt.rgba(clamp(value(parts[0], 255)), clamp(value(parts[1], 255)), clamp(value(parts[2], 255)), clamp(alpha));
+        const hue = ((parseFloat(parts[0]) % 360) + 360) % 360 / 360;
+        return Qt.hsla(hue, clamp(value(parts[1], 100)), clamp(value(parts[2], 100)), clamp(alpha));
     }
 
     // ========================================================================

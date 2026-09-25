@@ -217,7 +217,38 @@ Singleton {
     // details as the comment; `clip` is the ClipboardService entry
     readonly property var clipItems: ClipboardService.entries.map(entry => _clipItem(entry))
 
-    readonly property var clipIndex: clipItems.map(item => ({
+    // Kinds of entry the clipboard mode shows: "all", "text" (text, paths,
+    // colors), "image" or "link". Back to "all" on each open
+    property string clipFilter: "all"
+    readonly property var clipFilters: [
+        {
+            id: "all",
+            label: "All",
+            icon: "\u{f014d}"
+        },
+        {
+            id: "text",
+            label: "Text",
+            icon: "\u{f09a8}"
+        },
+        {
+            id: "image",
+            label: "Images",
+            icon: "\u{f0976}"
+        },
+        {
+            id: "link",
+            label: "Links",
+            icon: "\u{f0337}"
+        }
+    ]
+
+    readonly property var shownClips: clipFilter === "all" ? clipItems : clipItems.filter(item => {
+        const kind = item.clip.kind;
+        return clipFilter === "text" ? kind !== "image" && kind !== "link" : kind === clipFilter;
+    })
+
+    readonly property var clipIndex: shownClips.map(item => ({
                 item: item,
                 id: item.id,
                 fields: [_field(item.name, 1, false)]
@@ -225,7 +256,7 @@ Singleton {
 
     readonly property var clipMatches: mode.id === "clipboard" ? _search(clipIndex, () => 0) : []
 
-    readonly property var filteredClips: term !== "" ? clipMatches.map(m => m.item) : clipItems
+    readonly property var filteredClips: term !== "" ? clipMatches.map(m => m.item) : shownClips
 
     // Glyph per entry kind
     readonly property var clipGlyphs: ({
@@ -313,6 +344,11 @@ Singleton {
         return out;
     }
 
+    function setClipFilter(id: string) {
+        clipFilter = id;
+        selectedIndex = 0;
+    }
+
     // Deletes a clipboard entry from the history
     function removeClip(item) {
         ClipboardService.remove(item?.clip);
@@ -341,6 +377,7 @@ Singleton {
         _refreshToken++;
         query = modes.find(m => m.id === id)?.prefix ?? "";
         selectedIndex = 0;
+        clipFilter = "all";
         visible = true;
         if (id === "clipboard")
             ClipboardService.refresh();

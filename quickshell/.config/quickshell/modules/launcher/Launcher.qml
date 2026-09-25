@@ -207,6 +207,15 @@ PanelWindow {
             else
                 hide();
             break;
+        case Qt.Key_1:
+        case Qt.Key_2:
+        case Qt.Key_3:
+        case Qt.Key_4:
+            // Alt+1…4 picks the clipboard filter
+            if (!clipboard || !(event.modifiers & Qt.AltModifier))
+                return;
+            LauncherService.setClipFilter(LauncherService.clipFilters[event.key - Qt.Key_1].id);
+            break;
         case Qt.Key_Delete:
             // Deletes the selected clipboard entry
             if (!clipboard)
@@ -407,15 +416,17 @@ PanelWindow {
                     results: 3,
                     favoritesLabel: 4,
                     favorites: 5,
-                    search: 6
+                    filters: 6,
+                    search: 7
                 }) : ({
                     search: 0,
-                    favoritesLabel: 1,
-                    favorites: 2,
-                    resultsLabel: 3,
-                    results: 4,
-                    separator: 5,
-                    footer: 6
+                    filters: 1,
+                    favoritesLabel: 2,
+                    favorites: 3,
+                    resultsLabel: 4,
+                    results: 5,
+                    separator: 6,
+                    footer: 7
                 })
 
             columns: 1
@@ -447,6 +458,17 @@ PanelWindow {
                             focusInput();
                     });
                 }
+            }
+
+            // Clipboard: kind of entries shown (Alt+1…4)
+            SegmentedControl {
+                Layout.row: column.rows.filters
+                Layout.maximumWidth: root.grid ? Config.fontSizeNormal * 40 : -1
+                Layout.alignment: Qt.AlignHCenter
+                visible: root.clipboard && ClipboardService.entries.length > 0
+                options: LauncherService.clipFilters
+                currentIndex: Math.max(0, LauncherService.clipFilters.findIndex(f => f.id === LauncherService.clipFilter))
+                onSelected: index => LauncherService.setClipFilter(LauncherService.clipFilters[index].id)
             }
 
             SectionLabel {
@@ -536,7 +558,7 @@ PanelWindow {
                 // of widening the whole panel (narrow templates)
                 readonly property real room: column.width - Config.padding * 2
                 readonly property var shown: {
-                    const byImportance = [closeHint, openHint, deleteHint, navigateHint, modeHint];
+                    const byImportance = [closeHint, openHint, deleteHint, navigateHint, modeHint, filterHint];
                     const list = [];
                     let used = 0;
                     for (const hint of byImportance) {
@@ -571,6 +593,14 @@ PanelWindow {
                     wanted: root.clipboard
                     keys: "del"
                     label: "delete"
+                }
+
+                KeyHint {
+                    id: filterHint
+                    visible: footer.shown.includes(this)
+                    wanted: root.clipboard
+                    keys: "alt 1-4"
+                    label: "filter"
                 }
 
                 KeyHint {

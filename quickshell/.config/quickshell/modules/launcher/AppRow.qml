@@ -80,7 +80,10 @@ Item {
             Layout.preferredWidth: root.clipEntry?.kind === "image" ? Math.round(root.iconBoxSize * 1.6) : root.iconBoxSize
             Layout.preferredHeight: root.iconBoxSize
             radius: Config.radiusLarge
-            color: root.selected ? Config.surface2Color : Config.surface1Color
+            // Copied colors fill the box
+            color: root.clipEntry?.kind === "color" ? root.clipEntry.color : root.selected ? Config.surface2Color : Config.surface1Color
+            border.width: root.clipEntry?.kind === "color" ? 1 : 0
+            border.color: Config.surface2Color
 
             Image {
                 anchors.fill: parent
@@ -92,7 +95,7 @@ Item {
 
             Text {
                 anchors.centerIn: parent
-                visible: !root.isApp && root.thumbnail === ""
+                visible: !root.isApp && root.thumbnail === "" && root.clipEntry?.kind !== "color"
                 text: root.modelData?.glyph ?? ""
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeIcon
