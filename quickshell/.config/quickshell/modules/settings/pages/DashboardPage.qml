@@ -95,7 +95,7 @@ ColumnLayout {
 
         ToggleRow {
             label: "GIF"
-            description: "Beside the players in the Overview and the Media tab; moves while something plays"
+            description: "Beside the player in the Media tab; moves while something plays"
             path: "dashboard.showGif"
         }
 

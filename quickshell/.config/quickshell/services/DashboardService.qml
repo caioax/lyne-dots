@@ -23,7 +23,7 @@ Singleton {
             id: "media",
             label: "Media",
             icon: "\u{f075a}",
-            description: "Full player with the visualizer, lyrics and the players"
+            description: "Full player with the visualizer and the GIF"
         },
         {
             id: "system",
@@ -66,7 +66,7 @@ Singleton {
     readonly property string overviewLayout: StateService.get("dashboard.overviewLayout", "stacked")
     readonly property int panelWidth: overviewLayout === "grid" ? 840 : 720
 
-    // GIF next to the players (animates while something plays). An empty
+    // GIF beside the Media tab player (animates while something plays). An empty
     // path means the bundled bongocat
     readonly property bool showGif: StateService.get("dashboard.showGif", true)
     readonly property string gifPath: StateService.get("dashboard.gif", "")

@@ -83,11 +83,6 @@ Card {
         spacing: Config.padding / 2
     }
 
-    MediaGif {
-        Layout.fillWidth: true
-        Layout.preferredHeight: Config.fontSizeIconLarge * 2.5
-    }
-
     MouseArea {
         parent: root
         anchors.fill: parent

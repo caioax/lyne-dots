@@ -8,16 +8,14 @@ import qs.services
 import "../../components/"
 
 // Full player in three columns over the blurred cover:
-//   round cover with the cava spectrum around it, and the GIF below
+//   round cover with the cava spectrum around it
 //   track, wavy progress, round controls and volume
-//   lyrics and the players
+//   the GIF, and the players when there are several
 Item {
     id: root
 
     // Shown to the user (the dashboard is open on this tab)
     property bool active: false
-
-    signal closeRequested
 
     readonly property int coverSize: Config.fontSizeIconLarge * 6
     readonly property int sideWidth: DashboardService.panelWidth >= 840 ? 240 : 180
@@ -98,48 +96,37 @@ Item {
         anchors.margins: Config.padding * 2
         spacing: Config.spacing * 2
 
-        // ==================== COVER + GIF ====================
-        ColumnLayout {
-            Layout.fillHeight: true
-            Layout.alignment: Qt.AlignTop
-            spacing: 0
+        // ==================== COVER ====================
+        CoverVisualizer {
+            id: visualizer
+            Layout.alignment: Qt.AlignVCenter
+            coverSize: root.coverSize
+            coverRadius: root.coverSize / 2
+            ring: CavaService.enabled && CavaService.available ? Config.spacing * 3 : Config.spacing
+            running: root.visualizing
 
-            CoverVisualizer {
-                id: visualizer
-                coverSize: root.coverSize
-                coverRadius: root.coverSize / 2
-                ring: CavaService.enabled && CavaService.available ? Config.spacing * 3 : Config.spacing
-                running: root.visualizing
+            ClippingRectangle {
+                anchors.fill: parent
+                radius: width / 2
+                color: Config.surface1Color
 
-                ClippingRectangle {
+                Image {
+                    id: cover
                     anchors.fill: parent
-                    radius: width / 2
-                    color: Config.surface1Color
-
-                    Image {
-                        id: cover
-                        anchors.fill: parent
-                        source: MprisService.artUrl
-                        fillMode: Image.PreserveAspectCrop
-                        sourceSize: Qt.size(root.coverSize * 2, root.coverSize * 2)
-                        asynchronous: true
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        visible: cover.status !== Image.Ready
-                        text: "\u{f075a}"
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeIconLarge * 2
-                        color: Config.subtextColor
-                    }
+                    source: MprisService.artUrl
+                    fillMode: Image.PreserveAspectCrop
+                    sourceSize: Qt.size(root.coverSize * 2, root.coverSize * 2)
+                    asynchronous: true
                 }
-            }
 
-            MediaGif {
-                Layout.preferredWidth: visualizer.implicitWidth
-                Layout.preferredHeight: Config.fontSizeIconLarge * 3
-                Layout.fillHeight: true
+                Text {
+                    anchors.centerIn: parent
+                    visible: cover.status !== Image.Ready
+                    text: "\u{f075a}"
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeIconLarge * 2
+                    color: Config.subtextColor
+                }
             }
         }
 
@@ -149,7 +136,7 @@ Item {
             Layout.fillHeight: true
             spacing: Config.padding
 
-            // App + Open
+            // App
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Config.padding
@@ -166,22 +153,6 @@ Item {
                     font.bold: true
                     color: Config.subtextColor
                     elide: Text.ElideRight
-                }
-
-                ActionButton {
-                    visible: MprisService.canRaise
-                    icon: "\u{f03cc}"
-                    text: "Open"
-                    size: Config.fontSizeSmall * 2 + Config.padding
-                    iconSize: Config.fontSizeNormal
-                    baseColor: Config.cardColor
-                    hoverColor: Config.cardHoverColor
-                    textColor: Config.subtextColor
-                    hoverTextColor: Config.accentColor
-                    onClicked: {
-                        MprisService.raise();
-                        root.closeRequested();
-                    }
                 }
             }
 
@@ -270,37 +241,28 @@ Item {
             }
         }
 
-        // ==================== LYRICS + PLAYERS ====================
+        // ==================== GIF + PLAYERS ====================
         ColumnLayout {
             Layout.preferredWidth: root.sideWidth
             Layout.fillHeight: true
             spacing: Config.spacing
 
-            Rectangle {
-                Layout.fillWidth: true
+            Item {
                 Layout.fillHeight: true
-                radius: Config.radiusLarge
-                color: Config.cardColor
-
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: Config.padding * 2
-                    spacing: Config.padding
-
-                    SectionTitle {
-                        icon: "\u{f0370}"
-                        text: "Lyrics"
-                    }
-
-                    LyricsView {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        active: root.active
-                    }
-                }
             }
 
+            MediaGif {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Config.fontSizeIconLarge * 4
+            }
+
+            Item {
+                Layout.fillHeight: true
+            }
+
+            // Only to switch between several players
             Rectangle {
+                visible: MprisService.players.length > 1
                 Layout.fillWidth: true
                 implicitHeight: players.implicitHeight + Config.padding * 4
                 radius: Config.radiusLarge

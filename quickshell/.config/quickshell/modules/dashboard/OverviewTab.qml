@@ -84,7 +84,6 @@ GridLayout {
         visible: !root.grid && MprisService.hasPlayer
         dismissible: false
         openable: true
-        showGif: true
         onOpenRequested: DashboardService.tab = "media"
     }
 

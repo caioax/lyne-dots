@@ -20,7 +20,6 @@ Singleton {
     readonly property string artUrl: activePlayer?.trackArtUrl ?? ""
     readonly property string album: activePlayer?.trackAlbum ?? ""
     readonly property string identity: activePlayer?.identity ?? ""
-    readonly property bool canRaise: activePlayer?.canRaise ?? false
 
     // --- PLAYBACK STATE ---
     readonly property bool isPlaying: activePlayer?.isPlaying ?? false
@@ -122,12 +121,6 @@ Singleton {
             return "";
         const entry = DesktopEntries.heuristicLookup(player.desktopEntry || player.identity);
         return entry?.icon ? Quickshell.iconPath(entry.icon, true) : "";
-    }
-
-    // Brings the player's window to the front
-    function raise() {
-        if (activePlayer?.canRaise)
-            activePlayer.raise();
     }
 
     // --- CONTROLS ---

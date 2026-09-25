@@ -140,7 +140,6 @@ QsPopupWindow {
 
         MediaTab {
             active: root.visible && DashboardService.tab === "media"
-            onCloseRequested: root.closeWindow()
         }
     }
 
