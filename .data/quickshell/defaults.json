@@ -24,6 +24,7 @@
         "position": "top",
         "margin": 8,
         "attachPopups": true,
+        "centerStyle": "buttons",
         "showMedia": true,
         "showSystem": false,
         "showWeather": false

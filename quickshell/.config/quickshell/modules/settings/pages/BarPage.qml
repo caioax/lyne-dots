@@ -89,25 +89,43 @@ ColumnLayout {
     SettingsGroup {
         title: "Center"
 
+        SelectRow {
+            label: "Style"
+            description: Config.barCenterClock ? "The clock alone, with cava faintly behind it while something plays; hover shows the track" : "The clock plus the buttons below, each opening its dashboard tab"
+            path: "bar.centerStyle"
+            options: [
+                {
+                    label: "Buttons",
+                    icon: "\u{f056e}",
+                    value: "buttons"
+                },
+                {
+                    label: "Clock",
+                    icon: "\u{f0954}",
+                    value: "clock"
+                }
+            ]
+        }
+
         ToggleRow {
             label: "Media"
             description: "Cover and spectrum of what's playing, title on hover; opens the dashboard's Media tab"
             path: "bar.showMedia"
-            enabled: DashboardService.hasTab("media")
+            enabled: !Config.barCenterClock && DashboardService.hasTab("media")
         }
 
         ToggleRow {
             label: "System"
             description: "CPU usage graph; opens the dashboard's System tab"
             path: "bar.showSystem"
-            enabled: DashboardService.hasTab("system")
+            enabled: !Config.barCenterClock && DashboardService.hasTab("system")
         }
 
         ToggleRow {
             label: "Weather"
             description: "Its own button for the Weather tab; off, the clock shows the weather"
             path: "bar.showWeather"
-            enabled: DashboardService.hasTab("weather")
+            enabled: !Config.barCenterClock && DashboardService.hasTab("weather")
         }
     }
 
