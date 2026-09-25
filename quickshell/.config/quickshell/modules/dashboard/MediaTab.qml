@@ -292,21 +292,10 @@ Item {
                         text: "Lyrics"
                     }
 
-                    Item {
-                        Layout.fillHeight: true
-                    }
-
-                    Text {
+                    LyricsView {
                         Layout.fillWidth: true
-                        text: "Not available yet"
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeSmall
-                        color: Config.subtextColor
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-
-                    Item {
                         Layout.fillHeight: true
+                        active: root.active
                     }
                 }
             }

@@ -29,3 +29,4 @@ singleton KeybindsService KeybindsService.qml
 singleton LauncherActions LauncherActions.qml
 singleton DashboardService DashboardService.qml
 singleton CavaService CavaService.qml
+singleton LyricsService LyricsService.qml
