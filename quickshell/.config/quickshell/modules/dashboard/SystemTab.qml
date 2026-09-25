@@ -7,7 +7,8 @@ import qs.services
 import "../../components/"
 import "../systemMonitor/"
 
-// Resources, devices and processes (the old system monitor popup)
+// Resources and devices (the old system monitor popup); per-process detail
+// is left to Mission Center
 ColumnLayout {
     id: root
 
@@ -18,7 +19,7 @@ ColumnLayout {
 
     readonly property bool hasGpu: SystemMonitorService.gpuType !== "unknown"
 
-    // Heavy collectors (GPU, processes, disk) only run while this is shown
+    // Heavy collectors (GPU, disk) only run while this is shown
     onActiveChanged: active ? SystemMonitorService.acquire() : SystemMonitorService.release()
     Component.onDestruction: {
         if (active)
@@ -126,9 +127,5 @@ ColumnLayout {
                 Layout.fillHeight: true
             }
         }
-    }
-
-    ProcessCard {
-        Layout.fillWidth: true
     }
 }

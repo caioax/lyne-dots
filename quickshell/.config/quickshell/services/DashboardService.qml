@@ -29,7 +29,7 @@ Singleton {
             id: "system",
             label: "System",
             icon: "\u{f035b}",
-            description: "CPU, GPU, memory, storage, network and top processes"
+            description: "CPU, GPU, memory, storage and network"
         },
         {
             id: "weather",

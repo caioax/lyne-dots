@@ -16,7 +16,7 @@ Singleton {
     readonly property int interval: 2000
     readonly property int historyLength: 60 // samples (2 minutes at 2s)
 
-    // Expensive collectors (GPU, processes, disk) only run while at least one
+    // Expensive collectors (GPU, disk) only run while at least one
     // monitor popup is open. Popups call acquire()/release() on visibility.
     property int _watchers: 0
     readonly property bool detailed: _watchers > 0
@@ -34,15 +34,10 @@ Singleton {
             // Samples taken minutes apart would render as a continuous line / a
             // long-window CPU average, so start fresh on the next open
             gpuHistory = [];
-            internal.prevProcTicks = {};
-            internal.prevProcTime = 0;
             return;
         }
         updateDisk.running = true;
         root._pollDetailed();
-        // A second process sample shortly after opening gives real CPU deltas
-        // without waiting a full interval
-        warmupTimer.restart();
     }
 
     // ========================================================================
@@ -111,14 +106,6 @@ Singleton {
     property var netUpHistory: []
 
     // ========================================================================
-    // PROCESSES
-    // ========================================================================
-
-    // Grouped by name: [{ name, count, cpu, mem }]
-    property var processes: []
-    property string processSort: "cpu" // "cpu" | "mem"
-
-    // ========================================================================
     // HELPERS
     // ========================================================================
 
@@ -185,9 +172,6 @@ Singleton {
         property real prevRx: -1
         property real prevTx: -1
         property real prevNetTime: 0
-        property var prevProcTicks: ({})  // pid -> ticks
-        property real prevProcTime: 0
-        property int cpuCount: 1
 
         // Sensor paths resolved at startup
         property string cpuTempPath: ""
@@ -229,17 +213,9 @@ Singleton {
         onTriggered: updateDisk.running = true
     }
 
-    Timer {
-        id: warmupTimer
-        interval: 600
-        onTriggered: updateProcesses.running = true
-    }
-
     function _pollDetailed() {
         cpuinfoFile.reload();
         loadavgFile.reload();
-        if (!updateProcesses.running)
-            updateProcesses.running = true;
 
         switch (gpuType) {
         case "nvidia":
@@ -395,7 +371,6 @@ Singleton {
             }
 
             internal.prevCpu = next;
-            internal.cpuCount = Math.max(1, next.length - 1);
             if (prev.length === 0)
                 return;
 
@@ -569,60 +544,6 @@ Singleton {
             else
                 root.uptime = minutes + "m";
         }
-    }
-
-    // ========================================================================
-    // PROCESSES
-    // ========================================================================
-
-    Process {
-        id: updateProcesses
-        command: ["sh", "-c", "cat /proc/[0-9]*/stat 2>/dev/null"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const now = Date.now();
-                const prevTicks = internal.prevProcTicks;
-                const hasPrev = internal.prevProcTime > 0;
-                // CLK_TCK is 100 on Linux; normalize to whole-system percentage
-                const tickBudget = Math.max(0.001, (now - internal.prevProcTime) / 1000) * 100 * internal.cpuCount;
-                const ticks = {};
-                const groups = {};
-
-                for (const line of text.split("\n")) {
-                    const open = line.indexOf("(");
-                    const close = line.lastIndexOf(")");
-                    if (open < 0 || close < 0)
-                        continue;
-
-                    const pid = line.slice(0, open).trim();
-                    const f = line.slice(close + 2).split(" ");
-                    // f[n] is field n+3 of proc(5): ppid=4, utime=14, stime=15, rss=24
-                    if (pid === "2" || f[1] === "2")
-                        continue; // kernel threads
-
-                    const t = (parseInt(f[11]) || 0) + (parseInt(f[12]) || 0);
-                    ticks[pid] = t;
-
-                    const name = line.slice(open + 1, close);
-                    const g = groups[name] ?? (groups[name] = { name, count: 0, cpu: 0, mem: 0 });
-                    g.count++;
-                    g.mem += (parseInt(f[21]) || 0) * 4096;
-                    if (hasPrev && prevTicks[pid] !== undefined)
-                        g.cpu += Math.max(0, t - prevTicks[pid]) / tickBudget * 100;
-                }
-
-                internal.prevProcTicks = ticks;
-                internal.prevProcTime = now;
-
-                const key = root.processSort;
-                root.processes = Object.values(groups).sort((a, b) => b[key] - a[key]).slice(0, 6);
-            }
-        }
-    }
-
-    onProcessSortChanged: {
-        const key = processSort;
-        processes = processes.slice().sort((a, b) => b[key] - a[key]);
     }
 
     // ========================================================================
