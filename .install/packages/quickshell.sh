@@ -24,6 +24,9 @@ QUICKSHELL_PACKAGES=(
 
     # Launcher
     "libqalculate" # qalc, for the launcher's calculator mode (=)
+
+    # Dashboard
+    "cava" # Audio visualizer around the cover in the Media tab
 )
 
 # AUR packages

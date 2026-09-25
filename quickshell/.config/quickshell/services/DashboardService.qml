@@ -36,6 +36,13 @@ Singleton {
     readonly property string overviewLayout: StateService.get("dashboard.overviewLayout", "stacked")
     readonly property int panelWidth: overviewLayout === "grid" ? 840 : 720
 
+    // GIF next to the players (animates while something plays). An empty
+    // path means the bundled bongocat
+    readonly property bool showGif: StateService.get("dashboard.showGif", true)
+    readonly property string gifPath: StateService.get("dashboard.gif", "")
+    readonly property url gifSource: gifPath !== "" ? "file://" + gifPath : Qt.resolvedUrl("../assets/bongocat.gif")
+    readonly property string gifDir: Quickshell.env("HOME") + "/.local/share/quickshell"
+
     // Screen name the dashboard is open on ("" = closed)
     property string screen: ""
     property string tab: defaultTab
@@ -76,6 +83,36 @@ Singleton {
     function cycleTab(step: int): void {
         const i = (tabIndex + step + tabs.length) % tabs.length;
         tab = tabs[i].id;
+    }
+
+    function pickGif(): void {
+        if (!gifPicker.running)
+            gifPicker.running = true;
+    }
+
+    function resetGif(): void {
+        StateService.set("dashboard.gif", "");
+    }
+
+    // The GIF is copied (with a unique name, so the image cache doesn't keep
+    // the old one) and survives the original being moved or deleted
+    Process {
+        id: gifPicker
+        command: ["bash", "-c", `
+            file=$(zenity --file-selection --title="Choose a GIF" --file-filter="GIF | *.gif" 2>/dev/null) || exit 0
+            [ -f "$file" ] || exit 0
+            dir="${root.gifDir}"
+            mkdir -p "$dir" && rm -f "$dir"/media-gif-*
+            dest="$dir/media-gif-$(date +%s).gif"
+            cp "$file" "$dest" && echo "$dest"
+        `]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const path = text.trim();
+                if (path !== "")
+                    StateService.set("dashboard.gif", path);
+            }
+        }
     }
 
     function focusedScreen(): string {

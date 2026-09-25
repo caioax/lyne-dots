@@ -15,6 +15,9 @@ Rectangle {
     // Clicking the cover emits openRequested (to show the full player)
     property bool openable: false
 
+    // Shows the dashboard's GIF beside the controls
+    property bool showGif: false
+
     signal openRequested
 
     visible: MprisService.hasPlayer && !dismissed
@@ -209,6 +212,14 @@ Rectangle {
                 MediaControls {
                     Layout.topMargin: 2
                 }
+            }
+
+            // The dashboard's GIF, beside the controls
+            MediaGif {
+                visible: root.showGif && DashboardService.showGif
+                Layout.preferredWidth: Config.fontSizeIconLarge * 4
+                Layout.preferredHeight: Config.fontSizeIconLarge * 3
+                Layout.alignment: Qt.AlignBottom
             }
         }
 

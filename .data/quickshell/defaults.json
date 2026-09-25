@@ -42,7 +42,10 @@
         "order": "auto"
     },
     "dashboard": {
-        "overviewLayout": "stacked"
+        "overviewLayout": "stacked",
+        "visualizer": true,
+        "showGif": true,
+        "gif": ""
     },
     "opacity": {
         "background": 0.9
