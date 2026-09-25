@@ -27,6 +27,18 @@ ColumnLayout {
 
     spacing: Config.spacing
 
+    function uvLabel(uv: int): string {
+        if (uv >= 11)
+            return "Extreme";
+        if (uv >= 8)
+            return "Very high";
+        if (uv >= 6)
+            return "High";
+        if (uv >= 3)
+            return "Moderate";
+        return "Low";
+    }
+
     function uvColor(uv: int): color {
         if (uv >= 8)
             return Config.errorColor;
@@ -79,116 +91,114 @@ ColumnLayout {
         visible: WeatherService.available
         Layout.fillWidth: true
 
+        CardHeader {
+            icon: "\u{f034e}"
+            title: WeatherService.location
+            subtitle: WeatherService.lastUpdate > 0 ? "Updated " + Qt.formatTime(new Date(WeatherService.lastUpdate), "hh:mm") : ""
+
+            RefreshButton {
+                size: Config.fontSizeSmall * 2
+                loading: WeatherService.loading
+                onClicked: WeatherService.refresh(true)
+            }
+        }
+
         RowLayout {
             Layout.fillWidth: true
             spacing: Config.spacing * 2
 
-            Text {
-                text: root.current ? WeatherService.icon(root.current.code, root.current.isDay) : ""
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeIconLarge * 2.2
-                color: Config.accentColor
-            }
-
-            ColumnLayout {
-                spacing: 0
+            // Conditions
+            RowLayout {
+                Layout.alignment: Qt.AlignVCenter
+                spacing: Config.spacing * 2
 
                 Text {
-                    text: (root.current?.temp ?? 0) + "°"
+                    text: root.current ? WeatherService.icon(root.current.code, root.current.isDay) : ""
                     font.family: Config.font
-                    font.pixelSize: Config.fontSizeIconLarge * 1.5
-                    font.bold: true
-                    color: Config.textColor
+                    font.pixelSize: Config.fontSizeIconLarge * 2.2
+                    color: Config.accentColor
                 }
 
-                Text {
-                    text: root.current ? WeatherService.description(root.current.code) : ""
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeNormal
-                    color: Config.textColor
-                }
-
-                Text {
-                    text: "Feels " + (root.current?.feelsLike ?? 0) + "°  ·  \u{f005d} " + (root.today?.max ?? 0) + "°  \u{f0045} " + (root.today?.min ?? 0) + "°"
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeSmall
-                    color: Config.subtextColor
-                }
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            ColumnLayout {
-                Layout.alignment: Qt.AlignTop
-                spacing: Config.padding / 2
-
-                RowLayout {
-                    Layout.alignment: Qt.AlignRight
-                    spacing: Config.padding
+                ColumnLayout {
+                    spacing: 0
 
                     Text {
-                        text: "\u{f034e}  " + WeatherService.location
+                        text: (root.current?.temp ?? 0) + "°"
                         font.family: Config.font
-                        font.pixelSize: Config.fontSizeNormal
+                        font.pixelSize: Config.fontSizeIconLarge * 1.5
                         font.bold: true
                         color: Config.textColor
                     }
 
-                    RefreshButton {
-                        size: Config.fontSizeSmall * 2
-                        loading: WeatherService.loading
-                        onClicked: WeatherService.refresh(true)
+                    Text {
+                        text: root.current ? WeatherService.description(root.current.code) : ""
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeNormal
+                        color: Config.textColor
+                    }
+
+                    Text {
+                        text: "Feels " + (root.current?.feelsLike ?? 0) + "°"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeSmall
+                        color: Config.subtextColor
+                    }
+
+                    Text {
+                        text: "\u{f005d} " + (root.today?.max ?? 0) + "°  \u{f0045} " + (root.today?.min ?? 0) + "°"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeSmall
+                        color: Config.subtextColor
                     }
                 }
+            }
 
-                Text {
-                    Layout.alignment: Qt.AlignRight
-                    text: WeatherService.lastUpdate > 0 ? "Updated " + Qt.formatTime(new Date(WeatherService.lastUpdate), "hh:mm") : ""
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeSmall
-                    color: Config.subtextColor
+            // Details
+            GridLayout {
+                Layout.fillWidth: true
+                columns: 3
+                uniformCellWidths: true
+                rowSpacing: Config.padding
+                columnSpacing: Config.padding
+
+                DetailTile {
+                    icon: "\u{f058e}"
+                    label: "Humidity"
+                    value: (root.current?.humidity ?? 0) + "%"
                 }
-            }
-        }
 
-        Flow {
-            Layout.fillWidth: true
-            spacing: Config.padding
+                DetailTile {
+                    icon: "\u{f059d}"
+                    label: "Wind"
+                    value: (root.current?.wind ?? 0) + " km/h"
+                }
 
-            StatChip {
-                icon: "\u{f058e}"
-                text: (root.current?.humidity ?? 0) + "%"
-            }
+                DetailTile {
+                    icon: "\u{f058c}"
+                    label: "Rain"
+                    value: (root.today?.rain ?? 0) + "%"
+                }
 
-            StatChip {
-                icon: "\u{f059d}"
-                text: (root.current?.wind ?? 0) + " km/h"
-            }
+                DetailTile {
+                    icon: "\u{f0599}"
+                    label: "UV"
+                    value: (root.current?.uv ?? 0) + " " + root.uvLabel(root.current?.uv ?? 0)
+                    accent: root.uvColor(root.current?.uv ?? 0)
+                }
 
-            StatChip {
-                icon: "\u{f058c}"
-                text: (root.today?.rain ?? 0) + "%"
-                accent: Config.accentColor
-            }
+                DetailTile {
+                    icon: "\u{f059c}"
+                    label: "Sunrise"
+                    value: WeatherService.sunrise
+                    accent: Config.warningColor
+                }
 
-            StatChip {
-                icon: "\u{f0599}"
-                text: "UV " + (root.current?.uv ?? 0)
-                accent: root.uvColor(root.current?.uv ?? 0)
-            }
-
-            StatChip {
-                icon: "\u{f059c}"
-                text: WeatherService.sunrise
-                accent: Config.warningColor
-            }
-
-            StatChip {
-                icon: "\u{f059b}"
-                text: WeatherService.sunset
-                accent: Config.warningColor
+                DetailTile {
+                    icon: "\u{f059b}"
+                    label: "Sunset"
+                    value: WeatherService.sunset
+                    accent: Config.warningColor
+                }
             }
         }
     }
@@ -209,9 +219,13 @@ ColumnLayout {
             readonly property real columnWidth: width / Math.max(1, root.hours.length)
             readonly property real labelHeight: Config.fontSizeSmall + Config.padding
             readonly property real iconHeight: Config.fontSizeIcon + Config.padding
-            // The curve lives between the icons and the rain line
+            // The curve lives between the icons and the rain bars
             readonly property real curveTop: labelHeight + iconHeight + labelHeight
             readonly property real curveHeight: Config.fontSizeIconLarge * 1.5
+            // Rain chance bars under the curve, their value below when likely
+            readonly property real rainTop: curveTop + curveHeight + Config.padding * 2
+            readonly property real rainHeight: Config.fontSizeIcon
+            readonly property int rainShown: 20
             readonly property real minTemp: Math.min(...root.hours.map(h => h.temp))
             readonly property real maxTemp: Math.max(...root.hours.map(h => h.temp))
 
@@ -221,7 +235,7 @@ ColumnLayout {
             }
 
             Layout.fillWidth: true
-            implicitHeight: curveTop + curveHeight + Config.padding + labelHeight
+            implicitHeight: rainTop + rainHeight + labelHeight
 
             Canvas {
                 id: curve
@@ -257,7 +271,7 @@ ColumnLayout {
                     ctx.lineTo(pts[0][0], bottom);
                     ctx.closePath();
                     const grad = ctx.createLinearGradient(0, hoursArea.curveTop, 0, bottom);
-                    grad.addColorStop(0, Qt.alpha(Config.accentColor, 0.25));
+                    grad.addColorStop(0, Qt.alpha(Config.accentColor, 0.4));
                     grad.addColorStop(1, Qt.alpha(Config.accentColor, 0));
                     ctx.fillStyle = grad;
                     ctx.fill();
@@ -319,14 +333,33 @@ ColumnLayout {
                         color: Config.textColor
                     }
 
+                    // Rain chance: a bar on a faint track
+                    Rectangle {
+                        y: hoursArea.rainTop
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: Config.padding
+                        height: hoursArea.rainHeight
+                        radius: width / 2
+                        color: Qt.alpha(Config.surface3Color, 0.35)
+
+                        Rectangle {
+                            anchors.bottom: parent.bottom
+                            width: parent.width
+                            height: hour.modelData.rain > 0 ? Math.max(width, parent.height * hour.modelData.rain / 100) : 0
+                            radius: width / 2
+                            color: Qt.alpha(Config.accentColor, hour.modelData.rain >= hoursArea.rainShown ? 1 : 0.5)
+                        }
+                    }
+
                     Text {
                         anchors.bottom: parent.bottom
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: "\u{f058c}" + hour.modelData.rain + "%"
-                        opacity: hour.modelData.rain >= 20 ? 1 : 0.35
+                        visible: hour.modelData.rain >= hoursArea.rainShown
+                        text: hour.modelData.rain + "%"
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeSmall - 2
-                        color: hour.modelData.rain >= 20 ? Config.accentColor : Config.subtextColor
+                        font.bold: true
+                        color: Config.accentColor
                     }
                 }
             }
@@ -448,12 +481,66 @@ ColumnLayout {
                     color: Config.textColor
                 }
 
-                StatChip {
-                    Layout.preferredWidth: Config.fontSizeSmall * 5
-                    icon: "\u{f0599}"
-                    text: String(day.modelData.uv)
-                    accent: root.uvColor(day.modelData.uv)
+                // UV, its level shown by the color only
+                Text {
+                    Layout.preferredWidth: Config.fontSizeSmall * 3
+                    text: "\u{f0599} " + day.modelData.uv
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    color: root.uvColor(day.modelData.uv)
+                    horizontalAlignment: Text.AlignRight
                 }
+            }
+        }
+    }
+
+    // Labeled value in the now card's grid
+    component DetailTile: Rectangle {
+        id: tile
+
+        required property string icon
+        required property string label
+        required property string value
+        property color accent: Config.accentColor
+
+        Layout.fillWidth: true
+        implicitHeight: tileColumn.implicitHeight + Config.padding * 2
+        radius: Config.radius
+        color: Qt.alpha(Config.surface1Color, 0.5)
+
+        ColumnLayout {
+            id: tileColumn
+            anchors.fill: parent
+            anchors.margins: Config.padding
+            anchors.leftMargin: Config.padding * 2
+            spacing: 0
+
+            RowLayout {
+                spacing: Config.padding
+
+                Text {
+                    text: tile.icon
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    color: tile.accent
+                }
+
+                Text {
+                    text: tile.label
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    color: Config.subtextColor
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                text: tile.value
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeNormal
+                font.bold: true
+                color: Config.textColor
+                elide: Text.ElideRight
             }
         }
     }
