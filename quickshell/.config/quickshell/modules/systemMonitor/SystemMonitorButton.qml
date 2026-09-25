@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.config
 import qs.services
 import "../../components/"
@@ -16,9 +17,12 @@ BarButton {
     // Recent CPU samples shown in the bar (40s at 2s interval)
     readonly property int samples: 20
 
-    active: monitorWindow.visible
+    readonly property string screenName: QsWindow.window?.screen?.name ?? ""
+
+    // Opens the dashboard on its System tab
+    active: DashboardService.screen === screenName && DashboardService.tab === "system"
     contentItem: buttonContent
-    onClicked: monitorWindow.visible = !monitorWindow.visible
+    onClicked: DashboardService.toggle("system", screenName)
 
     RowLayout {
         id: buttonContent
@@ -75,11 +79,5 @@ BarButton {
                 color: root.hot ? SystemMonitorService.tempColor(root.temp) : Config.textColor
             }
         }
-    }
-
-    SystemMonitorWindow {
-        id: monitorWindow
-        anchorItem: root
-        visible: false
     }
 }

@@ -9,6 +9,7 @@ import "../../components/"
 import "../quickSettings/"
 import "../systemMonitor/"
 import "../calendar/"
+import "../dashboard/"
 
 Scope {
     id: root
@@ -165,7 +166,14 @@ Scope {
                     BarIsland {
                         anchors.centerIn: parent
 
-                        CalendarButton {}
+                        CalendarButton {
+                            id: clock
+                        }
+                    }
+
+                    DashboardWindow {
+                        screen: bar.modelData
+                        anchorItem: clock
                     }
 
                     // --- RIGHT: media, tray, CPU, quick settings ---

@@ -27,3 +27,4 @@ singleton SettingsService SettingsService.qml
 singleton HyprlandSettingsService HyprlandSettingsService.qml
 singleton KeybindsService KeybindsService.qml
 singleton LauncherActions LauncherActions.qml
+singleton DashboardService DashboardService.qml

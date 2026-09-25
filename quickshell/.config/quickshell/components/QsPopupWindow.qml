@@ -23,6 +23,8 @@ PanelWindow {
     property real contentImplicitHeight: 0
 
     default property alias content: contentContainer.data
+    // Items whose Keys handlers get the key presses (the popup keeps the focus)
+    property list<Item> keyTargets
 
     signal closing
 
@@ -115,6 +117,18 @@ PanelWindow {
         closeTimer.restart();
     }
 
+    // Shows the popup again, also halfway through closing (a click on the bar
+    // clears the focus grab before the button that reopens it gets the click)
+    function reopen() {
+        if (!visible) {
+            visible = true;
+            return;
+        }
+        closeTimer.stop();
+        isClosing = false;
+        grabTimer.restart();
+    }
+
     Timer {
         id: closeTimer
         interval: Config.animDuration
@@ -178,6 +192,7 @@ PanelWindow {
             }
         }
 
+        Keys.forwardTo: root.keyTargets
         Keys.onEscapePressed: root.closeWindow()
     }
 

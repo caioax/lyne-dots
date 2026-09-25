@@ -1,19 +1,21 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.config
 import qs.services
 import "../../components/"
 
-// Clock, date and current weather; opens the calendar
+// Clock, date and current weather; opens the dashboard
 BarButton {
     id: root
 
+    readonly property string screenName: QsWindow.window?.screen?.name ?? ""
     readonly property color mainColor: active ? Config.accentColor : Config.textColor
 
-    active: calendarWindow.visible
+    active: DashboardService.screen === screenName
     contentItem: content
-    onClicked: calendarWindow.visible = !calendarWindow.visible
+    onClicked: DashboardService.toggle("", screenName)
 
     RowLayout {
         id: content
@@ -65,11 +67,5 @@ BarButton {
                 color: Config.textColor
             }
         }
-    }
-
-    CalendarWindow {
-        id: calendarWindow
-        anchorItem: root
-        visible: false
     }
 }
