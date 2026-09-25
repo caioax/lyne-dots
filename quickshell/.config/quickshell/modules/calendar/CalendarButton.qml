@@ -6,14 +6,17 @@ import qs.config
 import qs.services
 import "../../components/"
 
-// Clock, date and current weather; opens the dashboard
+// Clock and date; opens the dashboard (on the Overview or the tab it was
+// left on). Media, weather and CPU have their own buttons for their tabs
 BarButton {
     id: root
 
     readonly property string screenName: QsWindow.window?.screen?.name ?? ""
     readonly property color mainColor: active ? Config.accentColor : Config.textColor
 
-    active: DashboardService.screen === screenName
+    // Lit unless one of the other center buttons owns the current tab
+    readonly property var ownedTabs: ["media", "weather", "system"]
+    active: DashboardService.screen === screenName && !ownedTabs.includes(DashboardService.tab)
     contentItem: content
     onClicked: DashboardService.toggle("", screenName)
 
@@ -41,31 +44,6 @@ BarButton {
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             color: Config.subtextColor
-        }
-
-        // Current weather
-        RowLayout {
-            visible: WeatherService.available
-            spacing: Math.round(Config.padding / 2)
-
-            BarDivider {
-                Layout.rightMargin: Config.padding / 2
-            }
-
-            Text {
-                text: WeatherService.available ? WeatherService.icon(WeatherService.current.code, WeatherService.current.isDay) : ""
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeNormal
-                color: Config.warningColor
-            }
-
-            Text {
-                text: WeatherService.available ? WeatherService.current.temp + "°" : ""
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeSmall
-                font.bold: true
-                color: Config.textColor
-            }
         }
     }
 }

@@ -162,45 +162,52 @@ Scope {
                         }
                     }
 
-                    // --- CENTER: clock, date, weather ---
+                    // --- CENTER: everything that opens the dashboard, each
+                    // button on its own tab ---
                     BarIsland {
+                        id: center
                         anchors.centerIn: parent
 
-                        CalendarButton {
-                            id: clock
-                        }
-                    }
-
-                    DashboardWindow {
-                        screen: bar.modelData
-                        anchorItem: clock
-                    }
-
-                    // --- RIGHT: media, tray, CPU, quick settings ---
-                    RowLayout {
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: Config.spacing
-
-                        MediaIsland {
+                        MediaButton {
                             id: media
                         }
 
                         BarDivider {
-                            visible: !Config.barIslands && media.visible
+                            visible: media.visible
                         }
 
-                        BarIsland {
-                            TrayWidget {}
+                        CalendarButton {}
 
-                            SystemMonitorButton {}
-
-                            BarDivider {}
-
-                            QuickSettingsButton {
-                                id: quickSettings
-                            }
+                        BarDivider {
+                            visible: weather.visible
                         }
+
+                        WeatherButton {
+                            id: weather
+                        }
+
+                        BarDivider {}
+
+                        SystemMonitorButton {}
+                    }
+
+                    DashboardWindow {
+                        screen: bar.modelData
+                        anchorItem: center
+                    }
+
+                    // --- RIGHT: tray, quick settings ---
+                    BarIsland {
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        TrayWidget {}
+
+                        BarDivider {
+                            visible: TrayService.hasItems
+                        }
+
+                        QuickSettingsButton {}
                     }
                 }
             }

@@ -12,33 +12,45 @@ Item {
 
     property int maxWidth: Config.fontSizeNormal * 18
 
-    // Internal state to force clearing
-    property bool windowExists: Hyprland.activeToplevel !== null
+    // Each bar shows the window of its own monitor: the focused window on the
+    // focused monitor, else the last one focused on the workspace it shows
+    readonly property var parentScreen: QsWindow.window?.screen ?? null
+    readonly property var monitor: (parentScreen ? Hyprland.monitorFor(parentScreen) : null) ?? Hyprland.focusedMonitor
+    readonly property var workspace: monitor?.activeWorkspace ?? null
 
-    readonly property string windowTitle: Hyprland.activeToplevel?.title ?? ""
+    readonly property var toplevel: {
+        const active = Hyprland.activeToplevel;
+        if (active && active.workspace === workspace)
+            return active;
+        const last = root.bareAddress(workspace?.lastIpcObject?.lastwindow);
+        const toplevels = workspace?.toplevels?.values ?? [];
+        return last !== "" ? toplevels.find(t => root.bareAddress(t.address) === last) ?? null : null;
+    }
 
-    // Logic to verify focus changes
+    function bareAddress(address): string {
+        return String(address ?? "").replace(/^0x/, "");
+    }
+
+    // Clicking the desktop sends an empty "activewindowv2" but leaves
+    // Hyprland.activeToplevel set, so the focused monitor tracks it here
+    property bool focusCleared: false
+    readonly property bool windowExists: toplevel !== null && !(monitor?.focused && focusCleared)
+
+    readonly property string windowTitle: toplevel?.title ?? ""
+
     Connections {
         target: Hyprland
         function onRawEvent(event) {
-            // "activewindowv2" is sent even when clicking the desktop (returns empty)
-            if (event.name === "activewindowv2") {
-                // If the address is empty, no window is focused
-                root.windowExists = event.data !== "," && event.data !== "";
-            }
-
-            // Clear title when changing workspaces to an empty one
-            if (event.name === "workspace") {
-                // Small delay to let Hyprland update its internal state
-                Qt.callLater(() => {
-                    if (root)
-                        root.windowExists = Hyprland.activeToplevel !== null;
-                });
-            }
+            if (event.name === "activewindowv2")
+                root.focusCleared = event.data === "," || event.data === "";
+            // The last window of each workspace (lastIpcObject) only updates
+            // on a refresh
+            if (["activewindowv2", "workspacev2", "focusedmonv2", "closewindow", "movewindowv2"].includes(event.name))
+                Qt.callLater(Hyprland.refreshWorkspaces);
         }
     }
 
-    readonly property string appId: Hyprland.activeToplevel?.wayland?.appId ?? ""
+    readonly property string appId: toplevel?.wayland?.appId ?? ""
     readonly property string appIcon: appId !== "" ? Quickshell.iconPath(appId, true) : ""
 
     implicitWidth: windowExists && windowTitle !== "" ? content.implicitWidth : 0
