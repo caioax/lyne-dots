@@ -11,25 +11,55 @@ import Quickshell.Hyprland
 Singleton {
     id: root
 
-    // Tab bar entries, in order. Each id needs a component in DashboardWindow
-    readonly property var tabs: [
+    // Every tab, in order. Each id needs a component in DashboardWindow
+    readonly property var allTabs: [
         {
             id: "overview",
             label: "Overview",
-            icon: "\u{f056e}"
+            icon: "\u{f056e}",
+            description: "Clock, weather, the month, the player and resource usage"
         },
         {
             id: "media",
             label: "Media",
-            icon: "\u{f075a}"
+            icon: "\u{f075a}",
+            description: "Full player with the visualizer, lyrics and the players"
         },
         {
             id: "system",
             label: "System",
-            icon: "\u{f035b}"
+            icon: "\u{f035b}",
+            description: "CPU, GPU, memory, storage, network and top processes"
+        },
+        {
+            id: "weather",
+            label: "Weather",
+            icon: "\u{f0595}",
+            description: "Now, the next 24 hours and the week"
         }
     ]
-    readonly property string defaultTab: "overview"
+    // Hidden in Settings (at least one always stays)
+    readonly property var hiddenTabs: StateService.get("dashboard.hiddenTabs", [])
+    readonly property var tabs: {
+        const shown = allTabs.filter(t => !hiddenTabs.includes(t.id));
+        return shown.length > 0 ? shown : [allTabs[0]];
+    }
+
+    // Tab the dashboard opens on: a tab id, or "last" for the one it was on
+    readonly property string openOn: StateService.get("dashboard.defaultTab", "overview")
+    readonly property string defaultTab: hasTab(openOn) ? openOn : tabs[0].id
+
+    onTabsChanged: {
+        if (!hasTab(tab))
+            tab = tabs[0].id;
+    }
+
+    function setTabShown(id: string, shown: bool): void {
+        const hidden = hiddenTabs.filter(t => t !== id);
+        if (!shown)
+            hidden.push(id);
+        StateService.set("dashboard.hiddenTabs", hidden);
+    }
 
     // Overview template: "stacked" (cards in rows, the Quick Settings player)
     // or "grid" (three columns with a tall player, wider panel)
@@ -61,7 +91,7 @@ Singleton {
     function open(tabId: string, screenName: string): void {
         if (tabId !== "" && hasTab(tabId))
             tab = tabId;
-        else if (!visible)
+        else if (!visible && !(openOn === "last" && hasTab(tab)))
             tab = defaultTab;
         screen = screenName;
         shown();

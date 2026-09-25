@@ -5,7 +5,8 @@ import QtQuick
 import Quickshell
 import qs.services
 
-// Current weather + short forecast from Open-Meteo (free, no API key).
+// Current weather, the next 24 hours and a 7-day forecast from Open-Meteo
+// (free, no API key).
 // Location comes from state "weather.city"; when empty it is guessed from the IP.
 // There is no background polling: data is fetched at startup and refreshed
 // on demand (refresh()) when older than maxAge.
@@ -14,16 +15,18 @@ Singleton {
 
     readonly property string city: StateService.get("weather.city", "")
     readonly property int maxAge: 15 * 60 * 1000
-    readonly property int forecastDays: 5
+    readonly property int forecastDays: 7
 
     property string location: ""
     property bool loading: false
     property string error: ""
     property real lastUpdate: 0
 
-    // { temp, feelsLike, humidity, wind, code, isDay }
+    // { temp, feelsLike, humidity, wind, code, isDay, uv }
     property var current: null
-    // [{ date, code, max, min, rain }]
+    // Next 24 hours, from the current one: [{ date, temp, code, isDay, rain }]
+    property var hourly: []
+    // [{ date, code, max, min, rain, wind, uv }]
     property var daily: []
     property string sunrise: ""
     property string sunset: ""
@@ -195,7 +198,7 @@ Singleton {
 
     function _fetchForecast() {
         const c = _coords;
-        const url = "https://api.open-meteo.com/v1/forecast?timezone=auto" + "&latitude=" + c.lat + "&longitude=" + c.lon + "&forecast_days=" + forecastDays + "&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,is_day" + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset";
+        const url = "https://api.open-meteo.com/v1/forecast?timezone=auto" + "&latitude=" + c.lat + "&longitude=" + c.lon + "&forecast_days=" + forecastDays + "&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,is_day,uv_index" + "&hourly=temperature_2m,weather_code,precipitation_probability,is_day" + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,uv_index_max,sunrise,sunset";
 
         _get(url, data => {
             const cur = data.current;
@@ -207,15 +210,34 @@ Singleton {
                 humidity: cur.relative_humidity_2m,
                 wind: Math.round(cur.wind_speed_10m),
                 code: cur.weather_code,
-                isDay: cur.is_day === 1
+                isDay: cur.is_day === 1,
+                uv: Math.round(cur.uv_index ?? 0)
             };
+
+            // Hours are local times like "2026-09-25T14:00"; start at the
+            // current one
+            const h = data.hourly;
+            const nowHour = cur.time.slice(0, 13);
+            const first = Math.max(0, h.time.findIndex(t => t.slice(0, 13) === nowHour));
+            root.hourly = h.time.slice(first, first + 24).map((t, j) => {
+                const i = first + j;
+                return {
+                    date: new Date(t),
+                    temp: Math.round(h.temperature_2m[i]),
+                    code: h.weather_code[i],
+                    isDay: h.is_day[i] === 1,
+                    rain: h.precipitation_probability[i] ?? 0
+                };
+            });
 
             root.daily = d.time.map((t, i) => ({
                         date: new Date(t + "T12:00:00"),
                         code: d.weather_code[i],
                         max: Math.round(d.temperature_2m_max[i]),
                         min: Math.round(d.temperature_2m_min[i]),
-                        rain: d.precipitation_probability_max[i] ?? 0
+                        rain: d.precipitation_probability_max[i] ?? 0,
+                        wind: Math.round(d.wind_speed_10m_max[i] ?? 0),
+                        uv: Math.round(d.uv_index_max[i] ?? 0)
                     }));
 
             root.sunrise = d.sunrise[0].slice(11);

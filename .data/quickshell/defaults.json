@@ -45,7 +45,9 @@
         "overviewLayout": "stacked",
         "visualizer": true,
         "showGif": true,
-        "gif": ""
+        "gif": "",
+        "hiddenTabs": [],
+        "defaultTab": "overview"
     },
     "opacity": {
         "background": 0.9

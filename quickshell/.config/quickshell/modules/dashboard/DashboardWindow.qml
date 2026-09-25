@@ -121,6 +121,7 @@ QsPopupWindow {
     readonly property var tabComponents: ({
             overview: overviewComponent,
             media: mediaComponent,
+            weather: weatherComponent,
             system: systemComponent
         })
 
@@ -140,6 +141,14 @@ QsPopupWindow {
         MediaTab {
             active: root.visible && DashboardService.tab === "media"
             onCloseRequested: root.closeWindow()
+        }
+    }
+
+    Component {
+        id: weatherComponent
+
+        WeatherTab {
+            active: root.visible && DashboardService.tab === "weather"
         }
     }
 

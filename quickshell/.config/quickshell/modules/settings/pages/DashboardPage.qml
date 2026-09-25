@@ -12,6 +12,55 @@ ColumnLayout {
     spacing: Config.spacing * 3
 
     SettingsGroup {
+        title: "Tabs"
+
+        SelectRow {
+            label: "Opens on"
+            description: "Tab shown when the clock opens the dashboard"
+            path: "dashboard.defaultTab"
+            segmentWidth: Config.fontSizeNormal * 5.5
+            options: [
+                {
+                    label: "Last used",
+                    value: "last"
+                },
+                {
+                    label: "Overview",
+                    value: "overview"
+                },
+                {
+                    label: "Media",
+                    value: "media"
+                },
+                {
+                    label: "System",
+                    value: "system"
+                },
+                {
+                    label: "Weather",
+                    value: "weather"
+                }
+            ]
+        }
+
+        TabRow {
+            tabId: "overview"
+        }
+
+        TabRow {
+            tabId: "media"
+        }
+
+        TabRow {
+            tabId: "system"
+        }
+
+        TabRow {
+            tabId: "weather"
+        }
+    }
+
+    SettingsGroup {
         title: "Overview"
 
         TemplatePicker {
@@ -73,5 +122,20 @@ ColumnLayout {
                 onClicked: DashboardService.pickGif()
             }
         }
+    }
+
+    // Shows or hides one tab; the last one shown can't be hidden
+    component TabRow: ToggleRow {
+        id: tabRow
+
+        required property string tabId
+        readonly property var tab: DashboardService.allTabs.find(t => t.id === tabId)
+        readonly property bool shown: !DashboardService.hiddenTabs.includes(tabId)
+
+        label: tab.label + " tab"
+        description: tab.description
+        checked: shown
+        enabled: !shown || DashboardService.tabs.length > 1
+        onToggled: value => DashboardService.setTabShown(tabId, value)
     }
 }
