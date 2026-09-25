@@ -85,13 +85,13 @@ Card {
         spacing: Config.padding / 2
     }
 
-    MouseArea {
+    // The wheel changes the volume. A handler, not a MouseArea: one on top
+    // resets the controls' pointing hand cursor
+    WheelHandler {
         parent: root
-        anchors.fill: parent
-        acceptedButtons: Qt.NoButton
-        onWheel: wheel => {
+        onWheel: event => {
             const step = 0.05;
-            MprisService.setVolume(MprisService.volume + (wheel.angleDelta.y > 0 ? step : -step));
+            MprisService.setVolume(MprisService.volume + (event.angleDelta.y > 0 ? step : -step));
         }
     }
 }

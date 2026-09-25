@@ -35,13 +35,13 @@ BarButton {
             MprisService.next();
     }
 
-    MouseArea {
-        anchors.fill: parent
-        acceptedButtons: Qt.NoButton
+    // A handler, not a MouseArea: one on top of the button's own resets the
+    // pointing hand cursor
+    WheelHandler {
         enabled: root.media
-        onWheel: wheel => {
+        onWheel: event => {
             const step = 0.05;
-            MprisService.setVolume(MprisService.volume + (wheel.angleDelta.y > 0 ? step : -step));
+            MprisService.setVolume(MprisService.volume + (event.angleDelta.y > 0 ? step : -step));
         }
     }
 

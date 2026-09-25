@@ -223,15 +223,12 @@ Rectangle {
     }
 
     // --- SCROLL WHEEL FOR VOLUME ---
-    MouseArea {
-        anchors.fill: parent
-        acceptedButtons: Qt.NoButton
-        onWheel: wheel => {
+    // A handler, not a MouseArea: one on top resets the controls' pointing
+    // hand cursor
+    WheelHandler {
+        onWheel: event => {
             const step = 0.05;
-            if (wheel.angleDelta.y > 0)
-                MprisService.setVolume(MprisService.volume + step);
-            else
-                MprisService.setVolume(MprisService.volume - step);
+            MprisService.setVolume(MprisService.volume + (event.angleDelta.y > 0 ? step : -step));
         }
     }
 }
