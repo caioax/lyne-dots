@@ -8,9 +8,9 @@ import "../quickSettings/"
 
 // Clock, weather, the month, the player and resource usage, laid out by
 // DashboardService.overviewLayout:
-//   stacked: clock + weather | month, then the Quick Settings player and
+//   stacked: clock + weather | month, then the wide MediaWidget player and
 //            the resources, full width
-//   grid:    clock + weather | month | tall player, resources below
+//   grid:    clock + weather | month | tall player, resources below (default)
 GridLayout {
     id: root
 

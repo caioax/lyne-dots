@@ -63,7 +63,7 @@ Singleton {
 
     // Overview template: "stacked" (cards in rows, the Quick Settings player)
     // or "grid" (three columns with a tall player, wider panel)
-    readonly property string overviewLayout: StateService.get("dashboard.overviewLayout", "stacked")
+    readonly property string overviewLayout: StateService.get("dashboard.overviewLayout", "grid")
     readonly property int panelWidth: overviewLayout === "grid" ? 840 : 720
 
     // Blurred cover behind the Media tab (a plain card when off)

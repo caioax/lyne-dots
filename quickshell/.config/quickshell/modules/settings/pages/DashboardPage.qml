@@ -65,7 +65,7 @@ ColumnLayout {
 
         TemplatePicker {
             label: "Layout"
-            description: "Stacked keeps the Quick Settings player; grid is wider, with a tall player"
+            description: "Grid is wider, with a tall player; stacked has a full-width player"
             path: "dashboard.overviewLayout"
             options: [
                 {

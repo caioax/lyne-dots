@@ -24,7 +24,7 @@
         "position": "top",
         "margin": 8,
         "attachPopups": true,
-        "centerStyle": "buttons",
+        "centerStyle": "clock",
         "showMedia": true,
         "showSystem": false,
         "showWeather": false
@@ -46,7 +46,7 @@
         "order": "auto"
     },
     "dashboard": {
-        "overviewLayout": "stacked",
+        "overviewLayout": "grid",
         "visualizer": true,
         "coverBackdrop": true,
         "showGif": true,

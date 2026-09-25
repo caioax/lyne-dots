@@ -67,9 +67,9 @@ Singleton {
     // Floating islands inside the bar and the buttons inside them
     readonly property int barIslandHeight: barHeight - padding
     readonly property int barButtonHeight: barIslandHeight - Math.round(padding * 2 / 3)
-    // Bar center: "buttons" (the clock plus optional buttons, each opening its
-    // dashboard tab) or "clock" (the clock alone, cava faintly behind it)
-    readonly property bool barCenterClock: getState("bar.centerStyle", "buttons") === "clock"
+    // Bar center: "clock" (default: the clock alone, cava faintly behind it) or
+    // "buttons" (the clock plus optional buttons, each opening its dashboard tab)
+    readonly property bool barCenterClock: getState("bar.centerStyle", "clock") === "clock"
     readonly property bool barShowMedia: !barCenterClock && getState("bar.showMedia", true)
     readonly property bool barShowSystem: !barCenterClock && getState("bar.showSystem", false)
     readonly property bool barShowWeather: !barCenterClock && getState("bar.showWeather", false)
