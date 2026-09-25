@@ -136,7 +136,7 @@ Item {
                 padding: Config.padding
 
                 background: Rectangle {
-                    color: Config.surface0Color
+                    color: Config.cardColor
                     border.width: 1
                     border.color: Config.surface2Color
                     radius: Config.radius

@@ -32,7 +32,7 @@ Popup {
 
     background: Rectangle {
         radius: Config.radiusLarge
-        color: Config.surface0Color
+        color: Config.cardColor
         border.width: 1
         border.color: Config.surface2Color
     }

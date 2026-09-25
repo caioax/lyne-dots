@@ -368,7 +368,7 @@ PanelWindow {
             anchors.fill: parent
             // Concentric with the rows inside the margin
             radius: root.grid ? 0 : Config.radiusLarge
-            color: root.grid ? Qt.alpha(Config.backgroundColor, Math.min(0.95, Config.backgroundOpacity + 0.05)) : Config.backgroundTransparentColor
+            color: Config.backgroundTransparentColor
             border.width: root.grid ? 0 : 1
             border.color: Config.surface2Color
         }

@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell.Widgets
 import qs.config
 import qs.services
+import "../../components/"
 
 // App (or clipboard entry) as a tile: icon over the name. Copied images show
 // their thumbnail over their size, copied text fills the tile. Same signals

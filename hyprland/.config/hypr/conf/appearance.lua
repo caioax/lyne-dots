@@ -95,7 +95,7 @@ hl.layer_rule({
     match = { namespace = "qs_modules" },
 
     blur         = true,
-    ignore_alpha = 0.5,
+    ignore_alpha = 0.3,
     no_anim      = true,
 })
 
@@ -106,9 +106,20 @@ hl.layer_rule({
     match = { namespace = "qs_attached" },
 
     blur         = true,
-    ignore_alpha = 0.5,
+    ignore_alpha = 0.3,
     no_anim      = true,
     xray         = true,
+})
+
+-- Notification popups float over windows like the bar popups, so they blur
+-- what is behind them (no xray)
+hl.layer_rule({
+    name  = "notifications",
+    match = { namespace = "qs_notifications" },
+
+    blur         = true,
+    ignore_alpha = 0.3,
+    no_anim      = true,
 })
 
 hl.layer_rule({

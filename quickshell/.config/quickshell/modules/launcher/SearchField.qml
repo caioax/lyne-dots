@@ -27,7 +27,7 @@ Rectangle {
     Layout.fillWidth: true
     implicitHeight: Config.fontSizeLarge + Config.padding * 5
     radius: Config.radiusLarge
-    color: Config.surface0Color
+    color: Config.cardColor
     border.width: 1
     border.color: root.focused ? Qt.alpha(Config.accentColor, 0.6) : Config.surface1Color
 

@@ -7,85 +7,136 @@ import qs.config
 import qs.services
 import "../../components/"
 
-// Notification history section (Quick Settings dashboard): header plus the
-// app groups, scrolling once they are taller than maxHeight
-Item {
+// Notification history card: app groups split by dividers, scrolling once
+// taller than maxHeight. `preview` (Quick Settings dashboard) shows only the
+// newest groups plus "See all", which asks for the notifications page.
+Card {
     id: root
 
+    property bool preview: false
+    property int previewGroups: 2
+    // The page has its own header with these controls
+    property bool showHeader: true
+    // 0 = no limit
     property real maxHeight: 0
 
     signal actionTriggered
+    signal openPageRequested
 
-    readonly property real listHeight: Math.max(0, Math.min(groups.implicitHeight, maxHeight - header.implicitHeight - Config.spacing))
+    readonly property var shownGroups: preview ? NotificationService.groupNames.slice(0, previewGroups) : NotificationService.groupNames
+    readonly property int hiddenGroups: NotificationService.groupNames.length - shownGroups.length
+    readonly property real listMaxHeight: maxHeight > 0 ? maxHeight - padding * 2 - (showHeader ? header.implicitHeight + spacing : 0) : Infinity
 
-    implicitHeight: header.implicitHeight + Config.spacing + listHeight
+    spacing: Config.spacing * 2
 
-    RowLayout {
+    CardHeader {
         id: header
 
-        width: parent.width
-        spacing: Config.padding
+        visible: root.showHeader
+        // md-bell_off / md-bell
+        icon: NotificationService.dndEnabled ? "\u{f009b}" : "\u{f009a}"
+        title: "Notifications"
+        subtitle: NotificationService.count + (NotificationService.dndEnabled ? " · Do not disturb" : "")
 
-        Text {
-            text: "Notifications"
-            font.family: Config.font
-            font.pixelSize: Config.fontSizeNormal
-            font.bold: true
-            color: Config.textColor
+        ActionButton {
+            visible: root.preview
+            size: Config.fontSizeSmall + Config.padding * 3
+            iconSize: Config.fontSizeNormal
+            // md-format_list_bulleted
+            icon: "\u{f0279}"
+            text: root.hiddenGroups > 0 ? "See all " + NotificationService.groupNames.length : "See all"
+            onClicked: root.openPageRequested()
         }
 
-        Text {
-            text: NotificationService.count
-            font.family: Config.font
-            font.pixelSize: Config.fontSizeSmall
-            color: Config.subtextColor
-        }
-
-        Item {
-            Layout.fillWidth: true
-        }
-
-        ClearButton {
-            icon: "󰎟"
-            text: "Clear"
-            implicitHeight: Config.fontSizeSmall + Config.padding * 3
-            onClicked: NotificationService.clearAll()
+        MenuButton {
+            id: menuButton
+            onClicked: menu.openAt(menuButton, null)
         }
     }
 
-    // Flickable + Column (not ListView): groups change height when rows expand,
-    // and a Column always relayouts for that
     Flickable {
         id: flick
 
-        anchors.top: header.bottom
-        anchors.topMargin: Config.spacing
-        width: parent.width
-        height: root.listHeight
+        // Wider than the card content so row highlights can bleed into the
+        // padding without being clipped
+        Layout.fillWidth: true
+        Layout.leftMargin: -Config.padding
+        Layout.rightMargin: -Config.padding
+        Layout.preferredHeight: Math.min(groups.implicitHeight, root.listMaxHeight)
         contentHeight: groups.implicitHeight
         boundsBehavior: Flickable.StopAtBounds
         clip: true
 
         ScrollBar.vertical: QsScrollBar {}
 
+        // Flickable + Column (not ListView): groups change height when rows
+        // expand, and a Column always relayouts for that
         Column {
             id: groups
 
-            width: flick.width
-            spacing: Config.spacing
+            x: Config.padding
+            width: flick.width - Config.padding * 2
+            topPadding: Config.padding
+            bottomPadding: Config.padding
+            spacing: Config.spacing * 2
 
             Repeater {
                 model: ScriptModel {
-                    values: NotificationService.groupNames
+                    values: root.shownGroups
                 }
 
-                NotificationGroup {
+                Column {
+                    id: entry
+
                     required property string modelData
+                    required property int index
+
                     width: groups.width
-                    appName: modelData
-                    onActionTriggered: root.actionTriggered()
+                    spacing: Config.spacing * 2
+
+                    Rectangle {
+                        visible: entry.index > 0
+                        width: parent.width
+                        height: 1
+                        color: Config.surface1Color
+                    }
+
+                    NotificationGroup {
+                        width: parent.width
+                        appName: entry.modelData
+                        preview: root.preview
+                        onActionTriggered: root.actionTriggered()
+                        onOpenRequested: root.openPageRequested()
+                    }
                 }
             }
+        }
+    }
+
+    ContextMenu {
+        id: menu
+
+        items: [
+            {
+                label: NotificationService.dndEnabled ? "Turn off do not disturb" : "Do not disturb",
+                // md-bell / md-bell_sleep
+                icon: NotificationService.dndEnabled ? "\u{f009a}" : "\u{f00a0}",
+                action: "dnd"
+            },
+            {
+                label: "Clear all",
+                // md-notification_clear_all
+                icon: "\u{f039f}",
+                action: "clear",
+                danger: true
+            }
+        ]
+
+        onTriggered: action => {
+            if (action === "dnd")
+                NotificationService.toggleDnd();
+            else if (action === "clear")
+                NotificationService.clearAll();
         }
     }
 }

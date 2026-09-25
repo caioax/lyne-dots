@@ -92,13 +92,27 @@ ColumnLayout {
     }
 
     SettingsGroup {
+        title: "Transparency"
+
+        SliderRow {
+            label: "Background opacity"
+            description: "Bar, panels, launcher, notifications, Settings and their cards. Presets may set their own when applied"
+            path: "opacity.background"
+            from: 0.5
+            to: 1
+            stepSize: 0.01
+            format: v => Math.round(v * 100) + "%"
+        }
+    }
+
+    SettingsGroup {
         title: "Presets"
 
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: grid.implicitHeight + Config.padding * 4
             radius: Config.radiusLarge
-            color: Config.surface0Color
+            color: Config.cardColor
 
             GridLayout {
                 id: grid

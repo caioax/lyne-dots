@@ -92,20 +92,6 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Transparency"
-
-        SliderRow {
-            label: "Background opacity"
-            description: "Bar and popup backgrounds. Presets may set their own when applied"
-            path: "opacity.background"
-            from: 0.5
-            to: 1
-            stepSize: 0.05
-            format: v => Math.round(v * 100) + "%"
-        }
-    }
-
-    SettingsGroup {
         title: "Motion"
 
         SelectRow {

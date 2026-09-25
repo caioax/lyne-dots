@@ -149,13 +149,16 @@ Item {
     }
 
     // ========== NOTIFICATIONS ==========
+    // Newest apps only; "See all" opens the notifications page
     NotificationList {
         id: notifList
         visible: root.hasNotifications
         anchors.top: main.bottom
-        anchors.topMargin: Config.padding * 2
+        anchors.topMargin: main.spacing
         width: parent.width
+        preview: true
         maxHeight: root.availableHeight - main.implicitHeight - anchors.topMargin
         onActionTriggered: root.closeWindow()
+        onOpenPageRequested: pageStack.currentIndex = 6
     }
 }

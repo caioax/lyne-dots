@@ -176,7 +176,7 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: Config.fontSizeIconSmall * 2
             radius: Config.radiusLarge
-            color: Config.surface0Color
+            color: Config.cardColor
             border.width: search.activeFocus ? 1 : 0
             border.color: Qt.alpha(Config.accentColor, 0.6)
 

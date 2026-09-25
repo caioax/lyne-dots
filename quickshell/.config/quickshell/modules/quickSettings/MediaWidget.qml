@@ -34,7 +34,7 @@ Rectangle {
     Layout.fillWidth: true
     implicitHeight: contentLayout.implicitHeight + contentLayout.anchors.topMargin + contentLayout.anchors.bottomMargin
     radius: Config.radiusLarge
-    color: Config.surface0Color
+    color: Config.cardColor
 
     // --- BLURRED BACKGROUND ---
     Item {

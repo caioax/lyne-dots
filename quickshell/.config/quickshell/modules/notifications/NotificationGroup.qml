@@ -5,103 +5,145 @@ import Quickshell
 import Quickshell.Widgets
 import qs.config
 import qs.services
+import "../../components/"
 
-// Compact history card with the notifications of one app (newest first).
-// Shows the latest `previewCount` rows until expanded.
-Rectangle {
+// Notifications of one app (newest first), inside the history card: app icon
+// box on the left, the rows on the right. Collapsed it shows the newest one;
+// the chevron shows them all (or asks for the full page in `preview`).
+Item {
     id: root
 
     required property string appName
-    readonly property var notifs: NotificationService.notificationsOf(appName)
-    readonly property string appIconSource: notifs.length > 0 ? NotificationService.iconSource(notifs[0].appIcon) : ""
-    readonly property int previewCount: 3
+    // Dashboard preview: the chevron opens the notifications page instead
+    property bool preview: false
     property bool expanded: false
 
     signal actionTriggered
+    signal openRequested
 
-    implicitHeight: column.implicitHeight + Config.spacing * 2
-    radius: Config.radius
-    color: Config.surface0Color
+    readonly property var notifs: NotificationService.notificationsOf(appName)
+    readonly property bool critical: notifs.some(n => n.isCritical)
+    readonly property string appIconSource: notifs.length > 0 ? NotificationService.iconSource(notifs[0].appIcon) : ""
+    readonly property int boxSize: Config.fontSizeIconSmall * 2
+    readonly property color tint: critical ? Config.errorColor : Config.accentColor
 
-    Column {
-        id: column
+    implicitHeight: layout.implicitHeight
 
-        anchors.fill: parent
-        anchors.margins: Config.spacing
-        anchors.leftMargin: Config.spacing + Config.padding
-        anchors.rightMargin: Config.spacing + Config.padding
-        spacing: Config.spacing
+    RowLayout {
+        id: layout
 
-        // ========== HEADER ==========
-        RowLayout {
-            width: column.width
-            spacing: Config.padding
+        width: parent.width
+        spacing: Config.spacing + Config.padding
+
+        Rectangle {
+            Layout.alignment: Qt.AlignTop
+            implicitWidth: root.boxSize
+            implicitHeight: root.boxSize
+            radius: Config.radiusLarge
+            color: root.critical ? Qt.alpha(Config.errorColor, 0.15) : Config.surface1Color
 
             IconImage {
+                id: appIcon
+                anchors.centerIn: parent
                 visible: root.appIconSource !== "" && status !== Image.Error
-                implicitSize: Config.fontSizeNormal
+                implicitSize: Config.fontSizeIconSmall
                 source: root.appIconSource
             }
 
+            // md-alert / md-bell
             Text {
-                Layout.maximumWidth: column.width / 2
-                text: root.appName
+                anchors.centerIn: parent
+                visible: !appIcon.visible
+                text: root.critical ? "\u{f0026}" : "\u{f009a}"
                 font.family: Config.font
-                font.pixelSize: Config.fontSizeSmall
-                font.bold: true
-                color: Config.textColor
-                elide: Text.ElideRight
-            }
-
-            Text {
-                visible: root.notifs.length > 1
-                text: "· " + root.notifs.length
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeSmall
-                color: Config.subtextColor
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            NotificationIconButton {
-                id: clearGroup
-                icon: "󰅖"
-                iconColor: clearGroup.hovered ? Config.errorColor : Config.subtextColor
-                onClicked: NotificationService.dismissGroup(root.appName)
+                font.pixelSize: Config.fontSizeIconSmall
+                color: root.tint
             }
         }
 
-        // ========== ROWS ==========
-        Repeater {
-            model: ScriptModel {
-                values: root.expanded ? root.notifs : root.notifs.slice(0, root.previewCount)
-            }
+        Column {
+            id: column
 
-            NotificationRow {
-                required property var modelData
+            Layout.fillWidth: true
+            spacing: Config.spacing
+
+            // ========== HEADER ==========
+            RowLayout {
                 width: column.width
-                notif: modelData
-                onActionTriggered: root.actionTriggered()
+                spacing: Config.padding
+
+                Text {
+                    Layout.maximumWidth: column.width / 2
+                    text: root.appName
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    font.bold: true
+                    color: root.critical ? Config.errorColor : Config.subtextColor
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    visible: root.notifs.length > 1
+                    text: "· " + root.notifs.length
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    color: Config.subtextColor
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                // md-chevron_up / md-chevron_down
+                NotificationIconButton {
+                    visible: root.notifs.length > 1
+                    icon: root.expanded ? "\u{f0143}" : "\u{f0140}"
+                    onClicked: {
+                        if (root.preview)
+                            root.openRequested();
+                        else
+                            root.expanded = !root.expanded;
+                    }
+                }
+
+                MenuButton {
+                    id: groupMenuButton
+                    onClicked: groupMenu.openAt(groupMenuButton, root.appName)
+                }
+            }
+
+            // ========== ROWS ==========
+            Repeater {
+                model: ScriptModel {
+                    values: root.expanded ? root.notifs : root.notifs.slice(0, 1)
+                }
+
+                NotificationRow {
+                    required property var modelData
+                    width: column.width
+                    notif: modelData
+                    onActionTriggered: root.actionTriggered()
+                }
             }
         }
+    }
 
-        // ========== MORE / LESS ==========
-        Text {
-            visible: root.notifs.length > root.previewCount
-            text: root.expanded ? "Show less" : "+" + (root.notifs.length - root.previewCount) + " more"
-            font.family: Config.font
-            font.pixelSize: Config.fontSizeSmall
-            color: moreMouse.containsMouse ? Config.accentColor : Config.subtextColor
+    ContextMenu {
+        id: groupMenu
 
-            MouseArea {
-                id: moreMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.expanded = !root.expanded
+        items: [
+            {
+                label: root.notifs.length > 1 ? "Dismiss all " + root.notifs.length : "Dismiss",
+                // md-notification_clear_all
+                icon: "\u{f039f}",
+                action: "dismiss",
+                danger: true
             }
+        ]
+
+        onTriggered: action => {
+            if (action === "dismiss")
+                NotificationService.dismissGroup(root.appName);
         }
     }
 }

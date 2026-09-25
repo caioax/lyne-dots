@@ -113,10 +113,11 @@ Singleton {
                     root.runMatugen(wallpaper);
                 } else {
                     // Fallback to preset if no wallpaper
-                    root.applyTheme(root.currentThemeName);
+                    root.applyTheme(root.currentThemeName, true);
                 }
             } else {
-                root.applyTheme(root.currentThemeName);
+                // Reloading the current preset keeps the user's opacity
+                root.applyTheme(root.currentThemeName, true);
             }
         }
     }
@@ -125,9 +126,12 @@ Singleton {
     // PUBLIC API
     // ========================================================================
 
-    function applyTheme(themeName) {
+    // keepOpacity: re-applying the saved preset (startup, state reload) must
+    // not replace the opacity the user picked; only switching presets does
+    function applyTheme(themeName, keepOpacity = false) {
         console.log("[Theme] Loading theme:", themeName);
         loadThemeProc._themeName = themeName;
+        loadThemeProc._keepOpacity = keepOpacity;
         loadThemeProc._buffer = "";
         loadThemeProc.command = ["cat", themesDir + "/" + themeName + ".json"];
         loadThemeProc.running = true;
@@ -193,14 +197,14 @@ Singleton {
     // INTERNAL
     // ========================================================================
 
-    function _applyThemeData(themeName, data) {
+    function _applyThemeData(themeName, data, keepOpacity) {
         // 1. Update palette (triggers Config.qml rebinding)
         if (data.palette) {
             root.palette = data.palette;
         }
 
         // 2. Update opacity in StateService (user preference, not theme-owned)
-        if (data.opacity && data.opacity.background !== undefined) {
+        if (!keepOpacity && data.opacity && data.opacity.background !== undefined) {
             setState("opacity.background", data.opacity.background);
         }
 
@@ -489,6 +493,7 @@ Singleton {
     Process {
         id: loadThemeProc
         property string _themeName: ""
+        property bool _keepOpacity: false
         property string _buffer: ""
 
         stdout: SplitParser {
@@ -503,7 +508,7 @@ Singleton {
             if (exitCode === 0) {
                 try {
                     const data = JSON.parse(_buffer.trim());
-                    root._applyThemeData(_themeName, data);
+                    root._applyThemeData(_themeName, data, _keepOpacity);
                 } catch (e) {
                     console.error("[Theme] Failed to parse theme:", e);
                 }

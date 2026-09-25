@@ -39,7 +39,7 @@ Rectangle {
     Layout.fillWidth: true
     implicitHeight: content.implicitHeight + rowPadding * 2
 
-    color: rowHover.hovered ? Config.surface1Color : Config.surface0Color
+    color: rowHover.hovered ? Config.cardHoverColor : Config.cardColor
     topLeftRadius: first ? Config.radiusLarge : Config.radiusSmall
     topRightRadius: first ? Config.radiusLarge : Config.radiusSmall
     bottomLeftRadius: last ? Config.radiusLarge : Config.radiusSmall

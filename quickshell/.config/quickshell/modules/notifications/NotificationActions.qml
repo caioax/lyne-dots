@@ -7,11 +7,13 @@ import qs.config
 
 // Row of action buttons. With includeDefault the app's default action is
 // offered too (as "Open"), for places where a click doesn't trigger it.
+// Compact buttons (history) hug their text instead of sharing the width.
 RowLayout {
     id: root
 
     required property var notif
     property bool includeDefault: false
+    property bool compact: false
 
     readonly property var actions: {
         const list = root.notif.buttonActions;
@@ -33,7 +35,8 @@ RowLayout {
             required property var modelData
             readonly property string iconSource: root.notif.hasActionIcons ? Quickshell.iconPath(modelData.identifier, true) : ""
 
-            Layout.fillWidth: true
+            Layout.fillWidth: !root.compact
+            implicitWidth: pillRow.implicitWidth + Config.padding * 4
             implicitHeight: Config.fontSizeSmall + Config.padding * 3
             radius: Config.radius
             color: pillMouse.containsMouse ? Config.surface2Color : Config.surface1Color
@@ -45,6 +48,7 @@ RowLayout {
             }
 
             RowLayout {
+                id: pillRow
                 anchors.centerIn: parent
                 width: Math.min(implicitWidth, parent.width - Config.padding * 2)
                 spacing: Config.padding

@@ -151,7 +151,7 @@ FloatingWindow {
             Layout.fillHeight: true
             Layout.preferredWidth: root.sidebarWidth
             radius: Config.radiusLarge
-            color: Config.surface0Color
+            color: Config.cardColor
 
             ColumnLayout {
                 anchors.fill: parent

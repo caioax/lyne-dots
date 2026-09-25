@@ -251,7 +251,7 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: library.implicitHeight + Config.padding * 4
             radius: Config.radiusLarge
-            color: Config.surface0Color
+            color: Config.cardColor
 
             ColumnLayout {
                 id: library

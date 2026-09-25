@@ -179,7 +179,7 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: hero.implicitHeight + Config.padding * 4
         radius: Config.radiusLarge
-        color: Config.surface0Color
+        color: Config.cardColor
 
         RowLayout {
             id: hero

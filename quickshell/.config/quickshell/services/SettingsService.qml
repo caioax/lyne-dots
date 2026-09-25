@@ -20,7 +20,7 @@ Singleton {
             id: "theme",
             label: "Theme",
             icon: "\u{f03d8}",
-            description: "Color palette, light or dark mode and wallpaper",
+            description: "Color palette, light or dark mode, transparency and wallpaper",
             category: "Appearance"
         },
         {
@@ -34,7 +34,7 @@ Singleton {
             id: "layout",
             label: "Layout",
             icon: "\u{f0607}",
-            description: "Corners, spacing, transparency and motion",
+            description: "Corners, spacing and motion",
             category: "Appearance"
         },
         {

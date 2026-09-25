@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell.Widgets
 import qs.config
 import qs.services
+import "../../components/"
 
 // One result: an app (icon), an action / calculator result (glyph) or a
 // clipboard entry (glyph, or a thumbnail for images), with name and

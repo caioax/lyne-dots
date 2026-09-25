@@ -10,7 +10,8 @@ QsPopupWindow {
     id: root
 
     popupWidth: 420
-    popupMaxHeight: 820
+    // Up to the screen's free height, so the notifications preview fits
+    popupMaxHeight: screen ? screen.height - Config.barReservedHeight - Config.spacing * 2 : 820
     anchorSide: "right"
     moduleName: "QuickSettings"
     contentImplicitHeight: pageStack.children[pageStack.currentIndex]?.implicitHeight ?? popupMaxHeight - 32
@@ -74,6 +75,15 @@ QsPopupWindow {
         // ==========================
         SoundPage {
             onBackRequested: pageStack.currentIndex = 0
+        }
+
+        // ==========================
+        // PAGE 6: NOTIFICATIONS
+        // ==========================
+        NotificationsPage {
+            availableHeight: root.popupMaxHeight - 32
+            onBackRequested: pageStack.currentIndex = 0
+            onCloseWindow: root.closeWindow()
         }
     }
 }

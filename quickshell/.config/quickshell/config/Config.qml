@@ -23,6 +23,9 @@ Singleton {
     readonly property color surface1Color: ThemeService.color("surface1", "#292e42")
     readonly property color surface2Color: ThemeService.color("surface2", "#414868")
     readonly property color surface3Color: ThemeService.color("surface3", "#565f89")
+    // Cards and panels inside the shell surfaces follow the background opacity
+    readonly property color cardColor: Qt.alpha(surface0Color, backgroundOpacity)
+    readonly property color cardHoverColor: Qt.alpha(surface1Color, backgroundOpacity)
 
     readonly property color textColor: ThemeService.color("text", "#c0caf5")
     readonly property color textReverseColor: ThemeService.color("textReverse", "#1a1b26")
