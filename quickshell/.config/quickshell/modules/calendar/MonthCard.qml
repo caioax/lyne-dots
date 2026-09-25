@@ -299,31 +299,46 @@ Card {
             Layout.fillWidth: true
             spacing: 0
 
-            Text {
+            // The day, and on the right whether it's a holiday or when the
+            // next one is
+            RowLayout {
                 Layout.fillWidth: true
-                text: root.sameDay(root.selectedDate, root.today) ? "Today" : root.selectedDate.toLocaleDateString(Qt.locale(), "dddd, d MMMM")
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeNormal
-                font.bold: true
-                font.capitalization: Font.Capitalize
-                color: Config.textColor
-                elide: Text.ElideRight
+                spacing: Config.padding
+
+                Text {
+                    Layout.fillWidth: true
+                    text: root.sameDay(root.selectedDate, root.today) ? "Today" : root.selectedDate.toLocaleDateString(Qt.locale(), "dddd, d MMMM")
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeNormal
+                    font.bold: true
+                    font.capitalization: Font.Capitalize
+                    color: Config.textColor
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    visible: text !== ""
+                    text: {
+                        const h = root.selectedHoliday;
+                        if (h)
+                            return h.optional ? "optional" : "holiday";
+                        const n = root.nextHoliday;
+                        return n ? "holiday in " + n.days + (n.days === 1 ? " day" : " days") : "";
+                    }
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    font.bold: true
+                    color: root.selectedHoliday ? (root.selectedHoliday.optional ? Config.warningColor : Config.errorColor) : Config.accentColor
+                }
             }
 
+            // That holiday's name
             Text {
                 Layout.fillWidth: true
-                text: {
-                    const h = root.selectedHoliday;
-                    if (h)
-                        return h.name + (h.optional ? " · optional" : " · holiday");
-                    const n = root.nextHoliday;
-                    return n ? "Next holiday: " + n.name + " · in " + n.days + (n.days === 1 ? " day" : " days") : "No holidays";
-                }
+                text: root.selectedHoliday?.name ?? root.nextHoliday?.name ?? "No holidays"
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
                 color: root.selectedHoliday ? (root.selectedHoliday.optional ? Config.warningColor : Config.errorColor) : Config.subtextColor
-                wrapMode: Text.WordWrap
-                maximumLineCount: 2
                 elide: Text.ElideRight
             }
         }

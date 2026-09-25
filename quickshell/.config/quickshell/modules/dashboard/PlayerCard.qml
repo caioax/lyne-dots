@@ -76,10 +76,12 @@ Card {
 
     MediaProgress {
         Layout.fillWidth: true
+        wavy: true
     }
 
     MediaControls {
         Layout.alignment: Qt.AlignHCenter
+        round: true
         spacing: Config.padding / 2
     }
 

@@ -14,6 +14,8 @@ Rectangle {
     property bool dismissible: true
     // Clicking the cover emits openRequested (to show the full player)
     property bool openable: false
+    // Wavy progress and round controls, like the dashboard's Media tab
+    property bool expressive: false
 
     signal openRequested
 
@@ -208,6 +210,7 @@ Rectangle {
 
                 MediaControls {
                     Layout.topMargin: 2
+                    round: root.expressive
                 }
             }
         }
@@ -215,6 +218,7 @@ Rectangle {
         // --- BOTTOM: Progress section ---
         MediaProgress {
             Layout.fillWidth: true
+            wavy: root.expressive
         }
     }
 

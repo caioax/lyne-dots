@@ -6,17 +6,35 @@ import qs.services
 import "../../components/"
 
 // Current weather and today's range, compact (the forecast lives in the
-// Weather tab)
+// Weather tab, which a click opens)
 Card {
     id: root
 
     readonly property var current: WeatherService.current
     readonly property var today: WeatherService.daily[0] ?? null
 
+    color: mouse.containsMouse ? Config.cardHoverColor : Config.cardColor
+
+    Behavior on color {
+        ColorAnimation {
+            duration: Config.animDurationShort
+        }
+    }
+
+    // Behind the content, so the refresh button keeps its own clicks
+    MouseArea {
+        id: mouse
+        parent: root
+        z: -1
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: DashboardService.tab = "weather"
+    }
+
     CardHeader {
-        icon: "\u{f0595}"
-        title: "Weather"
-        subtitle: WeatherService.location
+        icon: "\u{f034e}"
+        title: WeatherService.location
 
         RefreshButton {
             size: Config.fontSizeSmall * 2
@@ -119,31 +137,36 @@ Card {
         }
     }
 
-    Flow {
+    GridLayout {
         visible: WeatherService.available
         Layout.fillWidth: true
-        spacing: Config.padding
+        columns: 2
+        uniformCellWidths: true
+        rowSpacing: Config.padding
+        columnSpacing: Config.padding
 
-        StatChip {
+        DetailTile {
             icon: "\u{f050f}"
-            text: "Feels " + (root.current?.feelsLike ?? 0) + "°"
+            label: "Feels"
+            value: (root.current?.feelsLike ?? 0) + "°"
         }
 
-        StatChip {
-            visible: (root.today?.rain ?? 0) > 0
+        DetailTile {
             icon: "\u{f058c}"
-            text: (root.today?.rain ?? 0) + "%"
-            accent: Config.accentColor
+            label: "Rain"
+            value: (root.today?.rain ?? 0) + "%"
         }
 
-        StatChip {
+        DetailTile {
             icon: "\u{f058e}"
-            text: (root.current?.humidity ?? 0) + "%"
+            label: "Humidity"
+            value: (root.current?.humidity ?? 0) + "%"
         }
 
-        StatChip {
+        DetailTile {
             icon: "\u{f059d}"
-            text: (root.current?.wind ?? 0) + " km/h"
+            label: "Wind"
+            value: (root.current?.wind ?? 0) + " km/h"
         }
     }
 

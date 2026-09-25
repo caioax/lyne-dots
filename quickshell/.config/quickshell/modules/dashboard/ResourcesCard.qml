@@ -5,8 +5,8 @@ import qs.config
 import qs.services
 import "../../components/"
 
-// CPU, memory, GPU and root disk usage as rings, plus the uptime.
-// Clicking it opens the System tab
+// CPU, memory, GPU and root disk usage as rings, plus the uptime, in equal
+// columns. Clicking it opens the System tab
 Rectangle {
     id: root
 
@@ -37,6 +37,7 @@ Rectangle {
         anchors.fill: parent
         anchors.margins: Config.padding * 2
         spacing: Config.spacing
+        uniformCellSizes: true
 
         Resource {
             label: "CPU"
@@ -63,62 +64,91 @@ Rectangle {
             detail: root.rootDisk ? SystemMonitorService.formatBytes(root.rootDisk.total - root.rootDisk.used) + " free" : ""
         }
 
-        StatChip {
-            Layout.alignment: Qt.AlignVCenter
+        Resource {
+            label: "Uptime"
+            detail: SystemMonitorService.uptime
             icon: "\u{f0150}"
-            text: SystemMonitorService.uptime
-            accent: Config.accentColor
         }
     }
 
-    component Resource: RowLayout {
+    // A ring with the usage, or an icon in a circle of the same size when
+    // `icon` is set (no usage to show), and a label over a detail. Centered
+    // in its column
+    component Resource: Item {
         id: resource
 
         required property string label
-        required property real value
+        property real value: 0
         property string detail: ""
+        property string icon: ""
         readonly property color color: SystemMonitorService.usageColor(value)
+        readonly property real ringSize: Config.fontSizeIcon * 2
 
         Layout.fillWidth: true
-        spacing: Config.spacing
+        implicitWidth: content.implicitWidth
+        implicitHeight: content.implicitHeight
 
-        ProgressRing {
-            implicitWidth: Config.fontSizeIcon * 2
-            implicitHeight: Config.fontSizeIcon * 2
-            value: resource.value
-            strokeWidth: Config.padding - 2
-            color: resource.color
+        RowLayout {
+            id: content
+            anchors.centerIn: parent
+            width: Math.min(implicitWidth, parent.width)
+            spacing: Config.spacing
 
-            Text {
-                anchors.centerIn: parent
-                text: Math.round(resource.value)
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeSmall
-                font.bold: true
-                color: Config.textColor
-            }
-        }
+            ProgressRing {
+                visible: resource.icon === ""
+                implicitWidth: resource.ringSize
+                implicitHeight: resource.ringSize
+                value: resource.value
+                strokeWidth: Config.padding - 2
+                color: resource.color
 
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: 0
-
-            Text {
-                text: resource.label
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeSmall
-                font.bold: true
-                color: Config.textColor
+                Text {
+                    anchors.centerIn: parent
+                    text: Math.round(resource.value) + "%"
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall - 1
+                    font.bold: true
+                    color: Config.textColor
+                }
             }
 
-            Text {
+            Rectangle {
+                visible: resource.icon !== ""
+                implicitWidth: resource.ringSize
+                implicitHeight: resource.ringSize
+                radius: width / 2
+                color: Qt.alpha(Config.accentColor, 0.15)
+
+                Text {
+                    anchors.centerIn: parent
+                    text: resource.icon
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeIconSmall
+                    color: Config.accentColor
+                }
+            }
+
+            ColumnLayout {
                 Layout.fillWidth: true
-                visible: text !== ""
-                text: resource.detail
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeSmall - 2
-                color: Config.subtextColor
-                elide: Text.ElideRight
+                spacing: 0
+
+                Text {
+                    text: resource.label
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    font.bold: true
+                    color: Config.textColor
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    visible: text !== ""
+                    text: resource.detail
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall - 2
+                    color: Config.subtextColor
+                    elide: Text.ElideRight
+                }
             }
         }
     }
