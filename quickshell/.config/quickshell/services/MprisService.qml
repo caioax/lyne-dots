@@ -49,17 +49,19 @@ Singleton {
     // set as the volume until the player reports back, so that value is
     // already 0-1 and isn't scaled (else it flashed 0-1% while dragging, and
     // stayed there when the player had nothing new to report)
+    // Kept per player: when the player was already at that volume it reports
+    // nothing back, so the set value stays until it changes for real
     readonly property real volume: rawVolume === writtenVolume ? writtenVolume : rawVolume / volumeScale
     readonly property real rawVolume: activePlayer?.volume ?? 0
     readonly property real volumeScale: rawVolume > 2 || percentVolume[activePlayer?.dbusName ?? ""] ? 100 : 1
     property var percentVolume: ({})
-    // Last volume set on the active player (-1: none since it became active)
-    property real writtenVolume: -1
+    // Last volume set on each player (by D-Bus name)
+    property var writtenVolumes: ({})
+    readonly property real writtenVolume: writtenVolumes[activePlayer?.dbusName ?? ""] ?? -1
     onRawVolumeChanged: {
         if (rawVolume > 2 && activePlayer)
             percentVolume[activePlayer.dbusName] = true;
     }
-    onActivePlayerChanged: writtenVolume = -1
     readonly property bool volumeSupported: activePlayer?.volumeSupported ?? false
 
     // --- POSITION TRACKING ---
@@ -187,7 +189,11 @@ Singleton {
     function setVolume(vol: real) {
         if (!activePlayer)
             return;
-        writtenVolume = Math.max(0, Math.min(1, vol));
-        activePlayer.volume = writtenVolume;
+        const value = Math.max(0, Math.min(1, vol));
+        // Reassigned (not mutated) so the bindings see it
+        writtenVolumes = Object.assign({}, writtenVolumes, {
+            [activePlayer.dbusName]: value
+        });
+        activePlayer.volume = value;
     }
 }
