@@ -24,6 +24,8 @@ Item {
     readonly property bool hasLines: LyricsService.status === "synced" || LyricsService.status === "plain"
     // Follows the current line unless the user scrolled recently
     property bool following: true
+    // Size of the line being sung next to the others
+    readonly property real currentScale: Config.fontSizeLarge / Config.fontSizeSmall
 
     function recenter() {
         const item = repeater.itemAt(LyricsService.currentIndex);
@@ -165,7 +167,10 @@ Item {
                 id: repeater
                 model: LyricsService.lines
 
-                Text {
+                // Grows the current line with `scale` (no reflow while it
+                // animates); the wrapper follows the scaled height so the
+                // lines never overlap
+                Item {
                     id: line
 
                     required property var modelData
@@ -174,18 +179,35 @@ Item {
                     readonly property int distance: Math.abs(index - LyricsService.currentIndex)
 
                     width: column.width
-                    text: modelData.text !== "" ? modelData.text : "\u{f075a}"
-                    font.family: Config.font
-                    font.pixelSize: current ? Config.fontSizeNormal : Config.fontSizeSmall
-                    font.bold: current
-                    color: current ? Config.accentColor : lineMouse.containsMouse && LyricsService.synced ? Config.textColor : Config.subtextColor
-                    opacity: !LyricsService.synced || current ? 1 : Math.max(0.35, 1 - distance * 0.18)
-                    wrapMode: Text.Wrap
-                    horizontalAlignment: Text.AlignHCenter
+                    height: label.implicitHeight * label.scale
 
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Config.animDuration
+                    Text {
+                        id: label
+
+                        anchors.centerIn: parent
+                        // Wraps at the width the scaled-up line may use
+                        width: parent.width / root.currentScale
+                        scale: line.current && LyricsService.synced ? root.currentScale : 1
+                        text: line.modelData.text !== "" ? line.modelData.text : "\u{f075a}"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeSmall
+                        font.bold: line.current
+                        color: line.current ? Config.accentColor : lineMouse.containsMouse && LyricsService.synced ? Config.textColor : Config.subtextColor
+                        opacity: !LyricsService.synced || line.current ? 1 : Math.max(0.35, 1 - line.distance * 0.18)
+                        wrapMode: Text.Wrap
+                        horizontalAlignment: Text.AlignHCenter
+
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: Config.animDuration
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Config.animDuration
+                            }
                         }
                     }
 
