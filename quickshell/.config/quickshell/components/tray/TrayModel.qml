@@ -14,7 +14,7 @@ QtObject {
     readonly property bool hasItems: items.length > 0
 
     // Pinned items in pin order, and the rest in tray order
-    readonly property var pinnedIds: Config.barTrayPinned
+    readonly property var pinnedIds: TrayService.pinnedIds
     readonly property var pinnedItems: pinnedIds.map(id => items.find(i => i.id === id)).filter(i => i !== undefined)
     readonly property var restItems: items.filter(i => !pinnedIds.includes(i.id))
 
@@ -31,14 +31,11 @@ QtObject {
     }
 
     function isPinned(item) {
-        return pinnedIds.includes(item.id);
+        return TrayService.isPinned(item.id);
     }
 
     function setPinned(item, pinned) {
-        const ids = pinnedIds.filter(id => id !== item.id);
-        if (pinned)
-            ids.push(item.id);
-        StateService.set("bar.tray.pinned", ids);
+        TrayService.setPinned(item.id, pinned);
     }
 
     // Pinning lives in the menu too, so every item gets one in that style

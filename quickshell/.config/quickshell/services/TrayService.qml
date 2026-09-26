@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell.Services.SystemTray
+import qs.config
 
 QtObject {
     id: root
@@ -10,6 +11,25 @@ QtObject {
 
     // Checks whether there are items in the tray
     readonly property bool hasItems: items.length > 0
+
+    // --- PINNING (bar.tray.pinned, used by the "pinned" style) ---
+    readonly property var pinnedIds: Config.barTrayPinned
+
+    function isPinned(id) {
+        return pinnedIds.includes(id);
+    }
+
+    function setPinned(id, pinned) {
+        const ids = pinnedIds.filter(x => x !== id);
+        if (pinned)
+            ids.push(id);
+        StateService.set("bar.tray.pinned", ids);
+    }
+
+    // Name to show for an item: its title, else its id
+    function itemName(item) {
+        return item?.title || item?.tooltipTitle || item?.id || "";
+    }
 
     // --- ICON LOGIC ---
     function getIconSource(iconString) {

@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services
 import "../rows/"
+import "../../../components/"
 
 ColumnLayout {
     spacing: Config.spacing * 3
@@ -191,12 +192,126 @@ ColumnLayout {
     }
 
     SettingsGroup {
+        title: "Tray"
+
+        SelectRow {
+            label: "Style"
+            description: ({
+                    "row": "Every icon always in the bar",
+                    "overflow": "One button in the bar; the icons open in a grid under it",
+                    "pinned": "The items switched on below stay in the bar; the rest wait behind a button"
+                })[Config.barTrayStyle] ?? "The icons slide out of a button in the bar"
+            path: "bar.tray.style"
+            options: [
+                {
+                    label: "Row",
+                    value: "row"
+                },
+                {
+                    label: "Drawer",
+                    value: "drawer"
+                },
+                {
+                    label: "Overflow",
+                    value: "overflow"
+                },
+                {
+                    label: "Pinned",
+                    value: "pinned"
+                }
+            ]
+        }
+
+        // Running items; the switch keeps one in the bar (pinned style)
+        Repeater {
+            model: TrayService.items
+
+            ToggleRow {
+                id: trayRow
+
+                required property var modelData
+
+                label: TrayService.itemName(modelData)
+                description: Config.barTrayStyle === "pinned" ? (checked ? "Pinned to the bar" : "Behind the button") : "Pinning applies to the Pinned style"
+                checked: TrayService.isPinned(modelData.id)
+                enabled: Config.barTrayStyle === "pinned"
+                onToggled: value => TrayService.setPinned(trayRow.modelData.id, value)
+
+                leading: TrayIconBox {
+                    source: TrayService.getIconSource(trayRow.modelData.icon)
+                    color: trayRow.controlColor
+                }
+            }
+        }
+
+        // Pinned items that aren't running right now
+        Repeater {
+            model: TrayService.pinnedIds.filter(id => !TrayService.items.some(i => i.id === id))
+
+            SettingRow {
+                id: missingRow
+
+                required property string modelData
+
+                label: modelData
+                description: "Pinned, not running"
+
+                leading: TrayIconBox {
+                    source: ""
+                    color: missingRow.controlColor
+                }
+
+                ActionButton {
+                    icon: "\u{f0404}"
+                    text: "Unpin"
+                    size: Config.fontSizeIconSmall + Config.padding * 2
+                    baseColor: missingRow.controlColor
+                    onClicked: TrayService.setPinned(missingRow.modelData, false)
+                }
+            }
+        }
+    }
+
+    SettingsGroup {
         title: "Behaviour"
 
         ToggleRow {
             label: "Auto hide"
             description: "Hide the bar until the pointer reaches its edge of the screen"
             path: "bar.autoHide"
+        }
+    }
+
+    // Tray item icon in a rounded box, like the launcher's app rows
+    component TrayIconBox: Rectangle {
+        id: iconBox
+
+        property string source
+
+        implicitWidth: Config.fontSizeIconLarge + Config.padding * 2
+        implicitHeight: implicitWidth
+        radius: Config.radiusLarge
+
+        Image {
+            id: icon
+            anchors.centerIn: parent
+            width: Config.fontSizeIconLarge
+            height: width
+            source: iconBox.source
+            sourceSize: Qt.size(width * 2, height * 2)
+            fillMode: Image.PreserveAspectFit
+            visible: status === Image.Ready
+        }
+
+        // Missing or broken icon
+        Image {
+            anchors.centerIn: parent
+            width: Config.fontSizeIconLarge
+            height: width
+            source: "image://icon/application-x-executable"
+            sourceSize: Qt.size(width * 2, height * 2)
+            fillMode: Image.PreserveAspectFit
+            visible: icon.status !== Image.Ready
         }
     }
 }
