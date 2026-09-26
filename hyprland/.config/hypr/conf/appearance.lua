@@ -89,38 +89,48 @@ hl.animation({ leaf = "fade",    enabled = true, speed = 4, bezier = "standard" 
 hl.animation({ leaf = "fadeDim", enabled = true, speed = 4, bezier = "standard" })
 hl.animation({ leaf = "border",  enabled = true, speed = 4, bezier = "standard" })
 
--- QuickShell layer surfaces
-hl.layer_rule({
-    name  = "modules",
-    match = { namespace = "qs_modules" },
+-- QuickShell layer surfaces. Blur only covers pixels more opaque than
+-- ignore_alpha, cut hard at that threshold: the antialiased edge of a
+-- rounded panel (alpha between the threshold and the panel's opacity) then
+-- shows the blur through, a jagged light fringe with xray. Quickshell keeps
+-- the threshold just below its background opacity by calling this again
+-- (same-name rules replace each other); 0.45 is below any opacity it allows
+function lyne_set_blur_ignore_alpha(ignore_alpha)
+    hl.layer_rule({
+        name  = "modules",
+        match = { namespace = "qs_modules" },
 
-    blur         = true,
-    ignore_alpha = 0.3,
-    no_anim      = true,
-})
+        blur         = true,
+        ignore_alpha = ignore_alpha,
+        no_anim      = true,
+    })
 
--- The bar and the panels attached to it (bar.attachPopups) blur only the
--- wallpaper (xray), so they share one tint whatever window is behind them
-hl.layer_rule({
-    name  = "attached",
-    match = { namespace = "qs_attached" },
+    -- The bar and the panels attached to it (bar.attachPopups) blur only
+    -- the wallpaper (xray), so they share one tint whatever window is
+    -- behind them
+    hl.layer_rule({
+        name  = "attached",
+        match = { namespace = "qs_attached" },
 
-    blur         = true,
-    ignore_alpha = 0.3,
-    no_anim      = true,
-    xray         = true,
-})
+        blur         = true,
+        ignore_alpha = ignore_alpha,
+        no_anim      = true,
+        xray         = true,
+    })
 
--- Notification popups float over windows like the bar popups, so they blur
--- what is behind them (no xray)
-hl.layer_rule({
-    name  = "notifications",
-    match = { namespace = "qs_notifications" },
+    -- Notification popups float over windows like the bar popups, so they
+    -- blur what is behind them (no xray)
+    hl.layer_rule({
+        name  = "notifications",
+        match = { namespace = "qs_notifications" },
 
-    blur         = true,
-    ignore_alpha = 0.3,
-    no_anim      = true,
-})
+        blur         = true,
+        ignore_alpha = ignore_alpha,
+        no_anim      = true,
+    })
+end
+
+lyne_set_blur_ignore_alpha(0.45)
 
 hl.layer_rule({
     name  = "power",

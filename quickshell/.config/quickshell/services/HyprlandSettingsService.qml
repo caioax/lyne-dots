@@ -4,6 +4,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Hyprland
+import qs.config
 
 // Hyprland options edited from Settings. The "hyprland" block of state.json
 // mirrors the hl.config() table; every change is applied live with
@@ -47,6 +49,25 @@ Singleton {
     // Last `hyprctl eval` error, shown by the settings pages
     property string error: ""
 
+    // Blur threshold of the Quickshell layers (lyne_set_blur_ignore_alpha in
+    // conf/appearance.lua), just below the background opacity: a lower one
+    // lets the blur show through the antialiased edges of rounded panels as
+    // a jagged light fringe. Only in memory, so it's sent again after every
+    // config reload
+    readonly property real blurIgnoreAlpha: Math.max(0, Config.backgroundOpacity - 0.05)
+
+    onBlurIgnoreAlphaChanged: blurDebounce.restart()
+    Component.onCompleted: blurDebounce.restart()
+
+    Connections {
+        target: Hyprland
+
+        function onRawEvent(event) {
+            if (event.name === "configreloaded")
+                root.applyBlur();
+        }
+    }
+
     onLuaChanged: {
         if (!StateService.isLoading) {
             evalDebounce.restart();
@@ -67,6 +88,7 @@ Singleton {
 
         function onStateLoaded() {
             writeDebounce.restart();
+            blurDebounce.restart();
         }
     }
 
@@ -111,6 +133,12 @@ Singleton {
         evalProc.running = true;
     }
 
+    function applyBlur() {
+        const value = blurIgnoreAlpha.toFixed(2);
+        blurProc.command = ["hyprctl", "eval", "if lyne_set_blur_ignore_alpha then lyne_set_blur_ignore_alpha(" + value + ") end"];
+        blurProc.running = true;
+    }
+
     // Persist; Hyprland reloads and picks the file up
     function write() {
         // Already on disk (e.g. on startup): don't trigger a reload
@@ -123,6 +151,13 @@ Singleton {
         id: evalDebounce
         interval: 100
         onTriggered: root.applyLive()
+    }
+
+    // The opacity slider changes it on every step
+    Timer {
+        id: blurDebounce
+        interval: 100
+        onTriggered: root.applyBlur()
     }
 
     Timer {
@@ -154,5 +189,9 @@ Singleton {
                     console.warn("[HyprlandSettings]", root.error);
             }
         }
+    }
+
+    Process {
+        id: blurProc
     }
 }
