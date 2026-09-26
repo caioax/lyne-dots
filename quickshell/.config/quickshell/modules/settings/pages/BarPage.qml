@@ -91,7 +91,10 @@ ColumnLayout {
 
         SelectRow {
             label: "Style"
-            description: Config.barWorkspaceStyle === "numbers" ? "Numbers of the workspaces in use, dots for the empty ones" : "A pill per workspace, solid when it has windows"
+            description: ({
+                    "numbers": "Numbers of the workspaces in use, dots for the empty ones",
+                    "dots": "Filled dots for workspaces in use, rings for empty ones; the active one is a bar"
+                })[Config.barWorkspaceStyle] ?? "A pill per workspace, solid when it has windows"
             path: "bar.workspaces.style"
             options: [
                 {
@@ -103,6 +106,11 @@ ColumnLayout {
                     label: "Numbers",
                     icon: "\u{f03a0}",
                     value: "numbers"
+                },
+                {
+                    label: "Dots",
+                    icon: "\u{f09df}",
+                    value: "dots"
                 }
             ]
         }

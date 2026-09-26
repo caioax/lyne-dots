@@ -59,7 +59,8 @@ Item {
     }
 
     implicitWidth: slotEnd(firstVisible + count - 1) - slotX(firstVisible)
-    implicitHeight: indicatorHeight + itemSpacing
+    // Same height in every style, so small shapes keep a comfortable hit area
+    implicitHeight: Config.fontSizeSmall + Config.padding + Math.round(Config.padding * 2 / 3)
     clip: true
 
     // --- Scroll Logic ---

@@ -20,7 +20,8 @@ Item {
 
     readonly property var styles: ({
             "pills": pillsStyle,
-            "numbers": numbersStyle
+            "numbers": numbersStyle,
+            "dots": dotsStyle
         })
 
     implicitWidth: workspacesModel.specialActive ? badge.width : strip.implicitWidth
@@ -60,6 +61,14 @@ Item {
     Component {
         id: numbersStyle
         NumbersStyle {
+            model: workspacesModel
+            count: Config.barWorkspaceCount
+        }
+    }
+
+    Component {
+        id: dotsStyle
+        DotsStyle {
             model: workspacesModel
             count: Config.barWorkspaceCount
         }
