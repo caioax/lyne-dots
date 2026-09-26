@@ -340,7 +340,7 @@ ColumnLayout {
     SettingsGroup {
         title: "Quick Settings"
 
-        SelectRow {
+        TemplatePicker {
             label: "Style"
             description: Config.barQsStyle === "minimal" ? "One icon; a dot on it when something needs a glance: unread notifications, low battery, no network, a microphone in use" : "Network, Bluetooth, battery and notifications; muted audio and a microphone in use show up only then"
             path: "bar.quickSettings.style"
@@ -362,6 +362,9 @@ ColumnLayout {
                     value: "minimal"
                 }
             ]
+            preview: Component {
+                QsStylePreview {}
+            }
         }
 
         ToggleRow {

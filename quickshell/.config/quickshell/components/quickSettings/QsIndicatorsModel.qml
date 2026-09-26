@@ -58,19 +58,17 @@ QtObject {
     property bool live: true
     property var sampleIndicators: ({})
 
-    // The system state, minus the indicators switched off in Settings
-    // (bar.quickSettings.indicators)
+    // The system state (or the sample), minus the indicators switched off in
+    // Settings (bar.quickSettings.indicators)
     readonly property var indicators: {
-        if (!live)
-            return sampleIndicators;
-        const all = {
+        const all = Object.assign({}, live ? {
             "network": network,
             "bluetooth": bluetooth,
             "volume": volume,
             "mic": mic,
             "battery": battery,
             "notifications": notifications
-        };
+        } : sampleIndicators);
         const allowed = Config.barQsIndicators;
         for (const id of order) {
             if (allowed[id] === false)
