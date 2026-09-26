@@ -222,6 +222,12 @@ ColumnLayout {
             ]
         }
 
+        ToggleRow {
+            label: "Attention badge"
+            description: "A pulsing dot on items asking for attention, and on the button hiding them"
+            path: "bar.tray.attention"
+        }
+
         // Running items in bar order: move, hide, and pin (pinned style)
         Repeater {
             model: TrayService.items

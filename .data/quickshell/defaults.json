@@ -39,7 +39,8 @@
             "open": false,
             "pinned": [],
             "hidden": [],
-            "order": []
+            "order": [],
+            "attention": true
         }
     },
     "clipboard": {

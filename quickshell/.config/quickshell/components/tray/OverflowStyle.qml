@@ -49,6 +49,12 @@ BarButton {
         }
     }
 
+    // Something in the closed popup needs attention
+    AttentionDot {
+        anchors.margins: Math.round(Config.padding / 3)
+        active: !popup.visible && root.model.anyNeedsAttention(root.items)
+    }
+
     QsPopupWindow {
         id: popup
 

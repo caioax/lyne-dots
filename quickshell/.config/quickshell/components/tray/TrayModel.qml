@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.config
+import Quickshell.Services.SystemTray
 import qs.services
 
 // Tray state shared by every tray style: the items to show and what to do
@@ -15,6 +16,16 @@ QtObject {
     readonly property bool hasItems: items.length > 0
     readonly property var pinnedItems: items.filter(i => TrayService.isPinned(i.id))
     readonly property var restItems: items.filter(i => !TrayService.isPinned(i.id))
+
+    // Items asking for attention (StatusNotifierItem status), when the
+    // badge is on
+    function needsAttention(item) {
+        return Config.barTrayAttention && item?.status === Status.NeedsAttention;
+    }
+
+    function anyNeedsAttention(list) {
+        return list.some(i => needsAttention(i));
+    }
 
     signal menuRequested(var item, Item anchor)
     // The context menu went away: "triggered", "escape" or "outside"

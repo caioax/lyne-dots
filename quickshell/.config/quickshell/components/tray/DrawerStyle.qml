@@ -103,6 +103,12 @@ RowLayout {
             }
         }
 
+        // Something behind the closed drawer needs attention
+        AttentionDot {
+            anchors.margins: Math.round(Config.padding / 3)
+            active: !root.isOpen && root.model.anyNeedsAttention(root.model.items)
+        }
+
         MouseArea {
             id: toggleMouse
             anchors.fill: parent

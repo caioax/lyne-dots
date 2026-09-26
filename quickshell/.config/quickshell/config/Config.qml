@@ -90,6 +90,8 @@ Singleton {
     // Item ids never shown in the bar, and the user's item order
     readonly property var barTrayHidden: getState("bar.tray.hidden", [])
     readonly property var barTrayOrder: getState("bar.tray.order", [])
+    // Red dot on items asking for attention (and on the button hiding them)
+    readonly property bool barTrayAttention: getState("bar.tray.attention", true)
 
     readonly property int radiusSmall: getState("geometry.radiusSmall", 5)
     readonly property int radius: getState("geometry.radius", 10)

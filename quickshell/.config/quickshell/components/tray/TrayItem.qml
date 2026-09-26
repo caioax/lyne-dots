@@ -57,6 +57,17 @@ Rectangle {
         visible: icon.status === Image.Error
     }
 
+    // On the icon's corner
+    Item {
+        anchors.centerIn: parent
+        width: root.iconSize + Config.padding / 2
+        height: width
+
+        AttentionDot {
+            active: root.model.needsAttention(root.item)
+        }
+    }
+
     MouseArea {
         id: mouseArea
         anchors.fill: parent
