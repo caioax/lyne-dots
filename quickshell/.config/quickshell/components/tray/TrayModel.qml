@@ -17,6 +17,9 @@ QtObject {
     readonly property var pinnedItems: items.filter(i => TrayService.isPinned(i.id))
     readonly property var restItems: items.filter(i => !TrayService.isPinned(i.id))
 
+    // Icons drawn in the text color (bar.tray.monochrome)
+    readonly property bool monochrome: Config.barTrayMonochrome
+
     // Items asking for attention (StatusNotifierItem status), when the
     // badge is on
     function needsAttention(item) {

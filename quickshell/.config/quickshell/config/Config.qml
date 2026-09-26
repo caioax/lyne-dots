@@ -92,6 +92,8 @@ Singleton {
     readonly property var barTrayOrder: getState("bar.tray.order", [])
     // Red dot on items asking for attention (and on the button hiding them)
     readonly property bool barTrayAttention: getState("bar.tray.attention", true)
+    // Icons tinted with the text color instead of their own colors
+    readonly property bool barTrayMonochrome: getState("bar.tray.monochrome", false)
 
     readonly property int radiusSmall: getState("geometry.radiusSmall", 5)
     readonly property int radius: getState("geometry.radius", 10)

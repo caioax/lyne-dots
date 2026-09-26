@@ -223,6 +223,12 @@ ColumnLayout {
         }
 
         ToggleRow {
+            label: "Monochrome icons"
+            description: "Tint the icons with the text color, like the rest of the bar"
+            path: "bar.tray.monochrome"
+        }
+
+        ToggleRow {
             label: "Attention badge"
             description: "A pulsing dot on items asking for attention, and on the button hiding them"
             path: "bar.tray.attention"

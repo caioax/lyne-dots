@@ -40,7 +40,8 @@
             "pinned": [],
             "hidden": [],
             "order": [],
-            "attention": true
+            "attention": true,
+            "monochrome": false
         }
     },
     "clipboard": {

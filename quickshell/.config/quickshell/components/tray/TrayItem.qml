@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import qs.config
 
 // One tray icon: left click activates the item, right click asks the model
@@ -32,29 +33,45 @@ Rectangle {
         }
     }
 
-    // Primary icon (theme name, file path, or pixmap URL)
-    Image {
-        id: icon
-        anchors.centerIn: parent
-        width: root.iconSize
-        height: root.iconSize
-        source: root.model.iconSource(root.item)
-        fillMode: Image.PreserveAspectFit
-        sourceSize: Qt.size(root.iconSize * 2, root.iconSize * 2)
-        smooth: true
-        visible: status === Image.Ready
-    }
+    // The icon, tinted with the text color in monochrome mode
+    Item {
+        id: glyph
 
-    // Fallback when the primary icon fails (e.g. pixmap-based icons from nm-applet)
-    Image {
         anchors.centerIn: parent
         width: root.iconSize
         height: root.iconSize
-        source: "image://icon/application-default-icon"
-        fillMode: Image.PreserveAspectFit
-        sourceSize: Qt.size(root.iconSize * 2, root.iconSize * 2)
-        smooth: true
-        visible: icon.status === Image.Error
+
+        layer.enabled: root.model.monochrome
+        // Colorization alone keeps each color's luminance, so saturated
+        // icons came out dim grey; brighten and stretch them first to match
+        // the bar's own icons while keeping their inner details
+        layer.effect: MultiEffect {
+            colorization: 1
+            brightness: 0.4
+            contrast: 0.6
+            colorizationColor: Config.textColor
+        }
+
+        // Primary icon (theme name, file path, or pixmap URL)
+        Image {
+            id: icon
+            anchors.fill: parent
+            source: root.model.iconSource(root.item)
+            fillMode: Image.PreserveAspectFit
+            sourceSize: Qt.size(root.iconSize * 2, root.iconSize * 2)
+            smooth: true
+            visible: status === Image.Ready
+        }
+
+        // Fallback when the primary icon fails (e.g. pixmap-based icons from nm-applet)
+        Image {
+            anchors.fill: parent
+            source: "image://icon/application-default-icon"
+            fillMode: Image.PreserveAspectFit
+            sourceSize: Qt.size(root.iconSize * 2, root.iconSize * 2)
+            smooth: true
+            visible: icon.status === Image.Error
+        }
     }
 
     // On the icon's corner
