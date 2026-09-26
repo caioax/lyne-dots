@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell
 import qs.config
 import qs.services
 import "tray"
@@ -12,11 +13,16 @@ Item {
     TrayModel {
         id: trayModel
         onMenuRequested: (item, anchor) => {
-            // Opens under the icon, at its absolute position on screen
-            const globalPos = anchor.mapToGlobal(0, anchor.height);
+            // Under the icon. Positions inside a layer are relative to it,
+            // so add the layer's own offset (the overflow popup has one;
+            // the bar spans the screen edge)
+            const win = anchor.QsWindow.window;
+            const pos = anchor.mapToItem(null, 0, 0);
+            sharedMenu.companion = win !== root.QsWindow.window ? win : null;
             sharedMenu.rootMenuHandle = item.menu;
-            sharedMenu.anchorX = globalPos.x;
-            sharedMenu.anchorY = globalPos.y + Config.padding;
+            sharedMenu.anchorX = pos.x + (win?.margins?.left ?? 0);
+            sharedMenu.anchorY = (win?.margins?.top ?? 0) + pos.y + anchor.height + Config.padding;
+            sharedMenu.anchorBottom = (win?.margins?.bottom ?? 0) + (win?.height ?? 0) - pos.y + Config.padding;
             sharedMenu.open();
         }
     }
@@ -25,6 +31,7 @@ Item {
         id: sharedMenu
         visible: false
 
+        onDismissed: reason => trayModel.menuClosed(reason)
         onVisibleChanged: {
             if (visible)
                 TrayService.registerActiveMenu(sharedMenu);
@@ -33,7 +40,8 @@ Item {
 
     readonly property var styles: ({
             "row": rowStyle,
-            "drawer": drawerStyle
+            "drawer": drawerStyle,
+            "overflow": overflowStyle
         })
 
     implicitWidth: style.implicitWidth
@@ -48,6 +56,14 @@ Item {
     Component {
         id: rowStyle
         RowStyle {
+            model: trayModel
+            onItemActivated: sharedMenu.close()
+        }
+    }
+
+    Component {
+        id: overflowStyle
+        OverflowStyle {
             model: trayModel
             onItemActivated: sharedMenu.close()
         }

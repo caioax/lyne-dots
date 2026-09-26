@@ -13,6 +13,8 @@ QtObject {
     readonly property bool hasItems: items.length > 0
 
     signal menuRequested(var item, Item anchor)
+    // The context menu went away: "triggered", "escape" or "outside"
+    signal menuClosed(string reason)
 
     function iconSource(item) {
         return TrayService.getIconSource(item?.icon ?? "");

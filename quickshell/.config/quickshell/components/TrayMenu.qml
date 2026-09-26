@@ -17,7 +17,17 @@ PanelWindow {
     // Set before open()
     property var rootMenuHandle: null
     property int anchorX: 0
+    // From the screen top, or with the bar at the bottom, from the screen
+    // bottom (a layer doesn't know its own position, so it anchors to the
+    // edge the menu grows from)
     property int anchorY: 0
+    property int anchorBottom: 0
+    // Window the menu was opened from (the tray overflow popup): part of
+    // the focus grab, so clicks on it don't dismiss the menu
+    property var companion: null
+
+    // How the menu went away: "triggered", "escape" or "outside"
+    signal dismissed(string reason)
 
     // Submenus entered so far: [{ entry, label }]; empty = the root menu
     property var stack: []
@@ -35,8 +45,6 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     WlrLayershell.exclusiveZone: -1
 
-    // With the bar at the bottom the menu opens upward from it (a layer
-    // doesn't know its own position, so anchorY only works from the top)
     anchors {
         left: true
         top: !Config.barOnBottom
@@ -45,7 +53,7 @@ PanelWindow {
     margins {
         left: Math.max(Config.spacing, Math.min(root.screen.width - implicitWidth - Config.spacing, root.anchorX))
         top: Config.barOnBottom ? 0 : Math.min(root.screen.height - implicitHeight - Config.spacing, root.anchorY)
-        bottom: Config.barOnBottom ? Config.barReservedHeight + Config.padding : 0
+        bottom: Config.barOnBottom ? root.anchorBottom : 0
     }
 
     function open() {
@@ -54,10 +62,13 @@ PanelWindow {
         focusTimer.restart();
     }
 
-    function close() {
+    function close(reason) {
+        if (!visible)
+            return;
         visible = false;
         stack = [];
         focusGrab.active = false;
+        dismissed(reason ?? "outside");
     }
 
     function enter(entry) {
@@ -78,9 +89,9 @@ PanelWindow {
 
     HyprlandFocusGrab {
         id: focusGrab
-        windows: [root]
+        windows: root.companion ? [root, root.companion] : [root]
         active: false
-        onCleared: root.close()
+        onCleared: root.close("outside")
     }
 
     // The grab is cleared at once when activated in the same tick the
@@ -131,7 +142,7 @@ PanelWindow {
             if (root.current)
                 root.back();
             else
-                root.close();
+                root.close("escape");
         }
 
         Column {
@@ -211,7 +222,7 @@ PanelWindow {
                                     root.enter(entry);
                                 } else {
                                     entry.triggered();
-                                    root.close();
+                                    root.close("triggered");
                                 }
                             }
                         }

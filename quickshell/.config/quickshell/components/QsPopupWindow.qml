@@ -26,6 +26,10 @@ PanelWindow {
     // Items whose Keys handlers get the key presses (the popup keeps the focus)
     property list<Item> keyTargets
 
+    // While true, losing the focus grab doesn't close the popup (a menu
+    // opened from its content takes the grab); call regrab() afterwards
+    property bool holdOpen: false
+
     signal closing
 
     readonly property int screenMargin: 5
@@ -129,6 +133,12 @@ PanelWindow {
         grabTimer.restart();
     }
 
+    // Takes the focus grab back (see holdOpen)
+    function regrab() {
+        if (visible && !isClosing)
+            grabTimer.restart();
+    }
+
     Timer {
         id: closeTimer
         interval: Config.animDuration
@@ -143,7 +153,10 @@ PanelWindow {
         id: focusGrab
         windows: [root]
         active: false
-        onCleared: root.closeWindow()
+        onCleared: {
+            if (!root.holdOpen)
+                root.closeWindow();
+        }
     }
 
     Timer {

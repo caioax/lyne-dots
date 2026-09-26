@@ -11,12 +11,19 @@ Rectangle {
     required property var model
     required property var item
 
+    // Bar size by default; the overflow grid uses bigger, squarer tiles
+    property int size: Config.barButtonHeight
+    property int iconSize: Config.fontSizeIconSmall
+    property bool round: true
+
     // Emitted after a left click, so the owner can close an open menu
     signal activated
+    // Emitted before asking the model for the context menu
+    signal menuRequested
 
-    implicitWidth: Config.barButtonHeight
-    implicitHeight: Config.barButtonHeight
-    radius: width / 2
+    implicitWidth: size
+    implicitHeight: size
+    radius: round ? width / 2 : Config.radius
     color: mouseArea.containsMouse ? Config.surface1Color : Qt.alpha(Config.surface1Color, 0)
 
     Behavior on color {
@@ -29,11 +36,11 @@ Rectangle {
     Image {
         id: icon
         anchors.centerIn: parent
-        width: Config.fontSizeIconSmall
-        height: Config.fontSizeIconSmall
+        width: root.iconSize
+        height: root.iconSize
         source: root.model.iconSource(root.item)
         fillMode: Image.PreserveAspectFit
-        sourceSize: Qt.size(Config.fontSizeIconSmall * 2, Config.fontSizeIconSmall * 2)
+        sourceSize: Qt.size(root.iconSize * 2, root.iconSize * 2)
         smooth: true
         visible: status === Image.Ready
     }
@@ -41,11 +48,11 @@ Rectangle {
     // Fallback when the primary icon fails (e.g. pixmap-based icons from nm-applet)
     Image {
         anchors.centerIn: parent
-        width: Config.fontSizeIconSmall
-        height: Config.fontSizeIconSmall
+        width: root.iconSize
+        height: root.iconSize
         source: "image://icon/application-default-icon"
         fillMode: Image.PreserveAspectFit
-        sourceSize: Qt.size(Config.fontSizeIconSmall * 2, Config.fontSizeIconSmall * 2)
+        sourceSize: Qt.size(root.iconSize * 2, root.iconSize * 2)
         smooth: true
         visible: icon.status === Image.Error
     }
@@ -61,7 +68,8 @@ Rectangle {
             if (mouse.button === Qt.LeftButton) {
                 root.model.activate(root.item);
                 root.activated();
-            } else {
+            } else if (root.item.hasMenu) {
+                root.menuRequested();
                 root.model.openMenu(root.item, root);
             }
         }
