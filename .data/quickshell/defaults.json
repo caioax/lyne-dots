@@ -33,6 +33,10 @@
             "count": 10,
             "hideEmpty": false,
             "scroll": true
+        },
+        "tray": {
+            "style": "drawer",
+            "open": false
         }
     },
     "clipboard": {

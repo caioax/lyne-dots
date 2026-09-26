@@ -31,13 +31,26 @@ Item {
         }
     }
 
+    readonly property var styles: ({
+            "row": rowStyle,
+            "drawer": drawerStyle
+        })
+
     implicitWidth: style.implicitWidth
     implicitHeight: style.implicitHeight
 
     Loader {
         id: style
         anchors.verticalCenter: parent.verticalCenter
-        sourceComponent: drawerStyle
+        sourceComponent: root.styles[Config.barTrayStyle] ?? drawerStyle
+    }
+
+    Component {
+        id: rowStyle
+        RowStyle {
+            model: trayModel
+            onItemActivated: sharedMenu.close()
+        }
     }
 
     Component {

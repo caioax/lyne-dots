@@ -3,15 +3,16 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.services
 
 // Tray style "drawer": the icons slide out of a chevron button, inline in
-// the bar
+// the bar; open or closed is remembered in bar.tray.open
 RowLayout {
     id: root
 
     required property var model
 
-    property bool isOpen: false
+    readonly property bool isOpen: Config.barTrayOpen
 
     signal itemActivated
 
@@ -107,7 +108,7 @@ RowLayout {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.isOpen = !root.isOpen
+            onClicked: StateService.set("bar.tray.open", !root.isOpen)
         }
     }
 }

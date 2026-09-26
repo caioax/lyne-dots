@@ -17,7 +17,13 @@ Rectangle {
     implicitWidth: Config.barButtonHeight
     implicitHeight: Config.barButtonHeight
     radius: width / 2
-    color: mouseArea.containsMouse ? Config.surface1Color : "transparent"
+    color: mouseArea.containsMouse ? Config.surface1Color : Qt.alpha(Config.surface1Color, 0)
+
+    Behavior on color {
+        ColorAnimation {
+            duration: Config.animDuration
+        }
+    }
 
     // Primary icon (theme name, file path, or pixmap URL)
     Image {
@@ -27,7 +33,6 @@ Rectangle {
         height: Config.fontSizeIconSmall
         source: root.model.iconSource(root.item)
         fillMode: Image.PreserveAspectFit
-        asynchronous: true
         sourceSize: Qt.size(Config.fontSizeIconSmall * 2, Config.fontSizeIconSmall * 2)
         smooth: true
         visible: status === Image.Ready

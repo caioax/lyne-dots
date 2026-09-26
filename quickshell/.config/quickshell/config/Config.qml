@@ -81,6 +81,10 @@ Singleton {
     readonly property bool barWorkspaceHideEmpty: getState("bar.workspaces.hideEmpty", false)
     // Mouse wheel over the strip switches workspace
     readonly property bool barWorkspaceScroll: getState("bar.workspaces.scroll", true)
+    // Tray style: "row", "drawer", "overflow" or "pinned"
+    readonly property string barTrayStyle: getState("bar.tray.style", "drawer")
+    // Whether the drawer style is open (remembered across restarts)
+    readonly property bool barTrayOpen: getState("bar.tray.open", false)
 
     readonly property int radiusSmall: getState("geometry.radiusSmall", 5)
     readonly property int radius: getState("geometry.radius", 10)
