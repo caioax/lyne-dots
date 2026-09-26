@@ -6,7 +6,8 @@ import qs.services
 import "../power/"
 
 // Template "center": big clock, avatar and the password in the middle; the
-// status pills bottom left and the power buttons bottom right
+// status pills bottom left, the player (while something plays) bottom
+// center and the power buttons bottom right
 Item {
     id: root
 
@@ -58,6 +59,12 @@ Item {
         LockInput {
             Layout.alignment: Qt.AlignHCenter
         }
+    }
+
+    LockPlayer {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Config.spacing * 4
     }
 
     LockStatus {

@@ -83,6 +83,7 @@
         "style": "center",
         "showStatus": true,
         "showPower": true,
+        "showMedia": true,
         "beforeSleep": true
     },
     "power": {

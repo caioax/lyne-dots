@@ -33,117 +33,127 @@ Item {
         }
     }
 
-    RowLayout {
+    ColumnLayout {
         anchors.centerIn: parent
         spacing: Config.spacing * 2
 
-        // ========== WEATHER + STATUS ==========
-        LockCard {
-            visible: LockService.showStatus
-            Layout.preferredWidth: root.sideWidth
+        RowLayout {
+            Layout.alignment: Qt.AlignHCenter
+            spacing: Config.spacing * 2
 
-            Text {
-                visible: root.weather !== null
-                text: root.weather ? WeatherService.icon(root.weather.code, root.weather.isDay) : ""
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeIconLarge * 2
-                color: Config.accentColor
+            // ========== WEATHER + STATUS ==========
+            LockCard {
+                visible: LockService.showStatus
+                Layout.preferredWidth: root.sideWidth
+
+                Text {
+                    visible: root.weather !== null
+                    text: root.weather ? WeatherService.icon(root.weather.code, root.weather.isDay) : ""
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeIconLarge * 2
+                    color: Config.accentColor
+                }
+
+                Text {
+                    visible: root.weather !== null
+                    text: root.weather ? root.weather.temp + "°" : ""
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeIconLarge * 1.5
+                    font.bold: true
+                    color: Config.textColor
+                }
+
+                Text {
+                    visible: root.weather !== null
+                    Layout.fillWidth: true
+                    text: root.weather ? WeatherService.description(root.weather.code) + " · feels " + root.weather.feelsLike + "°" : ""
+                    wrapMode: Text.Wrap
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeNormal
+                    color: Config.subtextColor
+                }
+
+                Item {
+                    Layout.fillHeight: true
+                }
+
+                LockStatus {
+                    vertical: true
+                    showWeather: false
+                }
             }
 
-            Text {
-                visible: root.weather !== null
-                text: root.weather ? root.weather.temp + "°" : ""
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeIconLarge * 1.5
-                font.bold: true
-                color: Config.textColor
+            // ========== CLOCK + PASSWORD ==========
+            LockCard {
+                LockClock {
+                    Layout.alignment: Qt.AlignHCenter
+                    size: Config.fontSizeIconLarge * 3.5
+                }
+
+                Item {
+                    implicitHeight: Config.spacing
+                }
+
+                PowerAvatar {
+                    Layout.alignment: Qt.AlignHCenter
+                    size: Config.fontSizeIconLarge * 2.6
+                }
+
+                Text {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: PowerService.user
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeLarge
+                    font.bold: true
+                    color: Config.textColor
+                }
+
+                LockInput {
+                    Layout.alignment: Qt.AlignHCenter
+                    fieldWidth: Config.fontSizeNormal * 20
+                }
             }
 
-            Text {
-                visible: root.weather !== null
-                Layout.fillWidth: true
-                text: root.weather ? WeatherService.description(root.weather.code) + " · feels " + root.weather.feelsLike + "°" : ""
-                wrapMode: Text.Wrap
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeNormal
-                color: Config.subtextColor
-            }
+            // ========== SESSION + POWER ==========
+            LockCard {
+                visible: LockService.showPower
+                Layout.preferredWidth: root.sideWidth
 
-            Item {
-                Layout.fillHeight: true
-            }
+                Text {
+                    text: "Session"
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeLarge
+                    font.bold: true
+                    color: Config.textColor
+                }
 
-            LockStatus {
-                vertical: true
-                showWeather: false
+                Text {
+                    text: PowerService.user + (PowerService.host !== "" ? "@" + PowerService.host : "")
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeNormal
+                    color: Config.subtextColor
+                }
+
+                Text {
+                    text: "up " + PowerService.uptime
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeNormal
+                    color: Config.subtextColor
+                }
+
+                Item {
+                    Layout.fillHeight: true
+                }
+
+                LockPower {
+                    Layout.alignment: Qt.AlignHCenter
+                }
             }
         }
 
-        // ========== CLOCK + PASSWORD ==========
-        LockCard {
-            LockClock {
-                Layout.alignment: Qt.AlignHCenter
-                size: Config.fontSizeIconLarge * 3.5
-            }
-
-            Item {
-                implicitHeight: Config.spacing
-            }
-
-            PowerAvatar {
-                Layout.alignment: Qt.AlignHCenter
-                size: Config.fontSizeIconLarge * 2.6
-            }
-
-            Text {
-                Layout.alignment: Qt.AlignHCenter
-                text: PowerService.user
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeLarge
-                font.bold: true
-                color: Config.textColor
-            }
-
-            LockInput {
-                Layout.alignment: Qt.AlignHCenter
-                fieldWidth: Config.fontSizeNormal * 20
-            }
-        }
-
-        // ========== SESSION + POWER ==========
-        LockCard {
-            visible: LockService.showPower
-            Layout.preferredWidth: root.sideWidth
-
-            Text {
-                text: "Session"
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeLarge
-                font.bold: true
-                color: Config.textColor
-            }
-
-            Text {
-                text: PowerService.user + (PowerService.host !== "" ? "@" + PowerService.host : "")
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeNormal
-                color: Config.subtextColor
-            }
-
-            Text {
-                text: "up " + PowerService.uptime
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeNormal
-                color: Config.subtextColor
-            }
-
-            Item {
-                Layout.fillHeight: true
-            }
-
-            LockPower {
-                Layout.alignment: Qt.AlignHCenter
-            }
+        // Below the cards while something plays
+        LockPlayer {
+            Layout.alignment: Qt.AlignHCenter
         }
     }
 

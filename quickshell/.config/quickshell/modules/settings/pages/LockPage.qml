@@ -44,6 +44,12 @@ ColumnLayout {
         }
 
         ToggleRow {
+            label: "Media player"
+            description: "Cover with the cava ring, track and controls once something plays"
+            path: "lock.showMedia"
+        }
+
+        ToggleRow {
             label: "Power buttons"
             description: "Suspend, reboot and shut down, with the power menu's countdown"
             path: "lock.showPower"

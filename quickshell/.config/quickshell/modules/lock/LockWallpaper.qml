@@ -112,6 +112,12 @@ Item {
         }
     }
 
+    LockPlayer {
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        anchors.margins: Config.spacing * 6
+    }
+
     // Power buttons stay reachable in the corner while idle
     LockPower {
         visible: LockService.showPower && !root.typing

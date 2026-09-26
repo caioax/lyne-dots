@@ -21,44 +21,11 @@ WlSessionLock {
     // Fading out after a successful password
     property bool unlocking: false
 
-    onLockStateChanged: {
-        // Protocol unlock complete → defer LockService.unlock() to the next
-        // event loop so surface destruction finishes cleanly before the Loader
-        // tries to destroy this component (avoids "invalid context" warning)
-        if (!locked)
-            Qt.callLater(LockService.unlock);
-    }
-
     onSecureChanged: LockService.secure = secure
 
     Component.onCompleted: {
         PowerService.refresh();
         WeatherService.refresh(false);
-    }
-
-    Connections {
-        id: lockServiceConn
-
-        target: LockService
-
-        function onAuthSucceeded() {
-            PowerService.cancel();
-            root.unlocking = true;
-            unlockDelay.start();
-        }
-    }
-
-    // Lets the content fade and the blur clear before the surfaces go
-    Timer {
-        id: unlockDelay
-
-        interval: Config.animDurationLong
-        onTriggered: {
-            // Disconnect before unlocking to prevent signal handlers
-            // from firing during surface destruction
-            lockServiceConn.enabled = false;
-            root.locked = false;
-        }
     }
 
     WlSessionLockSurface {
@@ -74,6 +41,39 @@ WlSessionLock {
         readonly property bool shown: ready && !root.unlocking
 
         Component.onCompleted: Qt.callLater(() => ready = true)
+
+        // The unlock sequence lives in the main surface: children of
+        // WlSessionLock itself go to its default property (`surface`) and
+        // never run, which left the screen locked after a right password
+        Connections {
+            id: lockServiceConn
+
+            target: LockService
+            enabled: surface.main
+
+            function onAuthSucceeded() {
+                PowerService.cancel();
+                root.unlocking = true;
+                unlockDelay.start();
+            }
+        }
+
+        // Lets the content fade and the blur clear before the surfaces go
+        Timer {
+            id: unlockDelay
+
+            interval: Config.animDurationLong
+            onTriggered: {
+                // Disconnect before unlocking to prevent signal handlers
+                // from firing during surface destruction
+                lockServiceConn.enabled = false;
+                root.locked = false;
+                // lockStateChanged doesn't fire for the unlock, so the
+                // service is told here (on its own timer, after the
+                // surfaces are gone)
+                LockService.unlockSoon();
+            }
+        }
 
         color: Config.backgroundColor
 
@@ -173,6 +173,10 @@ WlSessionLock {
                 function onBufferChanged() {
                     if (input.text !== LockService.buffer)
                         input.text = LockService.buffer;
+                }
+
+                function onFocusRequested() {
+                    input.forceActiveFocus();
                 }
             }
         }

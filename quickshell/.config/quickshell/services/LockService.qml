@@ -33,9 +33,12 @@ Singleton {
     readonly property string style: StateService.get("lock.style", "center")
     readonly property bool showStatus: StateService.get("lock.showStatus", true)
     readonly property bool showPower: StateService.get("lock.showPower", true)
+    readonly property bool showMedia: StateService.get("lock.showMedia", true)
     readonly property bool lockBeforeSleep: StateService.get("lock.beforeSleep", true)
 
     signal authSucceeded
+    // The password field was clicked: the surfaces take the keyboard back
+    signal focusRequested
 
     // ========================================================================
     // PAM AUTHENTICATION
@@ -108,6 +111,20 @@ Singleton {
             locked = false;
             secure = false;
         }
+    }
+
+    // Called by LockScreen right after it releases the session lock: the
+    // service (and the Loader holding the lock) follow on the next turns of
+    // the event loop, once the surfaces are destroyed (avoids "invalid
+    // context" warnings)
+    function unlockSoon() {
+        unlockTimer.restart();
+    }
+
+    Timer {
+        id: unlockTimer
+        interval: 50
+        onTriggered: root.unlock()
     }
 
     function tryUnlock() {
