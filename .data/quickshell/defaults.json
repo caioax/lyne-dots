@@ -29,6 +29,7 @@
         "showSystem": false,
         "showWeather": false,
         "workspaces": {
+            "style": "pills",
             "count": 10
         }
     },

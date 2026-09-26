@@ -4,7 +4,8 @@ import qs.config
 import "workspaces"
 
 // Bar workspace indicator: the monitor's workspace state (WorkspacesModel)
-// drawn by a style, swapped for the special workspace badge while one is open.
+// drawn by the style picked in bar.workspaces.style, swapped for the special
+// workspace badge while one is open.
 Item {
     id: root
 
@@ -16,6 +17,11 @@ Item {
         id: workspacesModel
         screen: root.parentScreen
     }
+
+    readonly property var styles: ({
+            "pills": pillsStyle,
+            "numbers": numbersStyle
+        })
 
     implicitWidth: workspacesModel.specialActive ? badge.width : strip.implicitWidth
     implicitHeight: strip.implicitHeight
@@ -36,13 +42,26 @@ Item {
         }
     }
 
-    PillsStyle {
+    Loader {
         id: strip
-        model: workspacesModel
-        count: Config.barWorkspaceCount
         visible: !workspacesModel.specialActive
         anchors.centerIn: parent
-        width: implicitWidth
-        height: implicitHeight
+        sourceComponent: root.styles[Config.barWorkspaceStyle] ?? pillsStyle
+    }
+
+    Component {
+        id: pillsStyle
+        PillsStyle {
+            model: workspacesModel
+            count: Config.barWorkspaceCount
+        }
+    }
+
+    Component {
+        id: numbersStyle
+        NumbersStyle {
+            model: workspacesModel
+            count: Config.barWorkspaceCount
+        }
     }
 }

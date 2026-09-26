@@ -89,6 +89,24 @@ ColumnLayout {
     SettingsGroup {
         title: "Workspaces"
 
+        SelectRow {
+            label: "Style"
+            description: Config.barWorkspaceStyle === "numbers" ? "Numbers of the workspaces in use, dots for the empty ones" : "A pill per workspace, solid when it has windows"
+            path: "bar.workspaces.style"
+            options: [
+                {
+                    label: "Pills",
+                    icon: "\u{f01d8}",
+                    value: "pills"
+                },
+                {
+                    label: "Numbers",
+                    icon: "\u{f03a0}",
+                    value: "numbers"
+                }
+            ]
+        }
+
         StepperRow {
             label: "Shown"
             description: "Workspaces in view at once; the strip scrolls to reach the others"
