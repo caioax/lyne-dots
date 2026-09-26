@@ -13,6 +13,9 @@ Item {
 
     required property WorkspacesModel model
     property int count: 10
+    // Only workspaces with windows (and the active one) get a slot; the
+    // others collapse and nothing scrolls
+    property bool hideEmpty: false
 
     // Width of slot `index`; styles override it (it may read the model, e.g.
     // to fit a workspace's app icons)
@@ -40,27 +43,39 @@ Item {
     readonly property int activeIndex: model.relativeActiveId - 1
     readonly property int total: model.totalWorkspaces
 
-    // Left edge of every slot, plus the end of the last one
-    readonly property var xs: {
-        let out = [];
+    function isShown(index) {
+        return !hideEmpty || index === activeIndex || model.isOccupied(model.monitorOffset + index + 1);
+    }
+
+    // Left edge (xs, plus the end of the last slot) and width (ws) of every
+    // slot; hidden slots take no width and no gap
+    readonly property var layout: {
+        let xs = [];
+        let ws = [];
         let x = 0;
         for (let i = 0; i < total; i++) {
-            out.push(x);
-            x += slotWidth(i, i === activeIndex) + itemSpacing;
+            const w = isShown(i) ? slotWidth(i, i === activeIndex) : 0;
+            xs.push(x);
+            ws.push(w);
+            if (w > 0)
+                x += w + itemSpacing;
         }
-        out.push(x);
-        return out;
+        xs.push(x);
+        return {
+            xs: xs,
+            ws: ws
+        };
     }
 
     function slotX(index) {
-        return xs[Math.max(0, Math.min(index, total))];
+        return layout.xs[Math.max(0, Math.min(index, total))];
     }
     // Right edge of slot `index`
     function slotEnd(index) {
-        return slotX(index + 1) - itemSpacing;
+        return index < 0 || index >= total ? slotX(index) : slotX(index) + layout.ws[index];
     }
 
-    implicitWidth: slotEnd(firstVisible + count - 1) - slotX(firstVisible)
+    implicitWidth: hideEmpty ? Math.max(0, slotX(total) - itemSpacing) : slotEnd(firstVisible + count - 1) - slotX(firstVisible)
     // Eases the bar around a style whose slots change size (app icons)
     Behavior on implicitWidth {
         NumberAnimation {
@@ -76,6 +91,10 @@ Item {
     // First slot in view; switching within the window never moves the strip
     property int firstVisible: 0
     function scrollToActive() {
+        if (hideEmpty) {
+            firstVisible = 0;
+            return;
+        }
         let first = firstVisible;
         if (activeIndex < first)
             first = activeIndex;
@@ -85,8 +104,10 @@ Item {
     }
 
     // --- Indicator Placement ---
-    // Batched with callLater: a switch changes both activeIndex and xs, and
-    // the direction must be read once, against the previous index
+    // Batched on a zero timer: a switch changes both activeIndex and layout,
+    // and the direction must be read once, against the previous index (a
+    // timer rather than Qt.callLater, which could fire after a style swap
+    // destroyed this strip)
     function placeIndicator() {
         indicator.direction = Math.sign(activeIndex - indicator.lastIndex);
         indicator.lastIndex = activeIndex;
@@ -94,12 +115,19 @@ Item {
         indicator.rightEdge = slotEnd(activeIndex) - indicatorInset;
     }
 
+    Timer {
+        id: placeTimer
+        interval: 0
+        onTriggered: root.placeIndicator()
+    }
+
     onActiveIndexChanged: {
         scrollToActive();
-        Qt.callLater(placeIndicator);
+        placeTimer.restart();
     }
-    onXsChanged: Qt.callLater(placeIndicator)
+    onLayoutChanged: placeTimer.restart()
     onCountChanged: scrollToActive()
+    onHideEmptyChanged: scrollToActive()
     Component.onCompleted: scrollToActive()
 
     Item {
@@ -181,12 +209,14 @@ Item {
                 readonly property bool isEmpty: !root.model.isOccupied(workspaceId)
                 readonly property bool isUrgent: root.model.isUrgent(workspaceId)
                 readonly property bool hovered: hover.hovered
+                readonly property bool shown: root.isShown(index)
 
                 z: root.contentOverIndicator ? 2 : 0
                 x: root.slotX(index)
-                width: root.slotWidth(index, isActive)
+                width: root.layout.ws[index]
                 height: parent.height
-                opacity: !isActive && hovered ? 0.8 : 1.0
+                visible: opacity > 0
+                opacity: !shown ? 0 : !isActive && hovered ? 0.8 : 1.0
 
                 // Same timing as the indicator, so the slots open as it arrives
                 Behavior on x {
@@ -210,6 +240,34 @@ Item {
                 Component.onCompleted: root.slotContent?.createObject(slot, {
                     slot: slot
                 })
+
+                // Urgent: a pulsing error pill, over the slot's shape (styles
+                // whose content sits under the indicator) or under its label
+                Rectangle {
+                    z: root.contentOverIndicator ? -1 : 1
+                    anchors.centerIn: parent
+                    width: parent.width
+                    height: root.indicatorHeight
+                    radius: root.indicatorRadius
+                    color: Config.errorColor
+                    visible: slot.isUrgent && !slot.isActive
+                    opacity: 0
+
+                    SequentialAnimation on opacity {
+                        running: slot.isUrgent && !slot.isActive
+                        loops: Animation.Infinite
+                        NumberAnimation {
+                            to: 1
+                            duration: Config.animDurationLong
+                            easing.type: Easing.InOutSine
+                        }
+                        NumberAnimation {
+                            to: 0.35
+                            duration: Config.animDurationLong
+                            easing.type: Easing.InOutSine
+                        }
+                    }
+                }
 
                 TapHandler {
                     onTapped: root.model.focus(slot.workspaceId)

@@ -66,19 +66,41 @@ QtObject {
             if (ws && ws.id > 0)
                 info[ws.id] = {
                     windows: [],
-                    urgent: ws.urgent
+                    urgent: urgentIds[ws.id] === true
                 };
         }
         for (const tl of Hyprland.toplevels.values) {
             const id = tl?.workspace?.id ?? 0;
-            if (!info[id])
-                continue;
-            info[id].windows.push(tl.wayland?.appId || tl.lastIpcObject?.class || "");
-            if (tl.urgent)
-                info[id].urgent = true;
+            if (info[id])
+                info[id].windows.push(tl.wayland?.appId || tl.lastIpcObject?.class || "");
         }
         workspaces = info;
     }
+
+    // Workspaces holding a window that asked for attention, kept until the
+    // workspace is visited (Quickshell's own urgent flags clear on the next
+    // focus change anywhere)
+    property var urgentIds: ({})
+
+    function markUrgent(address) {
+        const bare = a => String(a).replace(/^0x/, "");
+        const tl = Hyprland.toplevels.values.find(t => bare(t.address) === bare(address));
+        const id = tl?.workspace?.id ?? 0;
+        if (id <= 0 || tl.workspace.active)
+            return;
+        urgentIds = Object.assign({}, urgentIds, {
+            [id]: true
+        });
+    }
+
+    onActiveIdChanged: {
+        if (urgentIds[activeId]) {
+            let ids = Object.assign({}, urgentIds);
+            delete ids[activeId];
+            urgentIds = ids;
+        }
+    }
+    onUrgentIdsChanged: updateTimer.restart()
 
     // --- Special Workspace ---
     // Name as reported by activespecial ("special:magic"), "" when closed
@@ -133,6 +155,17 @@ QtObject {
         if (id !== activeId)
             Hyprland.dispatch("hl.dsp.focus({ workspace = " + id + " })");
     }
+    // Next (1) or previous (-1) workspace of this monitor's block, skipping
+    // empty ones when they're hidden
+    function step(direction, skipEmpty) {
+        const first = monitorOffset + 1;
+        const last = monitorOffset + totalWorkspaces;
+        let id = activeId + direction;
+        while (skipEmpty && id >= first && id <= last && !isOccupied(id))
+            id += direction;
+        if (id >= first && id <= last)
+            focus(id);
+    }
     function toggleSpecial() {
         if (specialName)
             Hyprland.dispatch("hl.dsp.workspace.toggle_special(\"" + specialName + "\")");
@@ -159,7 +192,9 @@ QtObject {
             }
             if (event.name === "workspace")
                 root.specialRaw = "";
-            const refreshEvents = ["workspace", "createworkspace", "destroyworkspace", "movewindow", "openwindow", "closewindow", "urgent"];
+            if (event.name === "urgent")
+                root.markUrgent(event.data);
+            const refreshEvents = ["workspace", "createworkspace", "destroyworkspace", "movewindow", "openwindow", "closewindow"];
             if (refreshEvents.includes(event.name))
                 root.updateTimer.restart();
         }

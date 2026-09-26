@@ -77,6 +77,10 @@ Singleton {
     readonly property int barWorkspaceCount: getState("bar.workspaces.count", 10)
     // Workspace indicator style: "pills", "numbers", "dots", "groups" or "icons"
     readonly property string barWorkspaceStyle: getState("bar.workspaces.style", "pills")
+    // Only workspaces with windows (and the active one) in the strip
+    readonly property bool barWorkspaceHideEmpty: getState("bar.workspaces.hideEmpty", false)
+    // Mouse wheel over the strip switches workspace
+    readonly property bool barWorkspaceScroll: getState("bar.workspaces.scroll", true)
 
     readonly property int radiusSmall: getState("geometry.radiusSmall", 5)
     readonly property int radius: getState("geometry.radius", 10)

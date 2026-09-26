@@ -30,7 +30,9 @@
         "showWeather": false,
         "workspaces": {
             "style": "pills",
-            "count": 10
+            "count": 10,
+            "hideEmpty": false,
+            "scroll": true
         }
     },
     "clipboard": {

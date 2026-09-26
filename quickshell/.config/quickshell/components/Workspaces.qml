@@ -29,6 +29,21 @@ Item {
     implicitWidth: strip.implicitWidth + badgeSlot.width
     implicitHeight: strip.implicitHeight
 
+    // One workspace per notch; touchpads add up small deltas to a notch
+    WheelHandler {
+        property real accumulated: 0
+
+        enabled: Config.barWorkspaceScroll
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        onWheel: event => {
+            accumulated += event.angleDelta.y;
+            if (Math.abs(accumulated) < 120)
+                return;
+            workspacesModel.step(accumulated > 0 ? -1 : 1, Config.barWorkspaceHideEmpty);
+            accumulated = 0;
+        }
+    }
+
     Loader {
         id: strip
         anchors.verticalCenter: parent.verticalCenter
@@ -77,6 +92,7 @@ Item {
         PillsStyle {
             model: workspacesModel
             count: Config.barWorkspaceCount
+            hideEmpty: Config.barWorkspaceHideEmpty
         }
     }
 
@@ -85,6 +101,7 @@ Item {
         NumbersStyle {
             model: workspacesModel
             count: Config.barWorkspaceCount
+            hideEmpty: Config.barWorkspaceHideEmpty
         }
     }
 
@@ -93,6 +110,7 @@ Item {
         DotsStyle {
             model: workspacesModel
             count: Config.barWorkspaceCount
+            hideEmpty: Config.barWorkspaceHideEmpty
         }
     }
 
@@ -101,6 +119,7 @@ Item {
         GroupsStyle {
             model: workspacesModel
             count: Config.barWorkspaceCount
+            hideEmpty: Config.barWorkspaceHideEmpty
         }
     }
 
@@ -109,6 +128,7 @@ Item {
         IconsStyle {
             model: workspacesModel
             count: Config.barWorkspaceCount
+            hideEmpty: Config.barWorkspaceHideEmpty
         }
     }
 }

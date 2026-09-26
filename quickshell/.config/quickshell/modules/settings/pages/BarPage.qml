@@ -133,6 +133,19 @@ ColumnLayout {
             path: "bar.workspaces.count"
             from: 3
             to: 15
+            enabled: !Config.barWorkspaceHideEmpty
+        }
+
+        ToggleRow {
+            label: "Hide empty"
+            description: "Only workspaces with windows, plus the active one"
+            path: "bar.workspaces.hideEmpty"
+        }
+
+        ToggleRow {
+            label: "Scroll to switch"
+            description: "The mouse wheel over the workspaces moves to the next or previous one"
+            path: "bar.workspaces.scroll"
         }
     }
 
