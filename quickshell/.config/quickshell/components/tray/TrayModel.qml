@@ -11,17 +11,22 @@ import qs.services
 QtObject {
     id: root
 
+    // false for previews: `sampleItems` ({ id, icon, title, status, pinned })
+    // stand in for the tray, and the actions do nothing
+    property bool live: true
+    property var sampleItems: []
+
     // Shown items in the user's order, split for the pinned style
-    readonly property var items: TrayService.shownItems
+    readonly property var items: live ? TrayService.shownItems : sampleItems
     readonly property bool hasItems: items.length > 0
-    readonly property var pinnedItems: items.filter(i => TrayService.isPinned(i.id))
-    readonly property var restItems: items.filter(i => !TrayService.isPinned(i.id))
+    readonly property var pinnedItems: items.filter(i => isPinned(i))
+    readonly property var restItems: items.filter(i => !isPinned(i))
 
     // Icons drawn in the text color (bar.tray.monochrome)
     readonly property bool monochrome: Config.barTrayMonochrome
 
     // Hover tooltips on the icons (bar.tray.tooltips)
-    readonly property bool tooltips: Config.barTrayTooltips
+    readonly property bool tooltips: live && Config.barTrayTooltips
 
     function itemName(item) {
         return TrayService.itemName(item);
@@ -46,11 +51,22 @@ QtObject {
     }
 
     function activate(item) {
-        item.activate();
+        if (live)
+            item.activate();
+    }
+
+    function secondaryActivate(item) {
+        if (live)
+            item.secondaryActivate();
+    }
+
+    function scroll(item, delta, horizontal) {
+        if (live)
+            item.scroll(delta, horizontal);
     }
 
     function isPinned(item) {
-        return TrayService.isPinned(item.id);
+        return live ? TrayService.isPinned(item.id) : item.pinned === true;
     }
 
     function setPinned(item, pinned) {
@@ -91,7 +107,7 @@ QtObject {
     }
 
     function openMenu(item, anchor) {
-        if (hasMenu(item))
+        if (live && hasMenu(item))
             menuRequested(item, anchor);
     }
 }

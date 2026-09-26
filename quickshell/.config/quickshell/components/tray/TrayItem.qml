@@ -107,7 +107,7 @@ Rectangle {
         onWheel: event => {
             root.tooltipShown = false;
             const horizontal = event.angleDelta.x !== 0 && event.angleDelta.y === 0;
-            root.item.scroll(horizontal ? event.angleDelta.x : event.angleDelta.y, horizontal);
+            root.model.scroll(root.item, horizontal ? event.angleDelta.x : event.angleDelta.y, horizontal);
         }
     }
 
@@ -133,7 +133,7 @@ Rectangle {
 
         onClicked: mouse => {
             if (mouse.button === Qt.MiddleButton) {
-                root.item.secondaryActivate();
+                root.model.secondaryActivate(root.item);
             } else if (mouse.button === Qt.LeftButton) {
                 root.model.activate(root.item);
                 root.activated();

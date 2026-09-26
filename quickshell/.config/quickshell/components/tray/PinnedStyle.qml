@@ -10,6 +10,8 @@ Row {
 
     required property var model
 
+    property bool showOpen: false
+
     signal itemActivated
 
     spacing: Math.round(Config.padding / 2)
@@ -28,6 +30,7 @@ Row {
     OverflowStyle {
         model: root.model
         items: root.model.restItems
+        showOpen: root.showOpen
         onItemActivated: root.itemActivated()
     }
 }

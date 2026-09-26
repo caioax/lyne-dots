@@ -194,7 +194,7 @@ ColumnLayout {
     SettingsGroup {
         title: "Tray"
 
-        SelectRow {
+        TemplatePicker {
             label: "Style"
             description: ({
                     "row": "Every icon always in the bar",
@@ -220,6 +220,10 @@ ColumnLayout {
                     value: "pinned"
                 }
             ]
+            thumbHeight: Config.fontSizeIconLarge * 4
+            preview: Component {
+                TrayStylePreview {}
+            }
         }
 
         ToggleRow {

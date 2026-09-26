@@ -12,7 +12,8 @@ RowLayout {
 
     required property var model
 
-    readonly property bool isOpen: Config.barTrayOpen
+    // Previews set it by hand
+    property bool isOpen: Config.barTrayOpen
 
     signal itemActivated
 

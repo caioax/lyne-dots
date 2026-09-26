@@ -18,11 +18,14 @@ BarButton {
     readonly property int tileSize: Config.fontSizeIcon + Config.padding * 2
     readonly property int tileGap: Math.round(Config.padding / 2)
 
+    // Draws the button as open without the popup (previews draw the grid)
+    property bool showOpen: false
+
     signal itemActivated
 
     visible: items.length > 0
     implicitWidth: Config.barButtonHeight
-    active: popup.visible
+    active: popup.visible || showOpen
     onClicked: popup.visible ? popup.closeWindow() : popup.reopen()
 
     // md-chevron_down / md-chevron_up: points where the popup opens, flips
