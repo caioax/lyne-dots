@@ -14,6 +14,8 @@ Singleton {
     property string wifiInterface: ""
     property string connectingSsid: ""
     property string connectivity: "unknown" // none | portal | limited | full | unknown
+    // An ethernet device is connected (the bar shows it instead of the Wi-Fi state)
+    property bool ethernetConnected: false
     property bool _portalNotified: false
     readonly property bool scanning: rescanProc.running
     readonly property bool hasCaptivePortal: {
@@ -239,6 +241,45 @@ Singleton {
         onTriggered: {
             getSavedProc.running = true;
             getNetworksProc.running = true;
+            connectivityProc.running = true;
+        }
+    }
+
+    // Wired state, refreshed on every NetworkManager event
+    Process {
+        id: wiredProc
+        command: ["nmcli", "-g", "TYPE,STATE", "device"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: root.ethernetConnected = text.split("\n").some(l => l.startsWith("ethernet:connected"))
+        }
+    }
+
+    Process {
+        id: monitorProc
+        command: ["nmcli", "monitor"]
+        running: true
+        stdout: SplitParser {
+            onRead: monitorDebounce.restart()
+        }
+        // NetworkManager restarted: listen again
+        onExited: monitorRestart.start()
+    }
+
+    Timer {
+        id: monitorRestart
+        interval: 5000
+        onTriggered: {
+            monitorProc.running = true;
+            wiredProc.running = true;
+        }
+    }
+
+    Timer {
+        id: monitorDebounce
+        interval: 500
+        onTriggered: {
+            wiredProc.running = true;
             connectivityProc.running = true;
         }
     }

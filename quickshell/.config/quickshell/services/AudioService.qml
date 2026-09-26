@@ -16,6 +16,18 @@ Singleton {
         objects: [root.sink, root.source]
     }
 
+    // Capture streams (apps recording). Their properties need a bound node
+    readonly property var _captureNodes: Pipewire.nodes.values.filter(n => n.isStream && !n.isSink)
+    PwObjectTracker {
+        objects: root._captureNodes
+    }
+
+    // Apps recording from a microphone: capture streams minus the ones
+    // reading a sink's monitor (cava, peak meters)
+    readonly property var micStreams: _captureNodes.filter(n => n.properties["stream.capture.sink"] !== "true" && n.properties["media.class"] === "Stream/Input/Audio")
+    readonly property bool micInUse: micStreams.length > 0
+    readonly property var micApps: [...new Set(micStreams.map(n => n.properties["application.name"] || n.name))]
+
     // Hardware devices (streams from apps are left out)
     readonly property var sinks: Pipewire.nodes.values.filter(n => n.audio && n.isSink && !n.isStream)
     readonly property var sources: Pipewire.nodes.values.filter(n => n.audio && !n.isSink && !n.isStream)

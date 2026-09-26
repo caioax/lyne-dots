@@ -43,6 +43,9 @@
             "attention": true,
             "monochrome": false,
             "tooltips": true
+        },
+        "quickSettings": {
+            "style": "icons"
         }
     },
     "clipboard": {

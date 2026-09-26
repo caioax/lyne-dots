@@ -96,6 +96,8 @@ Singleton {
     readonly property bool barTrayMonochrome: getState("bar.tray.monochrome", false)
     // Title (and app text) on hover over a tray icon
     readonly property bool barTrayTooltips: getState("bar.tray.tooltips", true)
+    // Quick Settings button style: "icons"
+    readonly property string barQsStyle: getState("bar.quickSettings.style", "icons")
 
     readonly property int radiusSmall: getState("geometry.radiusSmall", 5)
     readonly property int radius: getState("geometry.radius", 10)

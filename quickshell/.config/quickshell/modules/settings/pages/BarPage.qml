@@ -338,6 +338,22 @@ ColumnLayout {
     }
 
     SettingsGroup {
+        title: "Quick Settings"
+
+        SelectRow {
+            label: "Style"
+            description: "Network, Bluetooth, battery and notifications; muted audio and a microphone in use show up only then"
+            path: "bar.quickSettings.style"
+            options: [
+                {
+                    label: "Icons",
+                    value: "icons"
+                }
+            ]
+        }
+    }
+
+    SettingsGroup {
         title: "Behaviour"
 
         ToggleRow {
