@@ -20,6 +20,13 @@ QtObject {
     // Icons drawn in the text color (bar.tray.monochrome)
     readonly property bool monochrome: Config.barTrayMonochrome
 
+    // Hover tooltips on the icons (bar.tray.tooltips)
+    readonly property bool tooltips: Config.barTrayTooltips
+
+    function itemName(item) {
+        return TrayService.itemName(item);
+    }
+
     // Items asking for attention (StatusNotifierItem status), when the
     // badge is on
     function needsAttention(item) {

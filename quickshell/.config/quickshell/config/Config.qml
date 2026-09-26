@@ -94,6 +94,8 @@ Singleton {
     readonly property bool barTrayAttention: getState("bar.tray.attention", true)
     // Icons tinted with the text color instead of their own colors
     readonly property bool barTrayMonochrome: getState("bar.tray.monochrome", false)
+    // Title (and app text) on hover over a tray icon
+    readonly property bool barTrayTooltips: getState("bar.tray.tooltips", true)
 
     readonly property int radiusSmall: getState("geometry.radiusSmall", 5)
     readonly property int radius: getState("geometry.radius", 10)

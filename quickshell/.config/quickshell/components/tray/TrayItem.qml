@@ -85,15 +85,56 @@ Rectangle {
         }
     }
 
+    // Tooltip after resting on the icon; any click or the wheel dismisses it
+    property bool tooltipShown: false
+
+    Timer {
+        id: tooltipTimer
+        interval: Config.animDurationLong
+        onTriggered: root.tooltipShown = root.model.tooltips
+    }
+
+    TrayTooltip {
+        target: root
+        visible: root.tooltipShown && mouseArea.containsMouse
+        title: root.item.tooltipTitle || root.model.itemName(root.item)
+        description: root.item.tooltipDescription ?? ""
+    }
+
+    // Forwarded to the app (volume in audio apps, for example)
+    WheelHandler {
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        onWheel: event => {
+            root.tooltipShown = false;
+            const horizontal = event.angleDelta.x !== 0 && event.angleDelta.y === 0;
+            root.item.scroll(horizontal ? event.angleDelta.x : event.angleDelta.y, horizontal);
+        }
+    }
+
     MouseArea {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         cursorShape: Qt.PointingHandCursor
 
+        onContainsMouseChanged: {
+            root.tooltipShown = false;
+            if (containsMouse)
+                tooltipTimer.restart();
+            else
+                tooltipTimer.stop();
+        }
+
+        onPressed: {
+            root.tooltipShown = false;
+            tooltipTimer.stop();
+        }
+
         onClicked: mouse => {
-            if (mouse.button === Qt.LeftButton) {
+            if (mouse.button === Qt.MiddleButton) {
+                root.item.secondaryActivate();
+            } else if (mouse.button === Qt.LeftButton) {
                 root.model.activate(root.item);
                 root.activated();
             } else if (root.model.hasMenu(root.item)) {

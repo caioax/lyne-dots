@@ -41,7 +41,8 @@
             "hidden": [],
             "order": [],
             "attention": true,
-            "monochrome": false
+            "monochrome": false,
+            "tooltips": true
         }
     },
     "clipboard": {
