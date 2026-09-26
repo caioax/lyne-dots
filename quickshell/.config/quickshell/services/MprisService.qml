@@ -43,7 +43,16 @@ Singleton {
     readonly property bool shuffleSupported: activePlayer?.shuffleSupported ?? false
 
     // --- VOLUME ---
-    readonly property real volume: activePlayer?.volume ?? 0
+    // 0-1. Some players (Harmonoid) report it in percent instead: remembered
+    // per player once seen above 2 (the spec allows a little over 1 for boost)
+    readonly property real volume: rawVolume / volumeScale
+    readonly property real rawVolume: activePlayer?.volume ?? 0
+    readonly property real volumeScale: rawVolume > 2 || percentVolume[activePlayer?.dbusName ?? ""] ? 100 : 1
+    property var percentVolume: ({})
+    onRawVolumeChanged: {
+        if (rawVolume > 2 && activePlayer)
+            percentVolume[activePlayer.dbusName] = true;
+    }
     readonly property bool volumeSupported: activePlayer?.volumeSupported ?? false
 
     // --- POSITION TRACKING ---
@@ -119,7 +128,9 @@ Singleton {
     function playerIcon(player: MprisPlayer): string {
         if (!player)
             return "";
-        const entry = DesktopEntries.heuristicLookup(player.desktopEntry || player.identity);
+        // Some players (Harmonoid) give a path instead of the entry's id
+        const id = (player.desktopEntry || player.identity).split("/").pop().replace(/\.desktop$/, "");
+        const entry = DesktopEntries.heuristicLookup(id);
         return entry?.icon ? Quickshell.iconPath(entry.icon, true) : "";
     }
 
@@ -168,6 +179,6 @@ Singleton {
 
     function setVolume(vol: real) {
         if (activePlayer)
-            activePlayer.volume = Math.max(0, Math.min(1, vol));
+            activePlayer.volume = Math.max(0, Math.min(1, vol)) * volumeScale;
     }
 }

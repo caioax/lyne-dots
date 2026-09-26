@@ -246,9 +246,12 @@ Item {
                 Layout.rightMargin: root.gifRoom
                 spacing: Config.spacing
 
-                // The title takes what it needs, the artist keeps some room
+                // The title takes what it needs, the artist keeps some room.
+                // Both fillWidth: without it a layout never shrinks an item,
+                // and a long title pushed the whole column out of the card
                 Text {
-                    Layout.minimumWidth: 0
+                    Layout.fillWidth: true
+                    Layout.maximumWidth: implicitWidth
                     text: MprisService.title
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeNormal
@@ -260,6 +263,8 @@ Item {
                 Text {
                     Layout.fillWidth: true
                     Layout.minimumWidth: Config.fontSizeNormal * 6
+                    // Shrinks first: the title only gives way below this
+                    Layout.preferredWidth: Layout.minimumWidth
                     text: "\u00b7  " + MprisService.artist
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeNormal
