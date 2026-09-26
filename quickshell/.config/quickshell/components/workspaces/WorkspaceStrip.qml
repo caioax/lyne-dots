@@ -33,6 +33,8 @@ Item {
 
     property int indicatorHeight: Config.fontSizeSmall + Config.padding
     property int indicatorRadius: Config.radius
+    // Horizontal gap between the indicator and its slot's edges
+    property int indicatorInset: 0
     property color indicatorColor: Config.accentColor
 
     readonly property int activeIndex: model.relativeActiveId - 1
@@ -81,8 +83,8 @@ Item {
     function placeIndicator() {
         indicator.direction = Math.sign(activeIndex - indicator.lastIndex);
         indicator.lastIndex = activeIndex;
-        indicator.leftEdge = slotX(activeIndex);
-        indicator.rightEdge = slotEnd(activeIndex);
+        indicator.leftEdge = slotX(activeIndex) + indicatorInset;
+        indicator.rightEdge = slotEnd(activeIndex) - indicatorInset;
     }
 
     onActiveIndexChanged: {
@@ -119,8 +121,8 @@ Item {
 
             // Set by placeIndicator(), so the direction is known before the
             // edges move
-            property real leftEdge: root.slotX(root.activeIndex)
-            property real rightEdge: root.slotEnd(root.activeIndex)
+            property real leftEdge: root.slotX(root.activeIndex) + root.indicatorInset
+            property real rightEdge: root.slotEnd(root.activeIndex) - root.indicatorInset
             // -1 left, 1 right, 0 same slot (a resize): both edges ease alike
             property int direction: 0
             property int lastIndex: 0
