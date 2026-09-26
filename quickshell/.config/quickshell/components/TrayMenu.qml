@@ -61,19 +61,41 @@ PanelWindow {
         bottom: Config.barOnBottom ? root.anchorBottom : 0
     }
 
+    // Drives the open/close animation; the window stays mapped until the
+    // closing one ends
+    property bool shown: false
+
     function open() {
-        stack = [];
+        hideTimer.stop();
+        if (!shown)
+            stack = [];
         visible = true;
+        shown = true;
         focusTimer.restart();
     }
 
     function close(reason) {
-        if (!visible)
+        if (!shown)
             return;
-        visible = false;
-        stack = [];
+        shown = false;
         focusGrab.active = false;
+        hideTimer.restart();
         dismissed(reason ?? "outside");
+    }
+
+    Timer {
+        id: hideTimer
+        interval: Config.animDurationShort
+        onTriggered: {
+            root.visible = false;
+            root.stack = [];
+        }
+    }
+
+    // Entering or leaving a submenu fades the new rows in
+    onStackChanged: {
+        if (shown)
+            contentFade.restart();
     }
 
     function enter(entry) {
@@ -141,6 +163,26 @@ PanelWindow {
         color: Config.cardColor
         border.width: 1
         border.color: Config.surface2Color
+        enabled: root.shown
+
+        // Grows out of the tray icon: from its top-left corner under a top
+        // bar, from the bottom-left above a bottom one
+        transformOrigin: Config.barOnBottom ? Item.BottomLeft : Item.TopLeft
+        scale: root.shown ? 1 : 0.9
+        opacity: root.shown ? 1 : 0
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: Config.animDurationShort
+                easing.type: root.shown ? Easing.OutExpo : Easing.InCubic
+            }
+        }
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Config.animDurationShort
+            }
+        }
 
         focus: true
         Keys.onEscapePressed: {
@@ -152,6 +194,16 @@ PanelWindow {
 
         Column {
             id: column
+
+            NumberAnimation {
+                id: contentFade
+                target: column
+                property: "opacity"
+                from: 0
+                to: 1
+                duration: Config.animDurationShort
+                easing.type: Easing.OutCubic
+            }
 
             // Widest row's natural width, so long labels widen the menu
             // (up to maxWidth) instead of eliding right away
