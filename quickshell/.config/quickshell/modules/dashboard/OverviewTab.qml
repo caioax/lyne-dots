@@ -4,20 +4,14 @@ import QtQuick.Layouts
 import qs.config
 import qs.services
 import "../calendar/"
-import "../quickSettings/"
 
-// Clock, weather, the month, the player and resource usage, laid out by
-// DashboardService.overviewLayout:
-//   stacked: clock + weather | month, then the wide MediaWidget player and
-//            the resources, full width
-//   grid:    clock + weather | month | tall player, resources below (default)
+// Clock, weather, the month, the player and resource usage in three columns:
+// clock + weather | month | tall player, resources below
 GridLayout {
     id: root
 
     // Shown to the user (the dashboard is open on this tab)
     property bool active: false
-
-    readonly property bool grid: DashboardService.overviewLayout === "grid"
 
     // Back to the current month, without the slide animation
     function reset() {
@@ -46,7 +40,7 @@ GridLayout {
     ColumnLayout {
         Layout.row: 0
         Layout.column: 0
-        Layout.preferredWidth: root.grid ? 250 : 280
+        Layout.preferredWidth: 250
         Layout.fillHeight: true
         spacing: Config.spacing
 
@@ -74,23 +68,12 @@ GridLayout {
         Layout.column: 2
         Layout.preferredWidth: 220
         Layout.fillHeight: true
-        visible: root.grid && MprisService.hasPlayer
-    }
-
-    MediaWidget {
-        Layout.row: 1
-        Layout.column: 0
-        Layout.columnSpan: 2
-        visible: !root.grid && MprisService.hasPlayer
-        dismissible: false
-        openable: true
-        expressive: true
-        onOpenRequested: DashboardService.tab = "media"
+        visible: MprisService.hasPlayer
     }
 
     ResourcesCard {
-        Layout.row: 2
+        Layout.row: 1
         Layout.column: 0
-        Layout.columnSpan: root.grid ? 3 : 2
+        Layout.columnSpan: 3
     }
 }

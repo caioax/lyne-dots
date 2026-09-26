@@ -46,7 +46,6 @@
         "order": "top"
     },
     "dashboard": {
-        "overviewLayout": "grid",
         "visualizer": true,
         "coverBackdrop": true,
         "showGif": true,

@@ -61,29 +61,6 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Overview"
-
-        TemplatePicker {
-            label: "Layout"
-            description: "Grid is wider, with a tall player; stacked has a full-width player"
-            path: "dashboard.overviewLayout"
-            options: [
-                {
-                    label: "Stacked",
-                    value: "stacked"
-                },
-                {
-                    label: "Grid",
-                    value: "grid"
-                }
-            ]
-            preview: Component {
-                DashboardLayoutPreview {}
-            }
-        }
-    }
-
-    SettingsGroup {
         title: "Media"
 
         ToggleRow {
