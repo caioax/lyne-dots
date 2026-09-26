@@ -43,8 +43,9 @@ Singleton {
     readonly property bool shuffleSupported: activePlayer?.shuffleSupported ?? false
 
     // --- VOLUME ---
-    // 0-1. Some players (Harmonoid) report it in percent instead: remembered
-    // per player once seen above 2 (the spec allows a little over 1 for boost)
+    // 0-1. Some players (Harmonoid) report it in percent instead, though they
+    // still take 0-1 when it's set: remembered per player once seen above 2
+    // (the spec allows a little over 1 for boost)
     readonly property real volume: rawVolume / volumeScale
     readonly property real rawVolume: activePlayer?.volume ?? 0
     readonly property real volumeScale: rawVolume > 2 || percentVolume[activePlayer?.dbusName ?? ""] ? 100 : 1
@@ -179,6 +180,6 @@ Singleton {
 
     function setVolume(vol: real) {
         if (activePlayer)
-            activePlayer.volume = Math.max(0, Math.min(1, vol)) * volumeScale;
+            activePlayer.volume = Math.max(0, Math.min(1, vol));
     }
 }
