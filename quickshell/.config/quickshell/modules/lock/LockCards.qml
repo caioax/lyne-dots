@@ -66,7 +66,7 @@ Item {
                 Text {
                     visible: root.weather !== null
                     Layout.fillWidth: true
-                    text: root.weather ? WeatherService.description(root.weather.code) + " · feels " + root.weather.feelsLike + "°" : ""
+                    text: root.weather ? WeatherService.description(root.weather.code) + "\nFeels like " + root.weather.feelsLike + "°" : ""
                     wrapMode: Text.Wrap
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeNormal
@@ -146,7 +146,8 @@ Item {
                 }
 
                 LockPower {
-                    Layout.alignment: Qt.AlignHCenter
+                    Layout.fillWidth: true
+                    rows: true
                 }
             }
         }

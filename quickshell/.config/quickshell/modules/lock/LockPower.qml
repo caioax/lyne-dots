@@ -11,6 +11,8 @@ ColumnLayout {
     id: root
 
     property bool vertical: false
+    // Full-width rows with the labels, for narrow cards
+    property bool rows: false
 
     readonly property var actions: PowerService.availableActions.filter(a => ["suspend", "reboot", "shutdown"].includes(a.id))
     readonly property var pending: PowerService.pendingAction
@@ -21,7 +23,8 @@ ColumnLayout {
         id: buttons
 
         Layout.alignment: Qt.AlignHCenter
-        columns: root.vertical ? 1 : root.actions.length
+        Layout.fillWidth: root.rows
+        columns: root.vertical || root.rows ? 1 : root.actions.length
         rowSpacing: 0
         columnSpacing: 0
 
@@ -31,8 +34,9 @@ ColumnLayout {
             PowerButton {
                 required property var modelData
 
+                Layout.fillWidth: root.rows
                 action: modelData
-                variant: "square"
+                variant: root.rows ? "row" : "square"
                 inPlace: true
                 showKey: false
             }
@@ -44,7 +48,8 @@ ColumnLayout {
         Layout.maximumWidth: buttons.implicitWidth
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.Wrap
-        visible: root.pending !== null
+        // Rows show the seconds on the pending one already
+        visible: root.pending !== null && !root.rows
         text: root.pending ? root.pending.progress + " in " + Math.ceil(PowerService.remaining / 1000) + "s · esc cancels" : ""
         font.family: Config.font
         font.pixelSize: Config.fontSizeSmall
