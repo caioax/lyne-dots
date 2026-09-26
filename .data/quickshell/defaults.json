@@ -46,7 +46,15 @@
         },
         "quickSettings": {
             "style": "icons",
-            "batteryPercent": true
+            "batteryPercent": true,
+            "indicators": {
+                "network": true,
+                "bluetooth": true,
+                "volume": true,
+                "mic": true,
+                "battery": true,
+                "notifications": true
+            }
         }
     },
     "clipboard": {

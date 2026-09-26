@@ -100,6 +100,15 @@ Singleton {
     readonly property string barQsStyle: getState("bar.quickSettings.style", "icons")
     // Battery percentage next to the battery icon
     readonly property bool barQsBatteryPercent: getState("bar.quickSettings.batteryPercent", true)
+    // Indicators the Quick Settings button may show, by id
+    readonly property var barQsIndicators: ({
+            "network": getState("bar.quickSettings.indicators.network", true),
+            "bluetooth": getState("bar.quickSettings.indicators.bluetooth", true),
+            "volume": getState("bar.quickSettings.indicators.volume", true),
+            "mic": getState("bar.quickSettings.indicators.mic", true),
+            "battery": getState("bar.quickSettings.indicators.battery", true),
+            "notifications": getState("bar.quickSettings.indicators.notifications", true)
+        })
 
     readonly property int radiusSmall: getState("geometry.radiusSmall", 5)
     readonly property int radius: getState("geometry.radius", 10)

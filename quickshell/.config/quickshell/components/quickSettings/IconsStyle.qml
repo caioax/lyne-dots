@@ -11,35 +11,39 @@ RowLayout {
     // Tone "normal" (the button tints it while Quick Settings is open)
     property color iconColor: Config.textColor
 
-    spacing: Config.spacing
+    // The slots carry the gaps
+    spacing: 0
 
     Repeater {
         model: root.model.order
 
-        RowLayout {
+        IndicatorSlot {
             id: slot
 
             required property string modelData
             readonly property var indicator: root.model.indicators[modelData]
-            readonly property bool withPercent: modelData === "battery" && root.model.batteryPercent
 
-            visible: indicator.shown
-            spacing: Math.round(Config.spacing / 3)
+            model: root.model
+            indicatorId: modelData
 
-            IndicatorGlyph {
-                model: root.model
-                indicatorId: slot.modelData
-                iconColor: root.iconColor
-            }
+            RowLayout {
+                spacing: Math.round(Config.spacing / 3)
 
-            Text {
-                visible: slot.withPercent
-                text: (slot.indicator.percentage ?? 0) + "%"
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeSmall
-                font.bold: true
-                color: root.model.toneColor(slot.indicator.tone, root.iconColor)
-                Layout.alignment: Qt.AlignVCenter
+                IndicatorGlyph {
+                    model: root.model
+                    indicatorId: slot.modelData
+                    iconColor: root.iconColor
+                }
+
+                Text {
+                    visible: slot.modelData === "battery" && root.model.batteryPercent
+                    text: (slot.indicator.percentage ?? 0) + "%"
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    font.bold: true
+                    color: root.model.toneColor(slot.indicator.tone, root.iconColor)
+                    Layout.alignment: Qt.AlignVCenter
+                }
             }
         }
     }

@@ -12,32 +12,36 @@ RowLayout {
     // Tone "normal" (the button tints it while Quick Settings is open)
     property color iconColor: Config.textColor
 
-    spacing: Config.spacing
+    // The slots carry the gaps
+    spacing: 0
 
     Repeater {
         model: root.model.order
 
-        Loader {
+        IndicatorSlot {
             id: slot
 
             required property string modelData
 
-            visible: root.model.indicators[modelData].shown
-            Layout.alignment: Qt.AlignVCenter
-            sourceComponent: modelData === "battery" ? capsule : glyph
+            model: root.model
+            indicatorId: modelData
 
-            Component {
-                id: glyph
-                IndicatorGlyph {
-                    model: root.model
-                    indicatorId: slot.modelData
-                    iconColor: root.iconColor
+            Loader {
+                sourceComponent: slot.modelData === "battery" ? capsule : glyph
+
+                Component {
+                    id: glyph
+                    IndicatorGlyph {
+                        model: root.model
+                        indicatorId: slot.modelData
+                        iconColor: root.iconColor
+                    }
                 }
-            }
 
-            Component {
-                id: capsule
-                Capsule {}
+                Component {
+                    id: capsule
+                    Capsule {}
+                }
             }
         }
     }

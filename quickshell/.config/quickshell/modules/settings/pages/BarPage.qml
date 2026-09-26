@@ -373,6 +373,46 @@ ColumnLayout {
     }
 
     SettingsGroup {
+        title: "Quick Settings indicators"
+
+        ToggleRow {
+            label: "Network"
+            description: "Wi-Fi signal, or ethernet while a cable is connected"
+            path: "bar.quickSettings.indicators.network"
+        }
+
+        ToggleRow {
+            label: "Bluetooth"
+            description: "While a device is connected"
+            path: "bar.quickSettings.indicators.bluetooth"
+        }
+
+        ToggleRow {
+            label: "Muted sound"
+            description: "While the output is muted"
+            path: "bar.quickSettings.indicators.volume"
+        }
+
+        ToggleRow {
+            label: "Microphone"
+            description: "While it's muted or an app is recording"
+            path: "bar.quickSettings.indicators.mic"
+        }
+
+        ToggleRow {
+            label: "Battery"
+            description: "Level and charging, on laptops"
+            path: "bar.quickSettings.indicators.battery"
+        }
+
+        ToggleRow {
+            label: "Notifications"
+            description: "Unread count, or the do not disturb bell"
+            path: "bar.quickSettings.indicators.notifications"
+        }
+    }
+
+    SettingsGroup {
         title: "Behaviour"
 
         ToggleRow {

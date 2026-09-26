@@ -58,14 +58,31 @@ QtObject {
     property bool live: true
     property var sampleIndicators: ({})
 
-    readonly property var indicators: live ? ({
+    // The system state, minus the indicators switched off in Settings
+    // (bar.quickSettings.indicators)
+    readonly property var indicators: {
+        if (!live)
+            return sampleIndicators;
+        const all = {
             "network": network,
             "bluetooth": bluetooth,
             "volume": volume,
             "mic": mic,
             "battery": battery,
             "notifications": notifications
-        }) : sampleIndicators
+        };
+        const allowed = Config.barQsIndicators;
+        for (const id of order) {
+            if (allowed[id] === false)
+                all[id] = Object.assign({}, all[id], {
+                    shown: false
+                });
+        }
+        return all;
+    }
+
+    // Shown ids in order; styles use it to put gaps only between them
+    readonly property var shownIds: order.filter(id => indicators[id]?.shown)
 
     // Ethernet first; otherwise the Wi-Fi state
     readonly property var network: {

@@ -3,7 +3,8 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 
-// One indicator as a glyph; the unread count sits on the bell
+// One indicator as a glyph; the unread count sits on the bell. Put it in an
+// IndicatorSlot, which shows and hides it
 Text {
     id: root
 
@@ -14,7 +15,6 @@ Text {
 
     readonly property var indicator: model.indicators[indicatorId]
 
-    visible: indicator.shown
     text: indicator.icon
     font.family: Config.font
     font.pixelSize: Config.fontSizeNormal
