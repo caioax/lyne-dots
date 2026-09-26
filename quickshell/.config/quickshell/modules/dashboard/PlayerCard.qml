@@ -6,9 +6,9 @@ import qs.config
 import qs.services
 import "../../components/"
 
-// Tall player for the grid Overview: cover on top, then the track, progress
-// and controls. The wheel changes the player's volume; the cover opens the
-// Media tab
+// Tall player for the Overview: cover on top, then the track, progress and
+// controls, with the GIF dancing in the space left below while something
+// plays. The wheel changes the player's volume; the cover opens the Media tab
 Card {
     id: root
 
@@ -70,11 +70,8 @@ Card {
         }
     }
 
-    Item {
-        Layout.fillHeight: true
-    }
-
     MediaProgress {
+        Layout.topMargin: Config.spacing
         Layout.fillWidth: true
         wavy: true
     }
@@ -83,6 +80,20 @@ Card {
         Layout.alignment: Qt.AlignHCenter
         round: true
         spacing: Config.padding / 2
+    }
+
+    // Whatever height is left, the GIF centered in it (kept free while paused
+    // so the controls don't move)
+    Item {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+
+        MediaGif {
+            anchors.centerIn: parent
+            width: Math.min(parent.width, Config.fontSizeIconLarge * 5)
+            height: Math.min(parent.height, Config.fontSizeIconLarge * 5)
+            onlyWhilePlaying: true
+        }
     }
 
     // The wheel changes the volume. A handler, not a MouseArea: one on top

@@ -66,7 +66,7 @@ Singleton {
     // Blurred cover behind the Media tab (a plain card when off)
     readonly property bool coverBackdrop: StateService.get("dashboard.coverBackdrop", true)
 
-    // GIF in the corner of the Media tab (animates while something plays). An empty
+    // GIF in the Media tab and the Overview player (animates while something plays). An empty
     // path means the bundled Capoo (assets/CREDITS.md)
     readonly property bool showGif: StateService.get("dashboard.showGif", true)
     readonly property string gifPath: StateService.get("dashboard.gif", "")

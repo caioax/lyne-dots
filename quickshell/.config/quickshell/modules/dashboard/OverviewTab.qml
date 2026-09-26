@@ -6,7 +6,9 @@ import qs.services
 import "../calendar/"
 
 // Clock, weather, the month, the player and resource usage in three columns:
-// clock + weather | month | tall player, resources below
+// clock + weather | month | player, with the resources below the first two.
+// The player runs down to the bottom (room for the GIF); without one the
+// resources take the full width
 GridLayout {
     id: root
 
@@ -67,6 +69,7 @@ GridLayout {
         Layout.row: 0
         Layout.column: 2
         Layout.preferredWidth: 220
+        Layout.rowSpan: 2
         Layout.fillHeight: true
         visible: MprisService.hasPlayer
     }
@@ -74,6 +77,6 @@ GridLayout {
     ResourcesCard {
         Layout.row: 1
         Layout.column: 0
-        Layout.columnSpan: 3
+        Layout.columnSpan: MprisService.hasPlayer ? 2 : 3
     }
 }
