@@ -13,13 +13,14 @@ BarButton {
 
     // Tiles per row in the popup
     property int columns: 4
-    readonly property var items: model.items
+    // The icons in the popup (the pinned style passes only the unpinned ones)
+    property var items: model.items
     readonly property int tileSize: Config.fontSizeIcon + Config.padding * 2
     readonly property int tileGap: Math.round(Config.padding / 2)
 
     signal itemActivated
 
-    visible: model.hasItems
+    visible: items.length > 0
     implicitWidth: Config.barButtonHeight
     active: popup.visible
     onClicked: popup.visible ? popup.closeWindow() : popup.reopen()
@@ -60,14 +61,18 @@ BarButton {
         popupWidth: shownColumns * root.tileSize + (shownColumns - 1) * root.tileGap + 32
         contentImplicitHeight: grid.implicitHeight
 
+        // Nothing left to show
+        Connections {
+            target: root
+            function onItemsChanged() {
+                if (root.items.length === 0)
+                    popup.closeWindow();
+            }
+        }
+
         Connections {
             target: root.model
 
-            // Nothing left to show
-            function onHasItemsChanged() {
-                if (!root.model.hasItems)
-                    popup.closeWindow();
-            }
 
             // A menu opened from the grid took the focus grab: stay open
             // for Esc (back to the grid), close with it otherwise

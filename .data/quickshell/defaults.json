@@ -36,7 +36,8 @@
         },
         "tray": {
             "style": "drawer",
-            "open": false
+            "open": false,
+            "pinned": []
         }
     },
     "clipboard": {

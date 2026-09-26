@@ -85,6 +85,8 @@ Singleton {
     readonly property string barTrayStyle: getState("bar.tray.style", "drawer")
     // Whether the drawer style is open (remembered across restarts)
     readonly property bool barTrayOpen: getState("bar.tray.open", false)
+    // Item ids (StatusNotifierItem id) kept in the bar by the "pinned" style
+    readonly property var barTrayPinned: getState("bar.tray.pinned", [])
 
     readonly property int radiusSmall: getState("geometry.radiusSmall", 5)
     readonly property int radius: getState("geometry.radius", 10)

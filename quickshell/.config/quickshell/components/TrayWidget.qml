@@ -19,7 +19,9 @@ Item {
             const win = anchor.QsWindow.window;
             const pos = anchor.mapToItem(null, 0, 0);
             sharedMenu.companion = win !== root.QsWindow.window ? win : null;
-            sharedMenu.rootMenuHandle = item.menu;
+            sharedMenu.target = item;
+            sharedMenu.extras = trayModel.menuExtras(item);
+            sharedMenu.rootMenuHandle = item.hasMenu ? item.menu : null;
             sharedMenu.anchorX = pos.x + (win?.margins?.left ?? 0);
             sharedMenu.anchorY = (win?.margins?.top ?? 0) + pos.y + anchor.height + Config.padding;
             sharedMenu.anchorBottom = (win?.margins?.bottom ?? 0) + (win?.height ?? 0) - pos.y + Config.padding;
@@ -31,6 +33,10 @@ Item {
         id: sharedMenu
         visible: false
 
+        // The item the menu was opened for
+        property var target: null
+
+        onExtraTriggered: action => trayModel.runExtra(target, action)
         onDismissed: reason => trayModel.menuClosed(reason)
         onVisibleChanged: {
             if (visible)
@@ -41,7 +47,8 @@ Item {
     readonly property var styles: ({
             "row": rowStyle,
             "drawer": drawerStyle,
-            "overflow": overflowStyle
+            "overflow": overflowStyle,
+            "pinned": pinnedStyle
         })
 
     implicitWidth: style.implicitWidth
@@ -64,6 +71,14 @@ Item {
     Component {
         id: overflowStyle
         OverflowStyle {
+            model: trayModel
+            onItemActivated: sharedMenu.close()
+        }
+    }
+
+    Component {
+        id: pinnedStyle
+        PinnedStyle {
             model: trayModel
             onItemActivated: sharedMenu.close()
         }

@@ -26,6 +26,11 @@ PanelWindow {
     // the focus grab, so clicks on it don't dismiss the menu
     property var companion: null
 
+    // Shell rows above the app's own entries (root menu only):
+    // [{ action, label, glyph }], answered with extraTriggered(action)
+    property var extras: []
+
+    signal extraTriggered(string action)
     // How the menu went away: "triggered", "escape" or "outside"
     signal dismissed(string reason)
 
@@ -158,8 +163,9 @@ PanelWindow {
                 return w;
             }
 
-            // Whether any entry of the shown menu has an icon or a toggle
-            readonly property bool anyLeading: (menuOpener.children?.values ?? []).some(e => !e.isSeparator && (e.buttonType !== QsMenuButtonType.None || (e.icon ?? "") !== ""))
+            // Whether any row of the shown menu has an icon or a toggle
+            // (the shell rows on top always have a glyph)
+            readonly property bool anyLeading: (!root.current && root.extras.length > 0) || (menuOpener.children?.values ?? []).some(e => !e.isSeparator && (e.buttonType !== QsMenuButtonType.None || (e.icon ?? "") !== ""))
 
             anchors.fill: parent
             anchors.margins: card.padding
@@ -172,6 +178,36 @@ PanelWindow {
                 glyph: "\u{f0141}"
                 muted: true
                 onClicked: root.back()
+            }
+
+            Repeater {
+                model: root.current ? [] : root.extras
+
+                MenuRow {
+                    required property var modelData
+
+                    label: modelData.label
+                    glyph: modelData.glyph
+                    muted: true
+                    onClicked: {
+                        root.extraTriggered(modelData.action);
+                        root.close("triggered");
+                    }
+                }
+            }
+
+            // Between the shell rows and the app's entries
+            Item {
+                visible: !root.current && root.extras.length > 0 && (menuOpener.children?.values.length ?? 0) > 0
+                width: parent.width
+                implicitHeight: Config.padding + 1
+
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: parent.width - Config.padding * 2
+                    height: 1
+                    color: Config.surface2Color
+                }
             }
 
             Repeater {

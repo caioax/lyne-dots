@@ -68,7 +68,7 @@ Rectangle {
             if (mouse.button === Qt.LeftButton) {
                 root.model.activate(root.item);
                 root.activated();
-            } else if (root.item.hasMenu) {
+            } else if (root.model.hasMenu(root.item)) {
                 root.menuRequested();
                 root.model.openMenu(root.item, root);
             }
