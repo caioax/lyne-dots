@@ -14,6 +14,9 @@ QtObject {
     // The screen the widget lives on; falls back to the focused monitor
     property var screen: null
     property int totalWorkspaces: 99
+    // false for previews: no Hyprland events, and activeId/workspaces are
+    // set by hand
+    property bool live: true
 
     // --- Monitor Logic ---
     readonly property var monitor: {
@@ -26,7 +29,7 @@ QtObject {
 
     // --- Normal Workspace Math ---
     // Each monitor owns a block of 100 ids (1-99, 101-199, ...)
-    readonly property int activeId: (activeWorkspace && activeWorkspace.id > 0) ? activeWorkspace.id : 1
+    property int activeId: (activeWorkspace && activeWorkspace.id > 0) ? activeWorkspace.id : 1
     readonly property int monitorOffset: Math.floor((activeId - 1) / 100) * 100
     // Derived from activeId alone: going through monitorOffset, a switch to
     // another monitor's block briefly reads the old offset (105 - 0 -> 99)
@@ -59,7 +62,7 @@ QtObject {
     }
 
     function update() {
-        if (!Hyprland || !Hyprland.workspaces)
+        if (!live || !Hyprland || !Hyprland.workspaces)
             return;
         let info = {};
         for (const ws of Hyprland.workspaces.values) {
@@ -181,6 +184,7 @@ QtObject {
 
     property Connections events: Connections {
         target: Hyprland
+        enabled: root.live
         function onRawEvent(event) {
             if (!event)
                 return;

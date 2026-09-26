@@ -89,7 +89,7 @@ ColumnLayout {
     SettingsGroup {
         title: "Workspaces"
 
-        SelectRow {
+        TemplatePicker {
             label: "Style"
             description: ({
                     "numbers": "Numbers of the workspaces in use, dots for the empty ones",
@@ -101,30 +101,28 @@ ColumnLayout {
             options: [
                 {
                     label: "Pills",
-                    icon: "\u{f01d8}",
                     value: "pills"
                 },
                 {
                     label: "Numbers",
-                    icon: "\u{f03a0}",
                     value: "numbers"
                 },
                 {
                     label: "Dots",
-                    icon: "\u{f09df}",
                     value: "dots"
                 },
                 {
                     label: "Groups",
-                    icon: "\u{f0f82}",
                     value: "groups"
                 },
                 {
                     label: "Icons",
-                    icon: "\u{f003b}",
                     value: "icons"
                 }
             ]
+            preview: Component {
+                WorkspaceStylePreview {}
+            }
         }
 
         StepperRow {
