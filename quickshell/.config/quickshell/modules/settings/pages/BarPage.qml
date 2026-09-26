@@ -94,7 +94,8 @@ ColumnLayout {
             description: ({
                     "numbers": "Numbers of the workspaces in use, dots for the empty ones",
                     "dots": "Filled dots for workspaces in use, rings for empty ones; the active one is a bar",
-                    "groups": "Numbers where neighbouring workspaces in use share one background"
+                    "groups": "Numbers where neighbouring workspaces in use share one background",
+                    "icons": "Icons of the apps open on each workspace, numbers for the empty ones"
                 })[Config.barWorkspaceStyle] ?? "A pill per workspace, solid when it has windows"
             path: "bar.workspaces.style"
             options: [
@@ -117,6 +118,11 @@ ColumnLayout {
                     label: "Groups",
                     icon: "\u{f0f82}",
                     value: "groups"
+                },
+                {
+                    label: "Icons",
+                    icon: "\u{f003b}",
+                    value: "icons"
                 }
             ]
         }

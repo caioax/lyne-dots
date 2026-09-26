@@ -46,6 +46,17 @@ QtObject {
     function windowsOf(id) {
         return workspaces[id]?.windows ?? [];
     }
+    // Distinct apps of a workspace, in window order
+    function appsOf(id) {
+        return [...new Set(windowsOf(id))];
+    }
+
+    // Icon of an app id: its desktop entry's icon when there is one (the
+    // class often differs from the icon name), else the id itself
+    function iconFor(appId) {
+        const entry = appId ? DesktopEntries.heuristicLookup(appId) : null;
+        return Quickshell.iconPath(entry?.icon || appId || "application-x-executable", "application-x-executable");
+    }
 
     function update() {
         if (!Hyprland || !Hyprland.workspaces)

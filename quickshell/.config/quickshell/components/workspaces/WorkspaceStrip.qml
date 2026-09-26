@@ -61,6 +61,13 @@ Item {
     }
 
     implicitWidth: slotEnd(firstVisible + count - 1) - slotX(firstVisible)
+    // Eases the bar around a style whose slots change size (app icons)
+    Behavior on implicitWidth {
+        NumberAnimation {
+            duration: Config.animDuration
+            easing.type: Easing.OutCubic
+        }
+    }
     // Same height in every style, so small shapes keep a comfortable hit area
     implicitHeight: Config.fontSizeSmall + Config.padding + Math.round(Config.padding * 2 / 3)
     clip: true

@@ -22,7 +22,8 @@ Item {
             "pills": pillsStyle,
             "numbers": numbersStyle,
             "dots": dotsStyle,
-            "groups": groupsStyle
+            "groups": groupsStyle,
+            "icons": iconsStyle
         })
 
     implicitWidth: workspacesModel.specialActive ? badge.width : strip.implicitWidth
@@ -78,6 +79,14 @@ Item {
     Component {
         id: groupsStyle
         GroupsStyle {
+            model: workspacesModel
+            count: Config.barWorkspaceCount
+        }
+    }
+
+    Component {
+        id: iconsStyle
+        IconsStyle {
             model: workspacesModel
             count: Config.barWorkspaceCount
         }
