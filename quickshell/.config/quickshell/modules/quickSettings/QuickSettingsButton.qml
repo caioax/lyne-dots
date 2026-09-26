@@ -34,7 +34,8 @@ BarButton {
     }
 
     readonly property var styles: ({
-            "icons": iconsStyle
+            "icons": iconsStyle,
+            "pill": pillStyle
         })
 
     Loader {
@@ -54,6 +55,14 @@ BarButton {
     Component {
         id: iconsStyle
         IconsStyle {
+            model: indicators
+            iconColor: style.iconColor
+        }
+    }
+
+    Component {
+        id: pillStyle
+        PillStyle {
             model: indicators
             iconColor: style.iconColor
         }

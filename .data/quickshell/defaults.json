@@ -45,7 +45,8 @@
             "tooltips": true
         },
         "quickSettings": {
-            "style": "icons"
+            "style": "icons",
+            "batteryPercent": true
         }
     },
     "clipboard": {

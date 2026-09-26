@@ -348,8 +348,19 @@ ColumnLayout {
                 {
                     label: "Icons",
                     value: "icons"
+                },
+                {
+                    label: "Pill",
+                    value: "pill"
                 }
             ]
+        }
+
+        ToggleRow {
+            label: "Battery percentage"
+            description: "Next to the battery icon, or inside the pill style's battery capsule"
+            path: "bar.quickSettings.batteryPercent"
+            enabled: BatteryService.hasBattery
         }
     }
 

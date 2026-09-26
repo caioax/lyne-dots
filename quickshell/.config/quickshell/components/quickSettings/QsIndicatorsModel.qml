@@ -14,6 +14,23 @@ QtObject {
 
     readonly property var order: ["network", "bluetooth", "volume", "mic", "battery", "notifications"]
 
+    // Percentage next to the battery (bar.quickSettings.batteryPercent)
+    readonly property bool batteryPercent: Config.barQsBatteryPercent
+
+    // Tone to color; "normal" is the style's own icon color
+    function toneColor(tone: string, normal: color): color {
+        switch (tone) {
+        case "success":
+            return Config.successColor;
+        case "warning":
+            return Config.warningColor;
+        case "error":
+            return Config.errorColor;
+        default:
+            return normal;
+        }
+    }
+
     readonly property var indicators: ({
             "network": network,
             "bluetooth": bluetooth,
@@ -72,7 +89,7 @@ QtObject {
     readonly property var battery: ({
             shown: BatteryService.hasBattery,
             icon: BatteryService.getBatteryIcon(),
-            tone: BatteryService.isCharging ? "success" : BatteryService.percentage < 20 ? "warning" : "normal",
+            tone: BatteryService.isCharging ? "success" : BatteryService.percentage < 10 ? "error" : BatteryService.percentage < 20 ? "warning" : "normal",
             alert: !BatteryService.isCharging && BatteryService.percentage < 20,
             percentage: BatteryService.percentage,
             charging: BatteryService.isCharging
