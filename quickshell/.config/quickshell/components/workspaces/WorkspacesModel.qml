@@ -1,0 +1,154 @@
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import Quickshell
+import Quickshell.Hyprland
+import qs.config
+
+// Workspace state for one monitor, shared by every workspace style: the
+// active id, which workspaces hold windows (and which apps), urgency and the
+// special workspace. Styles only read this and call focus()/toggleSpecial().
+QtObject {
+    id: root
+
+    // The screen the widget lives on; falls back to the focused monitor
+    property var screen: null
+    property int totalWorkspaces: 99
+
+    // --- Monitor Logic ---
+    readonly property var monitor: {
+        if (!Hyprland)
+            return null;
+        return (screen ? Hyprland.monitorFor(screen) : null) ?? Hyprland.focusedMonitor ?? null;
+    }
+    readonly property string monitorName: monitor?.name ?? ""
+    readonly property var activeWorkspace: monitor?.activeWorkspace ?? null
+
+    // --- Normal Workspace Math ---
+    // Each monitor owns a block of 100 ids (1-99, 101-199, ...)
+    readonly property int activeId: (activeWorkspace && activeWorkspace.id > 0) ? activeWorkspace.id : 1
+    readonly property int monitorOffset: Math.floor((activeId - 1) / 100) * 100
+    readonly property int relativeActiveId: Math.max(1, Math.min(activeId - monitorOffset, totalWorkspaces))
+
+    // --- Per-workspace info ---
+    // { <id>: { windows: [appId, ...], urgent: bool } } for every workspace
+    // that exists; a missing id means an empty workspace
+    property var workspaces: ({})
+
+    function isOccupied(id) {
+        return (workspaces[id]?.windows.length ?? 0) > 0;
+    }
+    function isUrgent(id) {
+        return workspaces[id]?.urgent === true;
+    }
+    function windowsOf(id) {
+        return workspaces[id]?.windows ?? [];
+    }
+
+    function update() {
+        if (!Hyprland || !Hyprland.workspaces)
+            return;
+        let info = {};
+        for (const ws of Hyprland.workspaces.values) {
+            if (ws && ws.id > 0)
+                info[ws.id] = {
+                    windows: [],
+                    urgent: ws.urgent
+                };
+        }
+        for (const tl of Hyprland.toplevels.values) {
+            const id = tl?.workspace?.id ?? 0;
+            if (!info[id])
+                continue;
+            info[id].windows.push(tl.wayland?.appId || tl.lastIpcObject?.class || "");
+            if (tl.urgent)
+                info[id].urgent = true;
+        }
+        workspaces = info;
+    }
+
+    // --- Special Workspace ---
+    // Name as reported by activespecial ("special:magic"), "" when closed
+    property string specialRaw: ""
+    readonly property bool specialActive: specialRaw !== ""
+    readonly property string specialName: specialRaw.startsWith("special:") ? specialRaw.substring(8) : specialRaw
+
+    readonly property var specialWorkspaces: ({
+            "whatsapp": {
+                icon: "󰖣",
+                color: Config.successColor,
+                name: "WhatsApp"
+            },
+            "spotify": {
+                icon: "󰓇",
+                color: Config.accentColor,
+                name: "Music"
+            },
+            "magic": {
+                icon: "󰀘",
+                color: Config.warningColor,
+                name: "Magic"
+            }
+        })
+
+    readonly property var currentSpecialConfig: {
+        if (!specialActive)
+            return null;
+        return specialWorkspaces[specialName] ?? {
+            icon: "󰀘",
+            color: Config.accentColor,
+            name: specialName.charAt(0).toUpperCase() + specialName.slice(1)
+        };
+    }
+
+    // Last special shown, kept while the badge animates out so it doesn't
+    // flash back to the defaults
+    property string specialIcon: "󰀘"
+    property string specialLabel: ""
+    property color specialColor: Config.accentColor
+
+    onCurrentSpecialConfigChanged: {
+        if (currentSpecialConfig) {
+            specialIcon = currentSpecialConfig.icon;
+            specialLabel = currentSpecialConfig.name;
+            specialColor = currentSpecialConfig.color;
+        }
+    }
+
+    // --- Actions ---
+    function focus(id) {
+        if (id !== activeId)
+            Hyprland.dispatch("hl.dsp.focus({ workspace = " + id + " })");
+    }
+    function toggleSpecial() {
+        if (specialName)
+            Hyprland.dispatch("hl.dsp.workspace.toggle_special(\"" + specialName + "\")");
+    }
+
+    // --- Event Handling ---
+    Component.onCompleted: update()
+
+    property Timer updateTimer: Timer {
+        interval: 10
+        onTriggered: root.update()
+    }
+
+    property Connections events: Connections {
+        target: Hyprland
+        function onRawEvent(event) {
+            if (!event)
+                return;
+            if (event.name === "activespecial") {
+                const parts = event.data.split(',');
+                const target = parts[1] || "";
+                if (target === "" || target === root.monitorName)
+                    root.specialRaw = parts[0] || "";
+            }
+            if (event.name === "workspace")
+                root.specialRaw = "";
+            const refreshEvents = ["workspace", "createworkspace", "destroyworkspace", "movewindow", "openwindow", "closewindow", "urgent"];
+            if (refreshEvents.includes(event.name))
+                root.updateTimer.restart();
+        }
+    }
+}
