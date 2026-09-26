@@ -8,9 +8,9 @@ import qs.services
 import "../../components/"
 
 // Full player over the blurred cover: the round cover with the cava spectrum
-// around it, then the track (or its synced lyrics), wavy progress, round
-// controls and volume, with the GIF floating in the top-right corner beside
-// the track
+// around it, then the track (or its synced lyrics), wavy progress, and the
+// round controls with the volume on their right, with the GIF floating in
+// the top-right corner beside the track
 Item {
     id: root
 
@@ -275,41 +275,49 @@ Item {
                 timeFontSize: Config.fontSizeSmall
             }
 
-            MediaControls {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: Config.padding
-                round: true
-                playSize: Config.fontSizeIconLarge * 1.6
-                spacing: Config.padding
-            }
-
-            // Volume
-            RowLayout {
-                visible: MprisService.volumeSupported
+            // Controls in the middle, the volume in the room on their right
+            Item {
                 Layout.fillWidth: true
                 Layout.topMargin: Config.padding
-                spacing: Config.spacing
+                implicitHeight: controls.implicitHeight
 
-                Text {
-                    text: MprisService.volume <= 0 ? "\u{f0581}" : MprisService.volume < 0.5 ? "\u{f0580}" : "\u{f057e}"
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeIconSmall
-                    color: Config.subtextColor
+                MediaControls {
+                    id: controls
+                    anchors.centerIn: parent
+                    round: true
+                    playSize: Config.fontSizeIconLarge * 1.6
+                    spacing: Config.padding
                 }
 
-                SlimSlider {
-                    Layout.fillWidth: true
-                    value: MprisService.volume
-                    onMoved: value => MprisService.setVolume(value)
-                }
+                RowLayout {
+                    visible: MprisService.volumeSupported
+                    anchors.left: controls.right
+                    anchors.leftMargin: Config.spacing * 2
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Config.spacing
 
-                Text {
-                    Layout.preferredWidth: Config.fontSizeSmall * 3
-                    text: Math.round(MprisService.volume * 100) + "%"
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeSmall
-                    color: Config.subtextColor
-                    horizontalAlignment: Text.AlignRight
+                    Text {
+                        text: MprisService.volume <= 0 ? "\u{f0581}" : MprisService.volume < 0.5 ? "\u{f0580}" : "\u{f057e}"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeIconSmall
+                        color: Config.subtextColor
+                    }
+
+                    SlimSlider {
+                        Layout.fillWidth: true
+                        value: MprisService.volume
+                        onMoved: value => MprisService.setVolume(value)
+                    }
+
+                    Text {
+                        Layout.preferredWidth: Config.fontSizeSmall * 3
+                        text: Math.round(MprisService.volume * 100) + "%"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeSmall
+                        color: Config.subtextColor
+                        horizontalAlignment: Text.AlignRight
+                    }
                 }
             }
         }
