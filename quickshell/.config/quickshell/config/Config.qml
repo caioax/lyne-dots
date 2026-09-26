@@ -96,7 +96,7 @@ Singleton {
     readonly property bool barTrayMonochrome: getState("bar.tray.monochrome", false)
     // Title (and app text) on hover over a tray icon
     readonly property bool barTrayTooltips: getState("bar.tray.tooltips", true)
-    // Quick Settings button style: "icons" or "pill"
+    // Quick Settings button style: "icons", "pill", "chips" or "minimal"
     readonly property string barQsStyle: getState("bar.quickSettings.style", "icons")
     // Battery percentage next to the battery icon
     readonly property bool barQsBatteryPercent: getState("bar.quickSettings.batteryPercent", true)

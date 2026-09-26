@@ -45,7 +45,7 @@ RowLayout {
     component Capsule: Rectangle {
         id: capsuleRect
 
-        readonly property var battery: root.model.battery
+        readonly property var battery: root.model.indicators.battery
         readonly property color levelColor: root.model.toneColor(battery.tone, root.iconColor)
 
         implicitHeight: Config.barButtonHeight - Config.padding

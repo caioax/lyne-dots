@@ -17,6 +17,28 @@ QtObject {
     // Percentage next to the battery (bar.quickSettings.batteryPercent)
     readonly property bool batteryPercent: Config.barQsBatteryPercent
 
+    // Worst state among the shown indicators, for styles that fold them into
+    // one icon: "error" (unread notifications, a nearly empty battery),
+    // "warning" (other alerts) or "" when nothing needs a glance
+    readonly property string summaryTone: {
+        let worst = "";
+        for (const id of order) {
+            const ind = indicators[id];
+            if (!ind.shown)
+                continue;
+            let tone = "";
+            if (id === "notifications")
+                tone = !ind.dnd && ind.count > 0 ? "error" : "";
+            else if (ind.alert)
+                tone = ind.tone === "error" ? "error" : "warning";
+            if (tone === "error")
+                return tone;
+            if (tone)
+                worst = tone;
+        }
+        return worst;
+    }
+
     // Tone to color; "normal" is the style's own icon color
     function toneColor(tone: string, normal: color): color {
         switch (tone) {
@@ -31,14 +53,19 @@ QtObject {
         }
     }
 
-    readonly property var indicators: ({
+    // false for previews: `sampleIndicators` (same shape, keyed by id) stand
+    // in for the system state
+    property bool live: true
+    property var sampleIndicators: ({})
+
+    readonly property var indicators: live ? ({
             "network": network,
             "bluetooth": bluetooth,
             "volume": volume,
             "mic": mic,
             "battery": battery,
             "notifications": notifications
-        })
+        }) : sampleIndicators
 
     // Ethernet first; otherwise the Wi-Fi state
     readonly property var network: {

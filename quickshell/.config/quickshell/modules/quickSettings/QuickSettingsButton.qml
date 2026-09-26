@@ -35,7 +35,9 @@ BarButton {
 
     readonly property var styles: ({
             "icons": iconsStyle,
-            "pill": pillStyle
+            "pill": pillStyle,
+            "chips": chipsStyle,
+            "minimal": minimalStyle
         })
 
     Loader {
@@ -63,6 +65,22 @@ BarButton {
     Component {
         id: pillStyle
         PillStyle {
+            model: indicators
+            iconColor: style.iconColor
+        }
+    }
+
+    Component {
+        id: chipsStyle
+        ChipsStyle {
+            model: indicators
+            iconColor: style.iconColor
+        }
+    }
+
+    Component {
+        id: minimalStyle
+        MinimalStyle {
             model: indicators
             iconColor: style.iconColor
         }

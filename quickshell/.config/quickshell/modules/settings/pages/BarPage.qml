@@ -342,7 +342,7 @@ ColumnLayout {
 
         SelectRow {
             label: "Style"
-            description: "Network, Bluetooth, battery and notifications; muted audio and a microphone in use show up only then"
+            description: Config.barQsStyle === "minimal" ? "One icon; a dot on it when something needs a glance: unread notifications, low battery, no network, a microphone in use" : "Network, Bluetooth, battery and notifications; muted audio and a microphone in use show up only then"
             path: "bar.quickSettings.style"
             options: [
                 {
@@ -352,15 +352,23 @@ ColumnLayout {
                 {
                     label: "Pill",
                     value: "pill"
+                },
+                {
+                    label: "Chips",
+                    value: "chips"
+                },
+                {
+                    label: "Minimal",
+                    value: "minimal"
                 }
             ]
         }
 
         ToggleRow {
             label: "Battery percentage"
-            description: "Next to the battery icon, or inside the pill style's battery capsule"
+            description: "Next to the battery icon, or inside the pill style's battery capsule (not in the minimal style)"
             path: "bar.quickSettings.batteryPercent"
-            enabled: BatteryService.hasBattery
+            enabled: BatteryService.hasBattery && Config.barQsStyle !== "minimal"
         }
     }
 
