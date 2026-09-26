@@ -37,7 +37,9 @@
         "tray": {
             "style": "drawer",
             "open": false,
-            "pinned": []
+            "pinned": [],
+            "hidden": [],
+            "order": []
         }
     },
     "clipboard": {

@@ -6,11 +6,21 @@ import qs.config
 QtObject {
     id: root
 
-    // List of tray items
-    readonly property var items: SystemTray.items.values
+    // Every tray item, in the user's order (bar.tray.order; items missing
+    // from it keep the tray's order after the ordered ones)
+    readonly property var items: {
+        const order = Config.barTrayOrder;
+        const rank = item => {
+            const i = order.indexOf(item.id);
+            return i < 0 ? order.length : i;
+        };
+        return [...SystemTray.items.values].sort((a, b) => rank(a) - rank(b));
+    }
+    // The ones the bar shows (not hidden)
+    readonly property var shownItems: items.filter(i => !isHidden(i.id))
 
     // Checks whether there are items in the tray
-    readonly property bool hasItems: items.length > 0
+    readonly property bool hasItems: shownItems.length > 0
 
     // --- PINNING (bar.tray.pinned, used by the "pinned" style) ---
     readonly property var pinnedIds: Config.barTrayPinned
@@ -24,6 +34,44 @@ QtObject {
         if (pinned)
             ids.push(id);
         StateService.set("bar.tray.pinned", ids);
+    }
+
+    // --- HIDING (bar.tray.hidden: never shown in the bar) ---
+    readonly property var hiddenIds: Config.barTrayHidden
+
+    function isHidden(id) {
+        return hiddenIds.includes(id);
+    }
+
+    function setHidden(id, hidden) {
+        const ids = hiddenIds.filter(x => x !== id);
+        if (hidden)
+            ids.push(id);
+        StateService.set("bar.tray.hidden", ids);
+    }
+
+    // --- ORDER ---
+    // Swaps a running item with its neighbour (dir -1 = earlier). Saved ids
+    // of items not running now stay in the list, after the running ones
+    function move(id, dir) {
+        const ids = items.map(i => i.id);
+        const from = ids.indexOf(id);
+        const to = from + dir;
+        if (from < 0 || to < 0 || to >= ids.length)
+            return;
+        ids[from] = ids[to];
+        ids[to] = id;
+        StateService.set("bar.tray.order", ids.concat(Config.barTrayOrder.filter(x => !ids.includes(x))));
+    }
+
+    // Saved ids (pinned or hidden) of items that aren't running
+    readonly property var missingIds: [...new Set(pinnedIds.concat(hiddenIds))].filter(id => !items.some(i => i.id === id))
+
+    // Forgets an item that isn't running anymore
+    function forget(id) {
+        setPinned(id, false);
+        setHidden(id, false);
+        StateService.set("bar.tray.order", Config.barTrayOrder.filter(x => x !== id));
     }
 
     // Name to show for an item: its title, else its id

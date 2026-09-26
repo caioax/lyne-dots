@@ -87,6 +87,9 @@ Singleton {
     readonly property bool barTrayOpen: getState("bar.tray.open", false)
     // Item ids (StatusNotifierItem id) kept in the bar by the "pinned" style
     readonly property var barTrayPinned: getState("bar.tray.pinned", [])
+    // Item ids never shown in the bar, and the user's item order
+    readonly property var barTrayHidden: getState("bar.tray.hidden", [])
+    readonly property var barTrayOrder: getState("bar.tray.order", [])
 
     readonly property int radiusSmall: getState("geometry.radiusSmall", 5)
     readonly property int radius: getState("geometry.radius", 10)

@@ -10,13 +10,11 @@ import qs.services
 QtObject {
     id: root
 
-    readonly property var items: TrayService.items
+    // Shown items in the user's order, split for the pinned style
+    readonly property var items: TrayService.shownItems
     readonly property bool hasItems: items.length > 0
-
-    // Pinned items in pin order, and the rest in tray order
-    readonly property var pinnedIds: TrayService.pinnedIds
-    readonly property var pinnedItems: pinnedIds.map(id => items.find(i => i.id === id)).filter(i => i !== undefined)
-    readonly property var restItems: items.filter(i => !pinnedIds.includes(i.id))
+    readonly property var pinnedItems: items.filter(i => TrayService.isPinned(i.id))
+    readonly property var restItems: items.filter(i => !TrayService.isPinned(i.id))
 
     signal menuRequested(var item, Item anchor)
     // The context menu went away: "triggered", "escape" or "outside"
@@ -38,29 +36,37 @@ QtObject {
         TrayService.setPinned(item.id, pinned);
     }
 
-    // Pinning lives in the menu too, so every item gets one in that style
+    // Every item gets a menu: the shell rows (pin, hide) are always there
     function hasMenu(item) {
-        return item.hasMenu || Config.barTrayStyle === "pinned";
+        return true;
     }
 
     // Shell rows on top of the item's own menu
     function menuExtras(item) {
-        if (Config.barTrayStyle !== "pinned")
-            return [];
-        const pinned = isPinned(item);
-        return [
-            {
+        const extras = [];
+        if (Config.barTrayStyle === "pinned") {
+            const pinned = isPinned(item);
+            extras.push({
                 action: pinned ? "unpin" : "pin",
                 label: pinned ? "Unpin from bar" : "Pin to bar",
                 // md-pin_off / md-pin
                 glyph: pinned ? "\u{f0404}" : "\u{f0403}"
-            }
-        ];
+            });
+        }
+        extras.push({
+            action: "hide",
+            label: "Hide from bar",
+            // md-eye_off
+            glyph: "\u{f0209}"
+        });
+        return extras;
     }
 
     function runExtra(item, action) {
         if (action === "pin" || action === "unpin")
             setPinned(item, action === "pin");
+        else if (action === "hide")
+            TrayService.setHidden(item.id, true);
     }
 
     function openMenu(item, anchor) {

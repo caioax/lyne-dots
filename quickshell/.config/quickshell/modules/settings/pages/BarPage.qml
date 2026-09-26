@@ -222,31 +222,73 @@ ColumnLayout {
             ]
         }
 
-        // Running items; the switch keeps one in the bar (pinned style)
+        // Running items in bar order: move, hide, and pin (pinned style)
         Repeater {
             model: TrayService.items
 
-            ToggleRow {
+            SettingRow {
                 id: trayRow
 
                 required property var modelData
+                required property int index
+
+                readonly property string itemId: modelData.id
+                readonly property bool hidden: TrayService.isHidden(itemId)
+                readonly property bool pinned: TrayService.isPinned(itemId)
+                readonly property bool pinnedStyle: Config.barTrayStyle === "pinned"
+                readonly property int buttonSize: Config.fontSizeIconSmall + Config.padding * 2
 
                 label: TrayService.itemName(modelData)
-                description: Config.barTrayStyle === "pinned" ? (checked ? "Pinned to the bar" : "Behind the button") : "Pinning applies to the Pinned style"
-                checked: TrayService.isPinned(modelData.id)
-                enabled: Config.barTrayStyle === "pinned"
-                onToggled: value => TrayService.setPinned(trayRow.modelData.id, value)
+                description: hidden ? "Hidden from the bar" : !pinnedStyle ? "" : pinned ? "Pinned to the bar" : "Behind the button"
 
                 leading: TrayIconBox {
                     source: TrayService.getIconSource(trayRow.modelData.icon)
                     color: trayRow.controlColor
+                    opacity: trayRow.hidden ? 0.4 : 1
+                }
+
+                // md-arrow_up / md-arrow_down
+                ActionButton {
+                    icon: "\u{f005d}"
+                    size: trayRow.buttonSize
+                    baseColor: trayRow.controlColor
+                    opacity: trayRow.index > 0 ? 1 : 0.3
+                    onClicked: TrayService.move(trayRow.itemId, -1)
+                }
+
+                ActionButton {
+                    icon: "\u{f0045}"
+                    size: trayRow.buttonSize
+                    baseColor: trayRow.controlColor
+                    opacity: trayRow.index < TrayService.items.length - 1 ? 1 : 0.3
+                    onClicked: TrayService.move(trayRow.itemId, 1)
+                }
+
+                // md-eye / md-eye_off
+                ActionButton {
+                    icon: trayRow.hidden ? "\u{f0208}" : "\u{f0209}"
+                    text: trayRow.hidden ? "Show" : "Hide"
+                    size: trayRow.buttonSize
+                    baseColor: trayRow.controlColor
+                    onClicked: TrayService.setHidden(trayRow.itemId, !trayRow.hidden)
+                }
+
+                QsSwitch {
+                    visible: trayRow.pinnedStyle
+                    enabled: !trayRow.hidden
+                    opacity: enabled ? 1 : 0.4
+                    checked: trayRow.pinned
+                    onToggled: {
+                        TrayService.setPinned(trayRow.itemId, checked);
+                        checked = Qt.binding(() => trayRow.pinned);
+                    }
                 }
             }
         }
 
-        // Pinned items that aren't running right now
+        // Pinned or hidden items that aren't running right now
         Repeater {
-            model: TrayService.pinnedIds.filter(id => !TrayService.items.some(i => i.id === id))
+            model: TrayService.missingIds
 
             SettingRow {
                 id: missingRow
@@ -254,19 +296,20 @@ ColumnLayout {
                 required property string modelData
 
                 label: modelData
-                description: "Pinned, not running"
+                description: (TrayService.isHidden(modelData) ? "Hidden" : "Pinned") + ", not running"
 
                 leading: TrayIconBox {
                     source: ""
                     color: missingRow.controlColor
                 }
 
+                // md-close
                 ActionButton {
-                    icon: "\u{f0404}"
-                    text: "Unpin"
+                    icon: "\u{f0156}"
+                    text: "Forget"
                     size: Config.fontSizeIconSmall + Config.padding * 2
                     baseColor: missingRow.controlColor
-                    onClicked: TrayService.setPinned(missingRow.modelData, false)
+                    onClicked: TrayService.forget(missingRow.modelData)
                 }
             }
         }
