@@ -8,6 +8,7 @@ import Quickshell.Wayland
 import qs.services
 import "./modules/bar/"
 import "./modules/power/"
+import "./modules/lock/"
 import "./modules/screenshot/"
 import "./modules/notifications/"
 import "./modules/settings/"
@@ -97,7 +98,7 @@ ShellRoot {
     Loader {
         id: lockLoader
         active: LockService.locked
-        source: "./modules/lock/LockScreen.qml"
+        sourceComponent: LockScreen {}
 
         onStatusChanged: {
             if (status === Loader.Ready)
@@ -199,7 +200,15 @@ ShellRoot {
         }
     }
 
-    // Shortcut: Power Menu
+    // Shortcut: Lock screen
+    GlobalShortcut {
+        name: "lock_screen"
+        description: "Lock screen"
+
+        onPressed: LockService.lock()
+    }
+
+        // Shortcut: Power Menu
     GlobalShortcut {
         name: "power_menu"
         description: "Power menu"

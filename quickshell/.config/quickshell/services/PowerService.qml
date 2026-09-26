@@ -170,12 +170,17 @@ Singleton {
         cancel();
         selectedId = actions.some(a => a.id === "lock") ? "lock" : actions[0].id;
         screen = Hyprland.focusedMonitor?.name ?? "";
-        uptimeFile.reload();
-        if (!inhibitorProc.running)
-            inhibitorProc.running = true;
+        refresh();
         closeTimer.stop();
         visible = true;
         open = true;
+    }
+
+    // Rereads the uptime and the blocking apps (on open, and by the lock screen)
+    function refresh(): void {
+        uptimeFile.reload();
+        if (!inhibitorProc.running)
+            inhibitorProc.running = true;
     }
 
     function hide(): void {
@@ -201,8 +206,9 @@ Singleton {
 
     // Asks for an action: destructive ones start the countdown (opening the
     // menu if needed), the rest run. Asking again during the countdown runs
-    // it now
-    function request(id: string): void {
+    // it now. `inPlace` keeps the menu closed: the caller shows the
+    // countdown itself (the lock screen)
+    function request(id: string, inPlace): void {
         const action = find(id);
         if (!action || !isAvailable(id))
             return;
@@ -214,7 +220,7 @@ Singleton {
             run(id);
             return;
         }
-        if (!open)
+        if (!open && !inPlace)
             show();
         selectedId = id;
         pendingId = id;

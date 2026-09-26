@@ -6,6 +6,10 @@ import Quickshell.Wayland
 import qs.config
 import qs.services
 
+// Session lock. Every monitor gets the blurred wallpaper; the one focused
+// when locking shows the lock.style template with the password, the others
+// only the clock. Each surface has a hidden input that edits the shared
+// LockService.buffer, so typing works whichever monitor has the keyboard
 WlSessionLock {
     id: root
 
@@ -13,6 +17,9 @@ WlSessionLock {
     // This avoids the race condition where Loader destruction and protocol
     // unlock happen simultaneously
     locked: true
+
+    // Fading out after a successful password
+    property bool unlocking: false
 
     onLockStateChanged: {
         // Protocol unlock complete → defer LockService.unlock() to the next
@@ -22,247 +29,150 @@ WlSessionLock {
             Qt.callLater(LockService.unlock);
     }
 
+    onSecureChanged: LockService.secure = secure
+
+    Component.onCompleted: {
+        PowerService.refresh();
+        WeatherService.refresh(false);
+    }
+
+    Connections {
+        id: lockServiceConn
+
+        target: LockService
+
+        function onAuthSucceeded() {
+            PowerService.cancel();
+            root.unlocking = true;
+            unlockDelay.start();
+        }
+    }
+
+    // Lets the content fade and the blur clear before the surfaces go
+    Timer {
+        id: unlockDelay
+
+        interval: Config.animDurationLong
+        onTriggered: {
+            // Disconnect before unlocking to prevent signal handlers
+            // from firing during surface destruction
+            lockServiceConn.enabled = false;
+            root.locked = false;
+        }
+    }
+
     WlSessionLockSurface {
+        id: surface
+
+        // The monitor focused when locking, or the first one
+        readonly property bool main: {
+            const name = LockService.screen;
+            const known = Quickshell.screens.some(s => s.name === name);
+            return known ? screen?.name === name : screen === Quickshell.screens[0];
+        }
+        property bool ready: false
+        readonly property bool shown: ready && !root.unlocking
+
+        Component.onCompleted: Qt.callLater(() => ready = true)
+
         color: Config.backgroundColor
 
-        // Capture clicks to refocus the hidden password input
+        LockBackground {
+            anchors.fill: parent
+            revealed: surface.shown
+            blurred: !surface.main || LockService.style !== "wallpaper" || (template.item?.typing ?? false)
+        }
+
+        // Clicks bring the keyboard back to the hidden input
         MouseArea {
             anchors.fill: parent
-            onClicked: passwordInput.forceActiveFocus()
+            onClicked: input.forceActiveFocus()
         }
 
-        // ====================================================================
-        // MAIN CONTENT
-        // ====================================================================
+        Loader {
+            id: template
 
-        Column {
-            id: content
+            anchors.fill: parent
+            active: surface.main
+            sourceComponent: LockService.style === "cards" ? cards : LockService.style === "wallpaper" ? wallpaper : center
+        }
+
+        Component {
+            id: center
+
+            LockCenter {
+                shown: surface.shown
+            }
+        }
+
+        Component {
+            id: cards
+
+            LockCards {
+                shown: surface.shown
+            }
+        }
+
+        Component {
+            id: wallpaper
+
+            LockWallpaper {
+                shown: surface.shown
+            }
+        }
+
+        // Other monitors: just the time
+        LockClock {
+            visible: !surface.main
             anchors.centerIn: parent
-            spacing: 8
-            opacity: 0
+            opacity: surface.shown ? 1 : 0
 
-            Component.onCompleted: fadeIn.start()
-
-            NumberAnimation {
-                id: fadeIn
-                target: content
-                property: "opacity"
-                from: 0
-                to: 1
-                duration: Config.animDurationLong
-                easing.type: Easing.OutCubic
-            }
-
-            // Clock
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: TimeService.format("HH:mm")
-                font.family: Config.font
-                font.pixelSize: 64
-                font.bold: true
-                color: Config.accentColor
-            }
-
-            // Date
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: TimeService.format("dddd, dd MMMM yyyy")
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeNormal
-                color: Config.subtextColor
-            }
-
-            Item {
-                width: 1
-                height: 24
-            }
-
-            // Password field
-            Rectangle {
-                id: passwordField
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: 280
-                height: 44
-                radius: Config.radius
-                color: Config.surface0Color
-                border.width: 2
-                border.color: LockService.failed ? Config.errorColor : passwordInput.activeFocus ? Config.accentColor : Config.surface2Color
-
-                Behavior on border.color {
-                    ColorAnimation {
-                        duration: Config.animDurationShort
-                    }
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Config.animDurationLong
+                    easing.type: Easing.OutCubic
                 }
-
-                // Shake offset (applied via transform to not affect layout)
-                property real shakeX: 0
-                transform: Translate {
-                    x: passwordField.shakeX
-                }
-
-                // Password dots
-                Row {
-                    visible: !LockService.authenticating
-                    anchors.centerIn: parent
-                    spacing: 6
-
-                    Repeater {
-                        model: passwordInput.text.length
-
-                        Rectangle {
-                            required property int index
-                            readonly property bool isLast: index === passwordInput.text.length - 1
-                            width: 10
-                            height: 10
-                            radius: width / 2
-                            color: Config.accentColor
-                            scale: isLast ? 0.5 : 1
-                            opacity: isLast ? 1.0 : 0.8
-
-                            Component.onCompleted: scale = isLast ? 1.2 : 1
-
-                            Behavior on scale {
-                                NumberAnimation {
-                                    duration: Config.animDuration
-                                    easing.type: Easing.OutBack
-                                }
-                            }
-
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Config.animDuration
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Placeholder / status text
-                Text {
-                    anchors.centerIn: parent
-                    visible: (passwordInput.text.length === 0) || (LockService.authenticating)
-                    text: LockService.authenticating ? "Verifying..." : "Enter password..."
-                    color: LockService.authenticating ? Config.accentColor : Config.mutedColor
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeNormal
-                }
-
-                // Shake animation on auth failure
-                SequentialAnimation {
-                    id: shakeAnim
-                    NumberAnimation {
-                        target: passwordField
-                        property: "shakeX"
-                        to: 12
-                        duration: 40
-                    }
-                    NumberAnimation {
-                        target: passwordField
-                        property: "shakeX"
-                        to: -10
-                        duration: 40
-                    }
-                    NumberAnimation {
-                        target: passwordField
-                        property: "shakeX"
-                        to: 8
-                        duration: 40
-                    }
-                    NumberAnimation {
-                        target: passwordField
-                        property: "shakeX"
-                        to: -6
-                        duration: 40
-                    }
-                    NumberAnimation {
-                        target: passwordField
-                        property: "shakeX"
-                        to: 0
-                        duration: 40
-                    }
-                }
-            }
-
-            // Error text
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                visible: LockService.failed
-                text: LockService.failMessage
-                color: Config.errorColor
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeSmall
-            }
-
-            // Username
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: Quickshell.env("USER")
-                color: Config.subtextColor
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeNormal
             }
         }
-
-        // ====================================================================
-        // HIDDEN PASSWORD INPUT
-        // ====================================================================
 
         TextInput {
-            id: passwordInput
+            id: input
+
             width: 1
             height: 1
             opacity: 0
             echoMode: TextInput.Password
             focus: true
+            text: LockService.buffer
 
-            Keys.onReturnPressed: submit()
-            Keys.onEnterPressed: submit()
+            onTextEdited: LockService.buffer = text
 
-            function submit() {
-                if (!LockService.authenticating && text.length > 0)
-                    LockService.tryUnlock(text);
-            }
-        }
-
-        // ====================================================================
-        // AUTH EVENT HANDLERS
-        // ====================================================================
-
-        Connections {
-            id: lockServiceConn
-            target: LockService
-
-            function onAuthSucceeded() {
-                passwordField.forceActiveFocus();
-                fadeOut.start();
-            }
-
-            function onFailedChanged() {
-                if (LockService.failed) {
-                    shakeAnim.start();
-                    passwordInput.clear();
+            Keys.onPressed: event => {
+                switch (event.key) {
+                case Qt.Key_Return:
+                case Qt.Key_Enter:
+                    LockService.tryUnlock();
+                    event.accepted = true;
+                    break;
+                case Qt.Key_Escape:
+                    // Cancels a power countdown first, then clears the password
+                    if (PowerService.pendingId !== "")
+                        PowerService.cancel();
+                    else
+                        LockService.buffer = "";
+                    event.accepted = true;
+                    break;
                 }
             }
-        }
+            Keys.onReleased: LockService.checkCapsLock()
 
-        // Fade out → unlock sequence
-        SequentialAnimation {
-            id: fadeOut
+            // Typed on another monitor (or cleared after a try)
+            Connections {
+                target: LockService
 
-            NumberAnimation {
-                target: content
-                property: "opacity"
-                to: 0
-                duration: Config.animDurationLong
-                easing.type: Easing.OutCubic
-            }
-
-            ScriptAction {
-                script: {
-                    // Disconnect before unlocking to prevent signal handlers
-                    // from firing during surface destruction
-                    lockServiceConn.enabled = false;
-                    root.locked = false;
+                function onBufferChanged() {
+                    if (input.text !== LockService.buffer)
+                        input.text = LockService.buffer;
                 }
             }
         }

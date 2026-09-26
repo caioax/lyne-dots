@@ -132,6 +132,7 @@ bind("launcher",          "Shell", "App launcher",      mainMod .. " + Space",  
 bind("clipboard-history", "Shell", "Clipboard history", mainMod .. " + V",         hl.dsp.global("quickshell:clipboard_history"))
 bind("screenshot",        "Shell", "Screenshot",        "Print",                   hl.dsp.global("quickshell:take_screenshot"))
 bind("power-menu",        "Shell", "Power menu",        mainMod .. " + End",       hl.dsp.global("quickshell:power_menu"))
+bind("lock-screen",       "Shell", "Lock screen",       mainMod .. " + Escape",    hl.dsp.global("quickshell:lock_screen"))
 bind("wallpapers",        "Shell", "Wallpapers",        mainMod .. " + B",         hl.dsp.global("quickshell:wallpaper_picker"))
 bind("settings",          "Shell", "Settings",          mainMod .. " + I",         hl.dsp.global("quickshell:settings"))
 bind("keybinds",          "Shell", "Keybinds",          mainMod .. " + slash",     hl.dsp.global("quickshell:keybinds_help"))

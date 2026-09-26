@@ -14,6 +14,10 @@ Item {
 
     required property var action
     property string variant: "tile"
+    // Countdown shown here only, without opening the power menu
+    property bool inPlace: false
+    // The letter keycap (off where letters type, like the lock screen)
+    property bool showKey: true
 
     readonly property bool selected: PowerService.selectedId === action.id
     readonly property bool pending: PowerService.pendingId === action.id
@@ -122,7 +126,7 @@ Item {
 
             // Letter that runs it
             Rectangle {
-                visible: !root.tile
+                visible: !root.tile && root.showKey
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 width: Math.max(height, keyText.implicitWidth + Config.padding)
@@ -157,7 +161,7 @@ Item {
 
         // Letter under the tile label
         Rectangle {
-            visible: root.tile
+            visible: root.tile && root.showKey
             Layout.alignment: Qt.AlignHCenter
             implicitWidth: Math.max(implicitHeight, tileKey.implicitWidth + Config.padding * 2)
             implicitHeight: tileKey.implicitHeight + Config.padding / 2
@@ -185,7 +189,7 @@ Item {
         cursorShape: Qt.PointingHandCursor
         onClicked: {
             if (root.selected) {
-                PowerService.request(root.action.id);
+                PowerService.request(root.action.id, root.inPlace);
             } else {
                 PowerService.cancel();
                 PowerService.selectedId = root.action.id;

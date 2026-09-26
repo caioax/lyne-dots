@@ -79,6 +79,12 @@
         "long": 400,
         "screenshot": true
     },
+    "lock": {
+        "style": "center",
+        "showStatus": true,
+        "showPower": true,
+        "beforeSleep": true
+    },
     "power": {
         "style": "card",
         "side": "right",

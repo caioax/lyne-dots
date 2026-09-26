@@ -108,6 +108,13 @@ Singleton {
             category: "Hyprland"
         },
         {
+            id: "lock",
+            label: "Lock screen",
+            icon: "\u{f033e}",
+            description: "Lock screen template, what it shows and locking before sleep",
+            category: "System"
+        },
+        {
             id: "idle",
             label: "Idle",
             icon: "\u{f04b2}",

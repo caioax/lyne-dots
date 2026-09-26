@@ -34,6 +34,7 @@ FloatingWindow {
             windows: windowsPage,
             input: inputPage,
             keybinds: keybindsPage,
+            lock: lockPage,
             idle: idlePage,
             profile: profilePage,
             about: aboutPage
@@ -63,6 +64,11 @@ FloatingWindow {
     Component {
         id: powerPage
         PowerPage {}
+    }
+
+    Component {
+        id: lockPage
+        LockPage {}
     }
 
     Component {
