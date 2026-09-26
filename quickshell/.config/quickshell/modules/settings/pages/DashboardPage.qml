@@ -77,6 +77,12 @@ ColumnLayout {
         }
 
         ToggleRow {
+            label: "Lyrics"
+            description: "Synced lyrics (LRCLIB, NetEase) in place of the album in the Media tab"
+            path: "dashboard.lyrics"
+        }
+
+        ToggleRow {
             label: "GIF"
             description: "In the Media tab and under the Overview player; moves while something plays"
             path: "dashboard.showGif"

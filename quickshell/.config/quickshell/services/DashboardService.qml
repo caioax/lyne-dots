@@ -66,6 +66,9 @@ Singleton {
     // Blurred cover behind the Media tab (a plain card when off)
     readonly property bool coverBackdrop: StateService.get("dashboard.coverBackdrop", true)
 
+    // Media tab shows the lyrics of the track in place of its title and album
+    readonly property bool lyrics: StateService.get("dashboard.lyrics", false)
+
     // GIF in the Media tab and the Overview player (animates while something plays). An empty
     // path means the bundled Capoo (assets/CREDITS.md)
     readonly property bool showGif: StateService.get("dashboard.showGif", true)

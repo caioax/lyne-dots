@@ -48,6 +48,7 @@
     "dashboard": {
         "visualizer": true,
         "coverBackdrop": true,
+        "lyrics": false,
         "showGif": true,
         "gif": "",
         "hiddenTabs": [],

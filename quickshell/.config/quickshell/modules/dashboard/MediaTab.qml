@@ -8,8 +8,9 @@ import qs.services
 import "../../components/"
 
 // Full player over the blurred cover: the round cover with the cava spectrum
-// around it, then the track, wavy progress, round controls and volume, with
-// the GIF floating in the top-right corner beside the track
+// around it, then the track (or its synced lyrics), wavy progress, round
+// controls and volume, with the GIF floating in the top-right corner beside
+// the track
 Item {
     id: root
 
@@ -24,6 +25,8 @@ Item {
     readonly property real gifRoom: gif.visible ? gif.paintedWidth + root.gifMargin + Config.spacing : 0
     // cava only runs while the tab is shown and something plays
     readonly property bool visualizing: active && MprisService.isPlaying
+    // Lyrics in place of the title, artist and album
+    readonly property bool showLyrics: DashboardService.lyrics
 
     onVisualizingChanged: visualizing ? CavaService.acquire() : CavaService.release()
     Component.onDestruction: {
@@ -168,6 +171,8 @@ Item {
                     elide: Text.ElideRight
                 }
 
+                LyricsButton {}
+
                 Repeater {
                     model: MprisService.players.length > 1 ? MprisService.players : []
 
@@ -176,10 +181,12 @@ Item {
             }
 
             Item {
+                visible: !root.showLyrics
                 Layout.fillHeight: true
             }
 
             Text {
+                visible: !root.showLyrics
                 Layout.fillWidth: true
                 Layout.rightMargin: root.gifRoom
                 text: MprisService.title
@@ -193,6 +200,7 @@ Item {
             }
 
             Text {
+                visible: !root.showLyrics
                 Layout.fillWidth: true
                 Layout.rightMargin: root.gifRoom
                 text: MprisService.artist
@@ -206,7 +214,7 @@ Item {
                 Layout.fillWidth: true
                 Layout.rightMargin: root.gifRoom
                 // Singles repeat the title as the album
-                visible: text !== "" && text !== MprisService.title
+                visible: !root.showLyrics && text !== "" && text !== MprisService.title
                 text: MprisService.album
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeNormal
@@ -215,7 +223,49 @@ Item {
             }
 
             Item {
+                visible: !root.showLyrics
                 Layout.fillHeight: true
+            }
+
+            // ==================== LYRICS ====================
+            LyricsView {
+                visible: root.showLyrics
+                active: root.active && root.showLyrics
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                // About 3 lines: takes the room of the title, artist and album
+                // without making the tab taller
+                Layout.minimumHeight: Config.fontSizeNormal * 5
+                Layout.rightMargin: root.gifRoom
+            }
+
+            // Title · artist, in one line under the lyrics
+            RowLayout {
+                visible: root.showLyrics
+                Layout.fillWidth: true
+                Layout.rightMargin: root.gifRoom
+                spacing: Config.spacing
+
+                // The title takes what it needs, the artist keeps some room
+                Text {
+                    Layout.minimumWidth: 0
+                    text: MprisService.title
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeNormal
+                    font.bold: true
+                    color: Config.textColor
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: Config.fontSizeNormal * 6
+                    text: "\u00b7  " + MprisService.artist
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeNormal
+                    color: Config.subtextColor
+                    elide: Text.ElideRight
+                }
             }
 
             MediaProgress {
@@ -315,6 +365,38 @@ Item {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: MprisService.selectPlayer(playerButton.modelData)
+        }
+    }
+
+    // Switches between the track info and its lyrics (outlined while on)
+    component LyricsButton: Rectangle {
+        implicitWidth: Config.fontSizeNormal + Config.padding * 2
+        implicitHeight: implicitWidth
+        radius: width / 2
+        color: root.showLyrics ? Qt.alpha(Config.accentColor, 0.15) : lyricsMouse.containsMouse ? Config.cardHoverColor : Qt.alpha(Config.cardHoverColor, 0)
+        border.width: root.showLyrics ? 1 : 0
+        border.color: Qt.alpha(Config.accentColor, 0.6)
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Config.animDurationShort
+            }
+        }
+
+        Text {
+            anchors.centerIn: parent
+            text: "\u{f0370}"
+            font.family: Config.font
+            font.pixelSize: Config.fontSizeNormal
+            color: root.showLyrics ? Config.accentColor : Config.subtextColor
+        }
+
+        MouseArea {
+            id: lyricsMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: StateService.set("dashboard.lyrics", !root.showLyrics)
         }
     }
 
