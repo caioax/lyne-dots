@@ -39,6 +39,7 @@ Item {
     PillsStyle {
         id: strip
         model: workspacesModel
+        count: Config.barWorkspaceCount
         visible: !workspacesModel.specialActive
         anchors.centerIn: parent
         width: implicitWidth

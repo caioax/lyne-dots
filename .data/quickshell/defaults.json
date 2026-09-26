@@ -27,7 +27,10 @@
         "centerStyle": "clock",
         "showMedia": true,
         "showSystem": false,
-        "showWeather": false
+        "showWeather": false,
+        "workspaces": {
+            "count": 10
+        }
     },
     "clipboard": {
         "storeImages": true,

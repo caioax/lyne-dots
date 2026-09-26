@@ -73,6 +73,8 @@ Singleton {
     readonly property bool barShowMedia: !barCenterClock && getState("bar.showMedia", true)
     readonly property bool barShowSystem: !barCenterClock && getState("bar.showSystem", false)
     readonly property bool barShowWeather: !barCenterClock && getState("bar.showWeather", false)
+    // Workspaces shown in the bar (per monitor); the strip scrolls to reach the others
+    readonly property int barWorkspaceCount: getState("bar.workspaces.count", 10)
 
     readonly property int radiusSmall: getState("geometry.radiusSmall", 5)
     readonly property int radius: getState("geometry.radius", 10)

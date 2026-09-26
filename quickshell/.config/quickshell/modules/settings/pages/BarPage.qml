@@ -87,6 +87,18 @@ ColumnLayout {
     }
 
     SettingsGroup {
+        title: "Workspaces"
+
+        StepperRow {
+            label: "Shown"
+            description: "Workspaces in view at once; the strip scrolls to reach the others"
+            path: "bar.workspaces.count"
+            from: 3
+            to: 15
+        }
+    }
+
+    SettingsGroup {
         title: "Center"
 
         SelectRow {

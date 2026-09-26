@@ -28,7 +28,9 @@ QtObject {
     // Each monitor owns a block of 100 ids (1-99, 101-199, ...)
     readonly property int activeId: (activeWorkspace && activeWorkspace.id > 0) ? activeWorkspace.id : 1
     readonly property int monitorOffset: Math.floor((activeId - 1) / 100) * 100
-    readonly property int relativeActiveId: Math.max(1, Math.min(activeId - monitorOffset, totalWorkspaces))
+    // Derived from activeId alone: going through monitorOffset, a switch to
+    // another monitor's block briefly reads the old offset (105 - 0 -> 99)
+    readonly property int relativeActiveId: Math.max(1, Math.min(activeId - Math.floor((activeId - 1) / 100) * 100, totalWorkspaces))
 
     // --- Per-workspace info ---
     // { <id>: { windows: [appId, ...], urgent: bool } } for every workspace
