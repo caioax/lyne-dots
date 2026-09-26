@@ -305,8 +305,11 @@ Card {
                 Layout.fillWidth: true
                 spacing: Config.padding
 
+                // No preferred width: a longer date or holiday name mustn't
+                // widen the card
                 Text {
                     Layout.fillWidth: true
+                    Layout.preferredWidth: 1
                     text: root.sameDay(root.selectedDate, root.today) ? "Today" : root.selectedDate.toLocaleDateString(Qt.locale(), "dddd, d MMMM")
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeNormal
@@ -335,6 +338,7 @@ Card {
             // That holiday's name
             Text {
                 Layout.fillWidth: true
+                Layout.preferredWidth: 1
                 text: root.selectedHoliday?.name ?? root.nextHoliday?.name ?? "No holidays"
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall

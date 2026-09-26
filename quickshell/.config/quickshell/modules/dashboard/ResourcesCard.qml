@@ -13,6 +13,13 @@ Rectangle {
     readonly property var rootDisk: SystemMonitorService.disks.find(d => d.mount === "/") ?? null
     readonly property bool hasGpu: SystemMonitorService.gpuType !== "unknown"
 
+    // Free space in few characters ("830G free", "1.2T free"): the columns
+    // are narrow beside the player
+    function shortFree(bytes: real): string {
+        const gib = bytes / 1073741824;
+        return (gib >= 1024 ? (gib / 1024).toFixed(1) + "T" : Math.round(gib) + "G") + " free";
+    }
+
     Layout.fillWidth: true
     implicitHeight: row.implicitHeight + Config.padding * 4
     radius: Config.radiusLarge
@@ -61,7 +68,7 @@ Rectangle {
         Resource {
             label: "Disk"
             value: root.rootDisk?.usage ?? 0
-            detail: root.rootDisk ? SystemMonitorService.formatBytes(root.rootDisk.total - root.rootDisk.used) + " free" : ""
+            detail: root.rootDisk ? root.shortFree(root.rootDisk.total - root.rootDisk.used) : ""
         }
 
         Resource {
