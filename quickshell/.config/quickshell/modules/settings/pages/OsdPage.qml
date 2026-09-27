@@ -12,7 +12,7 @@ ColumnLayout {
     SettingsGroup {
         title: "Appearance"
 
-        SelectRow {
+        TemplatePicker {
             label: "Style"
             description: ({
                     pill: "Icon, level bar and percentage in a capsule",
@@ -21,29 +21,28 @@ ColumnLayout {
                     attached: "Slides out of the bar like the attached panels (from the screen edge with islands or a floating bar)"
                 })[OsdService.style]
             path: "osd.style"
-            segmentWidth: Config.fontSizeNormal * 7
+            thumbHeight: Config.fontSizeIconLarge * 5
             options: [
                 {
                     label: "Pill",
-                    icon: "\u{f0402}",
                     value: "pill"
                 },
                 {
                     label: "Vertical",
-                    icon: "\u{f084f}",
                     value: "vertical"
                 },
                 {
                     label: "Card",
-                    icon: "\u{f07af}",
                     value: "card"
                 },
                 {
                     label: "Attached",
-                    icon: "\u{f10ac}",
                     value: "attached"
                 }
             ]
+            preview: Component {
+                OsdStylePreview {}
+            }
         }
 
         // Options depend on the style (OsdService.positions)
