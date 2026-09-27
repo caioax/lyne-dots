@@ -47,7 +47,8 @@ Item {
 
         ShapePath {
             fillColor: "transparent"
-            strokeColor: root.animatedValue > 0 ? root.color : "transparent"
+            // Rests on the color at alpha 0: animating from "transparent" flashes dark
+            strokeColor: root.animatedValue > 0 ? root.color : Qt.alpha(root.color, 0)
             strokeWidth: root.strokeWidth
             capStyle: ShapePath.RoundCap
 

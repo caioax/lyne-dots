@@ -13,11 +13,6 @@ import "../../components/osd/"
 Scope {
     id: root
 
-    // osd.style -> component
-    readonly property var styles: ({
-            pill: pillStyle
-        })
-
     // Focused monitor when it opened, or every monitor (osd.monitor)
     readonly property var screens: {
         if (Config.osdMonitor === "all")
@@ -33,20 +28,50 @@ Scope {
             id: osdWindow
 
             required property ShellScreen modelData
-            readonly property bool atTop: Config.osdPosition === "top"
-            // Room for a bar on the same edge
-            readonly property int barRoom: atTop !== Config.barOnBottom ? Config.barReservedHeight : 0
+
+            readonly property bool attached: OsdService.style === "attached"
+            readonly property string barEdge: Config.barOnBottom ? "bottom" : "top"
+            // Screen side the OSD sits on, "" when centered
+            readonly property string edge: {
+                const position = OsdService.position;
+                if (attached)
+                    return position === "bar" ? barEdge : (barEdge === "top" ? "bottom" : "top");
+                return position === "center" ? "" : position;
+            }
+            // Distance from that side: attached panels touch a docked bar (or
+            // the screen edge), the others keep clear of the bar
+            readonly property real edgeMargin: {
+                const onBar = edge === barEdge;
+                if (attached)
+                    return onBar && !Config.barIslands && !Config.barFloating ? Config.barHeight : 0;
+                if (edge === "left" || edge === "right")
+                    return Config.spacing * 2;
+                return (onBar ? Config.barReservedHeight : 0) + (edge === "top" ? Config.spacing * 2 : Config.spacing * 8);
+            }
+
+            // osd.style -> component
+            readonly property var styles: ({
+                    pill: pillStyle,
+                    vertical: verticalStyle,
+                    card: cardStyle,
+                    attached: attachedStyle
+                })
 
             screen: modelData
 
-            anchors.top: atTop
-            anchors.bottom: !atTop
-            margins.top: atTop ? barRoom + Config.spacing * 2 : 0
-            margins.bottom: atTop ? 0 : barRoom + Config.spacing * 8
+            anchors.top: edge === "top"
+            anchors.bottom: edge === "bottom"
+            anchors.left: edge === "left"
+            anchors.right: edge === "right"
+            margins.top: edge === "top" ? edgeMargin : 0
+            margins.bottom: edge === "bottom" ? edgeMargin : 0
+            margins.left: edge === "left" ? edgeMargin : 0
+            margins.right: edge === "right" ? edgeMargin : 0
             exclusionMode: ExclusionMode.Ignore
 
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.namespace: "qs_modules"
+            // Attached panels share the bar's tint (see AttachedPanel)
+            WlrLayershell.namespace: attached ? "qs_attached" : "qs_modules"
 
             implicitWidth: styleLoader.implicitWidth
             implicitHeight: styleLoader.implicitHeight
@@ -55,28 +80,68 @@ Scope {
             // Doesn't take the mouse
             mask: Region {}
 
+            // The attached style slides out by itself
             AnimatedPopup {
                 anchors.fill: parent
-                shown: OsdService.shown
-                transformOrigin: osdWindow.atTop ? Item.Top : Item.Bottom
+                shown: OsdService.shown || osdWindow.attached
+                fromScale: osdWindow.attached ? 1 : Config.animPopupFromScale
+                transformOrigin: ({
+                        top: Item.Top,
+                        bottom: Item.Bottom,
+                        left: Item.Left,
+                        right: Item.Right
+                    })[osdWindow.edge] ?? Item.Center
 
                 Loader {
                     id: styleLoader
 
                     anchors.fill: parent
-                    sourceComponent: root.styles[Config.osdStyle] ?? pillStyle
+                    sourceComponent: osdWindow.styles[OsdService.style]
                 }
             }
-        }
-    }
 
-    Component {
-        id: pillStyle
+            Component {
+                id: pillStyle
 
-        PillStyle {
-            value: OsdService.value
-            muted: OsdService.muted
-            icon: OsdService.icon
+                PillStyle {
+                    value: OsdService.value
+                    muted: OsdService.muted
+                    icon: OsdService.icon
+                }
+            }
+
+            Component {
+                id: verticalStyle
+
+                VerticalStyle {
+                    value: OsdService.value
+                    muted: OsdService.muted
+                    icon: OsdService.icon
+                }
+            }
+
+            Component {
+                id: cardStyle
+
+                CardStyle {
+                    value: OsdService.value
+                    muted: OsdService.muted
+                    icon: OsdService.icon
+                    label: OsdService.label
+                }
+            }
+
+            Component {
+                id: attachedStyle
+
+                AttachedStyle {
+                    value: OsdService.value
+                    muted: OsdService.muted
+                    icon: OsdService.icon
+                    edge: osdWindow.edge
+                    shown: OsdService.shown
+                }
+            }
         }
     }
 }

@@ -24,8 +24,20 @@ Singleton {
     // Monitor focused when the OSD opened (osd.monitor "focused")
     property string screenName: ""
 
+    // Positions each style offers (osd.position), the first is the fallback
+    readonly property var positions: ({
+            pill: ["bottom", "top"],
+            vertical: ["right", "left"],
+            card: ["center", "bottom"],
+            attached: ["bar", "opposite"]
+        })
+    readonly property string style: positions[Config.osdStyle] ? Config.osdStyle : "pill"
+    readonly property string position: positionFor(style)
+
     readonly property real value: kind === "brightness" ? BrightnessService.brightness : AudioService.volume
     readonly property bool muted: kind === "volume" && AudioService.muted
+
+    readonly property string label: kind === "brightness" ? "Brightness" : muted ? "Muted" : "Volume"
 
     readonly property string icon: {
         if (kind === "brightness") {
@@ -80,6 +92,12 @@ Singleton {
         root.shown = true;
         exitTimer.stop();
         hideTimer.restart();
+    }
+
+    // Saved position if the style offers it, else its first option
+    function positionFor(style: string): string {
+        const options = positions[style] ?? [];
+        return options.includes(Config.osdPosition) ? Config.osdPosition : options[0] ?? "";
     }
 
     function hide() {

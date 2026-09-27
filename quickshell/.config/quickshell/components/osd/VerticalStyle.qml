@@ -3,7 +3,8 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 
-// OSD capsule: icon badge, level bar and percentage
+// OSD capsule standing on a screen side: percentage on top, a level bar
+// that fills upwards and the icon badge at the bottom
 Rectangle {
     id: root
 
@@ -13,28 +14,47 @@ Rectangle {
 
     readonly property color tone: muted ? Config.mutedColor : Config.accentColor
 
-    implicitWidth: Config.fontSizeNormal * 20
-    implicitHeight: Config.fontSizeIcon + Config.padding * 4
-    radius: height / 2
+    implicitWidth: Config.fontSizeIcon + Config.padding * 4
+    implicitHeight: Config.fontSizeNormal * 14
+    radius: width / 2
     color: Config.backgroundTransparentColor
     border.width: 1
     border.color: Config.surface2Color
 
-    TextMetrics {
-        id: percentMetrics
-        font: percent.font
-        text: "100%"
-    }
-
-    RowLayout {
+    ColumnLayout {
         anchors.fill: parent
-        anchors.leftMargin: Config.padding
-        anchors.rightMargin: Config.padding * 3
+        anchors.topMargin: Config.padding * 3
+        anchors.bottomMargin: Config.padding
         spacing: Config.spacing * 1.5
+
+        Text {
+            Layout.alignment: Qt.AlignHCenter
+            text: Math.round(root.value * 100)
+            font.family: Config.font
+            font.pixelSize: Config.fontSizeSmall
+            font.weight: Font.DemiBold
+            color: root.muted ? Config.mutedColor : Config.textColor
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Config.animDurationShort
+                }
+            }
+        }
+
+        LevelBar {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.fillHeight: true
+            Layout.preferredWidth: Config.padding
+            vertical: true
+            value: root.value
+            tone: root.tone
+        }
 
         // Icon badge, concentric with the capsule
         Rectangle {
-            Layout.preferredWidth: root.height - Config.padding * 2
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: root.width - Config.padding * 2
             Layout.preferredHeight: Layout.preferredWidth
             radius: width / 2
             color: Qt.alpha(root.tone, 0.15)
@@ -56,31 +76,6 @@ Rectangle {
                     ColorAnimation {
                         duration: Config.animDurationShort
                     }
-                }
-            }
-        }
-
-        LevelBar {
-            Layout.fillWidth: true
-            Layout.preferredHeight: Config.padding
-            value: root.value
-            tone: root.tone
-        }
-
-        Text {
-            id: percent
-
-            Layout.preferredWidth: percentMetrics.advanceWidth
-            text: Math.round(root.value * 100) + "%"
-            horizontalAlignment: Text.AlignRight
-            font.family: Config.font
-            font.pixelSize: Config.fontSizeNormal
-            font.weight: Font.DemiBold
-            color: root.muted ? Config.mutedColor : Config.textColor
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: Config.animDurationShort
                 }
             }
         }

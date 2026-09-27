@@ -14,33 +14,81 @@ ColumnLayout {
 
         SelectRow {
             label: "Style"
-            description: "Icon, level bar and percentage in a capsule"
+            description: ({
+                    pill: "Icon, level bar and percentage in a capsule",
+                    vertical: "A slim capsule on a screen side, filling upwards",
+                    card: "A square card with a ring around the icon",
+                    attached: "Slides out of the bar like the attached panels (from the screen edge with islands or a floating bar)"
+                })[OsdService.style]
             path: "osd.style"
+            segmentWidth: Config.fontSizeNormal * 7
             options: [
                 {
                     label: "Pill",
                     icon: "\u{f0402}",
                     value: "pill"
+                },
+                {
+                    label: "Vertical",
+                    icon: "\u{f084f}",
+                    value: "vertical"
+                },
+                {
+                    label: "Card",
+                    icon: "\u{f07af}",
+                    value: "card"
+                },
+                {
+                    label: "Attached",
+                    icon: "\u{f10ac}",
+                    value: "attached"
                 }
             ]
         }
 
+        // Options depend on the style (OsdService.positions)
         SelectRow {
+            readonly property string barIcon: Config.barOnBottom ? "\u{f10a9}" : "\u{f1513}"
+            readonly property string oppositeIcon: Config.barOnBottom ? "\u{f1513}" : "\u{f10a9}"
+            readonly property var choices: ({
+                    top: {
+                        label: "Top",
+                        icon: "\u{f1513}"
+                    },
+                    bottom: {
+                        label: "Bottom",
+                        icon: "\u{f10a9}"
+                    },
+                    left: {
+                        label: "Left",
+                        icon: "\u{f10aa}"
+                    },
+                    right: {
+                        label: "Right",
+                        icon: "\u{f10ab}"
+                    },
+                    center: {
+                        label: "Center",
+                        icon: "\u{f11c6}"
+                    },
+                    bar: {
+                        label: "Bar",
+                        icon: barIcon
+                    },
+                    opposite: {
+                        label: "Opposite",
+                        icon: oppositeIcon
+                    }
+                })
+
             label: "Position"
-            description: "Screen edge the OSD sits on, clear of the bar"
+            description: OsdService.style === "attached" ? "Under the bar, or on the other screen edge" : "Where it sits, clear of the bar"
             path: "osd.position"
-            options: [
-                {
-                    label: "Top",
-                    icon: "\u{f1513}",
-                    value: "top"
-                },
-                {
-                    label: "Bottom",
-                    icon: "\u{f10a9}",
-                    value: "bottom"
-                }
-            ]
+            value: OsdService.position
+            segmentWidth: Config.fontSizeNormal * 7
+            options: OsdService.positions[OsdService.style].map(p => Object.assign({
+                        value: p
+                    }, choices[p]))
         }
 
         SettingRow {
