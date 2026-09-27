@@ -53,8 +53,9 @@ magick "$src" -crop "$geometry" +repage "$shot"
 rm -f "$@"
 [ -f "$shot" ] || exit 1
 
-# OCR: the text goes to the clipboard, the image is dropped. Upscaled and
-# grey, screen text reads better
+# OCR: the text goes to the clipboard, the image is dropped. The crop goes
+# in as it is: upscaling or greying it read worse in tests (screen fonts
+# at 11-18px, light on dark)
 case "$action" in
 ocr:*)
     langs="${action#ocr:}"
@@ -63,8 +64,7 @@ ocr:*)
         notify-send -a Screenshot -i org.xfce.screenshooter "Text not copied" "Install tesseract to copy text from screenshots"
         exit 1
     fi
-    text="$(magick "$shot" -colorspace Gray -resize 200% png:- |
-        tesseract - - -l "${langs:-eng}" -c page_separator= 2>/dev/null |
+    text="$(tesseract "$shot" - -l "${langs:-eng}" -c page_separator= 2>/dev/null |
         sed -e 's/[[:space:]]*$//' | sed -e '/./,$!d')"
     rm -f "$shot"
     if [ -z "$(printf '%s' "$text" | tr -d '[:space:]')" ]; then
@@ -72,9 +72,9 @@ ocr:*)
         exit 0
     fi
     printf '%s' "$text" | wl-copy
-    # The body is rich text: escape it; show the first lines
-    preview="$(printf '%s\n' "$text" | head -n 3 | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g')"
-    lines="$(printf '%s\n' "$text" | wc -l)"
+    # The body is rich text: escape it; show the first lines with text
+    preview="$(printf '%s\n' "$text" | grep -v '^[[:space:]]*$' | head -n 3 | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g')"
+    lines="$(printf '%s\n' "$text" | grep -cv '^[[:space:]]*$')"
     [ "$lines" -gt 3 ] && preview="$preview
 …"
     notify-send -a Screenshot -i org.xfce.screenshooter "Text copied" "$preview"
