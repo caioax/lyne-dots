@@ -136,12 +136,51 @@ Item {
                 onIconClicked: AudioService.toggleSourceMute()
             }
 
-            QsSlider {
-                visible: BrightnessService.primary !== null
-                icon: BrightnessService.iconFor(value)
-                value: BrightnessService.primary?.brightness ?? 0
-                onMoved: val => BrightnessService.primary.set(val)
-                onIconClicked: BrightnessService.primary.toggle()
+            // One slider per monitor with brightness control, named when
+            // there's more than one
+            Repeater {
+                model: BrightnessService.controllable
+
+                ColumnLayout {
+                    id: monitorBrightness
+
+                    required property var modelData
+
+                    Layout.fillWidth: true
+                    spacing: Math.round(Config.spacing / 2)
+
+                    RowLayout {
+                        visible: BrightnessService.controllable.length > 1
+                        Layout.fillWidth: true
+                        Layout.leftMargin: Math.round(Config.padding / 2)
+                        spacing: Config.spacing
+
+                        Text {
+                            // md-laptop / md-monitor
+                            text: monitorBrightness.modelData.internal ? "\u{f0322}" : "\u{f0379}"
+                            font.family: Config.font
+                            font.pixelSize: Config.fontSizeSmall
+                            color: Config.subtextColor
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: monitorBrightness.modelData.label
+                            elide: Text.ElideRight
+                            font.family: Config.font
+                            font.pixelSize: Config.fontSizeSmall
+                            color: Config.subtextColor
+                        }
+                    }
+
+                    QsSlider {
+                        icon: BrightnessService.iconFor(value)
+                        value: monitorBrightness.modelData.brightness
+                        stepSize: Config.brightnessStep
+                        onMoved: val => monitorBrightness.modelData.set(val)
+                        onIconClicked: monitorBrightness.modelData.toggle()
+                    }
+                }
             }
         }
     }
