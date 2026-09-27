@@ -9,8 +9,8 @@ import qs.services
 //   logo    — no background at rest, a pill the size of the logo on hover
 //   pill    — a soft accent pill that is always there
 //   compact — a round button
-// With `bar.launcher.animate` the dot hops on hover and grows while the
-// launcher is open. Right and middle click run the configured actions
+// With `bar.launcher.animate` the logo comes alive (see MOTION). Right and
+// middle click run the configured actions
 BarButton {
     id: root
 
@@ -65,40 +65,242 @@ BarButton {
     }
 
     // --- MOTION ---
-    // hop: 0 → 1 → 0 once per hover; grow: 1 while the launcher is open
-    property real hop: 0
-    property real grow: animate && active ? 1 : 0
+    // Driven as numbers, the logo (or glyph) maps them to its shape:
+    //   hover  — the dot bounces: squashes, leaps stretched, lands flat, rebounds
+    //   open   — the dot rides the whole line as a comet and comes home bigger;
+    //            closing rides it back
+    //   open   — then it breathes slowly until the launcher closes
+    //   press  — the logo squeezes and pops back on release
+    //   start  — the line draws itself once and the dot pops in
+    property real lift: 0
+    property real stretch: 0
+    property real travel: 0
+    property bool travelReverse: false
+    property real grow: 0
+    property real breath: 0
+    property real press: animate && pressed ? 1 : 0
+    property real draw: 1
+    property real pop: 1
 
-    Behavior on grow {
+    readonly property bool motionOn: live && animate
+
+    Behavior on press {
         NumberAnimation {
+            duration: root.pressed ? Config.animDurationShort : Config.animDuration
+            easing.type: root.pressed ? Easing.OutQuad : Easing.OutBack
+            easing.overshoot: 4
+        }
+    }
+
+    onHoveredChanged: {
+        if (hovered && motionOn && !travelAnim.running)
+            bounceAnim.restart();
+    }
+
+    onActiveChanged: {
+        if (!motionOn)
+            return;
+        bounceAnim.stop();
+        lift = 0;
+        stretch = 0;
+        travelAnim.stop();
+        travelReverse = !active;
+        travelAnim.from = active ? 0 : 1;
+        travelAnim.to = active ? 1 : 0;
+        // A close that interrupts the ride starts from where the dot is
+        if (!active && travel > 0)
+            travelAnim.from = travel;
+        travelAnim.duration = Config.animDurationLong * (active ? 2 : 1.5);
+        travelAnim.start();
+        growAnim.to = active ? 1 : 0;
+        growAnim.restart();
+    }
+
+    onMotionOnChanged: {
+        if (motionOn)
+            return;
+        bounceAnim.stop();
+        travelAnim.stop();
+        lift = 0;
+        stretch = 0;
+        travel = 0;
+        grow = 0;
+    }
+
+    NumberAnimation {
+        id: travelAnim
+        target: root
+        property: "travel"
+        easing.type: Easing.InOutCubic
+        onStopped: root.travel = root.travel >= 1 ? 0 : root.travel
+    }
+
+    // The dot grows once it is home (the ride takes the first part)
+    SequentialAnimation {
+        id: growAnim
+
+        property real to: 0
+
+        PauseAnimation {
+            duration: root.active && root.icon !== "distro" ? Config.animDurationLong * 2 : 0
+        }
+        NumberAnimation {
+            target: root
+            property: "grow"
+            to: growAnim.to
             duration: Config.animDuration
+            easing.type: Easing.OutBack
+            easing.overshoot: 4
+        }
+    }
+
+    SequentialAnimation {
+        running: root.motionOn && root.active && root.grow === 1
+        loops: Animation.Infinite
+        onRunningChanged: {
+            if (!running)
+                root.breath = 0;
+        }
+
+        NumberAnimation {
+            target: root
+            property: "breath"
+            to: 1
+            duration: Config.animDurationLong * 3
+            easing.type: Easing.InOutSine
+        }
+        NumberAnimation {
+            target: root
+            property: "breath"
+            to: 0
+            duration: Config.animDurationLong * 3
+            easing.type: Easing.InOutSine
+        }
+    }
+
+    component Step: NumberAnimation {
+        target: root
+        duration: Config.animDurationShort
+    }
+
+    SequentialAnimation {
+        id: bounceAnim
+
+        // Anticipation: crouch
+        Step {
+            property: "stretch"
+            to: -0.25
+            easing.type: Easing.OutQuad
+        }
+        // Leap, stretched, easing into the apex
+        ParallelAnimation {
+            Step {
+                property: "lift"
+                to: 0.4
+                duration: Config.animDuration
+                easing.type: Easing.OutQuad
+            }
+            SequentialAnimation {
+                Step {
+                    property: "stretch"
+                    to: 0.3
+                    easing.type: Easing.OutQuad
+                }
+                Step {
+                    property: "stretch"
+                    to: 0
+                    easing.type: Easing.InOutQuad
+                }
+            }
+        }
+        // Fall, stretching again
+        ParallelAnimation {
+            Step {
+                property: "lift"
+                to: 0
+                duration: Config.animDuration
+                easing.type: Easing.InQuad
+            }
+            Step {
+                property: "stretch"
+                to: 0.2
+                duration: Config.animDuration
+                easing.type: Easing.InQuad
+            }
+        }
+        // Impact
+        Step {
+            property: "stretch"
+            to: -0.35
+            duration: Config.animDurationShort / 2
+            easing.type: Easing.OutQuad
+        }
+        // Small rebound
+        ParallelAnimation {
+            Step {
+                property: "lift"
+                to: 0.1
+                easing.type: Easing.OutQuad
+            }
+            Step {
+                property: "stretch"
+                to: 0.1
+                easing.type: Easing.OutQuad
+            }
+        }
+        Step {
+            property: "lift"
+            to: 0
+            easing.type: Easing.InQuad
+        }
+        Step {
+            property: "stretch"
+            to: -0.12
+            duration: Config.animDurationShort / 2
+        }
+        Step {
+            property: "stretch"
+            to: 0
+            duration: Config.animDuration
+            easing.type: Easing.OutBack
+        }
+    }
+
+    // Line draws itself when the bar starts, then the dot pops in
+    SequentialAnimation {
+        id: startAnim
+
+        Step {
+            property: "draw"
+            from: 0
+            to: 1
+            duration: Config.animDurationLong * 3
+            easing.type: Easing.InOutCubic
+        }
+        Step {
+            property: "pop"
+            from: 0
+            to: 1
+            duration: Config.animDurationLong
             easing.type: Easing.OutBack
             easing.overshoot: 3
         }
     }
 
-    onHoveredChanged: {
-        if (hovered && animate)
-            hopAnim.restart();
+    Component.onCompleted: {
+        if (!motionOn)
+            return;
+        draw = 0;
+        pop = 0;
+        startDelay.start();
     }
 
-    SequentialAnimation {
-        id: hopAnim
-
-        NumberAnimation {
-            target: root
-            property: "hop"
-            to: 1
-            duration: Config.animDurationShort
-            easing.type: Easing.OutQuad
-        }
-        NumberAnimation {
-            target: root
-            property: "hop"
-            to: 0
-            duration: Config.animDuration
-            easing.type: Easing.OutBounce
-        }
+    // The bar is built before it shows up (the shell is still loading), so
+    // the drawing waits a moment to be seen
+    Timer {
+        id: startDelay
+        interval: Config.animDurationLong * 2
+        onTriggered: startAnim.start()
     }
 
     // --- DISTRO GLYPH ---
@@ -166,25 +368,41 @@ BarButton {
         implicitWidth: root.icon === "distro" ? glyph.implicitWidth : logo.implicitWidth
         implicitHeight: Config.fontSizeNormal
 
+        // Squeezed while pressed, around the center
+        scale: 1 - root.press * 0.15
+
         LyneLogo {
             id: logo
             anchors.centerIn: parent
             height: Config.fontSizeNormal
             visible: root.icon !== "distro"
-            dotLift: root.hop * 0.2
-            dotScale: 1 + root.grow * 0.3
+            dotLift: root.lift
+            dotStretch: root.stretch
+            dotScale: (1 + root.grow * (0.25 + root.breath * 0.12)) * root.pop
+            lineDraw: root.draw
+            travel: root.travel
+            travelReverse: root.travelReverse
         }
 
+        // The glyph can't split into line and dot, so it moves as a whole:
+        // bounces with the same squash & stretch, grows and breathes
         Text {
             id: glyph
             anchors.centerIn: parent
-            anchors.verticalCenterOffset: -root.hop * Config.fontSizeNormal * 0.2
+            anchors.verticalCenterOffset: -root.lift * Config.fontSizeNormal
             visible: root.icon === "distro"
             text: root.distroGlyph
             font.family: Config.font
             font.pixelSize: Config.fontSizeLarge
             color: Config.accentColor
-            scale: 1 + root.grow * 0.12
+            opacity: root.draw
+            scale: (1 + root.grow * (0.1 + root.breath * 0.06)) * (0.5 + root.pop * 0.5)
+            transform: Scale {
+                origin.x: glyph.width / 2
+                origin.y: glyph.height
+                xScale: 1 - root.stretch * 0.6
+                yScale: 1 + root.stretch
+            }
         }
     }
 }

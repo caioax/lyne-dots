@@ -11,6 +11,7 @@ Rectangle {
     // theme change still switches it at once
     property bool animateColor: true
     readonly property bool hovered: mouseArea.containsMouse
+    readonly property bool pressed: mouseArea.pressed
 
     signal clicked
     signal rightClicked

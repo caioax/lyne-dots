@@ -161,7 +161,7 @@ ColumnLayout {
 
         ToggleRow {
             label: "Animate"
-            description: "The logo's dot hops on hover and grows while the launcher is open"
+            description: "The dot bounces on hover and rides the line when the launcher opens; the logo draws itself when the shell starts"
             path: "bar.launcher.animate"
         }
 
