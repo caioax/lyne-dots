@@ -137,13 +137,10 @@ Scope {
                             active: LauncherService.visible
                             onClicked: LauncherService.toggle()
 
-                            Text {
+                            LyneLogo {
                                 id: launcherIcon
                                 anchors.centerIn: parent
-                                text: "󰣇"
-                                font.family: Config.font
-                                font.pixelSize: Config.fontSizeLarge
-                                color: Config.accentColor
+                                height: Config.fontSizeNormal
                             }
                         }
 

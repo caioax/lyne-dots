@@ -39,3 +39,6 @@ done
 if [[ "$has_pending" = false ]]; then
     echo "   No pending migrations"
 fi
+
+# The check above leaves a non-zero status when migrations ran
+return 0

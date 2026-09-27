@@ -392,6 +392,13 @@ setup_migrations() {
     log_info "Marked $count migrations as done (fresh install)"
 }
 
+# The lyne-dots logo as a system icon (used by lyne update notifications)
+install_lyne_icons() {
+    log_step "Installing the lyne-dots icon..."
+    local DOTS_DIR="$DOTFILES_DIR"
+    source "$DOTFILES_DIR/.data/lyne-cli/lib/install-icons.sh"
+}
+
 setup_state_aur_helper() {
     local STATE_FILE="$HOME/.config/quickshell/state.json"
 
@@ -434,6 +441,7 @@ full_install() {
 
     # Run setup scripts
     run_stow
+    install_lyne_icons
     run_hyprland_setup
     setup_state_aur_helper
     setup_mimetypes

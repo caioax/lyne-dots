@@ -206,13 +206,9 @@ FloatingWindow {
                         radius: Config.radiusLarge
                         color: Qt.alpha(Config.accentColor, 0.15)
 
-                        // md-cog
-                        Text {
+                        LyneLogo {
                             anchors.centerIn: parent
-                            text: "\u{f0493}"
-                            font.family: Config.font
-                            font.pixelSize: Config.fontSizeLarge
-                            color: Config.accentColor
+                            height: Config.fontSizeNormal
                         }
                     }
 

@@ -9,7 +9,7 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    // Copy of the chosen picture; empty = distro logo
+    // Copy of the chosen picture; empty = placeholder silhouette
     readonly property string avatar: StateService.get("profile.avatar", "")
     readonly property string avatarDir: Quickshell.env("HOME") + "/.local/share/quickshell"
 

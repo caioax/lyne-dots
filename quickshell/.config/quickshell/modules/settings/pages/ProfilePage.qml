@@ -22,7 +22,7 @@ ColumnLayout {
             id: avatarRow
 
             label: Quickshell.env("USER")
-            description: ProfileService.avatar !== "" ? "Custom picture" : "Distro logo"
+            description: ProfileService.avatar !== "" ? "Custom picture" : "No picture"
             path: "profile.avatar"
 
             ActionButton {
@@ -48,14 +48,14 @@ ColumnLayout {
                     asynchronous: true
                 }
 
-                // md-arch
+                // md-account
                 Text {
                     anchors.centerIn: parent
                     visible: !avatarImage.visible
-                    text: "\u{f08c7}"
+                    text: "\u{f0004}"
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeIconLarge
-                    color: Config.accentColor
+                    color: Config.subtextColor
                 }
             }
         }

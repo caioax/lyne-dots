@@ -3,7 +3,7 @@ import Quickshell.Widgets
 import qs.config
 import qs.services
 
-// Profile picture from ProfileService, or the distro logo
+// Profile picture from ProfileService, or a placeholder silhouette
 ClippingRectangle {
     id: root
 
@@ -25,12 +25,13 @@ ClippingRectangle {
         asynchronous: true
     }
 
+    // md-account
     Text {
         anchors.centerIn: parent
         visible: !image.visible
-        text: "\u{f08c7}"
+        text: "\u{f0004}"
         font.family: Config.font
         font.pixelSize: root.size / 2
-        color: Config.accentColor
+        color: Config.subtextColor
     }
 }

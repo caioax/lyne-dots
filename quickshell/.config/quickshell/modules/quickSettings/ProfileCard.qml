@@ -57,7 +57,7 @@ Card {
         Layout.fillWidth: true
         spacing: Config.spacing + Config.padding
 
-        // Click picks a picture, right click goes back to the distro logo
+        // Click picks a picture, right click goes back to the placeholder
         Item {
             implicitWidth: root.avatarSize
             implicitHeight: root.avatarSize
@@ -77,13 +77,14 @@ Card {
                     asynchronous: true
                 }
 
+                // md-account
                 Text {
                     anchors.centerIn: parent
                     visible: !avatarImage.visible
-                    text: "󰣇"
+                    text: "\u{f0004}"
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeIconLarge
-                    color: Config.accentColor
+                    color: Config.subtextColor
                 }
 
                 // Hover hint
