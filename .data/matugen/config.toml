@@ -5,6 +5,20 @@
 # Dark mode by default (matches the dotfiles dark theme)
 type = "scheme-tonal-spot"
 
+# Terminal (ANSI) and Neovim syntax hues. Material You has no red/green/...
+# roles, and its own ones are all close to the wallpaper hue; blend = true
+# pulls each hue towards the wallpaper (harmonize) and matugen picks a tone
+# that reads in the current mode (colors.<name>). The bright ANSI variants use
+# the same tone: the other roles are near black in light mode
+[config.custom_colors]
+red = { color = "#e05561", blend = true }
+green = { color = "#8cc265", blend = true }
+yellow = { color = "#e5c07b", blend = true }
+blue = { color = "#4aa5f0", blend = true }
+magenta = { color = "#c162de", blend = true }
+cyan = { color = "#42b3c2", blend = true }
+orange = { color = "#f08d49", blend = true }
+
 [templates.gtk-colors]
 input_path = "~/.lyne-dots/.data/matugen/templates/gtk-colors.css"
 output_path = "~/.config/gtk-4.0/colors.css"
