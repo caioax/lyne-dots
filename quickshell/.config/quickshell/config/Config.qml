@@ -73,6 +73,15 @@ Singleton {
     readonly property bool barShowMedia: !barCenterClock && getState("bar.showMedia", true)
     readonly property bool barShowSystem: !barCenterClock && getState("bar.showSystem", false)
     readonly property bool barShowWeather: !barCenterClock && getState("bar.showWeather", false)
+    // Launcher button: style "logo", "pill" or "compact"; icon "lyne" (the
+    // lyne-dots logo) or "distro" (Nerd Font glyph from /etc/os-release)
+    readonly property string barLauncherStyle: getState("bar.launcher.style", "logo")
+    readonly property string barLauncherIcon: getState("bar.launcher.icon", "lyne")
+    // The dot hops on hover and grows while the launcher is open
+    readonly property bool barLauncherAnimate: getState("bar.launcher.animate", true)
+    // Right/middle click: "none", "actions", "clipboard", "settings" or "power"
+    readonly property string barLauncherRightClick: getState("bar.launcher.rightClick", "actions")
+    readonly property string barLauncherMiddleClick: getState("bar.launcher.middleClick", "clipboard")
     // Workspaces shown in the bar (per monitor); the strip scrolls to reach the others
     readonly property int barWorkspaceCount: getState("bar.workspaces.count", 10)
     // Workspace indicator style: "pills", "numbers", "dots", "groups" or "icons"

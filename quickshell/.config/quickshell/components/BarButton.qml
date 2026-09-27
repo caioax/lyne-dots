@@ -7,6 +7,9 @@ Rectangle {
 
     property bool active: false
     property Item contentItem: null
+    // Off when the button drives its own color from an animated number, so a
+    // theme change still switches it at once
+    property bool animateColor: true
     readonly property bool hovered: mouseArea.containsMouse
 
     signal clicked
@@ -20,6 +23,7 @@ Rectangle {
     color: (active || hovered) ? Config.surface1Color : Qt.alpha(Config.surface1Color, 0)
 
     Behavior on color {
+        enabled: root.animateColor
         ColorAnimation {
             duration: Config.animDuration
         }

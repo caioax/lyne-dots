@@ -28,6 +28,13 @@
         "showMedia": true,
         "showSystem": false,
         "showWeather": false,
+        "launcher": {
+            "style": "logo",
+            "icon": "lyne",
+            "animate": true,
+            "rightClick": "actions",
+            "middleClick": "clipboard"
+        },
         "workspaces": {
             "style": "pills",
             "count": 10,

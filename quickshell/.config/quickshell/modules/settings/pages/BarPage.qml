@@ -7,7 +7,33 @@ import "../rows/"
 import "../../../components/"
 
 ColumnLayout {
+    id: page
+
     spacing: Config.spacing * 3
+
+    // What a right or middle click on the launcher button can do
+    readonly property var launcherClickOptions: [
+        {
+            label: "Nothing",
+            value: "none"
+        },
+        {
+            label: "Actions",
+            value: "actions"
+        },
+        {
+            label: "Clipboard",
+            value: "clipboard"
+        },
+        {
+            label: "Settings",
+            value: "settings"
+        },
+        {
+            label: "Power",
+            value: "power"
+        }
+    ]
 
     SettingsGroup {
         title: "Style"
@@ -84,6 +110,73 @@ ColumnLayout {
             from: 0
             to: 24
             format: v => v + "px"
+        }
+    }
+
+    SettingsGroup {
+        title: "Launcher button"
+
+        TemplatePicker {
+            label: "Style"
+            description: ({
+                    "pill": "The logo on a soft accent pill that is always there",
+                    "compact": "A round button, the same size as the bar's other icons"
+                })[Config.barLauncherStyle] ?? "Just the logo; a pill the size of the logo shows on hover"
+            path: "bar.launcher.style"
+            options: [
+                {
+                    label: "Logo",
+                    value: "logo"
+                },
+                {
+                    label: "Pill",
+                    value: "pill"
+                },
+                {
+                    label: "Compact",
+                    value: "compact"
+                }
+            ]
+            preview: Component {
+                LauncherButtonPreview {}
+            }
+        }
+
+        SelectRow {
+            label: "Icon"
+            description: "The lyne-dots logo, or your distro's logo from the Nerd Font"
+            path: "bar.launcher.icon"
+            options: [
+                {
+                    label: "lyne-dots",
+                    value: "lyne"
+                },
+                {
+                    label: "Distro",
+                    icon: "\u{f31a}",
+                    value: "distro"
+                }
+            ]
+        }
+
+        ToggleRow {
+            label: "Animate"
+            description: "The logo's dot hops on hover and grows while the launcher is open"
+            path: "bar.launcher.animate"
+        }
+
+        SelectRow {
+            label: "Right click"
+            description: "Actions and Clipboard open that launcher mode"
+            path: "bar.launcher.rightClick"
+            options: page.launcherClickOptions
+        }
+
+        SelectRow {
+            label: "Middle click"
+            description: "Same choices as the right click"
+            path: "bar.launcher.middleClick"
+            options: page.launcherClickOptions
         }
     }
 

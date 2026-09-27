@@ -19,6 +19,11 @@ Item {
     // Size of the drawing in SVG units (the tight viewBox)
     readonly property size viewBox: Qt.size(392, 280.24)
 
+    // Dot motion, for buttons that animate the logo: how far it rises, as a
+    // fraction of the logo height, and how much it grows
+    property real dotLift: 0
+    property real dotScale: 1
+
     implicitHeight: Config.fontSizeIcon
     implicitWidth: height * viewBox.width / viewBox.height
 
@@ -51,9 +56,9 @@ Item {
 
             PathAngleArc {
                 centerX: 343.87
-                centerY: 100.32
-                radiusX: 48.13
-                radiusY: 48.13
+                centerY: 100.32 - root.dotLift * root.viewBox.height
+                radiusX: 48.13 * root.dotScale
+                radiusY: 48.13 * root.dotScale
                 startAngle: 0
                 sweepAngle: 360
             }

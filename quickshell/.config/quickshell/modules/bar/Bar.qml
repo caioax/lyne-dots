@@ -131,18 +131,7 @@ Scope {
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
 
-                        BarButton {
-                            contentItem: launcherIcon
-                            implicitWidth: implicitHeight
-                            active: LauncherService.visible
-                            onClicked: LauncherService.toggle()
-
-                            LyneLogo {
-                                id: launcherIcon
-                                anchors.centerIn: parent
-                                height: Config.fontSizeNormal
-                            }
-                        }
+                        LauncherButton {}
 
                         Workspaces {
                             Layout.leftMargin: Math.round(Config.padding / 2)
