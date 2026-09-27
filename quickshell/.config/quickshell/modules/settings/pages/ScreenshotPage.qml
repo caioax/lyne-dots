@@ -52,9 +52,11 @@ ColumnLayout {
                 case "window":
                     return "Picks the window under the cursor; R, W and S switch modes";
                 case "screen":
-                    return "Takes the whole monitor under the cursor; R, W and S switch modes";
+                    return "Takes the whole monitor under the cursor; R, W, S and C switch modes";
+                case "color":
+                    return "Magnifies the pixels under the cursor, a click copies the color; R, W, S and C switch modes";
                 default:
-                    return "Drag to draw a region; R, W and S switch modes";
+                    return "Drag to draw a region; R, W, S and C switch modes";
                 }
             }
             path: "screenshot.mode"
@@ -73,6 +75,36 @@ ColumnLayout {
                     label: "Screen",
                     value: "screen",
                     icon: "\u{f0379}"
+                },
+                {
+                    label: "Color",
+                    value: "color",
+                    icon: "\u{f020a}"
+                }
+            ]
+        }
+
+        SelectRow {
+            label: "Color format"
+            description: "How color mode copies it, like " + ({
+                    hex: "#7aa2f7",
+                    rgb: "rgb(122, 162, 247)",
+                    hsl: "hsl(221, 89%, 72%)"
+                })[Config.screenshotColorFormat]
+            path: "screenshot.colorFormat"
+            segmentWidth: Config.fontSizeNormal * 5
+            options: [
+                {
+                    label: "HEX",
+                    value: "hex"
+                },
+                {
+                    label: "RGB",
+                    value: "rgb"
+                },
+                {
+                    label: "HSL",
+                    value: "hsl"
                 }
             ]
         }

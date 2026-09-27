@@ -45,7 +45,17 @@ Scope {
     readonly property int realWidth: Math.round(root.selectionWidth * root.monitorScale)
     readonly property int realHeight: Math.round(root.selectionHeight * root.monitorScale)
     // Enter / double click: a chosen selection, or the window under the mouse
-    readonly property bool canConfirm: root.hasSelection || (root.mode === "window" && root.selectionWidth > 0)
+    readonly property bool canConfirm: root.hasSelection || (root.mode === "window" && root.selectionWidth > 0) || (root.mode === "color" && root.pickX >= 0)
+
+    // Color mode: the pixel under the lens (overlay coordinates, -1 = none)
+    // and its color, read from the frozen image by the ColorPicker
+    property real pickX: -1
+    property real pickY: -1
+    property color pickedColor: Config.scrimColor
+    // The pixel pickedColor was read at: a copy waits until it is the picked one
+    property point sampledAt: Qt.point(-1, -1)
+    property bool copyPending: false
+    readonly property string pickedText: colorText(root.pickedColor, Config.screenshotColorFormat)
 
     // Window rounding and border size from Hyprland, so a window selection
     // outlines the window like its own border. Regions and screens are cut
@@ -59,16 +69,18 @@ Scope {
     // Animations
     readonly property bool activeAnimations: Config.screenshotAnimations && root.active && root.mode !== "region"
 
-    readonly property var modes: ["region", "window", "screen"]
+    readonly property var modes: ["region", "window", "screen", "color"]
     readonly property var modeLabels: ({
             region: "Region",
             window: "Window",
-            screen: "Screen"
+            screen: "Screen",
+            color: "Color"
         })
     readonly property var modeIcons: ({
             region: "\u{f0a6d}",
             window: "\u{f05af}",
-            screen: "\u{f0379}"
+            screen: "\u{f0379}",
+            color: "\u{f020a}"
         })
 
     // =========================================================================
@@ -214,6 +226,10 @@ Scope {
     // Arrow keys: move by (dx, dy), or with `resize` grow the right and
     // bottom edges (at least 1px)
     function nudge(dx: int, dy: int, resize: bool) {
+        if (root.mode === "color") {
+            setPick(root.pickX + dx, root.pickY + dy);
+            return;
+        }
         if (root.mode !== "region" || !root.hasSelection)
             return;
         if (resize)
@@ -222,7 +238,61 @@ Scope {
             moveRegion(root.selectionX + dx, root.selectionY + dy);
     }
 
+    // Pixel under the lens, kept on the screen
+    function setPick(x: real, y: real) {
+        const w = root.activeScreen?.width ?? 1;
+        const h = root.activeScreen?.height ?? 1;
+        root.pickX = Math.max(0, Math.min(Math.floor(x), w - 1));
+        root.pickY = Math.max(0, Math.min(Math.floor(y), h - 1));
+    }
+
+    // "hex" #rrggbb | "rgb" rgb(r, g, b) | "hsl" hsl(h, s%, l%)
+    function colorText(c: color, format: string): string {
+        const channel = v => Math.round(v * 255);
+        switch (format) {
+        case "rgb":
+            return `rgb(${channel(c.r)}, ${channel(c.g)}, ${channel(c.b)})`;
+        case "hsl":
+            return `hsl(${Math.round(Math.max(0, c.hslHue) * 360)}, ${Math.round(c.hslSaturation * 100)}%, ${Math.round(c.hslLightness * 100)}%)`;
+        default:
+            return "#" + [c.r, c.g, c.b].map(v => channel(v).toString(16).padStart(2, "0")).join("");
+        }
+    }
+
+    // From the ColorPicker, once it has read a pixel
+    function setSample(x: real, y: real, c: color) {
+        root.pickedColor = c;
+        root.sampledAt = Qt.point(x, y);
+        if (root.copyPending && x === root.pickX && y === root.pickY)
+            copyColor();
+    }
+
+    // Copies the picked color and shows it in a notification with a swatch
+    function copyColor() {
+        if (root.sampledAt.x !== root.pickX || root.sampledAt.y !== root.pickY) {
+            root.copyPending = true;
+            return;
+        }
+        root.copyPending = false;
+        const text = root.pickedText;
+        const hex = colorText(root.pickedColor, "hex");
+        Quickshell.execDetached(["sh", "-c", `
+            wl-copy -- "$1"
+            dir="\${XDG_CACHE_HOME:-$HOME/.cache}/quickshell/screenshots"
+            mkdir -p "$dir"
+            swatch="$dir/color-\${2#\\#}.png"
+            magick -size 64x64 "xc:$2" "$swatch"
+            notify-send -a Screenshot -i "$swatch" -h string:desktop-entry:org.xfce.screenshooter "Color copied" "$1"
+        `, "sh", text, hex]);
+        cancelCapture();
+    }
+
     function confirmSelection() {
+        if (root.mode === "color") {
+            if (root.pickX >= 0)
+                copyColor();
+            return;
+        }
         if (root.mode === "window" && !root.hasSelection && root.selectionWidth <= 0)
             return;
         root.editMode = false;
@@ -230,6 +300,8 @@ Scope {
     }
 
     function editSelection() {
+        if (root.mode === "color")
+            return;
         root.editMode = true;
         saveScreenshot(root.selectionX, root.selectionY, root.selectionWidth, root.selectionHeight);
     }
@@ -303,10 +375,16 @@ Scope {
         const monitor = root.monitorsFromIpc.find(m => m.name === root.activeScreen?.name);
         if (root.mode === "window" && monitor)
             checkWindowAt(root.cursorFromIpc.x - monitor.x, root.cursorFromIpc.y - monitor.y, monitor.name);
+        else if (root.mode === "color" && monitor)
+            setPick(root.cursorFromIpc.x - monitor.x, root.cursorFromIpc.y - monitor.y);
     }
 
     function prepareCapture() {
         root.mode = "region";
+        root.pickX = -1;
+        root.pickY = -1;
+        root.sampledAt = Qt.point(-1, -1);
+        root.copyPending = false;
         resetSelection();
         root.activeScreen = null;
 

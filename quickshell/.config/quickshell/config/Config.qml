@@ -160,6 +160,8 @@ Singleton {
     readonly property string screenshotFolder: getState("screenshot.folder", "")
     // date(1) format of the file name, without .png
     readonly property string screenshotFilename: getState("screenshot.filename", "Screenshot_%Y-%m-%d_%H-%M-%S")
+    // Color mode: copied as "hex" (#rrggbb) | "rgb" | "hsl"
+    readonly property string screenshotColorFormat: getState("screenshot.colorFormat", "hex")
     // Screen dimming behind overlays: black on every theme
     readonly property color scrimColor: Qt.rgba(0, 0, 0, 1)
 

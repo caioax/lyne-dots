@@ -36,6 +36,7 @@ PanelWindow {
     // =================================================================
 
     Image {
+        id: frozenImage
         anchors.fill: parent
         source: root.screenshot.captureTimestamp ? "file://" + root.screenshot.tempPathForScreen(root.screen.name) : ""
         fillMode: Image.PreserveAspectCrop
@@ -55,7 +56,8 @@ PanelWindow {
         property vector4d selectionRect: Qt.vector4d(root.screenshot.selectionX, root.screenshot.selectionY, root.screenshot.selectionWidth, root.screenshot.selectionHeight)
         property color dimColor: Config.scrimColor
         property color outlineColor: Config.accentColor
-        property real dimOpacity: Config.screenshotDim
+        // Color mode shows the screen as it is
+        property real dimOpacity: root.screenshot.mode === "color" ? 0 : Config.screenshotDim
         property vector2d screenSize: Qt.vector2d(width, height)
         property real borderRadius: root.screenshot.selectionRadius
         property real outlineThickness: root.screenshot.hyprBorderSize
@@ -84,6 +86,19 @@ PanelWindow {
         screenshot: root.screenshot
         guideMouseX: root.screenshot.cursorFromIpc.x - root.screen.x
         guideMouseY: root.screenshot.cursorFromIpc.y - root.screen.y
+        z: 7
+    }
+
+    // =================================================================
+    // COLOR PICKER
+    // =================================================================
+
+    ColorPicker {
+        anchors.fill: parent
+        visible: root.isActiveMonitor && root.screenshot.mode === "color"
+        screenshot: root.screenshot
+        frozen: frozenImage
+        source: frozenImage.source.toString()
         z: 7
     }
 
@@ -133,6 +148,8 @@ PanelWindow {
         onPositionChanged: mouse => {
             regionSelector.guideMouseX = mouse.x;
             regionSelector.guideMouseY = mouse.y;
+            if (root.screenshot.mode === "color")
+                root.screenshot.setPick(mouse.x, mouse.y);
             if (root.screenshot.mode === "window" && !root.screenshot.hasSelection) {
                 root.screenshot.checkWindowAt(mouse.x, mouse.y, root.screen.name);
             }
@@ -162,10 +179,17 @@ PanelWindow {
             } else if (root.screenshot.mode === "window") {
                 root.screenshot.checkWindowAt(mouse.x, mouse.y, root.screen.name);
                 root.screenshot.hasSelection = root.screenshot.selectionWidth > 0;
+            } else if (root.screenshot.mode === "color") {
+                root.screenshot.setPick(mouse.x, mouse.y);
             }
         }
 
         onReleased: {
+            // Copied on release: the lens has read the pressed pixel by then
+            if (root.screenshot.mode === "color") {
+                root.screenshot.confirmSelection();
+                return;
+            }
             if (!dragging)
                 return;
             dragging = false;
@@ -197,7 +221,8 @@ PanelWindow {
         onActivated: root.screenshot.confirmSelection()
     }
 
-    // Arrows move the region 1px, Shift 10px; with Ctrl they resize it
+    // Arrows move the region (or the picked pixel) 1px, Shift 10px; with
+    // Ctrl they resize the region
     Instantiator {
         model: {
             const keys = [];
@@ -216,7 +241,7 @@ PanelWindow {
             required property var modelData
 
             sequence: modelData.sequence
-            enabled: root.isActiveMonitor && root.screenshot.mode === "region" && root.screenshot.hasSelection
+            enabled: root.isActiveMonitor && ((root.screenshot.mode === "region" && root.screenshot.hasSelection) || root.screenshot.mode === "color")
             autoRepeat: true
             onActivated: root.screenshot.nudge(modelData.dx, modelData.dy, modelData.resize)
         }
@@ -241,6 +266,21 @@ PanelWindow {
     Shortcut {
         sequence: "s"
         onActivated: root.screenshot.setMode("screen")
+    }
+
+    Shortcut {
+        sequence: "c"
+        onActivated: root.screenshot.setMode("color")
+    }
+
+    // Switching to color mode by key or button: pick where the mouse is
+    Connections {
+        target: root.screenshot
+
+        function onModeChanged() {
+            if (root.isActiveMonitor && root.screenshot.mode === "color" && regionSelector.guideMouseX >= 0)
+                root.screenshot.setPick(regionSelector.guideMouseX, regionSelector.guideMouseY);
+        }
     }
 
     // =================================================================

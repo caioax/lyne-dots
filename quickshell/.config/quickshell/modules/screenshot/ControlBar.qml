@@ -99,6 +99,17 @@ Rectangle {
 
             Divider {}
 
+            // Color mode: swatch + value
+            Rectangle {
+                visible: root.mode === "color"
+                Layout.preferredWidth: Config.fontSizeSmall
+                Layout.preferredHeight: Config.fontSizeSmall
+                radius: Config.radiusSmall / 2
+                color: root.screenshot.pickedColor
+                border.width: 1
+                border.color: Config.surface2Color
+            }
+
             // What is selected; a fixed minimum so the card doesn't jump
             // while a region is drawn
             ColumnLayout {
@@ -114,6 +125,8 @@ Rectangle {
                             return root.selecting ? root.screenshot.selectedWindowClass || root.screenshot.selectedWindowTitle : "No window";
                         case "screen":
                             return root.screenshot.hyprlandMonitor?.name ?? "Screen";
+                        case "color":
+                            return root.screenshot.pickX >= 0 ? root.screenshot.pickedText : "No color";
                         default:
                             return root.selecting ? root.size : "No region";
                         }
@@ -123,12 +136,12 @@ Rectangle {
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeSmall
                     font.bold: true
-                    color: root.selecting ? Config.textColor : Config.subtextColor
+                    color: root.selecting || root.mode === "color" ? Config.textColor : Config.subtextColor
                 }
 
                 Text {
                     Layout.fillWidth: true
-                    visible: root.mode !== "region" && root.selecting
+                    visible: (root.mode === "window" || root.mode === "screen") && root.selecting
                     text: root.size
                     horizontalAlignment: Text.AlignHCenter
                     font.family: Config.font
@@ -140,8 +153,8 @@ Rectangle {
             Divider {}
 
             ActionButton {
-                icon: "\u{f012c}"
-                text: "Capture"
+                icon: root.mode === "color" ? "\u{f018f}" : "\u{f012c}"
+                text: root.mode === "color" ? "Copy" : "Capture"
                 size: root.buttonSize
                 enabled: root.screenshot.canConfirm
                 opacity: enabled ? 1 : 0.4
@@ -155,7 +168,7 @@ Rectangle {
                 icon: "\u{f03eb}"
                 text: "Edit"
                 size: root.buttonSize
-                enabled: root.screenshot.canConfirm
+                enabled: root.screenshot.canConfirm && root.mode !== "color"
                 opacity: enabled ? 1 : 0.4
                 onClicked: root.screenshot.editSelection()
             }
@@ -193,12 +206,14 @@ Rectangle {
                         hints.push(["drag", "select"]);
                     if (root.mode === "window")
                         hints.push(["click", "pick"]);
-                    if (root.screenshot.canConfirm)
+                    if (root.mode === "color")
+                        hints.push(["click", "copy"], ["←↑↓→", "move"], ["shift", "×10"]);
+                    else if (root.screenshot.canConfirm)
                         hints.push(["⏎", "capture"], ["E", "edit"]);
                     if (root.mode === "region" && root.screenshot.hasSelection)
                         hints.push(["←↑↓→", "move"], ["ctrl", "resize"], ["shift", "×10"]);
                     else
-                        hints.push(["R W S", "mode"]);
+                        hints.push(["R W S C", "mode"]);
                     hints.push(["esc", "cancel"]);
                     return hints;
                 }

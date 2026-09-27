@@ -203,6 +203,7 @@
         "action": "save",
         "folder": "",
         "filename": "Screenshot_%Y-%m-%d_%H-%M-%S",
+        "colorFormat": "hex",
         "guides": true,
         "hints": true,
         "animations": true,
