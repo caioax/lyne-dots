@@ -46,6 +46,7 @@ ColumnLayout {
                     width: parent.width
                     icon: ""
                     showPercentage: false
+                    wheelEnabled: false
                     value: monitorRow.modelData.brightness
                     stepSize: Config.brightnessStep
                     onMoved: v => monitorRow.modelData.set(v)

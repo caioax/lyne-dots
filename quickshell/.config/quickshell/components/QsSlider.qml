@@ -15,6 +15,9 @@ Item {
     property string icon: ""
     property bool showPercentage: true
     property string fillColor: Config.accentColor
+    // Off where the slider sits in a scrolling page (Settings): the wheel
+    // scrolls the page instead of changing the value
+    property bool wheelEnabled: true
 
     // SIGNALS
     signal moved(real newValue)
@@ -96,6 +99,17 @@ Item {
             readonly property real handleGap: Math.round(Config.padding * 2 / 3)
             // Clamped: the value can sit outside the range (volume set elsewhere)
             readonly property real visualPos: Math.max(0, Math.min(1, (root.value - root.from) / (root.to - root.from)))
+            // Only value changes animate: sizes follow the layout at once, or
+            // a resize (the Quick Settings monitor chip growing) restarts the
+            // animations every frame and the bars lag behind
+            property real shownPos: visualPos
+
+            Behavior on shownPos {
+                NumberAnimation {
+                    duration: Config.animDurationShort
+                    easing.type: Easing.OutQuad
+                }
+            }
 
             // Inner container for the scale animation
             Item {
@@ -114,7 +128,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
 
-                    width: Math.max(0, (sliderContainer.visualPos * parent.width) - sliderContainer.handleGap)
+                    width: Math.max(0, (sliderContainer.shownPos * parent.width) - sliderContainer.handleGap)
                     height: root.trackHeight
                     color: root.fillColor
 
@@ -122,13 +136,6 @@ Item {
                     bottomLeftRadius: Config.radius
                     topRightRadius: root.innerRadius
                     bottomRightRadius: root.innerRadius
-
-                    Behavior on width {
-                        NumberAnimation {
-                            duration: Config.animDurationShort
-                            easing.type: Easing.OutQuad
-                        }
-                    }
                 }
 
                 // Remaining
@@ -137,7 +144,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
 
-                    width: Math.max(0, ((1 - sliderContainer.visualPos) * parent.width) - sliderContainer.handleGap)
+                    width: Math.max(0, ((1 - sliderContainer.shownPos) * parent.width) - sliderContainer.handleGap)
                     height: root.trackHeight
                     color: Config.surface2Color
 
@@ -145,13 +152,6 @@ Item {
                     bottomLeftRadius: root.innerRadius
                     topRightRadius: Config.radius
                     bottomRightRadius: Config.radius
-
-                    Behavior on width {
-                        NumberAnimation {
-                            duration: Config.animDurationShort
-                            easing.type: Easing.OutQuad
-                        }
-                    }
                 }
 
                 // Handle
@@ -162,17 +162,10 @@ Item {
                     radius: root.innerRadius
                     color: root.fillColor
 
-                    x: (sliderContainer.visualPos * parent.width) - (width / 2)
+                    x: (sliderContainer.shownPos * parent.width) - (width / 2)
                     anchors.verticalCenter: parent.verticalCenter
 
                     opacity: sliderMouse.containsMouse || sliderMouse.pressed ? 1.0 : 0.8
-
-                    Behavior on x {
-                        NumberAnimation {
-                            duration: Config.animDurationShort
-                            easing.type: Easing.OutQuad
-                        }
-                    }
                 }
             }
 
@@ -197,6 +190,10 @@ Item {
                 }
 
                 onWheel: wheel => {
+                    if (!root.wheelEnabled) {
+                        wheel.accepted = false;
+                        return;
+                    }
                     let step = root.stepSize;
                     if (wheel.angleDelta.y > 0)
                         root.moved(Math.min(root.to, root.value + step));

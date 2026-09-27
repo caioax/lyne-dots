@@ -37,6 +37,7 @@ SettingRow {
         from: root.from
         to: root.to
         showPercentage: false
+        wheelEnabled: false
         onMoved: v => {
             const snapped = root._snap(v);
             if (root.path !== "")

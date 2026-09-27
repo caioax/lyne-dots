@@ -240,7 +240,8 @@ Item {
                                 Text {
                                     Layout.preferredWidth: monitorChip.hovered ? Math.min(implicitWidth, Config.fontSizeSmall * 12) : 0
                                     text: monitorBrightness.monitor.label
-                                    elide: Text.ElideRight
+                                    // Clipped while it slides open, elided only when too long
+                                    elide: nameAnim.running ? Text.ElideNone : Text.ElideRight
                                     clip: true
                                     font.family: Config.font
                                     font.pixelSize: Config.fontSizeSmall
@@ -249,6 +250,7 @@ Item {
 
                                     Behavior on Layout.preferredWidth {
                                         NumberAnimation {
+                                            id: nameAnim
                                             duration: Config.animDurationShort
                                             easing.type: Easing.OutQuad
                                         }
