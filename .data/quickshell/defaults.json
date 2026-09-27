@@ -196,6 +196,7 @@
         "target": "focused",
         "step": 5,
         "ddc": true,
-        "pollInterval": 60
+        "pollInterval": 60,
+        "quickSettings": "focused"
     }
 }

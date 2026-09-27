@@ -16,7 +16,10 @@ QsPopupWindow {
     moduleName: "QuickSettings"
     contentImplicitHeight: pageStack.children[pageStack.currentIndex]?.implicitHeight ?? popupMaxHeight - 32
 
-    onClosing: pageStack.currentIndex = 0
+    onClosing: {
+        pageStack.currentIndex = 0;
+        dashboardPage.pickedMonitor = null;
+    }
 
     StackLayout {
         id: pageStack
@@ -27,6 +30,7 @@ QsPopupWindow {
         // PAGE 0: DASHBOARD
         // ==========================
         DashboardPage {
+            id: dashboardPage
             availableHeight: root.popupMaxHeight - 32
             onCloseWindow: root.closeWindow()
         }

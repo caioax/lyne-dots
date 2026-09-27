@@ -179,6 +179,8 @@ Singleton {
     readonly property real brightnessStep: getState("brightness.step", 5) / 100
     // External monitors over DDC/CI (ddcutil)
     readonly property bool brightnessDdc: getState("brightness.ddc", true)
+    // Quick Settings: "focused" (one slider with a monitor switcher) | "all"
+    readonly property string brightnessQuickSettings: getState("brightness.quickSettings", "focused")
     // Seconds between re-reads of external monitors, 0 = never
     readonly property int brightnessPollInterval: getState("brightness.pollInterval", 60)
 

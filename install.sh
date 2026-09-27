@@ -292,6 +292,8 @@ setup_services() {
         echo i2c-dev | sudo tee /etc/modules-load.d/i2c-dev.conf >/dev/null
         sudo modprobe i2c-dev
     fi
+    # ddcutil's udev rule gives the user access to nodes that already exist
+    sudo udevadm trigger --subsystem-match=i2c-dev
 }
 
 setup_mimetypes() {

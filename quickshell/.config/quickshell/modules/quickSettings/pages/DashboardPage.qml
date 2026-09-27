@@ -16,6 +16,23 @@ Item {
 
     signal closeWindow
 
+    // Brightness slider: every monitor (brightness.quickSettings "all"), or
+    // one at a time, starting at the one the keys adjust
+    readonly property bool allMonitors: Config.brightnessQuickSettings === "all"
+    // Picked with the chip until the window closes
+    property var pickedMonitor: null
+    readonly property var brightnessMonitor: pickedMonitor?.available ? pickedMonitor : BrightnessService.primary
+
+    function nextBrightnessMonitor() {
+        const list = BrightnessService.controllable;
+        pickedMonitor = list[(list.indexOf(brightnessMonitor) + 1) % list.length] ?? null;
+    }
+
+    // md-laptop / md-monitor
+    function monitorIcon(monitor: var): string {
+        return monitor.internal ? "\u{f0322}" : "\u{f0379}";
+    }
+
     Layout.fillWidth: true
     implicitHeight: main.implicitHeight + (hasNotifications ? notifList.anchors.topMargin + notifList.implicitHeight : 0)
 
@@ -136,28 +153,30 @@ Item {
                 onIconClicked: AudioService.toggleSourceMute()
             }
 
-            // One slider per monitor with brightness control, named when
-            // there's more than one
+            // Brightness (brightness.quickSettings): the focused monitor with
+            // a chip that cycles through the others, or one slider per
+            // monitor, named when there's more than one
             Repeater {
-                model: BrightnessService.controllable
+                // One fixed row while switching, so it animates instead of being rebuilt
+                model: root.allMonitors ? BrightnessService.controllable : root.brightnessMonitor ? 1 : 0
 
                 ColumnLayout {
                     id: monitorBrightness
 
                     required property var modelData
+                    readonly property var monitor: root.allMonitors ? modelData : root.brightnessMonitor
 
                     Layout.fillWidth: true
                     spacing: Math.round(Config.spacing / 2)
 
                     RowLayout {
-                        visible: BrightnessService.controllable.length > 1
+                        visible: root.allMonitors && BrightnessService.controllable.length > 1
                         Layout.fillWidth: true
                         Layout.leftMargin: Math.round(Config.padding / 2)
                         spacing: Config.spacing
 
                         Text {
-                            // md-laptop / md-monitor
-                            text: monitorBrightness.modelData.internal ? "\u{f0322}" : "\u{f0379}"
+                            text: root.monitorIcon(monitorBrightness.monitor)
                             font.family: Config.font
                             font.pixelSize: Config.fontSizeSmall
                             color: Config.subtextColor
@@ -165,7 +184,7 @@ Item {
 
                         Text {
                             Layout.fillWidth: true
-                            text: monitorBrightness.modelData.label
+                            text: monitorBrightness.monitor.label
                             elide: Text.ElideRight
                             font.family: Config.font
                             font.pixelSize: Config.fontSizeSmall
@@ -173,12 +192,83 @@ Item {
                         }
                     }
 
-                    QsSlider {
-                        icon: BrightnessService.iconFor(value)
-                        value: monitorBrightness.modelData.brightness
-                        stepSize: Config.brightnessStep
-                        onMoved: val => monitorBrightness.modelData.set(val)
-                        onIconClicked: monitorBrightness.modelData.toggle()
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Config.spacing
+
+                        QsSlider {
+                            icon: BrightnessService.iconFor(value)
+                            value: monitorBrightness.monitor.brightness
+                            stepSize: Config.brightnessStep
+                            onMoved: val => monitorBrightness.monitor.set(val)
+                            onIconClicked: monitorBrightness.monitor.toggle()
+                        }
+
+                        // Next monitor; hovering shows the current one's name
+                        Rectangle {
+                            id: monitorChip
+
+                            readonly property bool hovered: chipMouse.containsMouse
+
+                            visible: !root.allMonitors && BrightnessService.controllable.length > 1
+                            Layout.preferredHeight: Config.fontSizeIconSmall * 2
+                            Layout.preferredWidth: chipRow.implicitWidth + Config.padding * 2
+                            radius: Config.radiusLarge
+                            color: hovered ? Config.surface2Color : Config.surface1Color
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: Config.animDurationShort
+                                }
+                            }
+
+                            RowLayout {
+                                id: chipRow
+                                anchors.centerIn: parent
+                                spacing: Math.round(Config.padding / 2)
+
+                                Text {
+                                    text: root.monitorIcon(monitorBrightness.monitor)
+                                    font.family: Config.font
+                                    font.pixelSize: Config.fontSizeNormal
+                                    color: Config.textColor
+                                }
+
+                                Text {
+                                    Layout.preferredWidth: monitorChip.hovered ? Math.min(implicitWidth, Config.fontSizeSmall * 12) : 0
+                                    text: monitorBrightness.monitor.label
+                                    elide: Text.ElideRight
+                                    clip: true
+                                    font.family: Config.font
+                                    font.pixelSize: Config.fontSizeSmall
+                                    font.bold: true
+                                    color: Config.textColor
+
+                                    Behavior on Layout.preferredWidth {
+                                        NumberAnimation {
+                                            duration: Config.animDurationShort
+                                            easing.type: Easing.OutQuad
+                                        }
+                                    }
+                                }
+
+                                // md-chevron_right
+                                Text {
+                                    text: "\u{f0142}"
+                                    font.family: Config.font
+                                    font.pixelSize: Config.fontSizeNormal
+                                    color: Config.subtextColor
+                                }
+                            }
+
+                            MouseArea {
+                                id: chipMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.nextBrightnessMonitor()
+                            }
+                        }
                     }
                 }
             }

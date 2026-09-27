@@ -22,3 +22,8 @@ if [[ ! -f /etc/modules-load.d/i2c-dev.conf ]]; then
 else
     echo "   i2c-dev already loaded at boot, skipping"
 fi
+
+# Apply ddcutil's udev rule to i2c nodes that already exist (no reboot)
+if command -v ddcutil &>/dev/null && command -v udevadm &>/dev/null; then
+    sudo udevadm trigger --subsystem-match=i2c-dev
+fi
