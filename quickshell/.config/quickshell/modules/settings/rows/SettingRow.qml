@@ -24,6 +24,8 @@ Rectangle {
 
     default property alias trailing: trailingRow.data
     property alias below: belowSlot.data
+    // false hides `below` without leaving a gap (a control that doesn't apply)
+    property bool belowVisible: true
     property alias leading: leadingRow.data
 
     readonly property bool hovered: rowHover.hovered
@@ -149,7 +151,7 @@ Rectangle {
             id: belowSlot
 
             width: parent.width
-            visible: children.length > 0
+            visible: root.belowVisible && children.length > 0
             implicitHeight: childrenRect.height
         }
     }

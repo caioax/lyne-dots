@@ -4,9 +4,55 @@ import QtQuick.Layouts
 import qs.config
 import qs.services
 import "../rows/"
+import "../../../components/"
 
 ColumnLayout {
     spacing: Config.spacing * 3
+
+    // Every screen, with how its brightness is controlled (or why it isn't)
+    SettingsGroup {
+        title: "Monitors"
+
+        Repeater {
+            model: BrightnessService.monitors
+
+            SettingRow {
+                id: monitorRow
+
+                required property var modelData
+
+                label: modelData.label
+                description: modelData.name + " · " + modelData.status
+                belowVisible: modelData.available
+
+                // md-laptop / md-monitor / md-monitor_off
+                leading: Text {
+                    text: !monitorRow.modelData.available ? "\u{f0d90}" : monitorRow.modelData.internal ? "\u{f0322}" : "\u{f0379}"
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeIcon
+                    color: monitorRow.modelData.available ? Config.textColor : Config.subtextColor
+                }
+
+                Text {
+                    visible: monitorRow.modelData.available
+                    text: Math.round(monitorRow.modelData.brightness * 100) + "%"
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    font.bold: true
+                    color: Config.subtextColor
+                }
+
+                below: QsSlider {
+                    width: parent.width
+                    icon: ""
+                    showPercentage: false
+                    value: monitorRow.modelData.brightness
+                    stepSize: Config.brightnessStep
+                    onMoved: v => monitorRow.modelData.set(v)
+                }
+            }
+        }
+    }
 
     SettingsGroup {
         title: "Keys"
@@ -56,6 +102,20 @@ ColumnLayout {
             path: "brightness.pollInterval"
             values: [0, 30, 60, 120, 300]
             format: v => v === 0 ? "Never" : v < 60 ? v + "s" : v / 60 + " min"
+        }
+
+        SettingRow {
+            label: "Detect monitors"
+            description: "Looks for DDC/CI monitors again, e.g. after turning on DDC/CI in the monitor's menu. Plugging one in does this by itself"
+            enabled: Config.brightnessDdc
+
+            // md-refresh
+            ActionButton {
+                icon: "\u{f0450}"
+                text: BrightnessService.detecting ? "Detecting…" : "Detect"
+                opacity: BrightnessService.detecting ? 0.6 : 1
+                onClicked: BrightnessService.detect()
+            }
         }
     }
 }

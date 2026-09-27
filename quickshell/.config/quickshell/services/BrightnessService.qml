@@ -44,6 +44,7 @@ Singleton {
     // ddcutil missing: external monitors have no control
     property bool ddcMissing: false
     property var _buses: ({})
+    readonly property bool detecting: detectProc.running
 
     // A monitor's level changed (keys, sliders, or read from the hardware)
     signal levelChanged(var monitor)
@@ -201,10 +202,14 @@ Singleton {
         detectProc.running = true;
     }
 
-    // qs ipc call brightness list | get <monitor> | set <monitor> <value>
+    // qs ipc call brightness list | detect | get <monitor> | set <monitor> <value>
     // Values like brightnessctl: 0.5, 50%, +5%, 5%-
     IpcHandler {
         target: "brightness"
+
+        function detect(): void {
+            root.detect();
+        }
 
         function list(): string {
             return root.monitors.map(m => `${m.name}\t${m.label}\t${m.method}${m.method === "ddc" ? " (bus " + m.bus + ")" : ""}\t${Math.round(m.brightness * 100)}%`).join("\n");
@@ -256,6 +261,22 @@ Singleton {
             return Config.brightnessDdc && bus >= 0 && !failed ? "ddc" : "none";
         }
         readonly property bool available: method !== "none"
+        // How it's controlled, or why it isn't (Settings)
+        readonly property string status: {
+            if (method === "backlight")
+                return "Backlight (" + root.backlightDevice + ")";
+            if (method === "ddc")
+                return "DDC/CI on /dev/i2c-" + bus;
+            if (internal)
+                return "No backlight device";
+            if (!Config.brightnessDdc)
+                return "DDC/CI is off";
+            if (root.ddcMissing)
+                return "ddcutil isn't installed";
+            if (failed)
+                return "No answer on /dev/i2c-" + bus;
+            return root.detecting ? "Detecting…" : "Doesn't support DDC/CI";
+        }
         // The panel can go black at 0; monitors keep their own floor
         readonly property real minimum: method === "backlight" ? 0.05 : 0
         property real brightness: 1
