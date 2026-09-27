@@ -200,6 +200,9 @@
     },
     "screenshot": {
         "mode": "region",
+        "action": "save",
+        "folder": "",
+        "filename": "Screenshot_%Y-%m-%d_%H-%M-%S",
         "guides": true,
         "hints": true,
         "animations": true,

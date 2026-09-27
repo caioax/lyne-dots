@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell.Widgets
 import qs.config
 import qs.services
 
@@ -33,6 +34,7 @@ ColumnLayout {
             visible: root.showIcon
             Layout.alignment: Qt.AlignTop
             notif: root.notif
+            showImage: !preview.wide
         }
 
         // A Column (not a ColumnLayout) so wrapped text reports its real height
@@ -162,6 +164,30 @@ ColumnLayout {
                     }
                 }
             }
+        }
+    }
+
+    // Images that aren't square (screenshots...) as a preview across the
+    // card; square ones (covers, avatars) stay the round icon
+    ClippingRectangle {
+        id: preview
+
+        readonly property real ratio: previewImage.implicitHeight > 0 ? previewImage.implicitWidth / previewImage.implicitHeight : 1
+        readonly property bool wide: previewImage.status === Image.Ready && Math.abs(ratio - 1) > 0.15
+
+        visible: wide
+        Layout.fillWidth: true
+        Layout.preferredHeight: Math.min(width / ratio, Config.notifImageSize * 4)
+        radius: Config.radius
+        color: Config.surface1Color
+
+        Image {
+            id: previewImage
+            anchors.fill: parent
+            source: NotificationService.iconSource(root.notif.image)
+            fillMode: Image.PreserveAspectCrop
+            sourceSize.width: Config.notifWidth * 2
+            mipmap: true
         }
     }
 

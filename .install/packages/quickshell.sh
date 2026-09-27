@@ -30,6 +30,9 @@ QUICKSHELL_PACKAGES=(
 
     # Brightness
     "ddcutil" # External monitor brightness over DDC/CI (needs i2c-dev)
+
+    # Screenshot
+    "xdg-user-dirs" # Finds the Pictures folder screenshots are saved to
 )
 
 # AUR packages

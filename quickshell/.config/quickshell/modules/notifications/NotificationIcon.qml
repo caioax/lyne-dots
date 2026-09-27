@@ -11,8 +11,11 @@ Item {
 
     required property var notif
     property int size: Config.notifImageSize
+    // false shows the app icon even when there is an image (the content shows
+    // wide images as a preview instead)
+    property bool showImage: true
 
-    readonly property string imageSource: NotificationService.iconSource(notif.image)
+    readonly property string imageSource: showImage ? NotificationService.iconSource(notif.image) : ""
     readonly property string appIconSource: NotificationService.iconSource(notif.appIcon)
     readonly property bool hasImage: imageSource !== "" && image.status !== Image.Error
     readonly property color tint: notif.isCritical ? Config.errorColor : Config.accentColor

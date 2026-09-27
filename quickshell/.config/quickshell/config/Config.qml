@@ -153,6 +153,13 @@ Singleton {
     readonly property bool screenshotGuides: getState("screenshot.guides", true)
     // Key hints under the control bar
     readonly property bool screenshotHints: getState("screenshot.hints", true)
+    // Capture button / Enter: "save" (file + clipboard) | "copy" (clipboard
+    // only) | "edit" (satty first)
+    readonly property string screenshotAction: getState("screenshot.action", "save")
+    // Empty = <XDG pictures dir>/Screenshots; ~ is expanded
+    readonly property string screenshotFolder: getState("screenshot.folder", "")
+    // date(1) format of the file name, without .png
+    readonly property string screenshotFilename: getState("screenshot.filename", "Screenshot_%Y-%m-%d_%H-%M-%S")
     // Screen dimming behind overlays: black on every theme
     readonly property color scrimColor: Qt.rgba(0, 0, 0, 1)
 

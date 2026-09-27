@@ -54,6 +54,8 @@ Scope {
     property int hyprBorderSize: 2
     readonly property int selectionRadius: root.mode === "window" ? root.hyprRounding : 0
 
+    readonly property string finishScript: Qt.resolvedUrl("../../scripts/screenshot.sh").toString().replace("file://", "")
+
     // Animations
     readonly property bool activeAnimations: Config.screenshotAnimations && root.active && root.mode !== "region"
 
@@ -340,35 +342,15 @@ Scope {
         const scale = root.hyprlandMonitor?.scale || 1;
         const sourcePath = tempPathForScreen(root.hyprlandMonitor?.name || "");
         const geometry = Math.round(width * scale) + "x" + Math.round(height * scale) + "+" + Math.round(x * scale) + "+" + Math.round(y * scale);
-        const timestamp = Qt.formatDateTime(new Date(), "yyyy-MM-dd_hh-mm-ss");
         const tempFiles = root.monitorsFromIpc.map(m => tempPathForScreen(m.name));
+        // Cropping, saving, copying and the notification with its actions
+        const action = root.editMode ? "edit" : Config.screenshotAction;
 
-        // $1 source, $2 crop geometry, $3 file name, $4 edit in satty, then
-        // the temp files to delete. Saved to <XDG pictures dir>/Screenshots
-        const script = `
-            src="$1"; geometry="$2"; name="$3"; edit="$4"; shift 4
-            trap 'rm -f "$@"' EXIT
-            dir="$(xdg-user-dir PICTURES 2>/dev/null)"
-            [ -n "$dir" ] && [ "$dir" != "$HOME" ] || dir="$HOME/Pictures"
-            dir="$dir/Screenshots"
-            out="$dir/$name"
-            mkdir -p "$dir" || exit 1
-            if [ "$edit" = 1 ]; then
-                magick "$src" -crop "$geometry" +repage png:- | satty --filename - --output-filename "$out" --early-exit --init-tool brush --disable-notifications
-            else
-                magick "$src" -crop "$geometry" +repage "$out"
-            fi
-            [ -f "$out" ] || exit 1
-            wl-copy --type image/png < "$out"
-            notify-send -i accessories-screenshot -a "Screenshot" "Screenshot Saved!" "Path: $out"
-        `;
-
-        const edit = root.editMode;
         root.active = false;
         root.hasSelection = false;
         root.editMode = false;
         root.captureTimestamp = "";
-        Quickshell.execDetached(["sh", "-c", script, "sh", sourcePath, geometry, `screenshot-${timestamp}.png`, edit ? "1" : "0", ...tempFiles]);
+        Quickshell.execDetached([root.finishScript, action, sourcePath, geometry, Config.screenshotFolder, Config.screenshotFilename, ...tempFiles]);
     }
 
     // =========================================================================
