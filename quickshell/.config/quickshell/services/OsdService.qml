@@ -36,6 +36,10 @@ Singleton {
 
     readonly property real value: kind === "brightness" ? BrightnessService.brightness : AudioService.volume
     readonly property bool muted: kind === "volume" && AudioService.muted
+    // End of the scale: the volume boost limit, or more when an app set more
+    readonly property real max: kind === "volume" ? Math.max(AudioService.maxVolume, value) : 1
+    // Pointer on the OSD (osd.interactive): it stays until the pointer leaves
+    property bool held: false
 
     readonly property string label: kind === "brightness" ? "Brightness" : muted ? "Muted" : "Volume"
 
@@ -91,7 +95,34 @@ Singleton {
             root.screenName = Hyprland.focusedMonitor?.name ?? "";
         root.shown = true;
         exitTimer.stop();
-        hideTimer.restart();
+        if (root.held)
+            hideTimer.stop();
+        else
+            hideTimer.restart();
+    }
+
+    function hold(held: bool) {
+        root.held = held;
+        if (held)
+            hideTimer.stop();
+        else if (root.shown)
+            hideTimer.restart();
+    }
+
+    // Wheel on the OSD: steps the level it shows
+    function adjust(steps: int) {
+        if (root.kind === "brightness")
+            BrightnessService.setBrightness(BrightnessService.brightness + 0.05 * steps);
+        else
+            AudioService.changeVolume(steps);
+        show(root.kind);
+    }
+
+    function toggleMute() {
+        if (root.kind !== "volume")
+            return;
+        AudioService.toggleMute();
+        show(root.kind);
     }
 
     // Saved position if the style offers it, else its first option
@@ -106,6 +137,7 @@ Singleton {
         // Before `shown` drops, or `mapped` goes false and unloads the window
         exitTimer.restart();
         hideTimer.stop();
+        root.held = false;
         root.shown = false;
     }
 

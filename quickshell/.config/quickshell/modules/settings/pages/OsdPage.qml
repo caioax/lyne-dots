@@ -143,6 +143,12 @@ ColumnLayout {
             ]
         }
 
+        ToggleRow {
+            label: "Interactive"
+            description: "Hovering keeps it open, scrolling changes the level and a click mutes"
+            path: "osd.interactive"
+        }
+
         StepperRow {
             label: "Duration"
             description: "How long the OSD stays after the last change"
@@ -151,6 +157,20 @@ ColumnLayout {
             to: 5000
             stepSize: 250
             format: v => v / 1000 + "s"
+        }
+    }
+
+    SettingsGroup {
+        title: "Volume"
+
+        SliderRow {
+            label: "Maximum volume"
+            description: "Above 100% the shell amplifies in software, which can distort; the OSD shows the boost in the warning color"
+            path: "audio.maxVolume"
+            from: 100
+            to: 150
+            stepSize: 5
+            format: v => v + "%"
         }
     }
 }

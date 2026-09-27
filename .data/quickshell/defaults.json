@@ -184,6 +184,10 @@
         "position": "bottom",
         "monitor": "focused",
         "timeout": 1500,
-        "trigger": "shortcuts"
+        "trigger": "shortcuts",
+        "interactive": true
+    },
+    "audio": {
+        "maxVolume": 100
     }
 }

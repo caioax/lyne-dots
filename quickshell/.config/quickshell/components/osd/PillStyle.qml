@@ -8,10 +8,14 @@ Rectangle {
     id: root
 
     property real value: 0
+    // Level at the end of the scale (above 1: volume boost)
+    property real max: 1
     property bool muted: false
     property string icon: ""
 
     readonly property color tone: muted ? Config.mutedColor : Config.accentColor
+    readonly property bool boosted: value > 1.005
+    readonly property color textTone: muted ? Config.mutedColor : boosted ? Config.warningColor : Config.textColor
 
     implicitWidth: Config.fontSizeNormal * 20
     implicitHeight: Config.fontSizeIcon + Config.padding * 4
@@ -64,6 +68,7 @@ Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: Config.padding
             value: root.value
+            max: root.max
             tone: root.tone
         }
 
@@ -76,7 +81,7 @@ Rectangle {
             font.family: Config.font
             font.pixelSize: Config.fontSizeNormal
             font.weight: Font.DemiBold
-            color: root.muted ? Config.mutedColor : Config.textColor
+            color: root.textTone
 
             Behavior on color {
                 ColorAnimation {

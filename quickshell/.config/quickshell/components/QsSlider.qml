@@ -10,6 +10,8 @@ Item {
     property real value: 0
     property real from: 0
     property real to: 1
+    // Wheel step
+    property real stepSize: (to - from) * 0.05
     property string icon: ""
     property bool showPercentage: true
     property string fillColor: Config.accentColor
@@ -92,7 +94,8 @@ Item {
             Layout.preferredHeight: parent.height - Config.padding
 
             readonly property real handleGap: Math.round(Config.padding * 2 / 3)
-            readonly property real visualPos: (root.value - root.from) / (root.to - root.from)
+            // Clamped: the value can sit outside the range (volume set elsewhere)
+            readonly property real visualPos: Math.max(0, Math.min(1, (root.value - root.from) / (root.to - root.from)))
 
             // Inner container for the scale animation
             Item {
@@ -194,7 +197,7 @@ Item {
                 }
 
                 onWheel: wheel => {
-                    let step = (root.to - root.from) * 0.05;
+                    let step = root.stepSize;
                     if (wheel.angleDelta.y > 0)
                         root.moved(Math.min(root.to, root.value + step));
                     else

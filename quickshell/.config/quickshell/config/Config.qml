@@ -163,4 +163,12 @@ Singleton {
     readonly property int osdTimeout: getState("osd.timeout", 1500)
     // "shortcuts" (only the volume/brightness keys) | "any" (every change)
     readonly property string osdTrigger: getState("osd.trigger", "shortcuts")
+    // Hovering keeps it open, the wheel changes the level, a click mutes
+    readonly property bool osdInteractive: getState("osd.interactive", true)
+
+    // ========================================================================
+    // AUDIO
+    // ========================================================================
+    // Highest volume the shell sets, 1 = 100% (audio.maxVolume is a percent)
+    readonly property real audioMaxVolume: getState("audio.maxVolume", 100) / 100
 }

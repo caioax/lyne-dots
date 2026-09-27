@@ -77,8 +77,17 @@ Scope {
             implicitHeight: styleLoader.implicitHeight
             color: "transparent"
 
-            // Doesn't take the mouse
-            mask: Region {}
+            // Takes the pointer over the OSD only while interactive
+            mask: Config.osdInteractive && OsdService.shown ? inputRegion : noInput
+
+            Region {
+                id: noInput
+            }
+
+            Region {
+                id: inputRegion
+                item: styleLoader
+            }
 
             // The attached style slides out by itself
             AnimatedPopup {
@@ -98,6 +107,60 @@ Scope {
                     anchors.fill: parent
                     sourceComponent: osdWindow.styles[OsdService.style]
                 }
+
+                // osd.interactive: hovering holds it open, the wheel steps the
+                // level, a click mutes. A pointer already resting where it
+                // opened doesn't hold it: only one entering after the entry
+                Item {
+                    id: pointerArea
+
+                    property bool armed: false
+                    property real wheelDelta: 0
+
+                    anchors.fill: styleLoader
+                    enabled: Config.osdInteractive
+
+                    Component.onDestruction: {
+                        if (hover.hovered)
+                            OsdService.hold(false);
+                    }
+
+                    Timer {
+                        running: true
+                        interval: Config.animDurationLong
+                        onTriggered: pointerArea.armed = true
+                    }
+
+                    HoverHandler {
+                        id: hover
+
+                        cursorShape: OsdService.kind === "volume" ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onHoveredChanged: {
+                            if (!hovered)
+                                OsdService.hold(false);
+                            else if (pointerArea.armed)
+                                OsdService.hold(true);
+                        }
+                    }
+
+                    WheelHandler {
+                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                        onWheel: event => {
+                            pointerArea.wheelDelta += event.angleDelta.y;
+                            // One step per notch (120), touchpads add up
+                            const steps = Math.trunc(pointerArea.wheelDelta / 120);
+                            if (steps === 0)
+                                return;
+                            pointerArea.wheelDelta -= steps * 120;
+                            OsdService.hold(true);
+                            OsdService.adjust(steps);
+                        }
+                    }
+
+                    TapHandler {
+                        onTapped: OsdService.toggleMute()
+                    }
+                }
             }
 
             Component {
@@ -105,6 +168,7 @@ Scope {
 
                 PillStyle {
                     value: OsdService.value
+                    max: OsdService.max
                     muted: OsdService.muted
                     icon: OsdService.icon
                 }
@@ -115,6 +179,7 @@ Scope {
 
                 VerticalStyle {
                     value: OsdService.value
+                    max: OsdService.max
                     muted: OsdService.muted
                     icon: OsdService.icon
                 }
@@ -125,6 +190,7 @@ Scope {
 
                 CardStyle {
                     value: OsdService.value
+                    max: OsdService.max
                     muted: OsdService.muted
                     icon: OsdService.icon
                     label: OsdService.label
@@ -136,6 +202,7 @@ Scope {
 
                 AttachedStyle {
                     value: OsdService.value
+                    max: OsdService.max
                     muted: OsdService.muted
                     icon: OsdService.icon
                     edge: osdWindow.edge

@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import Quickshell
 import Quickshell.Services.Pipewire
 import QtQuick
+import qs.config
 
 Singleton {
     id: root
@@ -51,12 +52,11 @@ Singleton {
     readonly property bool sourceReady: source !== null && source.audio !== null
 
     readonly property bool muted: sinkReady ? (sink.audio.muted ?? false) : false
-    readonly property real volume: {
-        if (!sinkReady)
-            return 0;
-        const vol = sink.audio.volume;
-        return Math.max(0, Math.min(1, vol));
-    }
+    // Highest volume the shell sets (audio.maxVolume, above 1 amplifies)
+    readonly property real maxVolume: Config.audioMaxVolume
+    readonly property real volumeStep: 0.05
+    // Not capped at maxVolume: other apps can set more
+    readonly property real volume: sinkReady ? Math.max(0, sink.audio.volume) : 0
     readonly property int percentage: Math.round(volume * 100)
 
     readonly property bool sourceMuted: sourceReady ? (source.audio.muted ?? false) : false
@@ -79,7 +79,7 @@ Singleton {
     function setVolume(newVolume) {
         if (sinkReady) {
             sink.audio.muted = false;
-            sink.audio.volume = Math.max(0, Math.min(1, newVolume));
+            sink.audio.volume = Math.max(0, Math.min(maxVolume, newVolume));
         }
     }
 
@@ -89,12 +89,19 @@ Singleton {
         }
     }
 
+    // Steps the volume; going up never lowers one already above maxVolume
+    function changeVolume(steps: int) {
+        if (steps > 0 && volume >= maxVolume)
+            return;
+        setVolume(volume + volumeStep * steps);
+    }
+
     function increaseVolume() {
-        setVolume(volume + 0.05);
+        changeVolume(1);
     }
 
     function decreaseVolume() {
-        setVolume(volume - 0.05);
+        changeVolume(-1);
     }
 
     function setSourceVolume(newVolume) {

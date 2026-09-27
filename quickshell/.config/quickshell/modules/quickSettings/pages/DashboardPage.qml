@@ -120,6 +120,8 @@ Item {
             QsSlider {
                 icon: AudioService.systemIcon
                 value: AudioService.volume
+                to: AudioService.maxVolume
+                stepSize: AudioService.volumeStep
                 fillColor: AudioService.muted ? Config.surface3Color : Config.accentColor
                 onMoved: val => AudioService.setVolume(val)
                 onIconClicked: AudioService.toggleMute()
