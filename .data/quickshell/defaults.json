@@ -204,6 +204,7 @@
         "folder": "",
         "filename": "Screenshot_%Y-%m-%d_%H-%M-%S",
         "colorFormat": "hex",
+        "ocrLanguages": ["eng"],
         "guides": true,
         "hints": true,
         "animations": true,

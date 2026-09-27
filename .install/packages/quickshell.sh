@@ -32,7 +32,10 @@ QUICKSHELL_PACKAGES=(
     "ddcutil" # External monitor brightness over DDC/CI (needs i2c-dev)
 
     # Screenshot
-    "xdg-user-dirs" # Finds the Pictures folder screenshots are saved to
+    "xdg-user-dirs"      # Finds the Pictures folder screenshots are saved to
+    "tesseract"          # OCR: copies the text in a screenshot selection
+    "tesseract-data-eng" # English for tesseract
+    "tesseract-data-por" # Portuguese for tesseract
 )
 
 # AUR packages

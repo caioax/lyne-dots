@@ -36,6 +36,35 @@ ColumnLayout {
         return pattern.replace(/%(.)/g, (match, field) => fields[field] ?? match).replace(/\//g, "-") + ".png";
     }
 
+    // tesseract --list-langs, without "osd" (script detection); null while
+    // unknown, [] when tesseract isn't installed
+    property var ocrInstalled: null
+    readonly property var ocrChoices: {
+        const installed = root.ocrInstalled ?? [];
+        return [...installed, ...Config.screenshotOcrLanguages.filter(l => !installed.includes(l))];
+    }
+    readonly property var languageNames: ({
+            eng: "English",
+            por: "Português",
+            spa: "Español",
+            fra: "Français",
+            deu: "Deutsch",
+            ita: "Italiano",
+            jpn: "日本語",
+            chi_sim: "简体中文",
+            chi_tra: "繁體中文",
+            kor: "한국어",
+            rus: "Русский"
+        })
+
+    function toggleLanguage(lang: string) {
+        const current = Config.screenshotOcrLanguages;
+        const next = current.includes(lang) ? current.filter(l => l !== lang) : [...current, lang];
+        // Keep at least one
+        if (next.length > 0)
+            StateService.set("screenshot.ocrLanguages", next);
+    }
+
     function expandHome(path: string): string {
         return path.startsWith("~") ? Quickshell.env("HOME") + path.slice(1) : path;
     }
@@ -198,6 +227,70 @@ ColumnLayout {
     }
 
     SettingsGroup {
+        title: "Copy text"
+
+        SettingRow {
+            label: "Languages"
+            description: {
+                if (root.ocrInstalled === null)
+                    return "Looking for tesseract…";
+                if (root.ocrInstalled.length === 0)
+                    return "Install tesseract and a tesseract-data-<language> package to copy the text in a selection";
+                return "Text (T in the overlay) reads the selection in these; more at once is slower";
+            }
+            path: "screenshot.ocrLanguages"
+            // No chips until tesseract has languages to pick
+            belowVisible: (root.ocrInstalled ?? []).length > 0
+
+            below: Flow {
+                width: parent.width
+                spacing: Config.padding
+
+                Repeater {
+                    model: root.ocrChoices
+
+                    Rectangle {
+                        id: chip
+
+                        required property string modelData
+                        readonly property bool active: Config.screenshotOcrLanguages.includes(modelData)
+                        readonly property bool missing: !(root.ocrInstalled ?? []).includes(modelData)
+
+                        width: chipText.implicitWidth + Config.padding * 4
+                        height: chipText.implicitHeight + Config.padding * 2
+                        radius: height / 2
+                        color: {
+                            if (missing)
+                                return Qt.alpha(Config.errorColor, 0.2);
+                            if (active)
+                                return Config.accentColor;
+                            return chipMouse.containsMouse ? Config.surface2Color : Config.surface1Color;
+                        }
+
+                        Text {
+                            id: chipText
+                            anchors.centerIn: parent
+                            text: (root.languageNames[chip.modelData] ?? chip.modelData) + (chip.missing ? " · not installed" : "")
+                            font.family: Config.font
+                            font.pixelSize: Config.fontSizeSmall
+                            font.bold: chip.active
+                            color: chip.missing ? Config.errorColor : chip.active ? Config.textReverseColor : Config.textColor
+                        }
+
+                        MouseArea {
+                            id: chipMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.toggleLanguage(chip.modelData)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    SettingsGroup {
         title: "Overlay"
 
         SliderRow {
@@ -237,6 +330,14 @@ ColumnLayout {
                 if (text.trim() !== "")
                     root.defaultFolder = text.trim();
             }
+        }
+    }
+
+    Process {
+        running: true
+        command: ["sh", "-c", "command -v tesseract >/dev/null && tesseract --list-langs 2>/dev/null | tail -n +2"]
+        stdout: StdioCollector {
+            onStreamFinished: root.ocrInstalled = text.split("\n").map(l => l.trim()).filter(l => l !== "" && l !== "osd")
         }
     }
 

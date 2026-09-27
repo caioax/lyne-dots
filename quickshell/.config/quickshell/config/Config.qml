@@ -162,6 +162,8 @@ Singleton {
     readonly property string screenshotFilename: getState("screenshot.filename", "Screenshot_%Y-%m-%d_%H-%M-%S")
     // Color mode: copied as "hex" (#rrggbb) | "rgb" | "hsl"
     readonly property string screenshotColorFormat: getState("screenshot.colorFormat", "hex")
+    // Tesseract languages for Copy text, like ["eng", "por"]
+    readonly property var screenshotOcrLanguages: getState("screenshot.ocrLanguages", ["eng"])
     // Screen dimming behind overlays: black on every theme
     readonly property color scrimColor: Qt.rgba(0, 0, 0, 1)
 

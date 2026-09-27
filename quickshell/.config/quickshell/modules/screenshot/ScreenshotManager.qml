@@ -13,8 +13,9 @@ Scope {
     // =========================================================================
 
     property bool active: false
-    property string mode: "region"  // "region", "window", "screen"
-    property bool editMode: false
+    property string mode: "region"  // "region", "window", "screen", "color"
+    // tesseract is installed (checked on each capture): Copy text shows
+    property bool ocrAvailable: false
     property string captureTimestamp: ""
 
     // Selection coordinates
@@ -145,6 +146,12 @@ Scope {
     }
 
     Process {
+        id: ocrCheck
+        command: ["sh", "-c", "command -v tesseract"]
+        onExited: code => root.ocrAvailable = code === 0
+    }
+
+    Process {
         id: grimCapture
         onExited: root.active = true
     }
@@ -156,6 +163,7 @@ Scope {
     function startCapture() {
         prepareCapture();
         hyprctlInfo.running = true;
+        ocrCheck.running = true;
     }
 
     function tempPathForScreen(screenName: string): string {
@@ -178,7 +186,6 @@ Scope {
     }
 
     function resetSelection() {
-        root.editMode = false;
         root.hasSelection = false;
         root.selectionX = 0;
         root.selectionY = 0;
@@ -295,15 +302,24 @@ Scope {
         }
         if (root.mode === "window" && !root.hasSelection && root.selectionWidth <= 0)
             return;
-        root.editMode = false;
-        saveScreenshot(root.selectionX, root.selectionY, root.selectionWidth, root.selectionHeight);
+        finish(Config.screenshotAction);
     }
 
     function editSelection() {
-        if (root.mode === "color")
-            return;
-        root.editMode = true;
-        saveScreenshot(root.selectionX, root.selectionY, root.selectionWidth, root.selectionHeight);
+        if (root.mode !== "color" && root.canConfirm)
+            finish("edit");
+    }
+
+    // OCR: copies the text in the selection
+    function copyText() {
+        if (root.mode !== "color" && root.canConfirm && root.ocrAvailable)
+            finish("ocr:" + Config.screenshotOcrLanguages.join("+"));
+    }
+
+    // Hands the selection to scripts/screenshot.sh with an action:
+    // save | copy | edit | ocr:<languages>
+    function finish(action: string) {
+        saveScreenshot(root.selectionX, root.selectionY, root.selectionWidth, root.selectionHeight, action);
     }
 
     // Windows shown on a monitor, topmost first: an open special workspace
@@ -412,7 +428,7 @@ Scope {
         grimCapture.running = true;
     }
 
-    function saveScreenshot(x: real, y: real, width: real, height: real) {
+    function saveScreenshot(x: real, y: real, width: real, height: real, action: string) {
         if (width < 5 || height < 5)
             return;
 
@@ -421,12 +437,9 @@ Scope {
         const sourcePath = tempPathForScreen(root.hyprlandMonitor?.name || "");
         const geometry = Math.round(width * scale) + "x" + Math.round(height * scale) + "+" + Math.round(x * scale) + "+" + Math.round(y * scale);
         const tempFiles = root.monitorsFromIpc.map(m => tempPathForScreen(m.name));
-        // Cropping, saving, copying and the notification with its actions
-        const action = root.editMode ? "edit" : Config.screenshotAction;
 
         root.active = false;
         root.hasSelection = false;
-        root.editMode = false;
         root.captureTimestamp = "";
         Quickshell.execDetached([root.finishScript, action, sourcePath, geometry, Config.screenshotFolder, Config.screenshotFilename, ...tempFiles]);
     }

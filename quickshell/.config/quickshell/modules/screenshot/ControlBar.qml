@@ -173,6 +173,17 @@ Rectangle {
                 onClicked: root.screenshot.editSelection()
             }
 
+            // OCR, while tesseract is installed
+            ActionButton {
+                visible: root.screenshot.ocrAvailable && root.mode !== "color"
+                icon: "\u{f113a}"
+                text: "Text"
+                size: root.buttonSize
+                enabled: root.screenshot.canConfirm
+                opacity: enabled ? 1 : 0.4
+                onClicked: root.screenshot.copyText()
+            }
+
             ActionButton {
                 visible: root.mode === "region"
                 icon: "\u{f054c}"
@@ -210,6 +221,8 @@ Rectangle {
                         hints.push(["click", "copy"], ["←↑↓→", "move"], ["shift", "×10"]);
                     else if (root.screenshot.canConfirm)
                         hints.push(["⏎", "capture"], ["E", "edit"]);
+                    if (root.mode !== "color" && root.screenshot.canConfirm && root.screenshot.ocrAvailable)
+                        hints.push(["T", "text"]);
                     if (root.mode === "region" && root.screenshot.hasSelection)
                         hints.push(["←↑↓→", "move"], ["ctrl", "resize"], ["shift", "×10"]);
                     else

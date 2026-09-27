@@ -4,7 +4,9 @@
 # open, edit, show or delete it (or save it, when it was only copied).
 #
 # Usage: screenshot.sh ACTION SOURCE GEOMETRY FOLDER NAME [TEMP_FILE...]
-#   ACTION     save (file + clipboard) | copy (clipboard only) | edit (satty first)
+#   ACTION     save (file + clipboard) | copy (clipboard only) | edit (satty
+#              first) | ocr:<langs> (copies the text, tesseract languages
+#              joined by +, like ocr:eng+por)
 #   SOURCE     capture of the whole monitor; GEOMETRY  WxH+X+Y in its pixels
 #   FOLDER     where to save; empty = <XDG pictures dir>/Screenshots
 #   NAME       date(1) format of the file name, without .png
@@ -50,6 +52,35 @@ shot="$(unique "$cache/$name.png")"
 magick "$src" -crop "$geometry" +repage "$shot"
 rm -f "$@"
 [ -f "$shot" ] || exit 1
+
+# OCR: the text goes to the clipboard, the image is dropped. Upscaled and
+# grey, screen text reads better
+case "$action" in
+ocr:*)
+    langs="${action#ocr:}"
+    if ! command -v tesseract >/dev/null; then
+        rm -f "$shot"
+        notify-send -a Screenshot -i org.xfce.screenshooter "Text not copied" "Install tesseract to copy text from screenshots"
+        exit 1
+    fi
+    text="$(magick "$shot" -colorspace Gray -resize 200% png:- |
+        tesseract - - -l "${langs:-eng}" -c page_separator= 2>/dev/null |
+        sed -e 's/[[:space:]]*$//' | sed -e '/./,$!d')"
+    rm -f "$shot"
+    if [ -z "$(printf '%s' "$text" | tr -d '[:space:]')" ]; then
+        notify-send -a Screenshot -i org.xfce.screenshooter "No text found" "Nothing readable in the selection"
+        exit 0
+    fi
+    printf '%s' "$text" | wl-copy
+    # The body is rich text: escape it; show the first lines
+    preview="$(printf '%s\n' "$text" | head -n 3 | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g')"
+    lines="$(printf '%s\n' "$text" | wc -l)"
+    [ "$lines" -gt 3 ] && preview="$preview
+…"
+    notify-send -a Screenshot -i org.xfce.screenshooter "Text copied" "$preview"
+    exit 0
+    ;;
+esac
 
 edit() {
     satty --filename "$1" --output-filename "$1" --early-exit --init-tool brush --disable-notifications

@@ -254,6 +254,12 @@ PanelWindow {
     }
 
     Shortcut {
+        sequence: "t"
+        enabled: root.screenshot.canConfirm
+        onActivated: root.screenshot.copyText()
+    }
+
+    Shortcut {
         sequence: "r"
         onActivated: root.screenshot.setMode("region")
     }
