@@ -97,7 +97,7 @@ Singleton {
             id: "screenshot",
             label: "Screenshot",
             icon: "\u{f0e51}",
-            description: "Capture overlay: dimming and animations. Opens with Print",
+            description: "Capture overlay: opening mode, dimming and guides. Opens with Print",
             category: "Shell"
         },
         {

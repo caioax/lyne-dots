@@ -199,6 +199,8 @@
         "quickSettings": "focused"
     },
     "screenshot": {
+        "mode": "region",
+        "guides": true,
         "animations": true,
         "dim": 60
     }

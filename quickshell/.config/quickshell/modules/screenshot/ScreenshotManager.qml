@@ -37,6 +37,15 @@ Scope {
     // IPC data (fresh on each capture)
     property var windowsFromIpc: []
     property var monitorsFromIpc: []
+    // Global cursor position when the capture started
+    property point cursorFromIpc: Qt.point(-1, -1)
+
+    // Size in the monitor's own pixels, as it will be saved
+    readonly property real monitorScale: root.hyprlandMonitor?.scale || 1
+    readonly property int realWidth: Math.round(root.selectionWidth * root.monitorScale)
+    readonly property int realHeight: Math.round(root.selectionHeight * root.monitorScale)
+    // Enter / double click: a chosen selection, or the window under the mouse
+    readonly property bool canConfirm: root.hasSelection || (root.mode === "window" && root.selectionWidth > 0)
 
     // Window rounding and border size from Hyprland, so a window selection
     // outlines the window like its own border. Regions and screens are cut
@@ -46,7 +55,7 @@ Scope {
     readonly property int selectionRadius: root.mode === "window" ? root.hyprRounding : 0
 
     // Animations
-    readonly property bool activeAnimations: Config.screenshotAnimations && root.mode !== "region"
+    readonly property bool activeAnimations: Config.screenshotAnimations && root.active && root.mode !== "region"
 
     readonly property var modes: ["region", "window", "screen"]
     readonly property var modeIcons: ({
@@ -95,7 +104,7 @@ Scope {
     // One hyprctl call; --batch separates the replies with two blank lines
     Process {
         id: hyprctlInfo
-        command: ["hyprctl", "-j", "--batch", "monitors; clients; getoption decoration:rounding; getoption general:border_size"]
+        command: ["hyprctl", "-j", "--batch", "monitors; clients; getoption decoration:rounding; getoption general:border_size; cursorpos"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const parts = text.split("\n\n\n").map(part => {
@@ -109,6 +118,8 @@ Scope {
                 root.windowsFromIpc = parts[1] ?? [];
                 root.hyprRounding = parts[2]?.int ?? 0;
                 root.hyprBorderSize = parts[3]?.int ?? 2;
+                root.cursorFromIpc = parts[4] ? Qt.point(parts[4].x, parts[4].y) : Qt.point(-1, -1);
+                root.applyInitialMode();
                 root.startGrimCapture();
             }
         }
@@ -172,7 +183,41 @@ Scope {
         }
     }
 
+    // Region in overlay coordinates, kept on the screen; a drag past an edge
+    // flips it instead of going negative
+    function setRegion(left: real, top: real, right: real, bottom: real) {
+        const w = root.activeScreen?.width ?? 0;
+        const h = root.activeScreen?.height ?? 0;
+        const l = Math.max(0, Math.min(left, right));
+        const t = Math.max(0, Math.min(top, bottom));
+        root.selectionX = l;
+        root.selectionY = t;
+        root.selectionWidth = Math.min(w, Math.max(left, right)) - l;
+        root.selectionHeight = Math.min(h, Math.max(top, bottom)) - t;
+    }
+
+    // Moves the region, stopping at the screen edges
+    function moveRegion(x: real, y: real) {
+        const w = root.activeScreen?.width ?? 0;
+        const h = root.activeScreen?.height ?? 0;
+        root.selectionX = Math.max(0, Math.min(x, w - root.selectionWidth));
+        root.selectionY = Math.max(0, Math.min(y, h - root.selectionHeight));
+    }
+
+    // Arrow keys: move by (dx, dy), or with `resize` grow the right and
+    // bottom edges (at least 1px)
+    function nudge(dx: int, dy: int, resize: bool) {
+        if (root.mode !== "region" || !root.hasSelection)
+            return;
+        if (resize)
+            setRegion(root.selectionX, root.selectionY, root.selectionX + Math.max(1, root.selectionWidth + dx), root.selectionY + Math.max(1, root.selectionHeight + dy));
+        else
+            moveRegion(root.selectionX + dx, root.selectionY + dy);
+    }
+
     function confirmSelection() {
+        if (root.mode === "window" && !root.hasSelection && root.selectionWidth <= 0)
+            return;
         root.editMode = false;
         saveScreenshot(root.selectionX, root.selectionY, root.selectionWidth, root.selectionHeight);
     }
@@ -182,56 +227,76 @@ Scope {
         saveScreenshot(root.selectionX, root.selectionY, root.selectionWidth, root.selectionHeight);
     }
 
+    // Windows shown on a monitor, topmost first: an open special workspace
+    // covers the regular one; then pinned, fullscreen and floating windows
+    // are above tiled ones, and the most recently focused wins a tie
+    function windowsOnScreen(screenName: string): var {
+        const monitor = root.monitorsFromIpc.find(m => m.name === screenName);
+        if (!monitor)
+            return [];
+
+        const specialId = monitor.specialWorkspace?.name ? monitor.specialWorkspace.id : null;
+        const activeId = monitor.activeWorkspace?.id;
+        const rank = win => [win.workspace?.id === specialId ? 0 : 1, win.pinned ? 0 : 1, win.fullscreen ? 0 : 1, win.floating ? 0 : 1, win.focusHistoryID ?? 0];
+
+        return root.windowsFromIpc.filter(win => {
+            if (!win?.at || !win?.size || win.hidden || win.mapped === false)
+                return false;
+            if (win.title === "" && win.class === "")
+                return false;
+            return win.workspace?.id === activeId || (specialId !== null && win.workspace?.id === specialId);
+        }).sort((a, b) => {
+            const ra = rank(a);
+            const rb = rank(b);
+            for (let i = 0; i < ra.length; i++)
+                if (ra[i] !== rb[i])
+                    return ra[i] - rb[i];
+            return 0;
+        }).map(win => ({
+                    x: win.at[0] - monitor.x,
+                    y: win.at[1] - monitor.y,
+                    width: win.size[0],
+                    height: win.size[1],
+                    title: win.title || win.class || "Window",
+                    windowClass: win.class || ""
+                }));
+    }
+
     function checkWindowAt(mouseX: real, mouseY: real, screenName: string) {
-        const monitorIpc = root.monitorsFromIpc.find(m => m.name === screenName);
-        if (!monitorIpc)
-            return;
-
-        const monitorX = monitorIpc.x;
-        const monitorY = monitorIpc.y;
-        const monitorId = monitorIpc.id;
-        const activeWorkspaceId = monitorIpc.activeWorkspace?.id;
-
-        const windows = root.windowsFromIpc;
-        if (!windows || windows.length === 0) {
+        const win = windowsOnScreen(screenName).find(w => mouseX >= w.x && mouseX <= w.x + w.width && mouseY >= w.y && mouseY <= w.y + w.height);
+        if (!win) {
             resetSelection();
             return;
         }
-
-        for (let i = windows.length - 1; i >= 0; i--) {
-            let win = windows[i];
-            if (!win)
-                continue;
-            if (win.monitor !== monitorId)
-                continue;
-            if (win.workspace?.id !== activeWorkspaceId)
-                continue;
-            if (!win.at || !win.size || win.at.length < 2 || win.size.length < 2)
-                continue;
-            if ((win.title === "" && win.class === "") || win.hidden)
-                continue;
-
-            let winX = win.at[0] - monitorX;
-            let winY = win.at[1] - monitorY;
-            let winW = win.size[0];
-            let winH = win.size[1];
-
-            if (mouseX >= winX && mouseX <= winX + winW && mouseY >= winY && mouseY <= winY + winH) {
-                root.selectionX = winX;
-                root.selectionY = winY;
-                root.selectionWidth = winW;
-                root.selectionHeight = winH;
-                root.selectedWindowTitle = win.title || win.class || "Window";
-                root.selectedWindowClass = win.class || "";
-                return;
-            }
-        }
-        resetSelection();
+        root.selectionX = win.x;
+        root.selectionY = win.y;
+        root.selectionWidth = win.width;
+        root.selectionHeight = win.height;
+        root.selectedWindowTitle = win.title;
+        root.selectedWindowClass = win.windowClass;
     }
 
     // =========================================================================
     // PRIVATE FUNCTIONS
     // =========================================================================
+
+    // Mode from Settings, ready before the overlay shows: the window under
+    // the cursor, or the whole screen
+    function applyInitialMode() {
+        // Hyprland.focusedMonitor can still be empty right after a start:
+        // take the focused monitor from the hyprctl reply
+        const focused = root.monitorsFromIpc.find(m => m.focused);
+        const screen = Quickshell.screens.find(s => s.name === focused?.name);
+        if (screen) {
+            root.activeScreen = screen;
+            root.hyprlandMonitor = Hyprland.monitorFor(screen);
+        }
+
+        setMode(Config.screenshotMode);
+        const monitor = root.monitorsFromIpc.find(m => m.name === root.activeScreen?.name);
+        if (root.mode === "window" && monitor)
+            checkWindowAt(root.cursorFromIpc.x - monitor.x, root.cursorFromIpc.y - monitor.y, monitor.name);
+    }
 
     function prepareCapture() {
         root.mode = "region";

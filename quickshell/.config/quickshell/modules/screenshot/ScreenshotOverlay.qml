@@ -75,12 +75,16 @@ PanelWindow {
     // REGION SELECTOR
     // =================================================================
 
+    // Above the overlay's MouseArea: its handles and inside take the
+    // presses they cover
     RegionSelector {
         id: regionSelector
         anchors.fill: parent
         visible: root.isActiveMonitor && root.screenshot.mode === "region"
         screenshot: root.screenshot
-        z: 2
+        guideMouseX: root.screenshot.cursorFromIpc.x - root.screen.x
+        guideMouseY: root.screenshot.cursorFromIpc.y - root.screen.y
+        z: 7
     }
 
     // =================================================================
@@ -110,7 +114,7 @@ PanelWindow {
                 return Qt.PointingHandCursor;
             if (root.screenshot.mode === "screen")
                 return Qt.ArrowCursor;
-            return root.screenshot.hasSelection ? Qt.ArrowCursor : Qt.CrossCursor;
+            return Qt.CrossCursor;
         }
 
         property real startX: 0
@@ -141,38 +145,40 @@ PanelWindow {
                 }
             }
 
-            if (dragging && root.screenshot.mode === "region" && !root.screenshot.hasSelection) {
-                root.screenshot.selectionX = Math.min(startX, mouse.x);
-                root.screenshot.selectionY = Math.min(startY, mouse.y);
-                root.screenshot.selectionWidth = Math.abs(mouse.x - startX);
-                root.screenshot.selectionHeight = Math.abs(mouse.y - startY);
-            }
+            if (dragging)
+                root.screenshot.setRegion(startX, startY, mouse.x, mouse.y);
         }
 
+        // Region: a press outside the current region (the handles and the
+        // inside are above) starts a new one. Window: a click picks the
+        // window under the cursor, even with another one picked
         onPressed: mouse => {
-            if (root.screenshot.mode === "region" && !root.screenshot.hasSelection) {
+            if (root.screenshot.mode === "region") {
+                root.screenshot.resetSelection();
                 startX = mouse.x;
                 startY = mouse.y;
-                root.screenshot.selectionX = mouse.x;
-                root.screenshot.selectionY = mouse.y;
-                root.screenshot.selectionWidth = 0;
-                root.screenshot.selectionHeight = 0;
+                root.screenshot.setRegion(mouse.x, mouse.y, mouse.x, mouse.y);
                 dragging = true;
+            } else if (root.screenshot.mode === "window") {
+                root.screenshot.checkWindowAt(mouse.x, mouse.y, root.screen.name);
+                root.screenshot.hasSelection = root.screenshot.selectionWidth > 0;
             }
         }
 
-        onReleased: mouse => {
+        onReleased: {
+            if (!dragging)
+                return;
             dragging = false;
+            // A click without a drag leaves the crosshair
+            if (root.screenshot.selectionWidth > Config.spacing && root.screenshot.selectionHeight > Config.spacing)
+                root.screenshot.hasSelection = true;
+            else
+                root.screenshot.resetSelection();
+        }
 
-            if (root.screenshot.mode === "region" && !root.screenshot.hasSelection) {
-                if (root.screenshot.selectionWidth > Config.spacing && root.screenshot.selectionHeight > Config.spacing) {
-                    root.screenshot.hasSelection = true;
-                }
-            } else if (root.screenshot.mode === "window" && !root.screenshot.hasSelection) {
-                if (mouse.x >= root.screenshot.selectionX && mouse.x <= root.screenshot.selectionX + root.screenshot.selectionWidth && mouse.y >= root.screenshot.selectionY && mouse.y <= root.screenshot.selectionY + root.screenshot.selectionHeight) {
-                    root.screenshot.hasSelection = true;
-                }
-            }
+        onDoubleClicked: {
+            if (root.screenshot.mode === "window" && root.screenshot.canConfirm)
+                root.screenshot.confirmSelection();
         }
     }
 
@@ -187,8 +193,33 @@ PanelWindow {
 
     Shortcut {
         sequences: ["Return", "Enter"]
-        enabled: root.screenshot.hasSelection
+        enabled: root.screenshot.canConfirm
         onActivated: root.screenshot.confirmSelection()
+    }
+
+    // Arrows move the region 1px, Shift 10px; with Ctrl they resize it
+    Instantiator {
+        model: {
+            const keys = [];
+            for (const [key, dx, dy] of [["Left", -1, 0], ["Right", 1, 0], ["Up", 0, -1], ["Down", 0, 1]])
+                for (const [prefix, step, resize] of [["", 1, false], ["Shift+", 10, false], ["Ctrl+", 1, true], ["Ctrl+Shift+", 10, true]])
+                    keys.push({
+                        sequence: prefix + key,
+                        dx: dx * step,
+                        dy: dy * step,
+                        resize: resize
+                    });
+            return keys;
+        }
+
+        delegate: Shortcut {
+            required property var modelData
+
+            sequence: modelData.sequence
+            enabled: root.isActiveMonitor && root.screenshot.mode === "region" && root.screenshot.hasSelection
+            autoRepeat: true
+            onActivated: root.screenshot.nudge(modelData.dx, modelData.dy, modelData.resize)
+        }
     }
 
     Shortcut {
@@ -236,7 +267,7 @@ PanelWindow {
         Text {
             id: dimLabel
             anchors.centerIn: parent
-            text: Math.round(root.screenshot.selectionWidth) + " × " + Math.round(root.screenshot.selectionHeight)
+            text: root.screenshot.realWidth + " × " + root.screenshot.realHeight
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             font.bold: true

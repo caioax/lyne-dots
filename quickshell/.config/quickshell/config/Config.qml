@@ -147,6 +147,10 @@ Singleton {
     readonly property bool screenshotAnimations: getState("screenshot.animations", getState("animations.screenshot", true))
     // Darkening outside the selection, 1 = black (screenshot.dim is a percent)
     readonly property real screenshotDim: getState("screenshot.dim", 60) / 100
+    // Mode the overlay opens in: "region" | "window" | "screen"
+    readonly property string screenshotMode: getState("screenshot.mode", "region")
+    // Dashed guides from the cursor / the selection to the screen edges
+    readonly property bool screenshotGuides: getState("screenshot.guides", true)
     // Screen dimming behind overlays: black on every theme
     readonly property color scrimColor: Qt.rgba(0, 0, 0, 1)
 
