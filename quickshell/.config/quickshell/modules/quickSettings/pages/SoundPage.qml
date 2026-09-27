@@ -14,17 +14,6 @@ Item {
     Layout.fillWidth: true
     implicitHeight: main.implicitHeight
 
-    function deviceIcon(node, isSink: bool): string {
-        const name = AudioService.deviceName(node).toLowerCase();
-        if (!isSink)
-            return "󰍬";
-        if (name.includes("hdmi") || name.includes("displayport"))
-            return "󰍹";
-        if (name.includes("headphone") || name.includes("headset") || name.includes("bluez"))
-            return "󰋋";
-        return "󰓃";
-    }
-
     ColumnLayout {
         id: main
         anchors.left: parent.left
@@ -92,7 +81,7 @@ Item {
                 Layout.rightMargin: Config.padding
                 title: AudioService.deviceName(modelData)
                 subtitle: isCurrent ? "In use" : ""
-                icon: root.deviceIcon(modelData, section.isSink)
+                icon: AudioService.deviceIcon(modelData, section.isSink)
                 active: isCurrent
                 onClicked: {
                     if (section.isSink)

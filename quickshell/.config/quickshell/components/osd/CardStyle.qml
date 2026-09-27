@@ -71,7 +71,9 @@ Rectangle {
 
         Text {
             Layout.alignment: Qt.AlignHCenter
+            Layout.maximumWidth: root.width - Config.padding * 4
             text: root.label
+            elide: Text.ElideRight
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             color: Config.subtextColor

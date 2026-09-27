@@ -134,7 +134,8 @@ Scope {
                     HoverHandler {
                         id: hover
 
-                        cursorShape: OsdService.kind === "volume" ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        // A click mutes everything but brightness
+                        cursorShape: OsdService.kind !== "brightness" ? Qt.PointingHandCursor : Qt.ArrowCursor
                         onHoveredChanged: {
                             if (!hovered)
                                 OsdService.hold(false);
@@ -171,6 +172,7 @@ Scope {
                     max: OsdService.max
                     muted: OsdService.muted
                     icon: OsdService.icon
+                    caption: OsdService.caption
                 }
             }
 
@@ -205,6 +207,7 @@ Scope {
                     max: OsdService.max
                     muted: OsdService.muted
                     icon: OsdService.icon
+                    caption: OsdService.caption
                     edge: osdWindow.edge
                     shown: OsdService.shown
                 }

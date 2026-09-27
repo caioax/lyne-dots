@@ -12,6 +12,8 @@ Rectangle {
     property real max: 1
     property bool muted: false
     property string icon: ""
+    // Line above the level bar (device name), "" for none
+    property string caption: ""
 
     readonly property color tone: muted ? Config.mutedColor : Config.accentColor
     readonly property bool boosted: value > 1.005
@@ -64,12 +66,27 @@ Rectangle {
             }
         }
 
-        LevelBar {
+        ColumnLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: Config.padding
-            value: root.value
-            max: root.max
-            tone: root.tone
+            spacing: Config.padding / 2
+
+            Text {
+                Layout.fillWidth: true
+                visible: root.caption !== ""
+                text: root.caption
+                elide: Text.ElideRight
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeSmall
+                color: Config.subtextColor
+            }
+
+            LevelBar {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Config.padding
+                value: root.value
+                max: root.max
+                tone: root.tone
+            }
         }
 
         Text {

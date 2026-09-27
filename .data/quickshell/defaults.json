@@ -185,7 +185,9 @@
         "monitor": "focused",
         "timeout": 1500,
         "trigger": "shortcuts",
-        "interactive": true
+        "interactive": true,
+        "mic": true,
+        "device": true
     },
     "audio": {
         "maxVolume": 100

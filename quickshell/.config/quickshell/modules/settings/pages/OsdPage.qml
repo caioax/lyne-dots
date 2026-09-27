@@ -125,6 +125,18 @@ ColumnLayout {
             ]
         }
 
+        ToggleRow {
+            label: "Microphone"
+            description: "The mic mute key (XF86AudioMicMute) shows the mic level and state"
+            path: "osd.mic"
+        }
+
+        ToggleRow {
+            label: "Output device"
+            description: "Switching the default output shows its name and volume, whatever \"Show on\" says"
+            path: "osd.device"
+        }
+
         SelectRow {
             label: "Monitor"
             description: "Where the OSD shows up"

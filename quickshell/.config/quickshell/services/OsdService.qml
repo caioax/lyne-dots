@@ -20,7 +20,9 @@ Singleton {
     property bool shown: false
     // Shown, or still playing the exit animation: keeps the window alive
     readonly property bool mapped: shown || exitTimer.running
-    property string kind: "volume" // "volume" | "brightness"
+    // "volume" | "brightness" | "mic" | "device" (the output changed: its
+    // name and volume)
+    property string kind: "volume"
     // Monitor focused when the OSD opened (osd.monitor "focused")
     property string screenName: ""
 
@@ -34,16 +36,32 @@ Singleton {
     readonly property string style: positions[Config.osdStyle] ? Config.osdStyle : "pill"
     readonly property string position: positionFor(style)
 
-    readonly property real value: kind === "brightness" ? BrightnessService.brightness : AudioService.volume
-    readonly property bool muted: kind === "volume" && AudioService.muted
+    readonly property bool isOutput: kind === "volume" || kind === "device"
+    readonly property real value: kind === "brightness" ? BrightnessService.brightness : kind === "mic" ? AudioService.sourceVolume : AudioService.volume
+    readonly property bool muted: kind === "mic" ? AudioService.sourceMuted : isOutput && AudioService.muted
     // End of the scale: the volume boost limit, or more when an app set more
-    readonly property real max: kind === "volume" ? Math.max(AudioService.maxVolume, value) : 1
+    readonly property real max: isOutput ? Math.max(AudioService.maxVolume, value) : Math.max(1, value)
     // Pointer on the OSD (osd.interactive): it stays until the pointer leaves
     property bool held: false
 
-    readonly property string label: kind === "brightness" ? "Brightness" : muted ? "Muted" : "Volume"
+    readonly property string deviceName: AudioService.deviceName(AudioService.sink)
+    readonly property string label: {
+        if (kind === "brightness")
+            return "Brightness";
+        if (kind === "mic")
+            return muted ? "Mic muted" : "Microphone";
+        if (kind === "device")
+            return deviceName;
+        return muted ? "Muted" : "Volume";
+    }
+    // Line of text above the level bar (pill and attached styles)
+    readonly property string caption: kind === "device" ? deviceName : ""
 
     readonly property string icon: {
+        if (kind === "mic")
+            return AudioService.sourceIcon;
+        if (kind === "device")
+            return AudioService.deviceIcon(AudioService.sink, true);
         if (kind === "brightness") {
             if (value < 0.3)
                 return "\u{f00de}"; // md-brightness_5
@@ -83,6 +101,10 @@ Singleton {
         id: armTimer
         interval: 3000
         running: true
+        onTriggered: {
+            if (AudioService.sink)
+                root._lastSink = AudioService.deviceName(AudioService.sink);
+        }
     }
 
     // ========================================================================
@@ -90,6 +112,8 @@ Singleton {
     // ========================================================================
 
     function show(kind: string) {
+        if ((kind === "mic" && !Config.osdMic) || (kind === "device" && !Config.osdDevice))
+            return;
         root.kind = kind;
         if (!root.shown)
             root.screenName = Hyprland.focusedMonitor?.name ?? "";
@@ -113,15 +137,20 @@ Singleton {
     function adjust(steps: int) {
         if (root.kind === "brightness")
             BrightnessService.setBrightness(BrightnessService.brightness + 0.05 * steps);
+        else if (root.kind === "mic")
+            AudioService.setSourceVolume(AudioService.sourceVolume + AudioService.volumeStep * steps);
         else
             AudioService.changeVolume(steps);
         show(root.kind);
     }
 
     function toggleMute() {
-        if (root.kind !== "volume")
+        if (root.kind === "mic")
+            AudioService.toggleSourceMute();
+        else if (root.isOutput)
+            AudioService.toggleMute();
+        else
             return;
-        AudioService.toggleMute();
         show(root.kind);
     }
 
@@ -150,10 +179,35 @@ Singleton {
     function _changed(kind: string) {
         if (Config.osdTrigger !== "any" || armTimer.running)
             return;
-        const open = WindowManagerService.activeModules;
-        if (open["QuickSettings"] || open["Dashboard"])
+        if (_panelOpen())
             return;
+        // The new output's volume shows in the device OSD already
+        if (kind === "volume" && root.shown && root.kind === "device")
+            kind = "device";
         show(kind);
+    }
+
+    function _panelOpen(): bool {
+        const open = WindowManagerService.activeModules;
+        return open["QuickSettings"] || open["Dashboard"];
+    }
+
+    // Default output switched (osd.device), whatever the trigger setting.
+    // The name is compared since the sink object can be replaced for the
+    // same device
+    property string _lastSink: ""
+
+    function _sinkChanged() {
+        if (!AudioService.sink)
+            return;
+        const name = AudioService.deviceName(AudioService.sink);
+        if (name === root._lastSink)
+            return;
+        const first = root._lastSink === "";
+        root._lastSink = name;
+        if (first || armTimer.running || _panelOpen())
+            return;
+        show("device");
     }
 
     Connections {
@@ -165,6 +219,15 @@ Singleton {
 
         function onMutedChanged() {
             root._changed("volume");
+        }
+
+        // Mic volume isn't watched: apps with auto gain move it all the time
+        function onSourceMutedChanged() {
+            root._changed("mic");
+        }
+
+        function onSinkChanged() {
+            root._sinkChanged();
         }
     }
 

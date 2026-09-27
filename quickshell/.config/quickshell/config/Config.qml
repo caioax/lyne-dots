@@ -165,6 +165,9 @@ Singleton {
     readonly property string osdTrigger: getState("osd.trigger", "shortcuts")
     // Hovering keeps it open, the wheel changes the level, a click mutes
     readonly property bool osdInteractive: getState("osd.interactive", true)
+    // Microphone mute key, and a switch of the default output
+    readonly property bool osdMic: getState("osd.mic", true)
+    readonly property bool osdDevice: getState("osd.device", true)
 
     // ========================================================================
     // AUDIO

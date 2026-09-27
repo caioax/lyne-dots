@@ -14,6 +14,8 @@ Item {
     property real max: 1
     property bool muted: false
     property string icon: ""
+    // Line above the level bar (device name), "" for none
+    property string caption: ""
     // "top" | "bottom"
     property string edge: "top"
     property bool shown: false
@@ -58,12 +60,27 @@ Item {
                 }
             }
 
-            LevelBar {
+            ColumnLayout {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Config.padding
-                value: root.value
-                max: root.max
-                tone: root.tone
+                spacing: Config.padding / 2
+
+                Text {
+                    Layout.fillWidth: true
+                    visible: root.caption !== ""
+                    text: root.caption
+                    elide: Text.ElideRight
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    color: Config.subtextColor
+                }
+
+                LevelBar {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Config.padding
+                    value: root.value
+                    max: root.max
+                    tone: root.tone
+                }
             }
 
             Text {

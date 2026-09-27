@@ -37,6 +37,19 @@ Singleton {
         return node?.description || node?.nickname || node?.name || "Unknown";
     }
 
+    // Glyph for an output (by its name) or input device
+    function deviceIcon(node, isSink: bool): string {
+        // Description plus node name: Bluetooth sinks only say "bluez" there
+        const name = (deviceName(node) + " " + (node?.name ?? "")).toLowerCase();
+        if (!isSink)
+            return "\u{f036c}"; // md-microphone
+        if (name.includes("hdmi") || name.includes("displayport"))
+            return "\u{f0379}"; // md-monitor
+        if (name.includes("headphone") || name.includes("headset") || name.includes("bluez"))
+            return "\u{f02cb}"; // md-headphones
+        return "\u{f04c3}"; // md-speaker
+    }
+
     function setDefaultSink(node) {
         Pipewire.preferredDefaultAudioSink = node;
     }
@@ -45,7 +58,7 @@ Singleton {
         Pipewire.preferredDefaultAudioSource = node;
     }
 
-    readonly property string sourceIcon: !sourceReady || sourceMuted ? "󰍭" : "󰍬"
+    readonly property string sourceIcon: !sourceReady || sourceMuted ? "\u{f036d}" : "\u{f036c}" // md-microphone(_off)
 
     // Check if the sink is ready to operate
     readonly property bool sinkReady: sink !== null && sink.audio !== null

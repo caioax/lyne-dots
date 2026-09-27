@@ -109,6 +109,7 @@ bind("move-to-prev-alt", "Workspaces", "Move window to previous workspace (arrow
 bind("volume-up",   "Media", "Volume up",   "XF86AudioRaiseVolume", hl.dsp.global("quickshell:volume_up"),   { repeating = true, locked = true })
 bind("volume-down", "Media", "Volume down", "XF86AudioLowerVolume", hl.dsp.global("quickshell:volume_down"), { repeating = true, locked = true })
 bind("volume-mute", "Media", "Mute",        "XF86AudioMute",        hl.dsp.global("quickshell:volume_mute"))
+bind("mic-mute",    "Media", "Mute microphone", "XF86AudioMicMute", hl.dsp.global("quickshell:mic_mute"))
 
 bind("brightness-up",   "Media", "Brightness up",   "XF86MonBrightnessUp",   hl.dsp.global("quickshell:brightness_up"),   { repeating = true, locked = true })
 bind("brightness-down", "Media", "Brightness down", "XF86MonBrightnessDown", hl.dsp.global("quickshell:brightness_down"), { repeating = true, locked = true })

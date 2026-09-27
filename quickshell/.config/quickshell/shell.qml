@@ -260,6 +260,17 @@ ShellRoot {
         }
     }
 
+    // Shortcut: Microphone Mute
+    GlobalShortcut {
+        name: "mic_mute"
+        description: "Mute microphone"
+
+        onPressed: {
+            AudioService.toggleSourceMute();
+            OsdService.show("mic");
+        }
+    }
+
     // Shortcut: Brightness Up
     GlobalShortcut {
         name: "brightness_up"
