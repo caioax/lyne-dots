@@ -37,6 +37,7 @@ FloatingWindow {
             keybinds: keybindsPage,
             lock: lockPage,
             idle: idlePage,
+            brightness: brightnessPage,
             profile: profilePage,
             about: aboutPage
         })
@@ -130,6 +131,11 @@ FloatingWindow {
     Component {
         id: idlePage
         IdlePage {}
+    }
+
+    Component {
+        id: brightnessPage
+        BrightnessPage {}
     }
 
     Component {

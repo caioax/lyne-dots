@@ -37,7 +37,7 @@ Singleton {
     readonly property string position: positionFor(style)
 
     readonly property bool isOutput: kind === "volume" || kind === "device"
-    readonly property real value: kind === "brightness" ? BrightnessService.brightness : kind === "mic" ? AudioService.sourceVolume : AudioService.volume
+    readonly property real value: kind === "brightness" ? (BrightnessService.current?.brightness ?? 0) : kind === "mic" ? AudioService.sourceVolume : AudioService.volume
     readonly property bool muted: kind === "mic" ? AudioService.sourceMuted : isOutput && AudioService.muted
     // End of the scale: the volume boost limit, or more when an app set more
     readonly property real max: isOutput ? Math.max(AudioService.maxVolume, value) : Math.max(1, value)
@@ -45,9 +45,11 @@ Singleton {
     property bool held: false
 
     readonly property string deviceName: AudioService.deviceName(AudioService.sink)
+    // Which monitor, when more than one can be dimmed
+    readonly property string monitorName: BrightnessService.controllable.length > 1 ? (BrightnessService.current?.label ?? "") : ""
     readonly property string label: {
         if (kind === "brightness")
-            return "Brightness";
+            return monitorName || "Brightness";
         if (kind === "mic")
             return muted ? "Mic muted" : "Microphone";
         if (kind === "device")
@@ -55,20 +57,15 @@ Singleton {
         return muted ? "Muted" : "Volume";
     }
     // Line of text above the level bar (pill and attached styles)
-    readonly property string caption: kind === "device" ? deviceName : ""
+    readonly property string caption: kind === "device" ? deviceName : kind === "brightness" ? monitorName : ""
 
     readonly property string icon: {
         if (kind === "mic")
             return AudioService.sourceIcon;
         if (kind === "device")
             return AudioService.deviceIcon(AudioService.sink, true);
-        if (kind === "brightness") {
-            if (value < 0.3)
-                return "\u{f00de}"; // md-brightness_5
-            if (value < 0.6)
-                return "\u{f00df}"; // md-brightness_6
-            return "\u{f00e0}"; // md-brightness_7
-        }
+        if (kind === "brightness")
+            return BrightnessService.iconFor(value);
         if (muted)
             return "\u{f075f}"; // md-volume_mute
         if (value < 0.01)
@@ -136,7 +133,7 @@ Singleton {
     // Wheel on the OSD: steps the level it shows
     function adjust(steps: int) {
         if (root.kind === "brightness")
-            BrightnessService.setBrightness(BrightnessService.brightness + 0.05 * steps);
+            BrightnessService.current?.set(BrightnessService.current.brightness + Config.brightnessStep * steps);
         else if (root.kind === "mic")
             AudioService.setSourceVolume(AudioService.sourceVolume + AudioService.volumeStep * steps);
         else
@@ -234,7 +231,9 @@ Singleton {
     Connections {
         target: BrightnessService
 
-        function onBrightnessChanged() {
+        // Keys and sliders set lastChanged themselves; this catches reads
+        function onLevelChanged(monitor) {
+            BrightnessService.lastChanged = monitor;
             root._changed("brightness");
         }
     }

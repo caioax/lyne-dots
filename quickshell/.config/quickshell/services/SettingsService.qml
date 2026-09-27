@@ -129,6 +129,13 @@ Singleton {
             category: "System"
         },
         {
+            id: "brightness",
+            label: "Brightness",
+            icon: "\u{f00df}",
+            description: "Brightness keys and external monitors over DDC/CI",
+            category: "System"
+        },
+        {
             id: "profile",
             label: "Profile & Region",
             icon: "\u{f0009}",

@@ -27,6 +27,9 @@ QUICKSHELL_PACKAGES=(
 
     # Dashboard
     "cava" # Audio visualizer around the cover in the Media tab
+
+    # Brightness
+    "ddcutil" # External monitor brightness over DDC/CI (needs i2c-dev)
 )
 
 # AUR packages

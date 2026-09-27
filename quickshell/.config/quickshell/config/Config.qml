@@ -170,6 +170,19 @@ Singleton {
     readonly property bool osdDevice: getState("osd.device", true)
 
     // ========================================================================
+    // BRIGHTNESS
+    // ========================================================================
+    // "focused" (the focused monitor, or the laptop panel when it has no
+    // control) | "all" (every monitor with control)
+    readonly property string brightnessTarget: getState("brightness.target", "focused")
+    // Brightness key step, 1 = 100% (brightness.step is a percent)
+    readonly property real brightnessStep: getState("brightness.step", 5) / 100
+    // External monitors over DDC/CI (ddcutil)
+    readonly property bool brightnessDdc: getState("brightness.ddc", true)
+    // Seconds between re-reads of external monitors, 0 = never
+    readonly property int brightnessPollInterval: getState("brightness.pollInterval", 60)
+
+    // ========================================================================
     // AUDIO
     // ========================================================================
     // Highest volume the shell sets, 1 = 100% (audio.maxVolume is a percent)

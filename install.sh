@@ -285,6 +285,13 @@ setup_services() {
         log_step "Enabling NetworkManager..."
         sudo systemctl enable --now NetworkManager.service
     fi
+
+    # i2c-dev: ddcutil reaches external monitors through /dev/i2c-* (brightness)
+    if [[ ! -f /etc/modules-load.d/i2c-dev.conf ]]; then
+        log_step "Loading i2c-dev at boot..."
+        echo i2c-dev | sudo tee /etc/modules-load.d/i2c-dev.conf >/dev/null
+        sudo modprobe i2c-dev
+    fi
 }
 
 setup_mimetypes() {

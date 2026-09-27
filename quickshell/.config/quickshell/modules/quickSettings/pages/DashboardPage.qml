@@ -137,11 +137,11 @@ Item {
             }
 
             QsSlider {
-                visible: BrightnessService.available
-                icon: BrightnessService.icon
-                value: BrightnessService.brightness
-                onMoved: val => BrightnessService.setBrightness(val)
-                onIconClicked: BrightnessService.toggleBrightness()
+                visible: BrightnessService.primary !== null
+                icon: BrightnessService.iconFor(value)
+                value: BrightnessService.primary?.brightness ?? 0
+                onMoved: val => BrightnessService.primary.set(val)
+                onIconClicked: BrightnessService.primary.toggle()
             }
         }
     }

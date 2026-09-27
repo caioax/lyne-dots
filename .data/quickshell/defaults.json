@@ -191,5 +191,11 @@
     },
     "audio": {
         "maxVolume": 100
+    },
+    "brightness": {
+        "target": "focused",
+        "step": 5,
+        "ddc": true,
+        "pollInterval": 60
     }
 }
