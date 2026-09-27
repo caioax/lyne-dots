@@ -200,11 +200,14 @@ Item {
                             icon: BrightnessService.iconFor(value)
                             value: monitorBrightness.monitor.brightness
                             stepSize: Config.brightnessStep
+                            // With the chip, the percentage sits inside it
+                            showPercentage: !monitorChip.visible
                             onMoved: val => monitorBrightness.monitor.set(val)
                             onIconClicked: monitorBrightness.monitor.toggle()
                         }
 
-                        // Next monitor; hovering shows the current one's name
+                        // Percentage and next monitor; hovering shows the
+                        // current one's name
                         Rectangle {
                             id: monitorChip
 
@@ -249,6 +252,25 @@ Item {
                                             duration: Config.animDurationShort
                                             easing.type: Easing.OutQuad
                                         }
+                                    }
+                                }
+
+                                Text {
+                                    // Fixed width so the chip doesn't jump between values
+                                    Layout.preferredWidth: percentMetrics.width
+                                    horizontalAlignment: Text.AlignRight
+                                    text: Math.round(monitorBrightness.monitor.brightness * 100) + "%"
+                                    font.family: Config.font
+                                    font.pixelSize: Config.fontSizeSmall
+                                    font.bold: true
+                                    color: Config.subtextColor
+
+                                    TextMetrics {
+                                        id: percentMetrics
+                                        font.family: Config.font
+                                        font.pixelSize: Config.fontSizeSmall
+                                        font.bold: true
+                                        text: "100%"
                                     }
                                 }
 
