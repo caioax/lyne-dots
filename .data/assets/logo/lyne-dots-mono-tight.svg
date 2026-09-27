@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 392 280.24" width="392" height="280.24" fill="none">
+  <path id="line" d="M204.81 208.97 L170.82 235.53 A89.84 89.84 0 0 1 115.51 254.57 A89.84 89.84 0 0 1 25.67 164.73 L25.67 115.51 A89.84 89.84 0 0 1 115.51 25.67 A89.84 89.84 0 0 1 186.3 60.2 L328.72 242.49 A31.44 31.44 0 0 0 353.5 254.57 L366.33 254.57" stroke="currentColor" stroke-width="51.34" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle id="dot" cx="343.87" cy="100.32" r="48.13" fill="currentColor"/>
+</svg>

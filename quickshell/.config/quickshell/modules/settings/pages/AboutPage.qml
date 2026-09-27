@@ -194,13 +194,9 @@ ColumnLayout {
                 radius: Config.radiusLarge
                 color: Qt.alpha(Config.accentColor, 0.15)
 
-                // md-arch
-                Text {
+                LyneLogo {
                     anchors.centerIn: parent
-                    text: "\u{f08c7}"
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeIconLarge
-                    color: Config.accentColor
+                    height: Config.fontSizeIconLarge
                 }
             }
 
