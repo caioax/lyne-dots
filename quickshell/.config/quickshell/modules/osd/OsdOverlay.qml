@@ -1,173 +1,82 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import qs.services
 import qs.config
+import "../../components/"
+import "../../components/osd/"
 
+// On-screen display for volume and brightness. Lives while
+// OsdService.mapped (see shell.qml), so the exit animation plays
 Scope {
     id: root
 
-    // Icons for each type (Nerd Font)
-    readonly property var icons: ({
-            "volume_off": "󰖁",
-            "volume_low": "󰕿",
-            "volume_medium": "󰖀",
-            "volume_high": "󰕾",
-            "mute": "󰝟",
-            "brightness_low": "󰃞",
-            "brightness_medium": "󰃟",
-            "brightness_high": "󰃠"
+    // osd.style -> component
+    readonly property var styles: ({
+            pill: pillStyle
         })
 
-    function getIcon(): string {
-        if (OsdService.type === "mute" || OsdService.muted) {
-            return icons.mute;
-        }
-        if (OsdService.type === "brightness") {
-            if (OsdService.value < 0.3)
-                return icons.brightness_low;
-            if (OsdService.value < 0.6)
-                return icons.brightness_medium;
-            return icons.brightness_high;
-        }
-        // Volume
-        if (OsdService.value < 0.01)
-            return icons.volume_off;
-        if (OsdService.value < 0.33)
-            return icons.volume_low;
-        if (OsdService.value < 0.66)
-            return icons.volume_medium;
-        return icons.volume_high;
+    // Focused monitor when it opened, or every monitor (osd.monitor)
+    readonly property var screens: {
+        if (Config.osdMonitor === "all")
+            return Quickshell.screens;
+        const focused = Quickshell.screens.filter(s => s.name === OsdService.screenName);
+        return focused.length > 0 ? focused : [Quickshell.screens[0]];
     }
 
-    // Create OSD on all monitors
     Variants {
-        model: Quickshell.screens
+        model: root.screens
 
         PanelWindow {
             id: osdWindow
 
-            required property var modelData
+            required property ShellScreen modelData
+            readonly property bool atTop: Config.osdPosition === "top"
+            // Room for a bar on the same edge
+            readonly property int barRoom: atTop !== Config.barOnBottom ? Config.barReservedHeight : 0
 
             screen: modelData
 
-            // Position: bottom-center of the screen
-            anchors.bottom: true
-            margins.bottom: 80 + (Config.barOnBottom ? Config.barReservedHeight : 0)
+            anchors.top: atTop
+            anchors.bottom: !atTop
+            margins.top: atTop ? barRoom + Config.spacing * 2 : 0
+            margins.bottom: atTop ? 0 : barRoom + Config.spacing * 8
             exclusionMode: ExclusionMode.Ignore
 
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.namespace: "qs_modules"
 
-            implicitWidth: content.width
-            implicitHeight: content.height
+            implicitWidth: styleLoader.implicitWidth
+            implicitHeight: styleLoader.implicitHeight
             color: "transparent"
 
-            // Does not block mouse
+            // Doesn't take the mouse
             mask: Region {}
 
-            // Visibility controlled by the service
-            visible: OsdService.visible
+            AnimatedPopup {
+                anchors.fill: parent
+                shown: OsdService.shown
+                transformOrigin: osdWindow.atTop ? Item.Top : Item.Bottom
 
-            Rectangle {
-                id: content
-                width: 280
-                height: 50
-                radius: Config.radiusLarge
-                color: Config.backgroundTransparentColor
-                border.color: Qt.alpha(Config.accentColor, 0.2)
-                border.width: 1
+                Loader {
+                    id: styleLoader
 
-                // Entry animation
-                scale: OsdService.visible ? 1 : 0.8
-                opacity: OsdService.visible ? 1 : 0
-
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: Config.animDuration
-                        easing.type: Easing.OutBack
-                        easing.overshoot: 1.2
-                    }
-                }
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Config.animDuration
-                    }
-                }
-
-                RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 16
-                    anchors.rightMargin: 16
-                    spacing: 14
-
-                    // Icon
-                    Text {
-                        text: root.getIcon()
-                        font.family: Config.font
-                        font.pixelSize: 22
-                        color: OsdService.muted ? Config.mutedColor : Config.accentColor
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Config.animDurationShort
-                            }
-                        }
-                    }
-
-                    // Progress bar
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 6
-                        radius: 3
-                        color: Config.surface1Color
-
-                        Rectangle {
-                            anchors.left: parent.left
-                            anchors.top: parent.top
-                            anchors.bottom: parent.bottom
-
-                            width: parent.width * Math.min(1, OsdService.value)
-                            radius: parent.radius
-                            color: OsdService.muted ? Config.mutedColor : Config.accentColor
-
-                            Behavior on width {
-                                NumberAnimation {
-                                    duration: Config.animDurationShort
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Config.animDurationShort
-                                }
-                            }
-                        }
-                    }
-
-                    // Percentage
-                    Text {
-                        text: Math.round(OsdService.value * 100) + "%"
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeNormal
-                        font.weight: Font.DemiBold
-                        color: OsdService.muted ? Config.mutedColor : Config.textColor
-                        horizontalAlignment: Text.AlignRight
-                        Layout.preferredWidth: 42
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Config.animDurationShort
-                            }
-                        }
-                    }
+                    sourceComponent: root.styles[Config.osdStyle] ?? pillStyle
                 }
             }
+        }
+    }
+
+    Component {
+        id: pillStyle
+
+        PillStyle {
+            value: OsdService.value
+            muted: OsdService.muted
+            icon: OsdService.icon
         }
     }
 }

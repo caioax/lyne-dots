@@ -178,5 +178,12 @@
     "keybinds": {
         "overrides": [],
         "custom": []
+    },
+    "osd": {
+        "style": "pill",
+        "position": "bottom",
+        "monitor": "focused",
+        "timeout": 1500,
+        "trigger": "shortcuts"
     }
 }

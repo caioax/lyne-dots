@@ -87,6 +87,13 @@ Singleton {
             category: "Shell"
         },
         {
+            id: "osd",
+            label: "OSD",
+            icon: "\u{f10a9}",
+            description: "Volume and brightness indicator: style, position and when it shows",
+            category: "Shell"
+        },
+        {
             id: "windows",
             label: "Windows",
             icon: "\u{f05b2}",

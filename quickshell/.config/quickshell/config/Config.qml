@@ -149,4 +149,17 @@ Singleton {
     readonly property int notifTimeout: getState("notifications.timeout", 5000)
     readonly property int notifSpacing: getState("notifications.spacing", 10)
     readonly property int notifMaxPopups: getState("notifications.maxPopups", 4)
+
+    // ========================================================================
+    // OSD
+    // ========================================================================
+    // "pill"
+    readonly property string osdStyle: getState("osd.style", "pill")
+    // "bottom" | "top"
+    readonly property string osdPosition: getState("osd.position", "bottom")
+    // "focused" | "all"
+    readonly property string osdMonitor: getState("osd.monitor", "focused")
+    readonly property int osdTimeout: getState("osd.timeout", 1500)
+    // "shortcuts" (only the volume/brightness keys) | "any" (every change)
+    readonly property string osdTrigger: getState("osd.trigger", "shortcuts")
 }

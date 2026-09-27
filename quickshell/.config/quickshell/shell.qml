@@ -13,6 +13,7 @@ import "./modules/screenshot/"
 import "./modules/notifications/"
 import "./modules/settings/"
 import "./modules/launcher/"
+import "./modules/osd/"
 import qs.config
 
 ShellRoot {
@@ -163,10 +164,10 @@ ShellRoot {
         }
     }
 
-    // OSD
+    // OSD (kept while mapped so the exit animation plays)
     Loader {
-        active: OsdService.visible
-        source: "./modules/osd/OsdOverlay.qml"
+        active: OsdService.mapped
+        sourceComponent: OsdOverlay {}
     }
 
     // Settings window (imported statically: Quickshell only resolves the
@@ -233,7 +234,7 @@ ShellRoot {
 
         onPressed: {
             AudioService.increaseVolume();
-            OsdService.showVolume(AudioService.volume, AudioService.muted);
+            OsdService.show("volume");
         }
     }
 
@@ -244,7 +245,7 @@ ShellRoot {
 
         onPressed: {
             AudioService.decreaseVolume();
-            OsdService.showVolume(AudioService.volume, AudioService.muted);
+            OsdService.show("volume");
         }
     }
 
@@ -255,7 +256,7 @@ ShellRoot {
 
         onPressed: {
             AudioService.toggleMute();
-            OsdService.showVolume(AudioService.volume, AudioService.muted);
+            OsdService.show("volume");
         }
     }
 
@@ -266,7 +267,7 @@ ShellRoot {
 
         onPressed: {
             BrightnessService.increaseBrightness();
-            OsdService.showBrightness(BrightnessService.brightness);
+            OsdService.show("brightness");
         }
     }
 
@@ -277,7 +278,7 @@ ShellRoot {
 
         onPressed: {
             BrightnessService.decreaseBrightness();
-            OsdService.showBrightness(BrightnessService.brightness);
+            OsdService.show("brightness");
         }
     }
 

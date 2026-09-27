@@ -31,6 +31,7 @@ FloatingWindow {
             dashboard: dashboardPage,
             power: powerPage,
             notifications: notificationsPage,
+            osd: osdPage,
             windows: windowsPage,
             input: inputPage,
             keybinds: keybindsPage,
@@ -104,6 +105,11 @@ FloatingWindow {
     Component {
         id: notificationsPage
         NotificationsPage {}
+    }
+
+    Component {
+        id: osdPage
+        OsdPage {}
     }
 
     Component {
