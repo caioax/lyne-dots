@@ -67,6 +67,18 @@ Singleton {
         }
     }
 
+    // For callers that close first (so they aren't captured) and are
+    // destroyed with their window: the wait lives here
+    function requestScreenshotAfter(ms: int) {
+        screenshotDelay.interval = ms;
+        screenshotDelay.restart();
+    }
+
+    Timer {
+        id: screenshotDelay
+        onTriggered: root.screenshotRequested()
+    }
+
     function getShortcutName(key: string): string {
         if (shortcuts.hasOwnProperty(key)) {
             return shortcuts[key].name;

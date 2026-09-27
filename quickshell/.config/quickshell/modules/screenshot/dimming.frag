@@ -6,6 +6,8 @@ layout(std140, binding = 0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
     vec4 selectionRect; // (x, y, width, height)
+    vec4 dimColor;      // opaque; dimOpacity sets how dark
+    vec4 outlineColor;  // opaque
     float dimOpacity;
     vec2 screenSize;
     float borderRadius;
@@ -18,22 +20,25 @@ float sdRoundedBox(vec2 p, vec2 b, float r) {
 }
 
 void main() {
+    vec4 dim = vec4(dimColor.rgb, 1.0) * dimOpacity;
+
+    // No selection yet: dim everything
+    if (selectionRect.z < 1.0 || selectionRect.w < 1.0) {
+        fragColor = dim * qt_Opacity;
+        return;
+    }
+
     vec2 halfSize = selectionRect.zw / 2.0;
     vec2 center = selectionRect.xy + halfSize;
-    vec2 pixelPos = qt_TexCoord0 * screenSize;
-    vec2 p = pixelPos - center;
+    vec2 p = qt_TexCoord0 * screenSize - center;
+    float radius = min(borderRadius, min(halfSize.x, halfSize.y));
+    float dist = sdRoundedBox(p, halfSize, radius);
 
-    float dist = sdRoundedBox(p, halfSize, borderRadius);
+    // Antialiased masks over one pixel: clear inside, outline ring around
+    float outside = smoothstep(-0.5, 0.5, dist);
+    float beyondOutline = smoothstep(outlineThickness - 0.5, outlineThickness + 0.5, dist);
+    vec4 outline = vec4(outlineColor.rgb, 1.0);
 
-    bool insideFilledArea = dist <= 0.0;
-
-    bool insideOutline = dist > 0.0 && dist <= outlineThickness;
-
-    if (insideFilledArea) {
-        fragColor = vec4(0.0);
-    } else if (insideOutline) {
-        fragColor = vec4(1.0, 1.0, 1.0, 1.0 * qt_Opacity);
-    } else {
-        fragColor = vec4(0.0, 0.0, 0.0, dimOpacity * qt_Opacity);
-    }
+    // Premultiplied: the ring fades into the dim, the inside stays clear
+    fragColor = mix(outline, dim, beyondOutline) * outside * qt_Opacity;
 }

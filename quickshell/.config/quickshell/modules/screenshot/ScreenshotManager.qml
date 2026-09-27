@@ -38,14 +38,21 @@ Scope {
     property var windowsFromIpc: []
     property var monitorsFromIpc: []
 
+    // Window rounding and border size from Hyprland, so a window selection
+    // outlines the window like its own border. Regions and screens are cut
+    // square, so they are drawn square
+    property int hyprRounding: 0
+    property int hyprBorderSize: 2
+    readonly property int selectionRadius: root.mode === "window" ? root.hyprRounding : 0
+
     // Animations
     readonly property bool activeAnimations: Config.screenshotAnimations && root.mode !== "region"
 
     readonly property var modes: ["region", "window", "screen"]
     readonly property var modeIcons: ({
-            region: "󰩭",
-            window: "󰖯",
-            screen: "󰍹"
+            region: "\u{f0a6d}",
+            window: "\u{f05af}",
+            screen: "\u{f0379}"
         })
 
     // =========================================================================
@@ -85,36 +92,26 @@ Scope {
     // IPC PROCESSES
     // =========================================================================
 
+    // One hyprctl call; --batch separates the replies with two blank lines
     Process {
-        id: hyprctlMonitors
-        command: ["hyprctl", "monitors", "-j"]
-        stdout: SplitParser {
-            splitMarker: ""
-            onRead: data => {
-                try {
-                    root.monitorsFromIpc = JSON.parse(data);
-                } catch (e) {
-                    root.monitorsFromIpc = [];
-                }
+        id: hyprctlInfo
+        command: ["hyprctl", "-j", "--batch", "monitors; clients; getoption decoration:rounding; getoption general:border_size"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const parts = text.split("\n\n\n").map(part => {
+                    try {
+                        return JSON.parse(part);
+                    } catch (e) {
+                        return null;
+                    }
+                });
+                root.monitorsFromIpc = parts[0] ?? [];
+                root.windowsFromIpc = parts[1] ?? [];
+                root.hyprRounding = parts[2]?.int ?? 0;
+                root.hyprBorderSize = parts[3]?.int ?? 2;
+                root.startGrimCapture();
             }
         }
-        onExited: hyprctlClients.running = true
-    }
-
-    Process {
-        id: hyprctlClients
-        command: ["hyprctl", "clients", "-j"]
-        stdout: SplitParser {
-            splitMarker: ""
-            onRead: data => {
-                try {
-                    root.windowsFromIpc = JSON.parse(data);
-                } catch (e) {
-                    root.windowsFromIpc = [];
-                }
-            }
-        }
-        onExited: root.startGrimCapture()
     }
 
     Process {
@@ -128,7 +125,7 @@ Scope {
 
     function startCapture() {
         prepareCapture();
-        hyprctlMonitors.running = true;
+        hyprctlInfo.running = true;
     }
 
     function tempPathForScreen(screenName: string): string {
@@ -138,13 +135,9 @@ Scope {
     }
 
     function cleanupTempFiles() {
-        const paths = [];
-        for (let i = 0; i < root.monitorsFromIpc.length; i++) {
-            paths.push("'" + tempPathForScreen(root.monitorsFromIpc[i].name) + "'");
-        }
-        if (paths.length > 0) {
-            Quickshell.execDetached(["sh", "-c", "rm -f " + paths.join(" ")]);
-        }
+        const paths = root.monitorsFromIpc.map(m => tempPathForScreen(m.name));
+        if (paths.length > 0)
+            Quickshell.execDetached(["rm", "-f", ...paths]);
         root.captureTimestamp = "";
     }
 
@@ -259,13 +252,13 @@ Scope {
         root.captureTimestamp = String(Date.now());
     }
 
+    // Uncompressed PNGs (-l 0): the default compression takes ~1.5s per
+    // monitor, this ~35ms, and the files are deleted after the crop anyway
     function startGrimCapture() {
-        const commands = [];
-        for (const monitor of root.monitorsFromIpc) {
-            const path = tempPathForScreen(monitor.name);
-            commands.push(`grim -o '${monitor.name}' '${path}'`);
-        }
-        grimCapture.command = ["sh", "-c", commands.join(" & ") + " & wait"];
+        const args = [];
+        for (const monitor of root.monitorsFromIpc)
+            args.push(monitor.name, tempPathForScreen(monitor.name));
+        grimCapture.command = ["sh", "-c", 'while [ $# -gt 0 ]; do grim -l 0 -o "$1" "$2" & shift 2; done; wait', "sh", ...args];
         grimCapture.running = true;
     }
 
@@ -273,44 +266,39 @@ Scope {
         if (width < 5 || height < 5)
             return;
 
+        // The capture of each monitor is in its own pixels
         const scale = root.hyprlandMonitor?.scale || 1;
-        const monitorName = root.hyprlandMonitor?.name || "";
-        const sourcePath = tempPathForScreen(monitorName);
-
-        // Per-monitor image: no monitor offset needed
-        const scaledX = Math.round(x * scale);
-        const scaledY = Math.round(y * scale);
-        const scaledWidth = Math.round(width * scale);
-        const scaledHeight = Math.round(height * scale);
-
-        const picturesDir = Quickshell.env("XDG_PICTURES_DIR") || (Quickshell.env("HOME") + "/Pictures/Screenshots");
+        const sourcePath = tempPathForScreen(root.hyprlandMonitor?.name || "");
+        const geometry = Math.round(width * scale) + "x" + Math.round(height * scale) + "+" + Math.round(x * scale) + "+" + Math.round(y * scale);
         const timestamp = Qt.formatDateTime(new Date(), "yyyy-MM-dd_hh-mm-ss");
-        const outputPath = `${picturesDir}/screenshot-${timestamp}.png`;
+        const tempFiles = root.monitorsFromIpc.map(m => tempPathForScreen(m.name));
 
-        // Commands
-        const createDir = `mkdir -p "${picturesDir}"`;
-        const cropImage = `magick "${sourcePath}" -crop ${scaledWidth}x${scaledHeight}+${scaledX}+${scaledY} +repage "${outputPath}"`;
-        const checkAndCopy = `[ -f "${outputPath}" ] && wl-copy < "${outputPath}"`;
-        const checkAndNotify = `[ -f "${outputPath}" ] && notify-send -i accessories-screenshot -a "Screenshot" "Screenshot Saved!" "Path: ${outputPath}"`;
-        const sattyAction = `magick "${sourcePath}" -crop ${scaledWidth}x${scaledHeight}+${scaledX}+${scaledY} png:- | satty --filename - --output-filename "${outputPath}" --early-exit --init-tool brush --disable-notifications`;
+        // $1 source, $2 crop geometry, $3 file name, $4 edit in satty, then
+        // the temp files to delete. Saved to <XDG pictures dir>/Screenshots
+        const script = `
+            src="$1"; geometry="$2"; name="$3"; edit="$4"; shift 4
+            trap 'rm -f "$@"' EXIT
+            dir="$(xdg-user-dir PICTURES 2>/dev/null)"
+            [ -n "$dir" ] && [ "$dir" != "$HOME" ] || dir="$HOME/Pictures"
+            dir="$dir/Screenshots"
+            out="$dir/$name"
+            mkdir -p "$dir" || exit 1
+            if [ "$edit" = 1 ]; then
+                magick "$src" -crop "$geometry" +repage png:- | satty --filename - --output-filename "$out" --early-exit --init-tool brush --disable-notifications
+            else
+                magick "$src" -crop "$geometry" +repage "$out"
+            fi
+            [ -f "$out" ] || exit 1
+            wl-copy --type image/png < "$out"
+            notify-send -i accessories-screenshot -a "Screenshot" "Screenshot Saved!" "Path: $out"
+        `;
 
-        // Cleanup all per-monitor temp files
-        let cleanPaths = [];
-        for (let i = 0; i < root.monitorsFromIpc.length; i++)
-            cleanPaths.push("'" + tempPathForScreen(root.monitorsFromIpc[i].name) + "'");
-        const cleanTemp = "rm -f " + cleanPaths.join(" ");
-
-        // Steps
-        const defaultCmd = [createDir, cropImage, checkAndCopy, cleanTemp, checkAndNotify];
-        const sattyCmd = `trap '${cleanTemp}' EXIT; ` + [createDir, sattyAction, checkAndCopy, checkAndNotify].join(" && ");
-
-        const cmd = root.editMode ? sattyCmd : defaultCmd.join(" && ");
-
+        const edit = root.editMode;
         root.active = false;
         root.hasSelection = false;
         root.editMode = false;
         root.captureTimestamp = "";
-        Quickshell.execDetached(["sh", "-c", cmd]);
+        Quickshell.execDetached(["sh", "-c", script, "sh", sourcePath, geometry, `screenshot-${timestamp}.png`, edit ? "1" : "0", ...tempFiles]);
     }
 
     // =========================================================================

@@ -7,12 +7,16 @@ Rectangle {
 
     required property var screenshot
 
+    // A round button and the room around it
+    readonly property int buttonSize: Config.fontSizeIcon + Config.padding * 2
+    readonly property int cellSize: buttonSize + Config.spacing
+
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
-    anchors.bottomMargin: 40
+    anchors.bottomMargin: Config.spacing * 5
 
-    height: 50
-    width: barContent.implicitWidth + 16
+    height: cellSize + Config.padding
+    width: barContent.implicitWidth + Config.spacing * 2
     radius: height / 2
     color: Config.surface0Color
     border.width: 1
@@ -39,6 +43,58 @@ Rectangle {
         }
     }
 
+    // Round action button that folds away while `shown` is false
+    component ActionButton: Item {
+        id: action
+
+        property bool shown: true
+        property string icon
+        property color iconColor
+        signal clicked
+
+        width: shown ? root.cellSize : 0
+        height: root.cellSize
+        visible: width > 0
+        clip: true
+
+        Behavior on width {
+            NumberAnimation {
+                duration: Config.animDurationShort
+            }
+        }
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: root.buttonSize
+            height: root.buttonSize
+            radius: width / 2
+            color: actionArea.containsMouse ? Config.surface2Color : Config.surface1Color
+
+            Text {
+                anchors.centerIn: parent
+                text: action.icon
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeIcon
+                color: actionArea.containsMouse ? Config.textColor : action.iconColor
+            }
+
+            MouseArea {
+                id: actionArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: action.clicked()
+            }
+        }
+    }
+
+    component Separator: Rectangle {
+        width: 1
+        height: root.buttonSize * 2 / 3
+        color: Config.surface2Color
+        anchors.verticalCenter: parent.verticalCenter
+    }
+
     Row {
         id: barContent
         anchors.centerIn: parent
@@ -46,17 +102,17 @@ Rectangle {
 
         // Mode selector
         Item {
-            width: 132
-            height: 42
+            width: root.cellSize * root.screenshot.modes.length
+            height: root.cellSize
 
             // Sliding highlight
             Rectangle {
-                height: 36
-                width: 36
-                y: 3
+                width: root.buttonSize
+                height: root.buttonSize
+                y: (parent.height - height) / 2
                 radius: height / 2
                 color: Config.accentColor
-                x: 4 + (root.screenshot.modes.indexOf(root.screenshot.mode) * 44)
+                x: (root.cellSize - root.buttonSize) / 2 + root.screenshot.modes.indexOf(root.screenshot.mode) * root.cellSize
 
                 Behavior on x {
                     NumberAnimation {
@@ -74,161 +130,61 @@ Rectangle {
                     model: root.screenshot.modes
 
                     Item {
+                        id: modeItem
+
                         required property string modelData
-                        width: 44
-                        height: 42
+
+                        width: root.cellSize
+                        height: root.cellSize
 
                         Text {
                             anchors.centerIn: parent
-                            text: root.screenshot.modeIcons[modelData]
+                            text: root.screenshot.modeIcons[modeItem.modelData]
                             font.family: Config.font
                             font.pixelSize: Config.fontSizeIcon
-                            color: root.screenshot.mode === modelData ? Config.textReverseColor : Config.textColor
+                            color: root.screenshot.mode === modeItem.modelData ? Config.textReverseColor : Config.textColor
                         }
 
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root.screenshot.setMode(modelData)
+                            onClicked: root.screenshot.setMode(modeItem.modelData)
                         }
                     }
                 }
             }
         }
 
-        // Separator
-        Rectangle {
-            width: 1
-            height: 24
-            color: Config.surface2Color
-            anchors.verticalCenter: parent.verticalCenter
-        }
+        Separator {}
 
         // Action buttons
         Row {
             spacing: 0
             anchors.verticalCenter: parent.verticalCenter
 
-            // Confirm button
-            Item {
-                width: root.screenshot.hasSelection ? 44 : 0
-                height: 42
-                visible: root.screenshot.hasSelection
-                clip: true
-
-                Behavior on width {
-                    NumberAnimation {
-                        duration: Config.animDurationShort
-                    }
-                }
-
-                Rectangle {
-                    anchors.centerIn: parent
-                    width: 36
-                    height: 36
-                    radius: width / 2
-                    color: confirmArea.containsMouse ? Config.surface2Color : Config.surface1Color
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "󰄬"
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeIcon
-                        color: confirmArea.containsMouse ? Config.textColor : Config.successColor
-                    }
-
-                    MouseArea {
-                        id: confirmArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.screenshot.confirmSelection()
-                    }
-                }
+            ActionButton {
+                shown: root.screenshot.hasSelection
+                icon: "\u{f012c}"
+                iconColor: Config.successColor
+                onClicked: root.screenshot.confirmSelection()
             }
 
-            // Edit button
-            Item {
-                width: root.screenshot.hasSelection ? 44 : 0
-                height: 42
-                visible: root.screenshot.hasSelection
-                clip: true
-
-                Behavior on width {
-                    NumberAnimation {
-                        duration: Config.animDurationShort
-                    }
-                }
-
-                Rectangle {
-                    anchors.centerIn: parent
-                    width: 36
-                    height: 36
-                    radius: width / 2
-                    color: editArea.containsMouse ? Config.surface2Color : Config.surface1Color
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: ""
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeIcon
-                        color: editArea.containsMouse ? Config.textColor : Config.warningColor
-                    }
-
-                    MouseArea {
-                        id: editArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.screenshot.editSelection()
-                    }
-                }
+            ActionButton {
+                shown: root.screenshot.hasSelection
+                icon: "\u{f03eb}"
+                iconColor: Config.warningColor
+                onClicked: root.screenshot.editSelection()
             }
 
-            // Reset button
-            Item {
-                width: (root.screenshot.hasSelection && root.screenshot.mode !== "screen") ? 44 : 0
-                height: 42
-                visible: root.screenshot.hasSelection && root.screenshot.mode !== "screen"
-                clip: true
-
-                Behavior on width {
-                    NumberAnimation {
-                        duration: Config.animDurationShort
-                    }
-                }
-
-                Rectangle {
-                    anchors.centerIn: parent
-                    width: 36
-                    height: 36
-                    radius: width / 2
-                    color: resetArea.containsMouse ? Config.surface2Color : Config.surface1Color
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: ""
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeIcon
-                        color: resetArea.containsMouse ? Config.textColor : Config.errorColor
-                    }
-
-                    MouseArea {
-                        id: resetArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.screenshot.resetSelection()
-                    }
-                }
+            ActionButton {
+                shown: root.screenshot.hasSelection && root.screenshot.mode !== "screen"
+                icon: "\u{f054c}"
+                iconColor: Config.errorColor
+                onClicked: root.screenshot.resetSelection()
             }
 
-            // Separator before cancel
-            Rectangle {
+            Separator {
                 width: root.screenshot.hasSelection ? 1 : 0
-                height: 24
-                color: Config.surface2Color
-                anchors.verticalCenter: parent.verticalCenter
 
                 Behavior on width {
                     NumberAnimation {
@@ -237,14 +193,14 @@ Rectangle {
                 }
             }
 
-            // Cancel button
+            // Cancel
             Item {
-                width: 44
-                height: 42
+                width: root.cellSize
+                height: root.cellSize
 
                 Text {
                     anchors.centerIn: parent
-                    text: "󰅖"
+                    text: "\u{f0156}"
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeLarge
                     color: cancelArea.containsMouse ? Config.errorColor : Config.subtextColor

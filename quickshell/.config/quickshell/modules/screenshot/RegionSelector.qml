@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.config
 
 Canvas {
     id: root
@@ -34,9 +35,9 @@ Canvas {
         ctx.clearRect(0, 0, width, height);
 
         ctx.beginPath();
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+        ctx.strokeStyle = Qt.alpha(Config.textColor, 0.5);
         ctx.lineWidth = 1;
-        ctx.setLineDash([5, 5]);
+        ctx.setLineDash([Config.padding, Config.padding]);
 
         if (!root.screenshot.hasSelection && root.screenshot.selectionWidth === 0) {
             // Crosshair at cursor

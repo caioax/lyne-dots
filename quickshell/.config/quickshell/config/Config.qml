@@ -139,7 +139,16 @@ Singleton {
     readonly property real animPopupFromScale: 0.92
     readonly property int animPopupEasing: Easing.OutExpo
 
-    readonly property bool screenshotAnimations: getState("animations.screenshot", true)
+    // ========================================================================
+    // SCREENSHOT
+    // ========================================================================
+    // Animates the window and screen selections (animations.screenshot is
+    // the key it had before the Screenshot page)
+    readonly property bool screenshotAnimations: getState("screenshot.animations", getState("animations.screenshot", true))
+    // Darkening outside the selection, 1 = black (screenshot.dim is a percent)
+    readonly property real screenshotDim: getState("screenshot.dim", 60) / 100
+    // Screen dimming behind overlays: black on every theme
+    readonly property color scrimColor: Qt.rgba(0, 0, 0, 1)
 
     // ========================================================================
     // NOTIFICATIONS

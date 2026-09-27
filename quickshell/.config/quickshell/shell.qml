@@ -118,7 +118,7 @@ ShellRoot {
     Loader {
         id: screenshotLoader
         active: root.screenshotActive
-        source: "./modules/screenshot/ScreenshotManager.qml"
+        sourceComponent: ScreenshotManager {}
 
         onStatusChanged: {
             if (status === Loader.Ready) {

@@ -2,35 +2,27 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 
+// Soft glow around the hovered window; the outline itself is drawn by the
+// dimming shader with the window's rounding
 Item {
     id: root
 
     required property var screenshot
     required property var monitorScreen
 
-    // Window highlight rectangle
     Rectangle {
+        readonly property int glow: Config.padding
+
         visible: root.screenshot.selectionWidth > 0
 
-        x: root.screenshot.selectionX - 4
-        y: root.screenshot.selectionY - 4
-        width: root.screenshot.selectionWidth + 8
-        height: root.screenshot.selectionHeight + 8
+        x: root.screenshot.selectionX - root.screenshot.hyprBorderSize - glow
+        y: root.screenshot.selectionY - root.screenshot.hyprBorderSize - glow
+        width: root.screenshot.selectionWidth + (root.screenshot.hyprBorderSize + glow) * 2
+        height: root.screenshot.selectionHeight + (root.screenshot.hyprBorderSize + glow) * 2
 
-        color: "transparent"
-        radius: Config.radius + 4
-        border.width: 3
-        border.color: Config.accentColor
-
-        // Outer glow
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: -6
-            radius: parent.radius + 6
-            color: "transparent"
-            border.width: 10
-            border.color: Qt.alpha(Config.accentColor, 0.2)
-            z: -1
-        }
+        color: Qt.alpha(Config.accentColor, 0)
+        radius: root.screenshot.selectionRadius + root.screenshot.hyprBorderSize + glow
+        border.width: glow
+        border.color: Qt.alpha(Config.accentColor, 0.25)
     }
 }

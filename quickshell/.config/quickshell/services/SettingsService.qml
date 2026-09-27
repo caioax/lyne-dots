@@ -94,6 +94,13 @@ Singleton {
             category: "Shell"
         },
         {
+            id: "screenshot",
+            label: "Screenshot",
+            icon: "\u{f0e51}",
+            description: "Capture overlay: dimming and animations. Opens with Print",
+            category: "Shell"
+        },
+        {
             id: "windows",
             label: "Windows",
             icon: "\u{f05b2}",

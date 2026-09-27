@@ -106,11 +106,5 @@ ColumnLayout {
                 StateService.set("animations.long", speed.durations[2]);
             }
         }
-
-        ToggleRow {
-            label: "Screenshot animations"
-            description: "Animate the screenshot tool (region selection is never animated)"
-            path: "animations.screenshot"
-        }
     }
 }

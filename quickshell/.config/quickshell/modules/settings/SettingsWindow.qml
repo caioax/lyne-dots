@@ -32,6 +32,7 @@ FloatingWindow {
             power: powerPage,
             notifications: notificationsPage,
             osd: osdPage,
+            screenshot: screenshotPage,
             windows: windowsPage,
             input: inputPage,
             keybinds: keybindsPage,
@@ -111,6 +112,11 @@ FloatingWindow {
     Component {
         id: osdPage
         OsdPage {}
+    }
+
+    Component {
+        id: screenshotPage
+        ScreenshotPage {}
     }
 
     Component {

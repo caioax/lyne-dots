@@ -21,6 +21,9 @@ PanelWindow {
 
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
+    // Hyprland rule qs_screenshot turns off the open animation: the frozen
+    // screen sliding in over the live one shows both
+    WlrLayershell.namespace: "qs_screenshot"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
     color: "transparent"
 
@@ -50,10 +53,12 @@ PanelWindow {
         visible: root.isActiveMonitor
 
         property vector4d selectionRect: Qt.vector4d(root.screenshot.selectionX, root.screenshot.selectionY, root.screenshot.selectionWidth, root.screenshot.selectionHeight)
-        property real dimOpacity: 0.6
+        property color dimColor: Config.scrimColor
+        property color outlineColor: Config.accentColor
+        property real dimOpacity: Config.screenshotDim
         property vector2d screenSize: Qt.vector2d(width, height)
-        property real borderRadius: Config.radius
-        property real outlineThickness: 2.0
+        property real borderRadius: root.screenshot.selectionRadius
+        property real outlineThickness: root.screenshot.hyprBorderSize
 
         fragmentShader: Qt.resolvedUrl("dimming.frag.qsb")
     }
@@ -61,7 +66,7 @@ PanelWindow {
     // Dim inactive monitors
     Rectangle {
         anchors.fill: parent
-        color: Qt.rgba(0, 0, 0, 0.6)
+        color: Qt.alpha(Config.scrimColor, Config.screenshotDim)
         visible: !root.isActiveMonitor
         z: 1
     }
@@ -160,7 +165,7 @@ PanelWindow {
             dragging = false;
 
             if (root.screenshot.mode === "region" && !root.screenshot.hasSelection) {
-                if (root.screenshot.selectionWidth > 10 && root.screenshot.selectionHeight > 10) {
+                if (root.screenshot.selectionWidth > Config.spacing && root.screenshot.selectionHeight > Config.spacing) {
                     root.screenshot.hasSelection = true;
                 }
             } else if (root.screenshot.mode === "window" && !root.screenshot.hasSelection) {
@@ -178,6 +183,12 @@ PanelWindow {
     Shortcut {
         sequence: "Escape"
         onActivated: root.screenshot.cancelCapture()
+    }
+
+    Shortcut {
+        sequences: ["Return", "Enter"]
+        enabled: root.screenshot.hasSelection
+        onActivated: root.screenshot.confirmSelection()
     }
 
     Shortcut {
@@ -209,15 +220,16 @@ PanelWindow {
     // DIMENSION INDICATOR
     // =================================================================
 
+    // Only while it fits inside the selection
     Rectangle {
-        visible: root.isActiveMonitor && root.screenshot.selectionWidth > 60 && root.screenshot.selectionHeight > 40 && root.screenshot.mode !== "screen"
+        visible: root.isActiveMonitor && root.screenshot.selectionWidth > width + Config.spacing * 2 && root.screenshot.selectionHeight > height + Config.spacing * 2 && root.screenshot.mode !== "screen"
         z: 6
 
         x: root.screenshot.selectionX + root.screenshot.selectionWidth / 2 - width / 2
         y: root.screenshot.selectionY + root.screenshot.selectionHeight / 2 - height / 2
 
-        width: dimLabel.implicitWidth + 16
-        height: dimLabel.implicitHeight + 8
+        width: dimLabel.implicitWidth + Config.spacing * 2
+        height: dimLabel.implicitHeight + Config.spacing
         radius: Config.radiusSmall
         color: Qt.alpha(Config.surface0Color, 0.9)
 
@@ -240,23 +252,23 @@ PanelWindow {
         visible: root.isActiveMonitor && (root.screenshot.mode === "window" || root.screenshot.mode === "screen") && root.screenshot.selectedWindowTitle !== ""
         z: 6
 
-        x: root.screenshot.selectionX + 12
-        y: root.screenshot.selectionY + 12
+        x: root.screenshot.selectionX + Config.spacing * 1.5
+        y: root.screenshot.selectionY + Config.spacing * 1.5
 
-        width: infoRow.implicitWidth + 20
-        height: 40
+        width: infoRow.implicitWidth + Config.spacing * 2.5
+        height: infoRow.implicitHeight + Config.spacing * 1.5
         radius: Config.radius
         color: Qt.alpha(Config.surface0Color, 0.95)
-        border.width: 2
+        border.width: root.screenshot.hyprBorderSize
         border.color: Config.accentColor
 
         Row {
             id: infoRow
             anchors.centerIn: parent
-            spacing: 10
+            spacing: Config.spacing
 
             Text {
-                text: root.screenshot.mode === "screen" ? "󰍹" : "󰖯"
+                text: root.screenshot.modeIcons[root.screenshot.mode] ?? ""
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeIcon
                 color: Config.accentColor
@@ -265,7 +277,7 @@ PanelWindow {
 
             Column {
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 2
+                spacing: 0
 
                 Text {
                     text: root.screenshot.selectedWindowTitle
@@ -274,7 +286,7 @@ PanelWindow {
                     font.bold: true
                     color: Config.textColor
                     elide: Text.ElideRight
-                    width: Math.min(implicitWidth, 220)
+                    width: Math.min(implicitWidth, Config.fontSizeSmall * 20)
                 }
 
                 Text {
@@ -298,23 +310,23 @@ PanelWindow {
 
         anchors.left: parent.left
         anchors.bottom: parent.bottom
-        anchors.leftMargin: 20
-        anchors.bottomMargin: 40
+        anchors.leftMargin: Config.spacing * 2.5
+        anchors.bottomMargin: Config.spacing * 5
 
-        width: hintRow.implicitWidth + 16
-        height: 32
+        width: hintRow.implicitWidth + Config.spacing * 2
+        height: hintRow.implicitHeight + Config.spacing * 1.5
         radius: Config.radius
         color: Qt.alpha(Config.surface0Color, 0.9)
 
         Row {
             id: hintRow
             anchors.centerIn: parent
-            spacing: 8
+            spacing: Config.spacing
 
             Rectangle {
-                width: escLabel.implicitWidth + 8
-                height: escLabel.implicitHeight + 4
-                radius: 4
+                width: escLabel.implicitWidth + Config.spacing
+                height: escLabel.implicitHeight + Config.padding / 1.5
+                radius: Config.radiusSmall
                 color: Config.surface1Color
                 anchors.verticalCenter: parent.verticalCenter
 

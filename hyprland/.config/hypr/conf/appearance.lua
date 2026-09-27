@@ -141,6 +141,15 @@ hl.layer_rule({
     ignore_alpha = 0,
 })
 
+-- The screenshot overlay shows a frozen copy of the screen: an open
+-- animation would slide it in over the live one and show both
+hl.layer_rule({
+    name  = "screenshot",
+    match = { namespace = "qs_screenshot" },
+
+    no_anim = true,
+})
+
 -- See https://wiki.hypr.land/Configuring/Layouts/Dwindle-Layout/ for more
 hl.config({
     dwindle = {

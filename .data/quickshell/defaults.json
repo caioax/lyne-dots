@@ -104,8 +104,7 @@
     "animations": {
         "short": 100,
         "normal": 200,
-        "long": 400,
-        "screenshot": true
+        "long": 400
     },
     "lock": {
         "style": "center",
@@ -198,5 +197,9 @@
         "ddc": true,
         "pollInterval": 60,
         "quickSettings": "focused"
+    },
+    "screenshot": {
+        "animations": true,
+        "dim": 60
     }
 }
