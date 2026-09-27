@@ -70,10 +70,10 @@ Singleton {
     readonly property bool lyrics: StateService.get("dashboard.lyrics", false)
 
     // GIF in the Media tab and the Overview player (animates while something plays). An empty
-    // path means the bundled Capoo (assets/CREDITS.md)
+    // path means the bundled duck (assets/duck.gif)
     readonly property bool showGif: StateService.get("dashboard.showGif", true)
     readonly property string gifPath: StateService.get("dashboard.gif", "")
-    readonly property url gifSource: gifPath !== "" ? "file://" + gifPath : Qt.resolvedUrl("../assets/capoo.gif")
+    readonly property url gifSource: gifPath !== "" ? "file://" + gifPath : Qt.resolvedUrl("../assets/duck.gif")
     readonly property string gifDir: Quickshell.env("HOME") + "/.local/share/quickshell"
 
     // Screen name the dashboard is open on ("" = closed)
