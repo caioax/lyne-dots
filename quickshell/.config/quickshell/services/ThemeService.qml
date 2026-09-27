@@ -26,7 +26,8 @@ Singleton {
 
     readonly property string themesDir: Quickshell.env("HOME") + "/.local/themes"
     readonly property string kittyThemePath: Quickshell.env("HOME") + "/.config/kitty/current-theme.conf"
-    readonly property string nvimThemePath: Quickshell.env("HOME") + "/.config/nvim/current-theme.txt"
+    // Read by the Neovim "lyne" colorscheme (nvim/.config/nvim/lua/lyne/)
+    readonly property string nvimPalettePath: Quickshell.env("HOME") + "/.cache/lyne/nvim.json"
     readonly property string wallpaperDir: Quickshell.env("HOME") + "/.local/wallpapers"
 
     // GTK/Qt paths
@@ -219,7 +220,7 @@ Singleton {
         _applyKitty(data.terminal);
 
         // 6. Apply to Neovim
-        _applyNeovim(data.neovim);
+        _applyNeovim(data.palette, data.terminal);
 
         // 7. Apply theme wallpaper
         _applyWallpaper(data.wallpaper);
@@ -275,15 +276,41 @@ Singleton {
         kittyProc.running = true;
     }
 
-    function _applyNeovim(neovimConfig) {
-        if (!neovimConfig || !neovimConfig.colorscheme)
+    // Neovim background: transparent lets the terminal's opacity through
+    readonly property bool nvimTransparent: getState("theme.nvimTransparent", false)
+    // Last colors sent to Neovim, sent again when the transparency changes
+    property var _nvimSource: null
+    // An update that arrived while the previous one was still being written
+    property bool _nvimPending: false
+
+    onNvimTransparentChanged: {
+        if (_nvimSource)
+            _applyNeovim(_nvimSource.palette, _nvimSource.terminal);
+    }
+
+    // Writes the theme for the "lyne" colorscheme and reloads it in every
+    // running Neovim through its server socket
+    function _applyNeovim(pal, terminal) {
+        if (!pal || !terminal)
             return;
+        _nvimSource = {
+            palette: pal,
+            terminal: terminal
+        };
+        if (nvimProc.running) {
+            _nvimPending = true;
+            return;
+        }
 
-        const colorscheme = neovimConfig.colorscheme;
+        const content = JSON.stringify({
+            palette: pal,
+            terminal: terminal,
+            transparent: nvimTransparent
+        }, null, 2);
+        const path = shellEscape(nvimPalettePath);
+        const tmp = shellEscape(nvimPalettePath + ".tmp");
 
-        // Write the colorscheme name to a file that Neovim reads on startup,
-        // then send the command to all running Neovim instances via their sockets
-        nvimProc.command = ["bash", "-c", "echo '" + colorscheme + "' > " + shellEscape(nvimThemePath) + " && " + "for sock in /run/user/$(id -u)/nvim.*.0; do " + "  [ -S \"$sock\" ] && nvim --server \"$sock\" --remote-send '<Cmd>colorscheme " + colorscheme + "<CR>' 2>/dev/null & " + "done; wait"];
+        nvimProc.command = ["bash", "-c", "mkdir -p \"$(dirname " + path + ")\" && cat > " + tmp + " << 'THEME_EOF'\n" + content + "\nTHEME_EOF\n" + "mv " + tmp + " " + path + " && " + "for sock in /run/user/$(id -u)/nvim.*.0; do " + "  [ -S \"$sock\" ] && nvim --server \"$sock\" --remote-send '<Cmd>colorscheme lyne<CR>' 2>/dev/null & " + "done; wait"];
         nvimProc.running = true;
     }
 
@@ -650,6 +677,10 @@ Singleton {
         onExited: exitCode => {
             if (exitCode === 0)
                 console.log("[Theme] Neovim theme updated");
+            if (root._nvimPending) {
+                root._nvimPending = false;
+                root._applyNeovim(root._nvimSource.palette, root._nvimSource.terminal);
+            }
         }
     }
 
@@ -766,8 +797,39 @@ Singleton {
 
                     // Reload kitty (matugen already wrote the theme file)
                     kittyReloadProc.running = true;
+
+                    // Neovim needs the terminal colors too
+                    loadMatugenTerminalProc._buffer = "";
+                    loadMatugenTerminalProc.running = true;
                 } catch (e) {
                     console.error("[Theme] Failed to parse matugen palette:", e);
+                }
+            }
+            _buffer = "";
+        }
+    }
+
+    // Load the matugen terminal colors (same as the kitty theme) for Neovim
+    Process {
+        id: loadMatugenTerminalProc
+        property string _buffer: ""
+
+        command: ["cat", root.matugenCachePath + "/terminal-colors.json"]
+
+        stdout: SplitParser {
+            onRead: data => loadMatugenTerminalProc._buffer += data + "\n"
+        }
+
+        stderr: SplitParser {
+            onRead: data => console.error("[Theme:MatugenTerminal] " + data)
+        }
+
+        onExited: exitCode => {
+            if (exitCode === 0) {
+                try {
+                    root._applyNeovim(root.palette, JSON.parse(_buffer.trim()));
+                } catch (e) {
+                    console.error("[Theme] Failed to parse matugen terminal colors:", e);
                 }
             }
             _buffer = "";

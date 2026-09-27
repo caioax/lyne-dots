@@ -21,9 +21,6 @@
   "opacity": {
     "background": 0.9
   },
-  "neovim": {
-    "colorscheme": "dracula"
-  },
   "hyprland": {
     "activeBorder": "bd93f9ff",
     "inactiveBorder": "6272a4aa",

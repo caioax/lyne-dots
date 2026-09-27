@@ -28,3 +28,7 @@ output_path = "~/.cache/matugen/quickshell-palette.json"
 [templates.hyprland-colors]
 input_path = "~/.lyne-dots/.data/matugen/templates/hyprland-colors.json"
 output_path = "~/.cache/matugen/hyprland-colors.json"
+
+[templates.terminal-colors]
+input_path = "~/.lyne-dots/.data/matugen/templates/terminal-colors.json"
+output_path = "~/.cache/matugen/terminal-colors.json"

@@ -6,7 +6,8 @@
     "theme": {
         "name": "tokyonight",
         "mode": "preset",
-        "scheme": "dark"
+        "scheme": "dark",
+        "nvimTransparent": false
     },
     "wallpaper": {
         "current": "~/.local/wallpapers/themes/tokyonight/theme-tokyonight.jpg",
