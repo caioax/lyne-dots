@@ -5,9 +5,11 @@
 local blend = require("lyne.palette").blend
 
 return function(p)
-	-- The editor background; floats and sidebars stay solid when transparent
-	local bg = p.transparent and "NONE" or p.bg
-	local bg_side = p.transparent and "NONE" or p.bg_dark
+	-- The editor background matches the terminal's, so kitty draws it with its
+	-- own opacity and blur (it treats cells of its background color as
+	-- default); floats and sidebars use other colors and stay solid
+	local bg = p.bg
+	local bg_side = p.bg_dark
 
 	-- Soft tints for diffs, virtual text and search matches
 	local function tint(color, alpha)

@@ -276,17 +276,10 @@ Singleton {
         kittyProc.running = true;
     }
 
-    // Neovim background: transparent lets the terminal's opacity through
-    readonly property bool nvimTransparent: getState("theme.nvimTransparent", false)
-    // Last colors sent to Neovim, sent again when the transparency changes
+    // Latest colors for Neovim; an update that arrives while the previous one
+    // is still being written waits for it (_nvimPending)
     property var _nvimSource: null
-    // An update that arrived while the previous one was still being written
     property bool _nvimPending: false
-
-    onNvimTransparentChanged: {
-        if (_nvimSource)
-            _applyNeovim(_nvimSource.palette, _nvimSource.terminal);
-    }
 
     // Writes the theme for the "lyne" colorscheme and reloads it in every
     // running Neovim through its server socket
@@ -304,8 +297,7 @@ Singleton {
 
         const content = JSON.stringify({
             palette: pal,
-            terminal: terminal,
-            transparent: nvimTransparent
+            terminal: terminal
         }, null, 2);
         const path = shellEscape(nvimPalettePath);
         const tmp = shellEscape(nvimPalettePath + ".tmp");

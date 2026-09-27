@@ -103,12 +103,6 @@ ColumnLayout {
             stepSize: 0.01
             format: v => Math.round(v * 100) + "%"
         }
-
-        ToggleRow {
-            label: "Transparent Neovim"
-            description: "The editor background lets the terminal's opacity and blur through; floating windows and the file tree stay solid"
-            path: "theme.nvimTransparent"
-        }
     }
 
     SettingsGroup {

@@ -2,8 +2,8 @@
 --
 -- The shell (quickshell ThemeService) writes the current theme to
 -- ~/.cache/lyne/nvim.json: the shell palette (surfaces, text, accent,
--- success/warning/error), the terminal colors (ANSI 0-15 + color16 orange)
--- and whether the background is transparent. Presets, custom themes and
+-- success/warning/error) and the terminal colors (ANSI 0-15 + color16
+-- orange). Presets, custom themes and
 -- Material You all arrive in that same shape, and this module maps it to the
 -- semantic roles the highlight groups use.
 
@@ -38,7 +38,6 @@ M.fallback = {
 		color6 = "#7dcfff",
 		color16 = "#ff9e64",
 	},
-	transparent = false,
 }
 
 -- Reads the theme the shell wrote; falls back per missing key
@@ -57,9 +56,6 @@ function M.read()
 		if type(data[key]) == "table" then
 			src[key] = vim.tbl_extend("force", src[key], data[key])
 		end
-	end
-	if data.transparent ~= nil then
-		src.transparent = data.transparent == true
 	end
 	return src
 end
@@ -189,8 +185,6 @@ function M.build(src)
 		color16 = syntax(orange),
 	}
 	local p = {
-		transparent = src.transparent,
-
 		-- Backgrounds, from darkest to lightest (on dark themes)
 		bg = s.background,
 		bg_dark = s.blueDark,
