@@ -22,18 +22,6 @@ Item {
     implicitHeight: Config.fontSizeIcon
     implicitWidth: height * viewBox.width / viewBox.height
 
-    Behavior on dotColor {
-        ColorAnimation {
-            duration: Config.animDuration
-        }
-    }
-
-    Behavior on lineColor {
-        ColorAnimation {
-            duration: Config.animDuration
-        }
-    }
-
     Shape {
         width: root.viewBox.width
         height: root.viewBox.height
