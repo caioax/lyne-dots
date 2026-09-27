@@ -6,7 +6,8 @@ import "../../components/"
 
 // Card at the bottom center of the active monitor: mode switch, what is
 // selected, actions, and the keys for the current state. It moves to the
-// top while the selection covers its spot (and not the top one)
+// top while the selection covers its spot (and not the top one); in color
+// mode it moves away from the cursor instead (see dodge())
 Rectangle {
     id: root
 
@@ -17,13 +18,67 @@ Rectangle {
     readonly property real edgeMargin: Config.barReservedHeight + Config.spacing * 2
     readonly property real bottomY: parent.height - height - edgeMargin
     readonly property real topY: edgeMargin
-    readonly property bool atTop: covers(bottomY) && !covers(topY)
+    readonly property bool atTop: mode === "color" ? colorAtTop : covers(bottomY) && !covers(topY)
     readonly property string mode: screenshot.mode
     readonly property bool selecting: screenshot.selectionWidth > 0 && screenshot.selectionHeight > 0
     readonly property string size: screenshot.realWidth + " × " + screenshot.realHeight
 
     // Plays the entry animation once the overlay is up
     property bool shown: false
+
+    // Color mode: the card's spot, the card spot ("top" | "bottom" | "")
+    // the cursor is in, the last one it left and when
+    property bool colorAtTop: false
+    property string cursorZone: ""
+    property string leftZone: ""
+    property real leftZoneAt: 0
+    // Going from the old spot to the new one within this is going to the
+    // card on purpose, so it stays and can be clicked
+    readonly property int travelTime: Config.animDurationLong * 3
+
+    // Which card spot (with a margin around it) holds the point
+    function zoneAt(x: real, y: real): string {
+        const margin = Config.spacing;
+        if (x < root.x - margin || x > root.x + root.width + margin)
+            return "";
+        if (y >= root.topY - margin && y <= root.topY + root.height + margin)
+            return "top";
+        if (y >= root.bottomY - margin && y <= root.bottomY + root.height + margin)
+            return "bottom";
+        return "";
+    }
+
+    // Color mode: the cursor picks pixels under the card too, so the card
+    // leaves when the cursor comes into it from the screen. Coming straight
+    // from where it was (the cursor followed it) it stays
+    function dodge() {
+        const zone = zoneAt(root.screenshot.pickX, root.screenshot.pickY);
+        if (zone === root.cursorZone)
+            return;
+        const here = root.colorAtTop ? "top" : "bottom";
+        if (zone === here) {
+            const followed = root.leftZone !== "" && root.leftZone !== here && Date.now() - root.leftZoneAt < root.travelTime;
+            if (!followed)
+                root.colorAtTop = !root.colorAtTop;
+        }
+        if (root.cursorZone !== "") {
+            root.leftZone = root.cursorZone;
+            root.leftZoneAt = Date.now();
+        }
+        root.cursorZone = zone;
+    }
+
+    Connections {
+        target: root.screenshot
+        enabled: root.mode === "color"
+
+        function onPickXChanged() {
+            root.dodge();
+        }
+        function onPickYChanged() {
+            root.dodge();
+        }
+    }
 
     // Whether the selection overlaps the card placed at `cardY`
     function covers(cardY: real): bool {
