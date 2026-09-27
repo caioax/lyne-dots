@@ -10,3 +10,7 @@ sessions/
 tmp/
 
 lua/config/secrets.lua
+
+# Written by the shell theme service (old theme loader; the "lyne" colorscheme
+# reads ~/.cache/lyne/nvim.json instead)
+current-theme.txt
