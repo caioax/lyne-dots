@@ -223,6 +223,12 @@ PanelWindow {
     }
 
     Shortcut {
+        sequence: "e"
+        enabled: root.screenshot.canConfirm
+        onActivated: root.screenshot.editSelection()
+    }
+
+    Shortcut {
         sequence: "r"
         onActivated: root.screenshot.setMode("region")
     }
@@ -251,9 +257,10 @@ PanelWindow {
     // DIMENSION INDICATOR
     // =================================================================
 
-    // Only while it fits inside the selection
+    // Region size next to the cursor while drawing, only while it fits
+    // inside (windows and screens show theirs in the control bar)
     Rectangle {
-        visible: root.isActiveMonitor && root.screenshot.selectionWidth > width + Config.spacing * 2 && root.screenshot.selectionHeight > height + Config.spacing * 2 && root.screenshot.mode !== "screen"
+        visible: root.isActiveMonitor && root.screenshot.mode === "region" && root.screenshot.selectionWidth > width + Config.spacing * 2 && root.screenshot.selectionHeight > height + Config.spacing * 2
         z: 6
 
         x: root.screenshot.selectionX + root.screenshot.selectionWidth / 2 - width / 2
@@ -272,113 +279,6 @@ PanelWindow {
             font.pixelSize: Config.fontSizeSmall
             font.bold: true
             color: Config.textColor
-        }
-    }
-
-    // =================================================================
-    // WINDOW/MONITOR INFO
-    // =================================================================
-
-    Rectangle {
-        visible: root.isActiveMonitor && (root.screenshot.mode === "window" || root.screenshot.mode === "screen") && root.screenshot.selectedWindowTitle !== ""
-        z: 6
-
-        x: root.screenshot.selectionX + Config.spacing * 1.5
-        y: root.screenshot.selectionY + Config.spacing * 1.5
-
-        width: infoRow.implicitWidth + Config.spacing * 2.5
-        height: infoRow.implicitHeight + Config.spacing * 1.5
-        radius: Config.radius
-        color: Qt.alpha(Config.surface0Color, 0.95)
-        border.width: root.screenshot.hyprBorderSize
-        border.color: Config.accentColor
-
-        Row {
-            id: infoRow
-            anchors.centerIn: parent
-            spacing: Config.spacing
-
-            Text {
-                text: root.screenshot.modeIcons[root.screenshot.mode] ?? ""
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeIcon
-                color: Config.accentColor
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 0
-
-                Text {
-                    text: root.screenshot.selectedWindowTitle
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeSmall
-                    font.bold: true
-                    color: Config.textColor
-                    elide: Text.ElideRight
-                    width: Math.min(implicitWidth, Config.fontSizeSmall * 20)
-                }
-
-                Text {
-                    visible: root.screenshot.selectedWindowClass !== "" && root.screenshot.selectedWindowClass !== root.screenshot.selectedWindowTitle
-                    text: root.screenshot.selectedWindowClass
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeSmall
-                    color: Config.subtextColor
-                }
-            }
-        }
-    }
-
-    // =================================================================
-    // USAGE HINT
-    // =================================================================
-
-    Rectangle {
-        visible: root.isActiveMonitor && !root.screenshot.hasSelection && root.screenshot.mode === "region"
-        z: 10
-
-        anchors.left: parent.left
-        anchors.bottom: parent.bottom
-        anchors.leftMargin: Config.spacing * 2.5
-        anchors.bottomMargin: Config.spacing * 5
-
-        width: hintRow.implicitWidth + Config.spacing * 2
-        height: hintRow.implicitHeight + Config.spacing * 1.5
-        radius: Config.radius
-        color: Qt.alpha(Config.surface0Color, 0.9)
-
-        Row {
-            id: hintRow
-            anchors.centerIn: parent
-            spacing: Config.spacing
-
-            Rectangle {
-                width: escLabel.implicitWidth + Config.spacing
-                height: escLabel.implicitHeight + Config.padding / 1.5
-                radius: Config.radiusSmall
-                color: Config.surface1Color
-                anchors.verticalCenter: parent.verticalCenter
-
-                Text {
-                    id: escLabel
-                    anchors.centerIn: parent
-                    text: "ESC"
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeSmall
-                    font.bold: true
-                    color: Config.subtextColor
-                }
-            }
-
-            Text {
-                text: "Drag to select region"
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeSmall
-                color: Config.subtextColor
-                anchors.verticalCenter: parent.verticalCenter
-            }
         }
     }
 }

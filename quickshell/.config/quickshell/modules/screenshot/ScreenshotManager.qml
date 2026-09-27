@@ -58,6 +58,11 @@ Scope {
     readonly property bool activeAnimations: Config.screenshotAnimations && root.active && root.mode !== "region"
 
     readonly property var modes: ["region", "window", "screen"]
+    readonly property var modeLabels: ({
+            region: "Region",
+            window: "Window",
+            screen: "Screen"
+        })
     readonly property var modeIcons: ({
             region: "\u{f0a6d}",
             window: "\u{f05af}",

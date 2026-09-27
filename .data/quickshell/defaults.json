@@ -201,6 +201,7 @@
     "screenshot": {
         "mode": "region",
         "guides": true,
+        "hints": true,
         "animations": true,
         "dim": 60
     }

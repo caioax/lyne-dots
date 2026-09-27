@@ -151,6 +151,8 @@ Singleton {
     readonly property string screenshotMode: getState("screenshot.mode", "region")
     // Dashed guides from the cursor / the selection to the screen edges
     readonly property bool screenshotGuides: getState("screenshot.guides", true)
+    // Key hints under the control bar
+    readonly property bool screenshotHints: getState("screenshot.hints", true)
     // Screen dimming behind overlays: black on every theme
     readonly property color scrimColor: Qt.rgba(0, 0, 0, 1)
 

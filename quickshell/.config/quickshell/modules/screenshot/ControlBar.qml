@@ -1,34 +1,62 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Layouts
 import qs.config
+import "../../components/"
 
+// Card at the bottom center of the active monitor: mode switch, what is
+// selected, actions, and the keys for the current state. It moves to the
+// top while the selection covers its spot (and not the top one)
 Rectangle {
     id: root
 
     required property var screenshot
 
-    // A round button and the room around it
-    readonly property int buttonSize: Config.fontSizeIcon + Config.padding * 2
-    readonly property int cellSize: buttonSize + Config.spacing
+    readonly property int buttonSize: Config.fontSizeIconSmall * 2
+    // Clear of the shell bar, which is in the frozen image
+    readonly property real edgeMargin: Config.barReservedHeight + Config.spacing * 2
+    readonly property real bottomY: parent.height - height - edgeMargin
+    readonly property real topY: edgeMargin
+    readonly property bool atTop: covers(bottomY) && !covers(topY)
+    readonly property string mode: screenshot.mode
+    readonly property bool selecting: screenshot.selectionWidth > 0 && screenshot.selectionHeight > 0
+    readonly property string size: screenshot.realWidth + " × " + screenshot.realHeight
 
-    anchors.horizontalCenter: parent.horizontalCenter
-    anchors.bottom: parent.bottom
-    anchors.bottomMargin: Config.spacing * 5
+    // Plays the entry animation once the overlay is up
+    property bool shown: false
 
-    height: cellSize + Config.padding
-    width: barContent.implicitWidth + Config.spacing * 2
-    radius: height / 2
-    color: Config.surface0Color
+    // Whether the selection overlaps the card placed at `cardY`
+    function covers(cardY: real): bool {
+        const s = root.screenshot;
+        if (!root.selecting)
+            return false;
+        return root.x < s.selectionX + s.selectionWidth && root.x + root.width > s.selectionX && cardY < s.selectionY + s.selectionHeight && cardY + root.height > s.selectionY;
+    }
+
+    Component.onCompleted: shown = true
+
+    x: Math.round((parent.width - width) / 2)
+    y: atTop ? topY : bottomY
+    implicitWidth: content.implicitWidth + Config.padding * 4
+    implicitHeight: content.implicitHeight + Config.padding * 4
+    radius: Config.radiusLarge
+    color: Config.backgroundColor
     border.width: 1
     border.color: Config.surface2Color
 
-    scale: screenshot.active ? 1.0 : 0.9
-    opacity: screenshot.active ? 1.0 : 0.0
+    scale: shown ? 1 : Config.animPopupFromScale
+    opacity: shown ? 1 : 0
 
+    Behavior on y {
+        NumberAnimation {
+            duration: Config.animDuration
+            easing.type: Easing.OutCubic
+        }
+    }
     Behavior on scale {
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutBack
+            easing.type: Config.animPopupEasing
         }
     }
     Behavior on opacity {
@@ -36,182 +64,150 @@ Rectangle {
             duration: Config.animDurationShort
         }
     }
-    Behavior on width {
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Easing.OutCubic
-        }
+
+    // Presses on the card must not reach the overlay (a new region)
+    MouseArea {
+        anchors.fill: parent
     }
 
-    // Round action button that folds away while `shown` is false
-    component ActionButton: Item {
-        id: action
-
-        property bool shown: true
-        property string icon
-        property color iconColor
-        signal clicked
-
-        width: shown ? root.cellSize : 0
-        height: root.cellSize
-        visible: width > 0
-        clip: true
-
-        Behavior on width {
-            NumberAnimation {
-                duration: Config.animDurationShort
-            }
-        }
-
-        Rectangle {
-            anchors.centerIn: parent
-            width: root.buttonSize
-            height: root.buttonSize
-            radius: width / 2
-            color: actionArea.containsMouse ? Config.surface2Color : Config.surface1Color
-
-            Text {
-                anchors.centerIn: parent
-                text: action.icon
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeIcon
-                color: actionArea.containsMouse ? Config.textColor : action.iconColor
-            }
-
-            MouseArea {
-                id: actionArea
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: action.clicked()
-            }
-        }
-    }
-
-    component Separator: Rectangle {
-        width: 1
-        height: root.buttonSize * 2 / 3
+    component Divider: Rectangle {
+        Layout.preferredWidth: 1
+        Layout.preferredHeight: root.buttonSize * 2 / 3
         color: Config.surface2Color
-        anchors.verticalCenter: parent.verticalCenter
     }
 
-    Row {
-        id: barContent
+    ColumnLayout {
+        id: content
+
         anchors.centerIn: parent
-        spacing: 0
+        spacing: Config.padding * 2
 
-        // Mode selector
-        Item {
-            width: root.cellSize * root.screenshot.modes.length
-            height: root.cellSize
+        RowLayout {
+            spacing: Config.spacing
 
-            // Sliding highlight
-            Rectangle {
-                width: root.buttonSize
-                height: root.buttonSize
-                y: (parent.height - height) / 2
-                radius: height / 2
-                color: Config.accentColor
-                x: (root.cellSize - root.buttonSize) / 2 + root.screenshot.modes.indexOf(root.screenshot.mode) * root.cellSize
-
-                Behavior on x {
-                    NumberAnimation {
-                        duration: Config.animDuration
-                        easing.type: Easing.OutCubic
-                    }
-                }
+            SegmentedControl {
+                Layout.fillWidth: false
+                Layout.preferredWidth: Config.fontSizeNormal * 6 * options.length
+                implicitHeight: root.buttonSize
+                options: root.screenshot.modes.map(mode => ({
+                            label: root.screenshot.modeLabels[mode],
+                            icon: root.screenshot.modeIcons[mode]
+                        }))
+                currentIndex: root.screenshot.modes.indexOf(root.mode)
+                onSelected: index => root.screenshot.setMode(root.screenshot.modes[index])
             }
 
-            Row {
-                anchors.fill: parent
+            Divider {}
+
+            // What is selected; a fixed minimum so the card doesn't jump
+            // while a region is drawn
+            ColumnLayout {
+                Layout.minimumWidth: Config.fontSizeSmall * 9
+                Layout.maximumWidth: Config.fontSizeSmall * 18
                 spacing: 0
 
-                Repeater {
-                    model: root.screenshot.modes
-
-                    Item {
-                        id: modeItem
-
-                        required property string modelData
-
-                        width: root.cellSize
-                        height: root.cellSize
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: root.screenshot.modeIcons[modeItem.modelData]
-                            font.family: Config.font
-                            font.pixelSize: Config.fontSizeIcon
-                            color: root.screenshot.mode === modeItem.modelData ? Config.textReverseColor : Config.textColor
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.screenshot.setMode(modeItem.modelData)
+                Text {
+                    Layout.fillWidth: true
+                    text: {
+                        switch (root.mode) {
+                        case "window":
+                            return root.selecting ? root.screenshot.selectedWindowClass || root.screenshot.selectedWindowTitle : "No window";
+                        case "screen":
+                            return root.screenshot.hyprlandMonitor?.name ?? "Screen";
+                        default:
+                            return root.selecting ? root.size : "No region";
                         }
                     }
+                    elide: Text.ElideRight
+                    horizontalAlignment: Text.AlignHCenter
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    font.bold: true
+                    color: root.selecting ? Config.textColor : Config.subtextColor
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    visible: root.mode !== "region" && root.selecting
+                    text: root.size
+                    horizontalAlignment: Text.AlignHCenter
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    color: Config.subtextColor
                 }
             }
-        }
 
-        Separator {}
-
-        // Action buttons
-        Row {
-            spacing: 0
-            anchors.verticalCenter: parent.verticalCenter
+            Divider {}
 
             ActionButton {
-                shown: root.screenshot.hasSelection
                 icon: "\u{f012c}"
-                iconColor: Config.successColor
+                text: "Capture"
+                size: root.buttonSize
+                enabled: root.screenshot.canConfirm
+                opacity: enabled ? 1 : 0.4
+                baseColor: Config.accentColor
+                hoverColor: Qt.lighter(Config.accentColor, 1.1)
+                textColor: Config.textReverseColor
                 onClicked: root.screenshot.confirmSelection()
             }
 
             ActionButton {
-                shown: root.screenshot.hasSelection
                 icon: "\u{f03eb}"
-                iconColor: Config.warningColor
+                text: "Edit"
+                size: root.buttonSize
+                enabled: root.screenshot.canConfirm
+                opacity: enabled ? 1 : 0.4
                 onClicked: root.screenshot.editSelection()
             }
 
             ActionButton {
-                shown: root.screenshot.hasSelection && root.screenshot.mode !== "screen"
+                visible: root.mode === "region"
                 icon: "\u{f054c}"
-                iconColor: Config.errorColor
+                size: root.buttonSize
+                enabled: root.screenshot.hasSelection
+                opacity: enabled ? 1 : 0.4
                 onClicked: root.screenshot.resetSelection()
             }
 
-            Separator {
-                width: root.screenshot.hasSelection ? 1 : 0
-
-                Behavior on width {
-                    NumberAnimation {
-                        duration: Config.animDurationShort
-                    }
-                }
+            ActionButton {
+                icon: "\u{f0156}"
+                size: root.buttonSize
+                baseColor: Qt.alpha(Config.errorColor, 0)
+                hoverColor: Qt.alpha(Config.errorColor, 0.2)
+                textColor: Config.subtextColor
+                hoverTextColor: Config.errorColor
+                onClicked: root.screenshot.cancelCapture()
             }
+        }
 
-            // Cancel
-            Item {
-                width: root.cellSize
-                height: root.cellSize
+        // Keys for the current state
+        RowLayout {
+            Layout.alignment: Qt.AlignHCenter
+            visible: Config.screenshotHints
+            spacing: Config.spacing * 2
 
-                Text {
-                    anchors.centerIn: parent
-                    text: "\u{f0156}"
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeLarge
-                    color: cancelArea.containsMouse ? Config.errorColor : Config.subtextColor
+            Repeater {
+                model: {
+                    const hints = [];
+                    if (root.mode === "region" && !root.screenshot.hasSelection)
+                        hints.push(["drag", "select"]);
+                    if (root.mode === "window")
+                        hints.push(["click", "pick"]);
+                    if (root.screenshot.canConfirm)
+                        hints.push(["⏎", "capture"], ["E", "edit"]);
+                    if (root.mode === "region" && root.screenshot.hasSelection)
+                        hints.push(["←↑↓→", "move"], ["ctrl", "resize"], ["shift", "×10"]);
+                    else
+                        hints.push(["R W S", "mode"]);
+                    hints.push(["esc", "cancel"]);
+                    return hints;
                 }
 
-                MouseArea {
-                    id: cancelArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.screenshot.cancelCapture()
+                KeyHint {
+                    required property var modelData
+
+                    keys: modelData[0]
+                    label: modelData[1]
                 }
             }
         }

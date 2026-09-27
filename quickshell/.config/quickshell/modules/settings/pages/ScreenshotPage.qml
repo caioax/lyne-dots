@@ -88,6 +88,12 @@ ColumnLayout {
         }
 
         ToggleRow {
+            label: "Key hints"
+            description: "The keys for what you are doing, under the control bar"
+            path: "screenshot.hints"
+        }
+
+        ToggleRow {
             label: "Animations"
             description: "Animate the window and screen selections (a region follows the mouse as it is drawn)"
             path: "screenshot.animations"
