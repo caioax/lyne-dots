@@ -33,7 +33,7 @@ Singleton {
             card: ["center", "bottom"],
             attached: ["bar", "opposite"]
         })
-    readonly property string style: positions[Config.osdStyle] ? Config.osdStyle : "pill"
+    readonly property string style: positions[Config.osdStyle] ? Config.osdStyle : "attached"
     readonly property string position: positionFor(style)
 
     readonly property bool isOutput: kind === "volume" || kind === "device"

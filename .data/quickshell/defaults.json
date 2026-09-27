@@ -180,7 +180,7 @@
         "custom": []
     },
     "osd": {
-        "style": "pill",
+        "style": "attached",
         "position": "bottom",
         "monitor": "focused",
         "timeout": 1500,

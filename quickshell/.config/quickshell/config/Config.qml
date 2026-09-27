@@ -154,7 +154,7 @@ Singleton {
     // OSD
     // ========================================================================
     // "pill" | "vertical" | "card" | "attached"
-    readonly property string osdStyle: getState("osd.style", "pill")
+    readonly property string osdStyle: getState("osd.style", "attached")
     // Per style (OsdService.positions): pill bottom|top, vertical right|left,
     // card center|bottom, attached bar|opposite
     readonly property string osdPosition: getState("osd.position", "bottom")
