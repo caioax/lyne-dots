@@ -16,18 +16,45 @@ Popup {
 
     signal triggered(string action, var target)
 
-    // Opens next to `anchor` (the ⋮ button), kept inside the window
+    // Opens next to `anchor` (the ⋮ button): below it, or above it when it
+    // doesn't fit there, kept inside the window
     function openAt(anchor: Item, menuTarget) {
         target = menuTarget;
         _submenu = null;
-        const pos = anchor.mapToItem(parent, anchor.width, 0);
-        x = Math.max(Config.spacing, Math.min(pos.x - width, parent.width - width - Config.spacing));
-        y = Math.min(pos.y + anchor.height + Config.padding, parent.height - implicitHeight - Config.spacing);
+        _anchor = anchor;
+        // The height below must already be the root menu's, not a submenu's
+        menuColumn.forceLayout();
+        // Overlay.overlay stays null for a menu created outside a window (a
+        // row built while its popup was closed): use the anchor's window root
+        let rootItem = anchor;
+        while (rootItem.parent)
+            rootItem = rootItem.parent;
+        parent = rootItem;
+        const pos = anchor.mapToItem(parent, 0, 0);
+        _above = pos.y + anchor.height + Config.padding + height > parent.height - Config.spacing && pos.y - Config.padding - height >= Config.spacing;
+        _place();
         open();
     }
 
-    parent: Overlay.overlay
+    // Also on resize, so an opened submenu grows away from the button and
+    // stays inside the window
+    function _place() {
+        if (!_anchor || !parent)
+            return;
+        const pos = _anchor.mapToItem(parent, 0, 0);
+        const wanted = _above ? pos.y - Config.padding - height : pos.y + _anchor.height + Config.padding;
+        x = Math.max(Config.spacing, Math.min(pos.x + _anchor.width - width, parent.width - width - Config.spacing));
+        y = Math.max(Config.spacing, Math.min(wanted, parent.height - height - Config.spacing));
+    }
+
+    property Item _anchor: null
+    property bool _above: false
+
+    onHeightChanged: _place()
+
     width: Config.fontSizeNormal * 16
+    // Scrolls when taller than the window
+    height: parent ? Math.min(implicitHeight, parent.height - Config.spacing * 2) : implicitHeight
     padding: Math.round(Config.padding / 2)
 
     background: Rectangle {
@@ -37,35 +64,46 @@ Popup {
         border.color: Config.surface2Color
     }
 
-    contentItem: Column {
-        spacing: Math.round(Config.padding / 3)
+    contentItem: Flickable {
+        implicitHeight: menuColumn.implicitHeight
+        contentHeight: menuColumn.implicitHeight
+        interactive: contentHeight > height
+        boundsBehavior: Flickable.StopAtBounds
+        clip: true
 
-        // Back from a submenu (md-chevron_left)
-        MenuItem {
-            visible: root._submenu !== null
-            label: root._submenu?.label ?? ""
-            icon: "\u{f0141}"
-            muted: true
-            onClicked: root._submenu = null
-        }
+        Column {
+            id: menuColumn
 
-        Repeater {
-            model: root._submenu ? root._submenu.children : root.items
+            width: parent.width
+            spacing: Math.round(Config.padding / 3)
 
+            // Back from a submenu (md-chevron_left)
             MenuItem {
-                required property var modelData
+                visible: root._submenu !== null
+                label: root._submenu?.label ?? ""
+                icon: "\u{f0141}"
+                muted: true
+                onClicked: root._submenu = null
+            }
 
-                label: modelData.label
-                icon: modelData.icon ?? ""
-                danger: modelData.danger ?? false
-                // md-chevron_right
-                trailingIcon: modelData.children ? "\u{f0142}" : ""
-                onClicked: {
-                    if (modelData.children) {
-                        root._submenu = modelData;
-                    } else {
-                        root.triggered(modelData.action, root.target);
-                        root.close();
+            Repeater {
+                model: root._submenu ? root._submenu.children : root.items
+
+                MenuItem {
+                    required property var modelData
+
+                    label: modelData.label
+                    icon: modelData.icon ?? ""
+                    danger: modelData.danger ?? false
+                    // md-chevron_right
+                    trailingIcon: modelData.children ? "\u{f0142}" : ""
+                    onClicked: {
+                        if (modelData.children) {
+                            root._submenu = modelData;
+                        } else {
+                            root.triggered(modelData.action, root.target);
+                            root.close();
+                        }
                     }
                 }
             }

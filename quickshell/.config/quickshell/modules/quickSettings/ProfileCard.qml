@@ -219,31 +219,38 @@ Card {
             model: [
                 {
                     "icon": "󰹑",
-                    "action": "screenshot"
+                    "action": "screenshot",
+                    "label": "Screenshot"
                 },
                 {
                     "icon": "󰅌",
-                    "action": "clipboard"
+                    "action": "clipboard",
+                    "label": "Clipboard history"
                 },
                 {
                     "icon": "󰸉",
-                    "action": "wallpaper"
+                    "action": "wallpaper",
+                    "label": "Wallpapers"
                 },
                 {
                     "icon": "󰏘",
-                    "action": "theme"
+                    "action": "theme",
+                    "label": "Themes"
                 },
                 {
                     "icon": "󰌌",
-                    "action": "keybinds"
+                    "action": "keybinds",
+                    "label": "Keybinds"
                 },
                 {
                     "icon": "󰌾",
-                    "action": "lock"
+                    "action": "lock",
+                    "label": "Lock screen"
                 },
                 {
                     "icon": "󰒓",
-                    "action": "settings"
+                    "action": "settings",
+                    "label": "Settings"
                 }
             ]
 
@@ -284,6 +291,11 @@ Card {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: root.runShortcut(shortcut.modelData.action)
+                }
+
+                QsToolTip {
+                    text: shortcut.modelData.label
+                    shown: shortcutMouse.containsMouse
                 }
             }
         }

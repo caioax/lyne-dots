@@ -115,7 +115,9 @@ PanelWindow {
     readonly property bool showState: visible && !isClosing && isOpening
 
     function closeWindow() {
-        if (!visible)
+        // Also while closing: `closing` handlers may call this again, and a
+        // restarted timer would hide the popup when it is reopened right after
+        if (!visible || isClosing)
             return;
         isClosing = true;
         closeTimer.restart();
@@ -170,6 +172,7 @@ PanelWindow {
 
     onVisibleChanged: {
         if (visible) {
+            closeTimer.stop();
             isClosing = false;
             isOpening = true;
             if (moduleName !== "")
