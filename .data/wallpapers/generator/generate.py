@@ -7,9 +7,9 @@ and the shell's LyneLogo: dot = accent, line = the accent's hue at 0.57
 saturation / 0.9 lightness):
 
     lake     mountains, pines and a mirror lake (night on dark themes,
-             dawn on light ones) - the theme's default wallpaper
+             dawn on light ones)
     waves    layered flat waves with soft shadows, the logo as the sun
-    contour  a big logo wrapped in contour lines
+    contour  a big logo wrapped in contour lines - the theme's default wallpaper
 
 Output: .data/wallpapers/themes/<theme>/lyne-<theme>-<scene>.jpg
 

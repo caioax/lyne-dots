@@ -2,7 +2,7 @@
 #
 # Every preset theme now ships three generated lyne-dots wallpapers in 4K
 # (lake, waves, contour; see .data/wallpapers/generator/generate.py), and the
-# lake one is the theme's wallpaper. The old theme-*.jpg defaults were
+# contour one is the theme's wallpaper. The old theme-*.jpg defaults were
 # removed from the repo; the copies already in ~/.local/wallpapers stay.
 # A theme only switches to the new wallpaper while it still uses its old
 # default: wallpapers the user picked for a theme are kept.
@@ -28,7 +28,7 @@ for dir in "$WALLPAPERS_SRC"/*/; do
         fi
     done
     # The theme's default also goes to the root folder (the "all" view)
-    cp -n "$dir"lyne-*-lake.jpg "$WALLPAPERS_DEST/" 2>/dev/null
+    cp -n "$dir"lyne-*-contour.jpg "$WALLPAPERS_DEST/" 2>/dev/null
 done
 echo "   $count new theme wallpaper(s) added to ~/.local/wallpapers/themes/"
 
@@ -36,7 +36,7 @@ switched=0
 for dir in "$WALLPAPERS_SRC"/*/; do
     theme="$(basename "$dir")"
     json="$THEMES_DEST/$theme.json"
-    new="themes/$theme/lyne-$theme-lake.jpg"
+    new="themes/$theme/lyne-$theme-contour.jpg"
     [[ -f "$json" && -f "$WALLPAPERS_DEST/$new" ]] || continue
     current="$(jq -r '.wallpaper // ""' "$json")"
     # Old defaults were themes/<theme>/theme-*.jpg|png
