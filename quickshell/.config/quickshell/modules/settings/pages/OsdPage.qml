@@ -10,10 +10,10 @@ ColumnLayout {
     spacing: Config.spacing * 3
 
     SettingsGroup {
-        title: "Appearance"
+        title: "Style"
 
         TemplatePicker {
-            label: "Style"
+            label: "Template"
             description: ({
                     pill: "Icon, level bar and percentage in a capsule",
                     vertical: "A slim capsule on a screen side, filling upwards",
@@ -103,7 +103,7 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Behaviour"
+        title: "Behavior"
 
         SelectRow {
             label: "Show on"

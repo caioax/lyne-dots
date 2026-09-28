@@ -12,7 +12,7 @@ ColumnLayout {
     spacing: Config.spacing * 3
 
     SettingsGroup {
-        title: "Layout"
+        title: "Style"
 
         TemplatePicker {
             label: "Template"

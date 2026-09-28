@@ -59,7 +59,7 @@ Singleton {
             id: "bar",
             label: "Bar",
             icon: "\u{f1513}",
-            description: "Template, position, size and behaviour of the bar",
+            description: "Template, position, size and behavior of the bar",
             category: "Shell"
         },
         {
@@ -184,6 +184,189 @@ Singleton {
     ]
 
     readonly property var currentEntry: pages.find(p => p.id === currentPage) ?? pages[0]
+    // Page ids in sidebar order (grouped by category)
+    readonly property var pageOrder: categories.reduce((ids, c) => ids.concat(pages.filter(p => p.category === c).map(p => p.id)), [])
+
+    function stepPage(delta: int) {
+        const i = pageOrder.indexOf(currentEntry.id);
+        currentPage = pageOrder[(i + delta + pageOrder.length) % pageOrder.length];
+    }
+
+    // ================= SEARCH =================
+    // Every page, group and row, read from the pages' QML source instead of
+    // instantiating them: label/title/description given as plain strings.
+    // Rows built from models (keybinds, specials) aren't in it
+    property var searchIndex: []
+    property bool indexing: false
+    // Row (or group) the Settings window scrolls to and flashes once the
+    // page shows: { page, group, label }
+    property var pendingReveal: null
+
+    signal revealRequested
+
+    readonly property var rowTypes: ["SettingRow", "ToggleRow", "SliderRow", "StepperRow", "SelectRow", "TextFieldRow", "InfoRow", "TemplatePicker", "ColorEditRow"]
+    readonly property string pagesDir: Qt.resolvedUrl("../modules/settings/pages/").toString().replace("file://", "")
+
+    function pageFile(id: string): string {
+        return id.charAt(0).toUpperCase() + id.slice(1) + "Page.qml";
+    }
+
+    function buildIndex() {
+        if (indexing || searchIndex.length > 0)
+            return;
+        indexing = true;
+        indexProc.command = ["sh", "-c", 'for f in "$@"; do printf "\\n@@FILE %s\\n" "$f"; cat "$f"; done', "sh"].concat(pages.map(p => pagesDir + pageFile(p.id)));
+        indexProc.running = true;
+    }
+
+    // Walks the QML line by line with a stack of the objects opened by
+    // braces; a property belongs to the innermost one, so the `label` of a
+    // JS option object ({ label, value }) never counts as a row
+    function parsePage(page: var, text: string): var {
+        const out = [];
+        const stack = [];
+        const unescape = t => t.replace(/\\(.)/g, "$1");
+        const groupOf = () => {
+            for (let i = stack.length - 1; i >= 0; i--) {
+                if (stack[i].type === "SettingsGroup")
+                    return stack[i].props.title?.text ?? "";
+            }
+            return "";
+        };
+        const finish = e => {
+            const label = e.props.label?.text ?? e.props.title?.text ?? "";
+            if (label === "")
+                return;
+            const isRow = rowTypes.includes(e.type);
+            if (!isRow && e.type !== "SettingsGroup")
+                return;
+            out.push({
+                kind: isRow ? "row" : "group",
+                page: page.id,
+                pageLabel: page.label,
+                icon: page.icon,
+                group: isRow ? groupOf() : "",
+                label: label,
+                description: e.props.description?.text ?? "",
+                words: e.props.description?.words ?? ""
+            });
+        };
+
+        for (const raw of text.split("\n")) {
+            const literals = [];
+            const code = raw.replace(/"((?:[^"\\]|\\.)*)"/g, (m, g) => {
+                literals.push(unescape(g));
+                return '""';
+            }).replace(/\/\/.*$/, "");
+            const prop = code.match(/^\s*(label|title|description)\s*:\s*(.*)$/);
+            if (prop && stack.length > 0 && stack[stack.length - 1].type !== "") {
+                const pure = prop[2].trim() === '""' && literals.length === 1;
+                stack[stack.length - 1].props[prop[1]] = {
+                    text: pure ? literals[0] : "",
+                    words: literals.join(" ")
+                };
+            }
+            const type = code.match(/^\s*([A-Z]\w*)\s*\{/);
+            let opened = false;
+            for (const ch of code) {
+                if (ch === "{") {
+                    stack.push({
+                        type: type && !opened ? type[1] : "",
+                        props: {}
+                    });
+                    opened = true;
+                } else if (ch === "}") {
+                    const e = stack.pop();
+                    if (e)
+                        finish(e);
+                }
+            }
+        }
+        return out;
+    }
+
+    function parseIndex(text: string) {
+        const byFile = {};
+        for (const chunk of text.split("\n@@FILE ").slice(1)) {
+            const nl = chunk.indexOf("\n");
+            byFile[chunk.slice(0, nl)] = chunk.slice(nl + 1);
+        }
+        let index = [];
+        for (const page of pages) {
+            index.push({
+                kind: "page",
+                page: page.id,
+                pageLabel: page.label,
+                icon: page.icon,
+                group: "",
+                label: page.label,
+                description: page.description,
+                words: page.description + " " + page.category
+            });
+            index = index.concat(parsePage(page, byFile[pagesDir + pageFile(page.id)] ?? ""));
+        }
+        searchIndex = index;
+    }
+
+    // Entries matching every word of the query, best first: label matches
+    // before description ones, pages and groups before rows on a tie
+    function search(query: string): var {
+        const q = query.trim().toLowerCase();
+        if (q === "")
+            return [];
+        const words = q.split(/\s+/);
+        const scored = [];
+        searchIndex.forEach((e, i) => {
+            const label = e.label.toLowerCase();
+            const hay = (e.label + " " + e.group + " " + e.pageLabel + " " + e.words).toLowerCase();
+            if (!words.every(w => hay.includes(w)))
+                return;
+            let score = e.kind === "page" ? 3 : e.kind === "group" ? 2 : 0;
+            if (label === q)
+                score += 100;
+            else if (label.startsWith(q))
+                score += 80;
+            else if (label.includes(q))
+                score += 60;
+            else if (words.every(w => label.includes(w)))
+                score += 40;
+            else if (words.every(w => (e.group + " " + e.pageLabel).toLowerCase().includes(w)))
+                score += 20;
+            scored.push({
+                e: e,
+                score: score,
+                i: i
+            });
+        });
+        scored.sort((a, b) => b.score - a.score || a.i - b.i);
+        return scored.slice(0, 50).map(r => r.e);
+    }
+
+    // Opens the entry's page; the window scrolls to the row and flashes it
+    function reveal(entry: var) {
+        pendingReveal = entry.kind === "page" ? null : {
+            page: entry.page,
+            group: entry.group !== "" ? entry.group : (entry.kind === "group" ? entry.label : ""),
+            label: entry.kind === "row" ? entry.label : ""
+        };
+        if (currentPage === entry.page) {
+            if (pendingReveal)
+                revealRequested();
+        } else {
+            currentPage = entry.page;
+        }
+    }
+
+    Process {
+        id: indexProc
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.parseIndex(text);
+                root.indexing = false;
+            }
+        }
+    }
 
     function open(page: string) {
         if (page && pages.some(p => p.id === page))

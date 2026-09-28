@@ -35,8 +35,17 @@ Rectangle {
     property bool resettable: true
     readonly property bool modified: resettable && path !== "" && !StateService.isDefault(path)
     readonly property int rowPadding: Config.padding * 2
+    // Narrow windows: when the control would leave the label less than this,
+    // it moves below the label instead of squeezing it
+    readonly property int minLabelWidth: Config.fontSizeNormal * 11
+    readonly property bool stacked: trailingRow.implicitWidth > 0 && content.width - trailingRow.implicitWidth - (leadingRow.visible ? leadingRow.implicitWidth + Config.padding : 0) - Config.spacing * 2 < minLabelWidth
 
     signal resetRequested
+
+    // Draws attention to the row (e.g. opened from the Settings search)
+    function flash() {
+        flashAnim.restart();
+    }
 
     Layout.fillWidth: true
     implicitHeight: content.implicitHeight + rowPadding * 2
@@ -67,6 +76,53 @@ Rectangle {
         id: rowHover
     }
 
+    // Accent wash pulsed by flash()
+    Rectangle {
+        id: flashOverlay
+
+        anchors.fill: parent
+        topLeftRadius: root.topLeftRadius
+        topRightRadius: root.topRightRadius
+        bottomLeftRadius: root.bottomLeftRadius
+        bottomRightRadius: root.bottomRightRadius
+        color: Qt.alpha(Config.accentColor, 0.15)
+        border.width: 1
+        border.color: Qt.alpha(Config.accentColor, 0.6)
+        opacity: 0
+
+        SequentialAnimation {
+            id: flashAnim
+
+            NumberAnimation {
+                target: flashOverlay
+                property: "opacity"
+                to: 1
+                duration: Config.animDuration
+            }
+            NumberAnimation {
+                target: flashOverlay
+                property: "opacity"
+                to: 0.3
+                duration: Config.animDurationLong
+            }
+            NumberAnimation {
+                target: flashOverlay
+                property: "opacity"
+                to: 1
+                duration: Config.animDuration
+            }
+            PauseAnimation {
+                duration: Config.animDurationLong
+            }
+            NumberAnimation {
+                target: flashOverlay
+                property: "opacity"
+                to: 0
+                duration: Config.animDurationLong * 2
+            }
+        }
+    }
+
     Column {
         id: content
 
@@ -77,6 +133,8 @@ Rectangle {
         spacing: Config.spacing
 
         RowLayout {
+            id: headerRow
+
             width: parent.width
             spacing: Config.spacing
 
@@ -144,8 +202,18 @@ Rectangle {
 
             RowLayout {
                 id: trailingRow
+
+                parent: root.stacked ? stackedSlot : headerRow
                 spacing: Config.spacing
             }
+        }
+
+        // The control when `stacked`, under the label
+        RowLayout {
+            id: stackedSlot
+
+            width: parent.width
+            visible: root.stacked
         }
 
         Item {

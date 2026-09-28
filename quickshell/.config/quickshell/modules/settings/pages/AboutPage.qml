@@ -266,11 +266,14 @@ ColumnLayout {
             }
 
             leading: Text {
-                // md-alert / md-download / md-check_circle
-                text: root.dirty > 0 ? "\u{f0026}" : root.behind > 0 ? "\u{f01da}" : "\u{f05e0}"
+                readonly property bool upToDate: root.git.fetched === "1" && root.behind === 0
+
+                // md-alert / md-download / md-check_circle / md-cloud_alert
+                // (GitHub unreachable or no upstream: the state is unknown)
+                text: root.dirty > 0 ? "\u{f0026}" : root.behind > 0 ? "\u{f01da}" : upToDate || root.checking ? "\u{f05e0}" : "\u{f09e0}"
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeIcon
-                color: root.dirty > 0 ? Config.warningColor : root.behind > 0 ? Config.accentColor : Config.successColor
+                color: root.dirty > 0 ? Config.warningColor : root.behind > 0 ? Config.accentColor : upToDate || root.checking ? Config.successColor : Config.warningColor
             }
 
             Spinner {

@@ -9,7 +9,7 @@ ColumnLayout {
     spacing: Config.spacing * 3
 
     SettingsGroup {
-        title: "Behaviour"
+        title: "Behavior"
 
         // Owned by NotificationService, which keeps its own copy
         ToggleRow {

@@ -97,8 +97,9 @@ ColumnLayout {
                 color: Config.subtextColor
             }
 
-            // md-refresh
+            // md-refresh (the spinner stands in while updating)
             ActionButton {
+                visible: !WeatherService.loading
                 icon: "\u{f0450}"
                 baseColor: weatherRow.controlColor
                 onClicked: WeatherService.refresh(true)

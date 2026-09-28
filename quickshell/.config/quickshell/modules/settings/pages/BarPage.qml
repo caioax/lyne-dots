@@ -509,7 +509,7 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Behaviour"
+        title: "Behavior"
 
         ToggleRow {
             label: "Auto hide"
