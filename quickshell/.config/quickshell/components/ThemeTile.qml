@@ -5,7 +5,8 @@ import Quickshell.Widgets
 import qs.config
 import qs.services
 
-// Preset theme card: wallpaper thumbnail, name and palette. Click applies it
+// Preset theme card: wallpaper thumbnail, name and palette. Click applies it;
+// with showDetails, a ⋯ button on hover asks for the theme's detail view
 Item {
     id: tile
 
@@ -14,6 +15,9 @@ Item {
     property real thumbHeight: Config.fontSizeIconLarge * 2 + Config.spacing * 2
     // Only load the thumbnail while it can be seen
     property bool loadImage: true
+    property bool showDetails: false
+
+    signal detailsRequested
 
     readonly property bool auto: ThemeService.isAutoMode
     readonly property var preview: ThemeService.themePreviews[modelData] ?? {}
@@ -114,6 +118,41 @@ Item {
         onClicked: {
             if (!tile.isCurrent)
                 ThemeService.setPresetMode(tile.modelData);
+        }
+    }
+
+    // md-dots_horizontal: theme details (wallpapers, colors)
+    Rectangle {
+        visible: tile.showDetails
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.margins: Config.padding
+        width: Config.fontSizeLarge + Config.padding * 2
+        height: Config.fontSizeLarge + Config.padding
+        radius: height / 2
+        color: detailsMouse.containsMouse ? Config.accentColor : Qt.alpha(Config.backgroundColor, 0.8)
+        opacity: tileMouse.containsMouse || detailsMouse.containsMouse ? 1 : 0
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Config.animDurationShort
+            }
+        }
+
+        Text {
+            anchors.centerIn: parent
+            text: "\u{f01d8}"
+            font.family: Config.font
+            font.pixelSize: Config.fontSizeNormal
+            color: detailsMouse.containsMouse ? Config.textReverseColor : Config.textColor
+        }
+
+        MouseArea {
+            id: detailsMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: tile.detailsRequested()
         }
     }
 }

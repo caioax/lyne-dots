@@ -7,27 +7,30 @@ import qs.services
 import "../rows/"
 import "../../../components/"
 
-// Wallpaper library: apply, favorite, add, delete, and pick the wallpaper of
-// each preset theme (Themes tab)
+// Wallpaper library: apply, favorite, add, delete. The wallpaper each theme
+// brings is picked in the theme's detail view (Theme page); picking one here
+// while themes bring their wallpaper offers to save it to the current theme
 ColumnLayout {
     id: root
 
     readonly property int columns: 3
     readonly property int thumbHeight: Config.fontSizeIconLarge * 2
 
-    property string category: "all" // "all" | "favorites" | "themes"
+    property string category: "all" // "all" | "favorites"
     property string query: ""
-    // Theme whose folder the Themes tab shows
-    property string theme: ThemeService.currentThemeName
     property var selection: []
     property bool confirmingDelete: false
+    // Wallpaper just picked that may become the current theme's (inline prompt)
+    property string offerPath: ""
 
     readonly property bool selecting: selection.length > 0
-    readonly property bool themesTab: category === "themes"
-    readonly property string themeActive: WallpaperService.themeWallpaperPath(theme)
+    readonly property string themeName: ThemeService.currentThemeName
+    readonly property string themeLabel: ThemeService.themePreviews[themeName]?.name ?? themeName
+    readonly property bool themeLinked: WallpaperService.dynamicWallpaper && !ThemeService.isAutoMode
+    readonly property bool onThemeWallpaper: WallpaperService.currentWallpaper !== "" && WallpaperService.fileName(WallpaperService.currentWallpaper) === WallpaperService.fileName(WallpaperService.themeWallpaperPath(themeName))
 
     readonly property var shown: {
-        let list = themesTab ? WallpaperService.themeWallpapers : WallpaperService.wallpapers;
+        let list = WallpaperService.wallpapers;
         if (category === "favorites")
             list = list.filter(w => WallpaperService.isFavorite(w));
         if (query !== "") {
@@ -53,16 +56,17 @@ ColumnLayout {
         confirmingDelete = false;
     }
 
-    // Library: set as wallpaper. Themes tab: make it the theme's wallpaper,
-    // and show it right away when that theme is the one in use
+    // Sets it as the wallpaper; while themes bring their wallpaper, asks
+    // whether it should become the current theme's too
     function activate(path: string) {
-        if (!themesTab) {
-            WallpaperService.setWallpaper(path);
-            return;
-        }
-        WallpaperService.setActiveThemeWallpaper(path, theme);
-        if (theme === ThemeService.currentThemeName && !ThemeService.isAutoMode)
-            WallpaperService.setWallpaper(path);
+        WallpaperService.setWallpaper(path);
+        const themePath = WallpaperService.themeWallpaperPath(themeName);
+        offerPath = themeLinked && WallpaperService.fileName(path) !== WallpaperService.fileName(themePath) ? path : "";
+    }
+
+    function saveOfferToTheme() {
+        WallpaperService.setThemeWallpaper(offerPath, themeName);
+        offerPath = "";
     }
 
     function deleteSelection() {
@@ -80,6 +84,10 @@ ColumnLayout {
             menu.close();
             return true;
         }
+        if (offerPath !== "") {
+            offerPath = "";
+            return true;
+        }
         if (selecting) {
             clearSelection();
             return true;
@@ -92,15 +100,9 @@ ColumnLayout {
     }
 
     onCategoryChanged: clearSelection()
-    onThemeChanged: {
-        clearSelection();
-        if (themesTab)
-            WallpaperService.refreshThemeWallpapers(theme);
-    }
-    onThemesTabChanged: {
-        if (themesTab)
-            WallpaperService.refreshThemeWallpapers(theme);
-    }
+    // Switching theme (or unlinking) makes the question moot
+    onThemeNameChanged: offerPath = ""
+    onThemeLinkedChanged: offerPath = ""
 
     Component.onCompleted: WallpaperService.refreshWallpapers()
 
@@ -127,28 +129,17 @@ ColumnLayout {
 
         readonly property bool isFavorite: typeof target === "string" && WallpaperService.isFavorite(target)
 
-        items: root.themesTab ? [
-            {
-                label: "Apply now",
-                icon: "\u{f012c}",
-                action: "apply"
-            },
-            {
-                label: "Select",
-                icon: "\u{f0485}",
-                action: "select"
-            },
-            {
-                label: "Delete",
-                icon: "\u{f09e7}",
-                action: "delete",
-                danger: true
-            }
-        ] : [
+        items: [
             {
                 label: isFavorite ? "Remove from favorites" : "Add to favorites",
                 icon: isFavorite ? "\u{f02d5}" : "\u{f02d1}",
                 action: "favorite"
+            },
+            {
+                label: "Use for " + root.themeLabel,
+                icon: "\u{f012c}",
+                action: "useForTheme",
+                hidden: ThemeService.isAutoMode
             },
             {
                 label: "Add to theme",
@@ -170,7 +161,7 @@ ColumnLayout {
                 action: "delete",
                 danger: true
             }
-        ]
+        ].filter(item => !item.hidden)
 
         onTriggered: (action, path) => {
             if (action.startsWith("theme:")) {
@@ -178,8 +169,8 @@ ColumnLayout {
                 return;
             }
             switch (action) {
-            case "apply":
-                WallpaperService.setWallpaper(path);
+            case "useForTheme":
+                WallpaperService.setThemeWallpaper(path, root.themeName);
                 break;
             case "favorite":
                 WallpaperService.toggleFavorite(path);
@@ -205,9 +196,11 @@ ColumnLayout {
             description: {
                 if (ThemeService.isAutoMode)
                     return "Material You: the colors follow this wallpaper";
-                if (WallpaperService.dynamicWallpaper)
-                    return "Switching preset also switches to its wallpaper";
-                return "Stays when switching preset";
+                if (!WallpaperService.dynamicWallpaper)
+                    return "Stays when switching theme";
+                if (root.onThemeWallpaper)
+                    return root.themeLabel + "'s wallpaper · switching theme brings the new theme's";
+                return "Switching theme replaces it with the theme's wallpaper";
             }
 
             leading: ClippingRectangle {
@@ -241,6 +234,60 @@ ColumnLayout {
                 onClicked: WallpaperService.addWallpapers()
             }
         }
+
+        // Asked after picking a wallpaper while themes bring their own
+        SettingRow {
+            id: offerRow
+
+            visible: root.offerPath !== ""
+            label: "Also make it " + root.themeLabel + "'s wallpaper?"
+            description: "Otherwise it stays until you switch theme, and " + root.themeLabel + " keeps its own"
+
+            leading: Text {
+                text: "\u{f03d8}"
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeIcon
+                color: Config.accentColor
+            }
+
+            ActionButton {
+                text: "Only now"
+                baseColor: offerRow.controlColor
+                onClicked: root.offerPath = ""
+            }
+
+            ActionButton {
+                icon: "\u{f012c}"
+                text: "Save to theme"
+                baseColor: Config.accentColor
+                hoverColor: Qt.lighter(Config.accentColor, 1.1)
+                textColor: Config.textReverseColor
+                onClicked: root.saveOfferToTheme()
+            }
+        }
+
+        // Where the link between themes and wallpapers is set
+        SettingRow {
+            id: linkRow
+
+            visible: !ThemeService.isAutoMode
+            label: WallpaperService.dynamicWallpaper ? "Themes bring their wallpaper" : "Themes keep your wallpaper"
+            description: "Change it, or pick each theme's wallpaper, in Theme"
+
+            leading: Text {
+                text: WallpaperService.dynamicWallpaper ? "\u{f0339}" : "\u{f033a}"
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeIcon
+                color: Config.subtextColor
+            }
+
+            ActionButton {
+                icon: "\u{f03d8}"
+                text: root.themeLabel + "'s wallpapers"
+                baseColor: linkRow.controlColor
+                onClicked: SettingsService.openThemeDetail(root.themeName)
+            }
+        }
     }
 
     // ================= LIBRARY =================
@@ -269,7 +316,7 @@ ColumnLayout {
 
                     SegmentedControl {
                         Layout.fillWidth: false
-                        Layout.preferredWidth: Config.fontSizeNormal * 22
+                        Layout.preferredWidth: Config.fontSizeNormal * 15
                         options: [
                             {
                                 label: "All",
@@ -278,14 +325,10 @@ ColumnLayout {
                             {
                                 label: "Favorites",
                                 icon: "\u{f02d1}"
-                            },
-                            {
-                                label: "Themes",
-                                icon: "\u{f03d8}"
                             }
                         ]
-                        currentIndex: ["all", "favorites", "themes"].indexOf(root.category)
-                        onSelected: index => root.category = ["all", "favorites", "themes"][index]
+                        currentIndex: ["all", "favorites"].indexOf(root.category)
+                        onSelected: index => root.category = ["all", "favorites"][index]
                     }
 
                     Rectangle {
@@ -332,56 +375,6 @@ ColumnLayout {
                     }
                 }
 
-                // Themes tab: which preset's folder is shown
-                Flow {
-                    visible: root.themesTab
-                    Layout.fillWidth: true
-                    spacing: Config.padding
-
-                    Repeater {
-                        model: ThemeService.availableThemes
-
-                        Rectangle {
-                            id: chip
-
-                            required property string modelData
-                            readonly property bool active: modelData === root.theme
-
-                            width: chipText.implicitWidth + Config.padding * 4
-                            height: chipText.implicitHeight + Config.padding * 2
-                            radius: height / 2
-                            color: active ? Config.accentColor : chipMouse.containsMouse ? Config.surface2Color : Config.surface1Color
-
-                            Text {
-                                id: chipText
-                                anchors.centerIn: parent
-                                text: ThemeService.themePreviews[chip.modelData]?.name ?? chip.modelData
-                                font.family: Config.font
-                                font.pixelSize: Config.fontSizeSmall
-                                font.bold: chip.active
-                                color: chip.active ? Config.textReverseColor : Config.textColor
-                            }
-
-                            MouseArea {
-                                id: chipMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.theme = chip.modelData
-                            }
-                        }
-                    }
-                }
-
-                Text {
-                    visible: root.themesTab
-                    Layout.fillWidth: true
-                    text: "Click a wallpaper to use it for this theme. Add more from the All tab (⋮ › Add to theme)"
-                    wrapMode: Text.WordWrap
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeSmall
-                    color: Config.subtextColor
-                }
 
                 // Selection bar
                 Rectangle {
@@ -445,8 +438,7 @@ ColumnLayout {
                             Layout.fillWidth: true
                             Layout.preferredWidth: grid.cellWidth
                             path: modelData
-                            current: root.themesTab ? false : modelData === WallpaperService.currentWallpaper
-                            badge: root.themesTab && modelData === root.themeActive ? "\u{f012c} Active" : ""
+                            current: modelData === WallpaperService.currentWallpaper
                             selected: root.selection.includes(modelData)
                             selecting: root.selecting
                             onActivated: root.activate(modelData)
@@ -490,8 +482,6 @@ ColumnLayout {
                                 return "No wallpapers match \"" + root.query + "\"";
                             if (root.category === "favorites")
                                 return "No favorites yet: use ⋮ › Add to favorites";
-                            if (root.themesTab)
-                                return "This theme has no wallpapers yet";
                             return "No wallpapers in ~/.local/wallpapers: use Add";
                         }
                         font.family: Config.font

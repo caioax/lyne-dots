@@ -23,7 +23,8 @@ Singleton {
 
     property string currentWallpaper: getState("wallpaper.current", "")
     property var wallpapers: []
-    property bool dynamicWallpaper: getState("wallpaper.dynamic", true)
+    // Switching theme also switches to the theme's wallpaper
+    readonly property bool dynamicWallpaper: getState("wallpaper.dynamic", true)
     property var favorites: getState("wallpaper.favorites", [])
 
     // Files inside themes/{themeWallpapersFor}/ (see refreshThemeWallpapers)
@@ -51,7 +52,6 @@ Singleton {
 
         function onStateLoaded() {
             root.currentWallpaper = getState("wallpaper.current", "");
-            root.dynamicWallpaper = getState("wallpaper.dynamic", true);
             root.favorites = getState("wallpaper.favorites", []);
             // What awww shows wins over the saved path
             root.getCurrentWallpaper();
@@ -99,19 +99,33 @@ Singleton {
         return match ? match[1] : "";
     }
 
-    // Theme wallpaper folder operations
-    function addToTheme(sourcePath: string, themeName: string) {
-        const dest = themeWallpaperDir + "/" + themeName + "/";
-        // Prints "missing" when the theme's wallpaper is unset or its file is
-        // gone, so the copy becomes the theme's wallpaper
+    // Theme wallpaper folder operations. Copies the file into the theme's
+    // folder; makeActive makes it the theme's wallpaper, otherwise it only
+    // becomes that when the theme has none (or its file is gone)
+    function addToTheme(sourcePath: string, themeName: string, makeActive = false) {
+        const dir = themeWallpaperDir + "/" + themeName;
+        const dest = dir + "/" + fileName(sourcePath);
         const current = themeWallpaperPath(themeName);
         // One process per call, so quick successive adds don't overwrite each other
         addToThemeComponent.createObject(root, {
-            command: ["bash", "-c", "mkdir -p '" + dest + "' && cp '" + sourcePath + "' '" + dest + "' && { [ -n '" + current + "' ] && [ -f '" + current + "' ] || echo missing; }"],
+            command: ["bash", "-c", "mkdir -p \"$1\" && { [ \"$2\" -ef \"$3\" ] || cp -f \"$2\" \"$3\"; } && " + "{ [ -n \"$4\" ] && [ -f \"$4\" ] || echo missing; }", "bash", dir, sourcePath, dest, current],
             themeName: themeName,
-            dest: dest + fileName(sourcePath)
+            dest: dest,
+            adopt: makeActive
         });
     }
+
+    // Makes the file the theme's wallpaper (copied into its folder) and shows
+    // it right away when that theme is in use and brings its wallpaper
+    function setThemeWallpaper(sourcePath: string, themeName: string) {
+        const dest = themeWallpaperDir + "/" + themeName + "/" + fileName(sourcePath);
+        addToTheme(sourcePath, themeName, true);
+        if (themeName === ThemeService.currentThemeName && !ThemeService.isAutoMode && dynamicWallpaper && currentWallpaper !== dest)
+            _applyWhenCopied[dest] = true;
+    }
+
+    // Theme wallpapers waiting for their copy before being shown
+    property var _applyWhenCopied: ({})
 
     function setActiveThemeWallpaper(wallpaperPath: string, themeName: string) {
         // Get the relative path from wallpaperDir
@@ -169,8 +183,7 @@ Singleton {
     }
 
     function toggleDynamicWallpaper() {
-        dynamicWallpaper = !dynamicWallpaper;
-        setState("wallpaper.dynamic", dynamicWallpaper);
+        setState("wallpaper.dynamic", !dynamicWallpaper);
     }
 
     // Apply wallpaper. A missing file is skipped and leaves the current one.
@@ -365,6 +378,10 @@ Singleton {
                     console.log("[Wallpaper] Added wallpaper to theme:", themeName);
                     if (adopt)
                         root.setActiveThemeWallpaper(dest, themeName);
+                    if (root._applyWhenCopied[dest]) {
+                        delete root._applyWhenCopied[dest];
+                        root.setWallpaper(dest, "grow");
+                    }
                     if (root.themeWallpapersFor === themeName)
                         root.refreshThemeWallpapers(themeName);
                 } else {

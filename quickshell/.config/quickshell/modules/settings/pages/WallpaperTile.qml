@@ -18,6 +18,8 @@ Item {
     property bool selecting: false
     // Small label in the corner (e.g. "Active" for a theme's wallpaper)
     property string badge: ""
+    // The ⋮ button on hover
+    property bool showMenu: true
 
     readonly property bool favorite: WallpaperService.isFavorite(path)
     readonly property bool hovered: tileHover.hovered
@@ -132,7 +134,7 @@ Item {
 
         // Details (md-dots_vertical), on hover
         Rectangle {
-            visible: (root.hovered || menuMouse.containsMouse) && !root.selecting
+            visible: root.showMenu && (root.hovered || menuMouse.containsMouse) && !root.selecting
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.margins: Config.padding

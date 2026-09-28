@@ -11,6 +11,17 @@ Singleton {
 
     property bool visible: false
     property string currentPage: "theme"
+    // Theme whose detail view the Theme page opens next (taken and cleared by it)
+    property string pendingThemeDetail: ""
+
+    function openThemeDetail(themeName: string) {
+        pendingThemeDetail = themeName;
+        if (currentPage === "theme")
+            themeDetailRequested(themeName);
+        currentPage = "theme";
+    }
+
+    signal themeDetailRequested(string themeName)
 
     // Sidebar entries, grouped by category in this order. Each id needs a
     // component in SettingsWindow.pageComponents
@@ -20,14 +31,14 @@ Singleton {
             id: "theme",
             label: "Theme",
             icon: "\u{f03d8}",
-            description: "Color palette, light or dark mode, transparency and wallpaper",
+            description: "Colors, light or dark mode, transparency and the wallpaper each theme brings",
             category: "Appearance"
         },
         {
             id: "wallpaper",
             label: "Wallpaper",
             icon: "\u{f0e09}",
-            description: "Your wallpaper library and the wallpaper of each theme",
+            description: "Your wallpaper library: apply, favorite, add and delete",
             category: "Appearance"
         },
         {

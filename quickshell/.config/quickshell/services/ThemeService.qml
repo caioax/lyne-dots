@@ -637,6 +637,7 @@ Singleton {
                     previews[themeName] = {
                         name: data.name || themeName,
                         palette: data.palette || {},
+                        terminal: data.terminal || {},
                         wallpaper: data.wallpaper || "",
                         variant: data.variant || "dark",
                         lightPair: data.lightPair || "",

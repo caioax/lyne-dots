@@ -7,24 +7,76 @@ import qs.services
 import "../rows/"
 import "../../../components/"
 
+// Colors, transparency and the theme grid. A theme's ⋯ opens its detail view
+// (ThemeDetail) in place of the grid
 ColumnLayout {
     id: root
 
     readonly property bool auto: ThemeService.isAutoMode
     readonly property int columns: 3
+    // Theme shown in the detail view, "" for the grid
+    property string detail: ""
+
+    function openDetail(themeName: string) {
+        detail = themeName;
+        scrollToTop();
+    }
+
+    // The page lives in SettingsWindow's Flickable: back to its top when
+    // switching between the grid and a detail view
+    function scrollToTop() {
+        let item = root.parent;
+        while (item && item.contentY === undefined)
+            item = item.parent;
+        if (item)
+            item.contentY = 0;
+    }
+
+    // Called by SettingsWindow before Escape closes the window
+    function handleEscape(): bool {
+        if (detail === "")
+            return false;
+        detail = "";
+        scrollToTop();
+        return true;
+    }
+
+    Component.onCompleted: {
+        if (SettingsService.pendingThemeDetail !== "") {
+            detail = SettingsService.pendingThemeDetail;
+            SettingsService.pendingThemeDetail = "";
+        }
+    }
+
+    Connections {
+        target: SettingsService
+
+        function onThemeDetailRequested(themeName) {
+            SettingsService.pendingThemeDetail = "";
+            root.openDetail(themeName);
+        }
+    }
 
     spacing: Config.spacing * 3
 
+    ThemeDetail {
+        visible: root.detail !== ""
+        Layout.fillWidth: true
+        theme: root.detail
+        onBack: root.handleEscape()
+    }
+
     SettingsGroup {
+        visible: root.detail === ""
         title: "Colors"
 
         SelectRow {
             label: "Source"
-            description: "A preset palette, or colors picked from your wallpaper"
+            description: "A theme's palette, or colors picked from your wallpaper"
             segmentWidth: Config.fontSizeNormal * 9
             options: [
                 {
-                    label: "Preset",
+                    label: "Theme",
                     icon: "\u{f03d8}",
                     value: "preset"
                 },
@@ -62,15 +114,6 @@ ColumnLayout {
             onSelected: value => ThemeService.setColorScheme(value)
         }
 
-        // Owned by WallpaperService, which keeps its own copy
-        ToggleRow {
-            visible: !root.auto
-            label: "Theme wallpaper"
-            description: "Switching preset also switches to its wallpaper"
-            checked: WallpaperService.dynamicWallpaper
-            onToggled: WallpaperService.toggleDynamicWallpaper()
-        }
-
         SettingRow {
             id: wallpaperRow
 
@@ -92,11 +135,36 @@ ColumnLayout {
     }
 
     SettingsGroup {
+        visible: root.detail === "" && !root.auto
+        title: "Wallpaper"
+
+        SelectRow {
+            label: "When switching theme"
+            description: WallpaperService.dynamicWallpaper ? "Each theme brings its own wallpaper: pick it in the theme's ⋯ page" : "Your wallpaper stays; themes only change the colors"
+            path: "wallpaper.dynamic"
+            segmentWidth: Config.fontSizeNormal * 8
+            options: [
+                {
+                    label: "Use theme's",
+                    icon: "\u{f0339}",
+                    value: true
+                },
+                {
+                    label: "Keep mine",
+                    icon: "\u{f033a}",
+                    value: false
+                }
+            ]
+        }
+    }
+
+    SettingsGroup {
+        visible: root.detail === ""
         title: "Transparency"
 
         SliderRow {
             label: "Background opacity"
-            description: "Bar, panels, launcher, notifications, Settings and their cards. Presets may set their own when applied"
+            description: "Bar, panels, launcher, notifications, Settings and their cards. Themes may set their own when applied"
             path: "opacity.background"
             from: 0.5
             to: 1
@@ -106,7 +174,8 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Presets"
+        visible: root.detail === ""
+        title: "Themes"
 
         Rectangle {
             Layout.fillWidth: true
@@ -127,8 +196,13 @@ ColumnLayout {
                     model: ThemeService.displayThemes
 
                     ThemeTile {
+                        id: tile
+
                         Layout.preferredWidth: (grid.width - grid.columnSpacing * (root.columns - 1)) / root.columns
                         thumbHeight: Config.fontSizeIconLarge * 3
+                        loadImage: root.detail === ""
+                        showDetails: true
+                        onDetailsRequested: root.openDetail(tile.modelData)
                     }
                 }
             }
