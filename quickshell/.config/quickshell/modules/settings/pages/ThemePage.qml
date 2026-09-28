@@ -16,6 +16,9 @@ ColumnLayout {
     readonly property int columns: 3
     // Theme shown in the detail view, "" for the grid
     property string detail: ""
+    // New theme view
+    property bool creating: false
+    readonly property bool onGrid: detail === "" && !creating
 
     function openDetail(themeName: string) {
         detail = themeName;
@@ -34,9 +37,10 @@ ColumnLayout {
 
     // Called by SettingsWindow before Escape closes the window
     function handleEscape(): bool {
-        if (detail === "")
+        if (onGrid)
             return false;
         detail = "";
+        creating = false;
         scrollToTop();
         return true;
     }
@@ -66,8 +70,19 @@ ColumnLayout {
         onBack: root.handleEscape()
     }
 
+    // Created on demand, so each visit starts from fresh picks
+    Loader {
+        active: root.creating
+        visible: active
+        Layout.fillWidth: true
+
+        sourceComponent: ThemeCreator {
+            onBack: root.handleEscape()
+        }
+    }
+
     SettingsGroup {
-        visible: root.detail === ""
+        visible: root.onGrid
         title: "Colors"
 
         SelectRow {
@@ -135,7 +150,7 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        visible: root.detail === "" && !root.auto
+        visible: root.onGrid && !root.auto
         title: "Wallpaper"
 
         SelectRow {
@@ -159,7 +174,7 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        visible: root.detail === ""
+        visible: root.onGrid
         title: "Transparency"
 
         SliderRow {
@@ -174,8 +189,25 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        visible: root.detail === ""
+        visible: root.onGrid
         title: "Themes"
+
+        SettingRow {
+            id: createRow
+
+            label: "Make your own"
+            description: "Start from an accent color; the rest of the theme follows"
+
+            ActionButton {
+                icon: "\u{f0415}"
+                text: "New theme"
+                baseColor: createRow.controlColor
+                onClicked: {
+                    root.creating = true;
+                    root.scrollToTop();
+                }
+            }
+        }
 
         Rectangle {
             Layout.fillWidth: true
@@ -200,7 +232,7 @@ ColumnLayout {
 
                         Layout.preferredWidth: (grid.width - grid.columnSpacing * (root.columns - 1)) / root.columns
                         thumbHeight: Config.fontSizeIconLarge * 3
-                        loadImage: root.detail === ""
+                        loadImage: root.onGrid
                         showDetails: true
                         onDetailsRequested: root.openDetail(tile.modelData)
                     }

@@ -132,6 +132,13 @@ ColumnLayout {
                 anchors.margins: Config.padding * 2
                 spacing: Config.spacing
 
+                ThemeMock {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.min(width * 9 / 16, Config.fontSizeNormal * 22)
+                    theme: root.preview
+                    wallpaper: root.activePath
+                }
+
                 // Interface palette
                 Flow {
                     Layout.fillWidth: true
@@ -205,41 +212,6 @@ ColumnLayout {
                                     font.pixelSize: Config.fontSizeSmall
                                     color: Config.textColor
                                 }
-                            }
-                        }
-                    }
-                }
-
-                // Terminal colors 0-15, on the terminal background
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: ansi.implicitHeight + Config.padding * 2
-                    radius: Config.radius
-                    color: root.terminal.background ?? Config.surface1Color
-
-                    Grid {
-                        id: ansi
-
-                        readonly property real cell: (width - columnSpacing * 7) / 8
-
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.margins: Config.padding
-                        columns: 8
-                        columnSpacing: Math.round(Config.padding / 2)
-                        rowSpacing: Math.round(Config.padding / 2)
-
-                        Repeater {
-                            model: 16
-
-                            Rectangle {
-                                required property int index
-
-                                width: ansi.cell
-                                height: Config.fontSizeNormal
-                                radius: Config.radiusSmall
-                                color: root.terminal["color" + index] ?? "transparent"
                             }
                         }
                     }
