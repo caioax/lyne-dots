@@ -24,6 +24,7 @@ WorkspaceStrip {
             color: slot.isActive ? Config.textReverseColor : slot.isEmpty ? Config.mutedColor : Config.textColor
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDuration
                 }

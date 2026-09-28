@@ -46,6 +46,7 @@ Rectangle {
             color: Qt.alpha(root.tone, 0.15)
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDurationShort
                 }
@@ -59,6 +60,7 @@ Rectangle {
                 color: root.tone
 
                 Behavior on color {
+                    enabled: !Config.themeTransitioning
                     ColorAnimation {
                         duration: Config.animDurationShort
                     }
@@ -101,6 +103,7 @@ Rectangle {
             color: root.textTone
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDurationShort
                 }

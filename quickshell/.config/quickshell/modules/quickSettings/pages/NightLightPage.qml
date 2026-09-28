@@ -67,6 +67,7 @@ Item {
             border.color: root.isOn ? Qt.alpha(Config.warningColor, 0.6) : "transparent"
 
             Behavior on border.color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDuration
                 }
@@ -101,6 +102,7 @@ Item {
                         color: root.isOn ? root.currentColor : Config.surface1Color
 
                         Behavior on color {
+                            enabled: !Config.themeTransitioning
                             ColorAnimation {
                                 duration: Config.animDuration
                             }
@@ -283,6 +285,7 @@ Item {
                         border.color: swatch
 
                         Behavior on color {
+                            enabled: !Config.themeTransitioning
                             ColorAnimation {
                                 duration: Config.animDurationShort
                             }

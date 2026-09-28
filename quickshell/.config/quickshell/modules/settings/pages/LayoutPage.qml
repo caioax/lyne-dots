@@ -106,5 +106,32 @@ ColumnLayout {
                 StateService.set("animations.long", speed.durations[2]);
             }
         }
+
+        ToggleRow {
+            label: "Theme color transition"
+            description: "Fade the shell's colors when switching theme or mode. Kitty, GTK/Qt apps and Neovim switch at once"
+            path: "animations.themeTransition"
+        }
+
+        SelectRow {
+            visible: Config.themeTransition
+            label: "Transition length"
+            description: Config.themeTransitionDuration + " ms now; follows the animation speed"
+            path: "animations.themeTransitionLength"
+            options: [
+                {
+                    label: "Short",
+                    value: "short"
+                },
+                {
+                    label: "Medium",
+                    value: "medium"
+                },
+                {
+                    label: "Long",
+                    value: "long"
+                }
+            ]
+        }
     }
 }

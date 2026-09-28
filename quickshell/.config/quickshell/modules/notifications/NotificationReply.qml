@@ -30,6 +30,7 @@ Rectangle {
     border.color: input.activeFocus ? Config.accentColor : "transparent"
 
     Behavior on border.color {
+        enabled: !Config.themeTransitioning
         ColorAnimation {
             duration: Config.animDurationShort
         }

@@ -17,6 +17,7 @@ Switch {
         color: root.checked ? Config.accentColor : Config.surface2Color
 
         Behavior on color {
+            enabled: !Config.themeTransitioning
             ColorAnimation {
                 duration: Config.animDuration
             }
@@ -33,6 +34,7 @@ Switch {
             color: root.checked ? Config.textReverseColor : Config.textColor
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDuration
                 }

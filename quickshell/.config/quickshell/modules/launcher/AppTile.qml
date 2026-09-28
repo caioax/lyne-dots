@@ -36,6 +36,7 @@ Item {
         border.color: Qt.alpha(Config.accentColor, 0.6)
 
         Behavior on color {
+            enabled: !Config.themeTransitioning
             ColorAnimation {
                 duration: Config.animDurationShort
             }

@@ -40,6 +40,7 @@ Card {
                 color: root.accent
 
                 Behavior on color {
+                    enabled: !Config.themeTransitioning
                     ColorAnimation {
                         duration: Config.animDuration
                     }
@@ -77,6 +78,7 @@ Card {
             color: root.accent
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDuration
                 }

@@ -22,6 +22,7 @@ WorkspaceStrip {
             color: !slot.isEmpty ? Config.surface3Color : Qt.alpha(Config.surface2Color, 0.65)
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDuration
                 }

@@ -267,6 +267,7 @@ Card {
                 scale: shortcutMouse.pressed ? 0.95 : 1
 
                 Behavior on color {
+                    enabled: !Config.themeTransitioning
                     ColorAnimation {
                         duration: Config.animDurationShort
                     }

@@ -31,6 +31,7 @@ Button {
         color: root.hovered ? Config.surface2Color : Qt.alpha(Config.surface2Color, 0)
 
         Behavior on color {
+            enabled: !Config.themeTransitioning
             ColorAnimation {
                 duration: Config.animDuration
             }

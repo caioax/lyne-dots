@@ -27,12 +27,14 @@ Rectangle {
 
     // --- Animations ---
     Behavior on color {
+        enabled: !Config.themeTransitioning
         ColorAnimation {
             duration: Config.animDurationShort
         }
     }
 
     Behavior on border.color {
+        enabled: !Config.themeTransitioning
         ColorAnimation {
             duration: Config.animDurationShort
         }

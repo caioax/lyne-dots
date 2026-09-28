@@ -263,6 +263,7 @@ Popup {
                         color: selected ? Qt.alpha(tint, 0.2) : iconMouse.containsMouse ? Config.surface2Color : Config.surface1Color
 
                         Behavior on color {
+                            enabled: !Config.themeTransitioning
                             ColorAnimation {
                                 duration: Config.animDurationShort
                             }
@@ -356,6 +357,7 @@ Popup {
         color: selected ? Config.accentColor : chipMouse.containsMouse ? Config.surface2Color : Config.surface1Color
 
         Behavior on color {
+            enabled: !Config.themeTransitioning
             ColorAnimation {
                 duration: Config.animDurationShort
             }

@@ -32,6 +32,7 @@ WorkspaceStrip {
             border.color: dotColor
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDuration
                 }

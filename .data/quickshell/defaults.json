@@ -124,7 +124,9 @@
     "animations": {
         "short": 100,
         "normal": 200,
-        "long": 400
+        "long": 400,
+        "themeTransition": true,
+        "themeTransitionLength": "medium"
     },
     "lock": {
         "style": "center",

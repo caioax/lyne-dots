@@ -220,6 +220,7 @@ Item {
                             color: hovered ? Config.surface2Color : Config.surface1Color
 
                             Behavior on color {
+                                enabled: !Config.themeTransitioning
                                 ColorAnimation {
                                     duration: Config.animDurationShort
                                 }

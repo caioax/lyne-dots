@@ -124,6 +124,7 @@ Rectangle {
     border.color: Config.accentColor
 
     Behavior on color {
+        enabled: !Config.themeTransitioning
         ColorAnimation {
             duration: Config.animDurationShort
         }

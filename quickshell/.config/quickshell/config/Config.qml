@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import Quickshell
 import QtQuick
 import qs.services
+import "../services/ThemeGenerator.js" as ThemeGenerator
 
 Singleton {
     id: root
@@ -16,30 +17,110 @@ Singleton {
     // ========================================================================
     // PALETTE (from ThemeService — defined in .data/themes/<name>.json)
     // ========================================================================
-    readonly property color backgroundColor: ThemeService.color("background", "#1a1b26")
-    readonly property real backgroundOpacity: getState("opacity.background", 0.9)
+    // Colors shown by the shell. A theme switch fades them from the old
+    // palette to the new one (mixed in OKLab); the first palette after a
+    // (re)load and switches with the transition off apply at once. Colors
+    // derived below (Qt.alpha, cards...) follow on their own
+    readonly property color backgroundColor: _shown("background", "#1a1b26")
+    readonly property real backgroundOpacity: _t >= 1 ? _opacityTarget : _opacityFrom + (_opacityTarget - _opacityFrom) * _t
     readonly property color backgroundTransparentColor: Qt.alpha(backgroundColor, backgroundOpacity)
-    readonly property color surface0Color: ThemeService.color("surface0", "#24283b")
-    readonly property color surface1Color: ThemeService.color("surface1", "#292e42")
-    readonly property color surface2Color: ThemeService.color("surface2", "#414868")
-    readonly property color surface3Color: ThemeService.color("surface3", "#565f89")
+    readonly property color surface0Color: _shown("surface0", "#24283b")
+    readonly property color surface1Color: _shown("surface1", "#292e42")
+    readonly property color surface2Color: _shown("surface2", "#414868")
+    readonly property color surface3Color: _shown("surface3", "#565f89")
     // Cards and panels inside the shell surfaces follow the background opacity
     readonly property color cardColor: Qt.alpha(surface0Color, backgroundOpacity)
     readonly property color cardHoverColor: Qt.alpha(surface1Color, backgroundOpacity)
 
-    readonly property color textColor: ThemeService.color("text", "#c0caf5")
-    readonly property color textReverseColor: ThemeService.color("textReverse", "#1a1b26")
-    readonly property color subtextColor: ThemeService.color("subtext", "#a9b1d6")
-    readonly property color subtextReverseColor: ThemeService.color("subtextReverse", "#565f89")
+    readonly property color textColor: _shown("text", "#c0caf5")
+    readonly property color textReverseColor: _shown("textReverse", "#1a1b26")
+    readonly property color subtextColor: _shown("subtext", "#a9b1d6")
+    readonly property color subtextReverseColor: _shown("subtextReverse", "#565f89")
 
-    readonly property color accentColor: ThemeService.color("accent", "#7aa2f7")
-    readonly property color successColor: ThemeService.color("success", "#9ece6a")
-    readonly property color warningColor: ThemeService.color("warning", "#e0af68")
-    readonly property color errorColor: ThemeService.color("error", "#f7768e")
+    readonly property color accentColor: _shown("accent", "#7aa2f7")
+    readonly property color successColor: _shown("success", "#9ece6a")
+    readonly property color warningColor: _shown("warning", "#e0af68")
+    readonly property color errorColor: _shown("error", "#f7768e")
 
-    readonly property color mutedColor: ThemeService.color("muted", "#545c7e")
-    readonly property color greyBlueColor: ThemeService.color("greyBlue", "#283457")
-    readonly property color blueDarkColor: ThemeService.color("blueDark", "#16161e")
+    readonly property color mutedColor: _shown("muted", "#545c7e")
+    readonly property color greyBlueColor: _shown("greyBlue", "#283457")
+    readonly property color blueDarkColor: _shown("blueDark", "#16161e")
+
+    // Theme switches: fade the colors over animDurationLong times 1, 2 or 3
+    readonly property bool themeTransition: getState("animations.themeTransition", true)
+    readonly property int themeTransitionDuration: animDurationLong * ({
+            "short": 1,
+            "medium": 2,
+            "long": 3
+        }[getState("animations.themeTransitionLength", "medium")] ?? 2)
+    // True while the colors fade: color Behaviors skip it and Canvases repaint
+    readonly property bool themeTransitioning: paletteFade.running
+
+    // Palette being shown, and the fade towards it: _fromLab/_toLab are
+    // colorToOklab() per key, _t goes 0 -> 1
+    property var _target: ({})
+    property var _fromLab: ({})
+    property var _toLab: ({})
+    property real _t: 1
+    property bool _paletteSeen: false
+    property real _opacityFrom: 0.9
+    readonly property real _opacityTarget: getState("opacity.background", 0.9)
+
+    function _shown(key, fallback) {
+        const to = _target[key] ?? fallback;
+        if (_t >= 1 || !_fromLab[key] || !_toLab[key])
+            return to;
+        const c = ThemeGenerator.mixOklab(_fromLab[key], _toLab[key], _t);
+        return Qt.rgba(c[0], c[1], c[2], c[3]);
+    }
+
+    function _setPalette(pal) {
+        const first = !_paletteSeen;
+        _paletteSeen = true;
+        const same = Object.keys(pal).length === Object.keys(_target).length && Object.keys(pal).every(k => String(pal[k]).toLowerCase() === String(_target[k]).toLowerCase());
+        if (same)
+            return;
+        if (first || !themeTransition) {
+            paletteFade.stop();
+            _t = 1;
+            _target = pal;
+            return;
+        }
+        // Start from what is on screen now, also mid-fade
+        const from = {};
+        const to = {};
+        for (const key in pal) {
+            to[key] = ThemeGenerator.colorToOklab(Qt.color(pal[key]));
+            if (_target[key] !== undefined)
+                from[key] = _t < 1 && _fromLab[key] && _toLab[key] ? ThemeGenerator.colorToOklab(_shown(key, pal[key])) : ThemeGenerator.colorToOklab(Qt.color(_target[key]));
+        }
+        _opacityFrom = backgroundOpacity;
+        paletteFade.stop();
+        _fromLab = from;
+        _toLab = to;
+        _target = pal;
+        _t = 0;
+        paletteFade.start();
+    }
+
+    Component.onCompleted: _target = ThemeService.palette
+
+    Connections {
+        target: ThemeService
+        function onPaletteChanged() {
+            root._setPalette(ThemeService.palette);
+        }
+    }
+
+    NumberAnimation {
+        id: paletteFade
+        target: root
+        property: "_t"
+        from: 0
+        to: 1
+        duration: root.themeTransitionDuration
+        easing.type: Easing.InOutQuad
+    }
 
     // ========================================================================
     // WALLPAPER

@@ -296,6 +296,7 @@ FloatingWindow {
                                         color: active ? Qt.alpha(Config.accentColor, 0.15) : navMouse.containsMouse ? Config.surface1Color : Qt.alpha(Config.surface1Color, 0)
 
                                         Behavior on color {
+                                            enabled: !Config.themeTransitioning
                                             ColorAnimation {
                                                 duration: Config.animDurationShort
                                             }
@@ -315,6 +316,7 @@ FloatingWindow {
                                                 color: navItem.active ? Config.accentColor : Config.surface1Color
 
                                                 Behavior on color {
+                                                    enabled: !Config.themeTransitioning
                                                     ColorAnimation {
                                                         duration: Config.animDurationShort
                                                     }

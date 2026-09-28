@@ -54,6 +54,7 @@ Item {
                 color: root.tone
 
                 Behavior on color {
+                    enabled: !Config.themeTransitioning
                     ColorAnimation {
                         duration: Config.animDurationShort
                     }
@@ -95,6 +96,7 @@ Item {
                 color: root.textTone
 
                 Behavior on color {
+                    enabled: !Config.themeTransitioning
                     ColorAnimation {
                         duration: Config.animDurationShort
                     }

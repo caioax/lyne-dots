@@ -77,6 +77,7 @@ Item {
         }
 
         Behavior on border.color {
+            enabled: !Config.themeTransitioning
             ColorAnimation {
                 duration: Config.animDurationShort
             }

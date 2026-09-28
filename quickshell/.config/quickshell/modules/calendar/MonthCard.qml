@@ -206,6 +206,7 @@ Card {
                         border.color: Config.accentColor
 
                         Behavior on color {
+                            enabled: !Config.themeTransitioning
                             ColorAnimation {
                                 duration: Config.animDurationShort
                             }
@@ -360,6 +361,7 @@ Card {
         color: navMouse.containsMouse ? Config.surface1Color : Qt.alpha(Config.surface1Color, 0)
 
         Behavior on color {
+            enabled: !Config.themeTransitioning
             ColorAnimation {
                 duration: Config.animDurationShort
             }

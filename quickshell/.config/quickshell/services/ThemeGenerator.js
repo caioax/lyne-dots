@@ -67,6 +67,20 @@ function hexToOklch(hex) {
     };
 }
 
+// [L, a, b, alpha] of a QML color, for mixOklab
+function colorToOklab(c) {
+    return _rgbToOklab([c.r, c.g, c.b]).concat([c.a]);
+}
+
+// Color between two colorToOklab results at t (0-1), as sRGB [r, g, b, a]
+// 0-1. Mixing in OKLab keeps the midpoints as bright and saturated as the
+// ends instead of going through muddy greys
+function mixOklab(from, to, t) {
+    const lab = [0, 1, 2].map(i => from[i] + (to[i] - from[i]) * t);
+    const rgb = _oklabToLinear(lab).map(v => _toSrgb(Math.min(1, Math.max(0, v))));
+    return rgb.concat([from[3] + (to[3] - from[3]) * t]);
+}
+
 function _inGamut(lin) {
     return lin.every(v => v >= -0.0001 && v <= 1.0001);
 }

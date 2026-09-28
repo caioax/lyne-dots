@@ -48,6 +48,7 @@ BarButton {
         property color iconColor: root.active ? Config.accentColor : Config.textColor
 
         Behavior on iconColor {
+            enabled: !Config.themeTransitioning
             ColorAnimation {
                 duration: Config.animDuration
             }

@@ -53,6 +53,7 @@ Item {
             capStyle: ShapePath.RoundCap
 
             Behavior on strokeColor {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDuration
                 }

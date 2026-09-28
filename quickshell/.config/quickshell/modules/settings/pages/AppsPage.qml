@@ -204,6 +204,7 @@ ColumnLayout {
                     color: appMouse.containsMouse ? Config.surface2Color : slotRow.controlColor
 
                     Behavior on color {
+                        enabled: !Config.themeTransitioning
                         ColorAnimation {
                             duration: Config.animDurationShort
                         }

@@ -51,6 +51,7 @@ Rectangle {
     opacity: enabled ? 1 : 0.4
 
     Behavior on color {
+        enabled: !Config.themeTransitioning
         ColorAnimation {
             duration: Config.animDurationShort
         }

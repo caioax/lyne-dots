@@ -46,6 +46,7 @@ RowLayout {
             }
         }
         Behavior on color {
+            enabled: !Config.themeTransitioning
             ColorAnimation {
                 duration: Config.animDurationShort
             }
@@ -117,6 +118,7 @@ RowLayout {
             }
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDurationShort
                 }
@@ -132,6 +134,7 @@ RowLayout {
             color: btn.active || mouseArea.containsMouse ? Config.accentColor : Config.textColor
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDurationShort
                 }

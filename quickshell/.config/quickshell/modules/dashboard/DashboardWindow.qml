@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell
 import QtQuick.Layouts
 import qs.config
 import qs.services
@@ -108,8 +109,10 @@ QsPopupWindow {
 
                     Loader {
                         required property var modelData
+                        required property int index
 
                         width: pages.width
+                        active: root.visible || DashboardService.tabLoaded(index, Quickshell.screens.indexOf(root.screen))
                         sourceComponent: root.tabComponents[modelData.id] ?? null
                     }
                 }

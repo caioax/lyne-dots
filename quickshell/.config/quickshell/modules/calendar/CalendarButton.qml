@@ -64,6 +64,7 @@ BarButton {
             color: root.mainColor
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDuration
                 }

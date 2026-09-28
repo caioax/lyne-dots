@@ -37,6 +37,7 @@ BarButton {
             color: root.active || root.cpu >= 70 ? root.accent : Config.subtextColor
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDuration
                 }

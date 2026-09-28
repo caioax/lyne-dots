@@ -32,6 +32,7 @@ Rectangle {
     border.color: root.focused ? Qt.alpha(Config.accentColor, 0.6) : Config.surface1Color
 
     Behavior on border.color {
+        enabled: !Config.themeTransitioning
         ColorAnimation {
             duration: Config.animDurationShort
         }
@@ -50,6 +51,7 @@ Rectangle {
             color: root.focused ? Config.accentColor : Config.subtextColor
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDurationShort
                 }

@@ -82,12 +82,14 @@ Item {
         border.color: Qt.alpha(root.tone, root.selected ? 0.6 : 0)
 
         Behavior on color {
+            enabled: !Config.themeTransitioning
             ColorAnimation {
                 duration: Config.animDurationShort
             }
         }
 
         Behavior on border.color {
+            enabled: !Config.themeTransitioning
             ColorAnimation {
                 duration: Config.animDurationShort
             }
@@ -213,6 +215,7 @@ Item {
             }
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDurationShort
                 }
@@ -228,6 +231,7 @@ Item {
                 color: button.selected ? Config.textReverseColor : button.hovered ? button.tone : Config.textColor
 
                 Behavior on color {
+                    enabled: !Config.themeTransitioning
                     ColorAnimation {
                         duration: Config.animDurationShort
                     }

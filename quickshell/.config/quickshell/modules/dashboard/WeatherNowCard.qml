@@ -16,6 +16,7 @@ Card {
     color: mouse.containsMouse ? Config.cardHoverColor : Config.cardColor
 
     Behavior on color {
+        enabled: !Config.themeTransitioning
         ColorAnimation {
             duration: Config.animDurationShort
         }

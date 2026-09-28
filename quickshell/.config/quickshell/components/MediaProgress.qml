@@ -117,9 +117,13 @@ RowLayout {
                 loops: Animation.Infinite
             }
 
+            // Canvas colors aren't bindings: repaint when the theme changes
+            readonly property color strokeColor: Config.accentColor
+
             onPhaseChanged: requestPaint()
             onAmplitudeChanged: requestPaint()
             onWidthChanged: requestPaint()
+            onStrokeColorChanged: requestPaint()
 
             Connections {
                 target: progressFill
@@ -135,7 +139,7 @@ RowLayout {
                 if (end <= 0)
                     return;
                 const mid = height / 2;
-                ctx.strokeStyle = Config.accentColor;
+                ctx.strokeStyle = strokeColor;
                 ctx.lineWidth = root.lineWidth;
                 ctx.lineCap = "round";
                 ctx.lineJoin = "round";

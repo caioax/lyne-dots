@@ -17,6 +17,7 @@ Rectangle {
     color: Qt.alpha(accent, 0.12)
 
     Behavior on color {
+        enabled: !Config.themeTransitioning
         ColorAnimation {
             duration: Config.animDuration
         }

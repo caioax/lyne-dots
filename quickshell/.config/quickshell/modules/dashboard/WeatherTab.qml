@@ -241,7 +241,11 @@ ColumnLayout {
                 id: curve
                 anchors.fill: parent
 
+                // Canvas colors aren't bindings: repaint when the theme changes
+                readonly property color lineColor: Config.accentColor
+
                 onWidthChanged: requestPaint()
+                onLineColorChanged: requestPaint()
                 Connections {
                     target: WeatherService
                     function onHourlyChanged() {
@@ -271,18 +275,18 @@ ColumnLayout {
                     ctx.lineTo(pts[0][0], bottom);
                     ctx.closePath();
                     const grad = ctx.createLinearGradient(0, hoursArea.curveTop, 0, bottom);
-                    grad.addColorStop(0, Qt.alpha(Config.accentColor, 0.4));
-                    grad.addColorStop(1, Qt.alpha(Config.accentColor, 0));
+                    grad.addColorStop(0, Qt.alpha(lineColor, 0.4));
+                    grad.addColorStop(1, Qt.alpha(lineColor, 0));
                     ctx.fillStyle = grad;
                     ctx.fill();
 
                     ctx.beginPath();
                     path();
-                    ctx.strokeStyle = Config.accentColor;
+                    ctx.strokeStyle = lineColor;
                     ctx.lineWidth = 2;
                     ctx.stroke();
 
-                    ctx.fillStyle = Config.accentColor;
+                    ctx.fillStyle = lineColor;
                     for (const p of pts) {
                         ctx.beginPath();
                         ctx.arc(p[0], p[1], 3, 0, Math.PI * 2);

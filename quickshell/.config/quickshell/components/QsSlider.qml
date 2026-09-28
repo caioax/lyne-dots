@@ -32,6 +32,7 @@ Item {
     Layout.fillWidth: true
 
     Behavior on fillColor {
+        enabled: !Config.themeTransitioning
         ColorAnimation {
             duration: Config.animDurationShort
         }
@@ -57,6 +58,7 @@ Item {
             color: iconMouse.containsMouse ? Config.surface2Color : Config.surface1Color
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDurationShort
                 }

@@ -32,6 +32,7 @@ Item {
         color: tileMouse.containsMouse ? Config.surface2Color : Config.surface1Color
 
         Behavior on color {
+            enabled: !Config.themeTransitioning
             ColorAnimation {
                 duration: Config.animDurationShort
             }

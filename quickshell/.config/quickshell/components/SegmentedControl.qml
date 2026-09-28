@@ -74,6 +74,7 @@ Rectangle {
                         color: segment.active ? Config.textReverseColor : segmentMouse.containsMouse ? Config.textColor : Config.subtextColor
 
                         Behavior on color {
+                            enabled: !Config.themeTransitioning
                             ColorAnimation {
                                 duration: Config.animDurationShort
                             }

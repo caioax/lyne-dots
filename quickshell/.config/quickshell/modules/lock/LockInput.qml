@@ -35,6 +35,7 @@ ColumnLayout {
         }
 
         Behavior on border.color {
+            enabled: !Config.themeTransitioning
             ColorAnimation {
                 duration: Config.animDurationShort
             }
@@ -203,6 +204,7 @@ ColumnLayout {
             color: LockService.buffer !== "" ? Config.accentColor : submitMouse.containsMouse ? Config.cardHoverColor : Qt.alpha(Config.cardHoverColor, 0)
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDurationShort
                 }

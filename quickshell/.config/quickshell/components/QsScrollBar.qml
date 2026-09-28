@@ -24,6 +24,7 @@ ScrollBar {
         visible: root.size < 1
 
         Behavior on color {
+            enabled: !Config.themeTransitioning
             ColorAnimation {
                 duration: Config.animDurationShort
             }

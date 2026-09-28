@@ -169,6 +169,7 @@ Popup {
                 color: current ? Qt.alpha(Config.accentColor, 0.15) : rowMouse.containsMouse ? hoverTint : Qt.alpha(hoverTint, 0)
 
                 Behavior on color {
+                    enabled: !Config.themeTransitioning
                     ColorAnimation {
                         duration: Config.animDurationShort
                     }

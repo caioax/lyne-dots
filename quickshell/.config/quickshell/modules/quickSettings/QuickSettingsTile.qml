@@ -30,6 +30,7 @@ Rectangle {
     }
 
     Behavior on color {
+        enabled: !Config.themeTransitioning
         ColorAnimation {
             duration: Config.animDurationShort
         }
@@ -64,6 +65,7 @@ Rectangle {
             color: root.active ? Config.accentColor : Config.surface2Color
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDurationShort
                 }

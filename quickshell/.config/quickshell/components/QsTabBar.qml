@@ -56,6 +56,7 @@ Item {
                     color: mouse.containsMouse && !tab.current ? Config.cardHoverColor : Qt.alpha(Config.cardHoverColor, 0)
 
                     Behavior on color {
+                        enabled: !Config.themeTransitioning
                         ColorAnimation {
                             duration: Config.animDurationShort
                         }
@@ -74,6 +75,7 @@ Item {
                         color: tab.current ? Config.accentColor : Config.subtextColor
 
                         Behavior on color {
+                            enabled: !Config.themeTransitioning
                             ColorAnimation {
                                 duration: Config.animDurationShort
                             }
@@ -88,6 +90,7 @@ Item {
                         color: tab.current ? Config.textColor : Config.subtextColor
 
                         Behavior on color {
+                            enabled: !Config.themeTransitioning
                             ColorAnimation {
                                 duration: Config.animDurationShort
                             }

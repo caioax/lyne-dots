@@ -46,6 +46,7 @@ RowLayout {
         color: Qt.alpha(toneColor, indicator.tone === "normal" ? 0.1 : 0.16)
 
         Behavior on color {
+            enabled: !Config.themeTransitioning
             ColorAnimation {
                 duration: Config.animDuration
             }

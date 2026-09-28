@@ -34,6 +34,7 @@ ProgressRing {
             color: root.color
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDuration
                 }

@@ -60,6 +60,7 @@ Item {
             color: root.active || root.connecting ? root.stateColor : Config.surface1Color
 
             Behavior on color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDurationShort
                 }

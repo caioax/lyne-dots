@@ -48,6 +48,7 @@ Rectangle {
         }
 
         Behavior on color {
+            enabled: !Config.themeTransitioning
             ColorAnimation {
                 duration: Config.animDurationShort
             }

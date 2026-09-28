@@ -106,6 +106,7 @@ Item {
             border.color: Qt.alpha(accent, 0.6)
 
             Behavior on border.color {
+                enabled: !Config.themeTransitioning
                 ColorAnimation {
                     duration: Config.animDuration
                 }
