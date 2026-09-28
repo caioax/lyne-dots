@@ -34,7 +34,13 @@ plugins=(
 source $ZSH/oh-my-zsh.sh
 
 # === ENVIRONMENT VARIABLES ===
-[[ -n $SSH_CONNECTION ]] && export EDITOR='vim' || export EDITOR='nvim'
+# Editor chosen in Settings > System > Apps (vim over SSH)
+if [[ -n $SSH_CONNECTION ]]; then
+    export EDITOR='vim'
+else
+    export EDITOR="$(jq -r '.system.editor // empty' ~/.config/quickshell/state.json 2>/dev/null)"
+    [[ -z $EDITOR ]] && export EDITOR='nvim'
+fi
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$PATH:$HOME/.spicetify"
 

@@ -47,7 +47,24 @@ Popup {
         KeybindsService.stopCapture();
     }
 
-    onClosed: stopRecording()
+    onClosed: {
+        stopRecording();
+        picker.close();
+    }
+
+    // Fills the name (when empty) and the command from an installed app
+    readonly property alias picker: picker
+
+    AppPicker {
+        id: picker
+
+        title: "Open an app"
+        onPicked: entry => {
+            if (nameField.text.trim() === "")
+                nameField.text = "Open " + entry.name;
+            commandField.text = AppsService.shellCommandOf(entry);
+        }
+    }
 
     parent: Overlay.overlay
     anchors.centerIn: parent
@@ -85,11 +102,25 @@ Popup {
             placeholder: "Open btop"
         }
 
-        Field {
-            id: commandField
-            label: "Command"
-            placeholder: "kitty -e btop"
-            onAccepted: root.save()
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Config.spacing
+
+            Field {
+                id: commandField
+                label: "Command"
+                placeholder: "Any shell command, or pick an app"
+                onAccepted: root.save()
+            }
+
+            // md-apps
+            ActionButton {
+                Layout.alignment: Qt.AlignBottom
+                size: Config.fontSizeIconSmall + Config.padding * 3
+                icon: "\u{f003b}"
+                text: "Pick app"
+                onClicked: picker.openWith("")
+            }
         }
 
         ColumnLayout {

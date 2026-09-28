@@ -40,6 +40,7 @@ FloatingWindow {
             lock: lockPage,
             idle: idlePage,
             brightness: brightnessPage,
+            apps: appsPage,
             profile: profilePage,
             about: aboutPage
         })
@@ -148,6 +149,11 @@ FloatingWindow {
     Component {
         id: brightnessPage
         BrightnessPage {}
+    }
+
+    Component {
+        id: appsPage
+        AppsPage {}
     }
 
     Component {

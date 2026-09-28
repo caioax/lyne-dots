@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import qs.config
+import qs.services
 import "../rows/"
 import "../../../components/"
 
@@ -103,8 +104,9 @@ ColumnLayout {
             return;
         }
         confirmingUpdate = false;
-        // In a terminal, so the output (and any sudo prompt from migrations) is visible
-        Quickshell.execDetached(["kitty", "--title", "lyne update", "--hold", "lyne", "update"]);
+        // In the default terminal, so the output (and any sudo prompt from
+        // migrations) is visible; it stays open until a key is pressed
+        Quickshell.execDetached(AppsService.terminalArgv(["bash", "-c", 'lyne update; echo; read -rsn1 -p "Press any key to close"']));
     }
 
     function copyInfo() {

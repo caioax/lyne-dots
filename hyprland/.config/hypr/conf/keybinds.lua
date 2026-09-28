@@ -26,9 +26,33 @@ local mainMod = "SUPER"
 -- APPS
 -- ==============================================================================
 
-bind("terminal",     "Apps", "Terminal",     mainMod .. " + return", hl.dsp.exec_cmd(vars.terminal))
-bind("file-manager", "Apps", "File manager", mainMod .. " + D",      hl.dsp.exec_cmd(vars.fileManager))
-bind("browser",      "Apps", "Browser",      mainMod .. " + Z",      hl.dsp.exec_cmd(vars.browser))
+-- The apps are chosen in Settings > System > Apps: local/settings.lua
+-- (generated) calls lyne_apps() with their commands. The binds read them
+-- when pressed, so changing an app doesn't need a rebind
+LYNE_APPS = {
+    terminal     = vars.terminal,
+    file_manager = vars.fileManager,
+    browser      = vars.browser,
+}
+
+function lyne_apps(apps)
+    for key, command in pairs(apps) do
+        LYNE_APPS[key] = command
+    end
+end
+
+local function open(app)
+    return function()
+        local command = LYNE_APPS[app] or ""
+        if command ~= "" then
+            hl.exec_cmd(command)
+        end
+    end
+end
+
+bind("terminal",     "Apps", "Terminal",     mainMod .. " + return", open("terminal"))
+bind("file-manager", "Apps", "File manager", mainMod .. " + D",      open("file_manager"))
+bind("browser",      "Apps", "Browser",      mainMod .. " + Z",      open("browser"))
 
 -- ==============================================================================
 -- WINDOWS

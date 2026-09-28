@@ -152,11 +152,18 @@ ColumnLayout {
     SettingsGroup {
         title: "Apps"
 
-        TextFieldRow {
+        SettingRow {
+            id: terminalRow
+
             label: "Terminal"
-            description: "Runs apps that need a terminal (Terminal=true in their .desktop file)"
-            path: "launcher.terminal"
-            placeholder: "kitty"
+            description: "Apps that need a terminal (Terminal=true in their .desktop file) open in " + AppsService.nameOf("terminal") + ", the default terminal"
+
+            ActionButton {
+                icon: "\u{f003b}"
+                text: "Default apps"
+                baseColor: terminalRow.controlColor
+                onClicked: SettingsService.open("apps")
+            }
         }
     }
 

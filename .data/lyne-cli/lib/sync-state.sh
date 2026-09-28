@@ -29,9 +29,21 @@ fi
 # A user value is only kept when its type matches the default (or the default
 # is null), so keys whose type changed between versions get the new default;
 # getpath is wrapped in try for the same reason.
+#
+# Keys that moved are carried to their new place first (`renames`): the
+# merge would drop the old key, and migrations run after this sync, too late
+# to read it.
+#   launcher.terminal -> apps.terminal (Settings > System > Apps)
 local MERGED
 MERGED=$(jq -s '
-    .[0] as $defaults | .[1] as $old |
+    def renames:
+        if (.launcher.terminal? | type) == "string" and .launcher.terminal != "" and .apps.terminal? == null
+        then .apps.terminal = {
+            command: .launcher.terminal,
+            desktop: (if .launcher.terminal == "kitty" then "kitty" else "" end)
+        }
+        else . end;
+    .[0] as $defaults | (.[1] | renames) as $old |
     $defaults | reduce (
         paths(type != "object") | select(all(.[]; type == "string"))
     ) as $p (

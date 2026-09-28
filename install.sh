@@ -299,19 +299,16 @@ setup_services() {
 setup_mimetypes() {
     log_header "Configuring Default Applications (MIME)"
 
-    if command -v dolphin &>/dev/null; then
-        log_step "Setting Dolphin as default file manager..."
+    # Folders, links and text files open with the default apps of
+    # Settings > System > Apps (Dolphin, Zen Browser and Neovim at first),
+    # and Dolphin's "Open terminal here" uses the default terminal
+    log_step "Setting the default apps for xdg-open..."
+    "$DOTFILES_DIR/quickshell/.config/quickshell/scripts/default-apps.sh" apply-all
 
-        # Set Dolphin to open directories
-        xdg-mime default org.kde.dolphin.desktop inode/directory
-
-        # Update KDE services database
-        if command -v kbuildsycoca6 &>/dev/null; then
-            log_step "Updating KDE services cache..."
-            kbuildsycoca6 >/dev/null 2>&1
-        fi
-    else
-        log_warn "Dolphin not found. Skipping MIME types configuration."
+    # Update KDE services database
+    if command -v kbuildsycoca6 &>/dev/null; then
+        log_step "Updating KDE services cache..."
+        kbuildsycoca6 >/dev/null 2>&1
     fi
 }
 

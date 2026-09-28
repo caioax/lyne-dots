@@ -150,10 +150,17 @@ Singleton {
             category: "System"
         },
         {
+            id: "apps",
+            label: "Apps",
+            icon: "\u{f003b}",
+            description: "Default terminal, file manager, browser and editor, and their shortcuts",
+            category: "System"
+        },
+        {
             id: "profile",
             label: "Profile & Region",
             icon: "\u{f0009}",
-            description: "Profile picture, weather location and default apps",
+            description: "Profile picture, weather location and AUR helper",
             category: "System"
         },
         {

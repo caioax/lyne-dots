@@ -53,6 +53,10 @@ ColumnLayout {
 
     // Called by SettingsWindow before Escape closes the window
     function handleEscape(): bool {
+        if (dialog.picker.opened) {
+            dialog.picker.close();
+            return true;
+        }
         if (dialog.recording) {
             dialog.stopRecording();
             return true;

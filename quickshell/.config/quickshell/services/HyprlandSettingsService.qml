@@ -30,7 +30,7 @@ Singleton {
     readonly property var customBinds: StateService.get("keybinds.custom", [])
     readonly property string bindsLua: {
         // Before the overrides: they may move these binds
-        let out = specialsLua;
+        let out = appsLua + specialsLua;
         if (bindOverrides.length > 0) {
             out += "\n-- Keybinds changed in Settings (lyne_rebind is defined in conf/binds.lua)\n";
             out += "if lyne_rebind then\n";
@@ -45,6 +45,12 @@ Singleton {
                 out += "hl.bind(" + _luaString(c.keys) + ", hl.dsp.exec_cmd(" + _luaString(c.command) + "), { description = " + _luaString(c.description || c.command) + " })\n";
         }
         return out;
+    }
+
+    // Apps opened by the Apps binds (AppsService), read when a bind is pressed
+    readonly property string appsLua: {
+        const apps = AppsService.slots.filter(s => s.luaKey !== "").map(s => s.luaKey + " = " + _luaString(AppsService.commandFor(s.key)));
+        return "\n-- Default apps (lyne_apps is defined in conf/keybinds.lua)\nif lyne_apps then\n    lyne_apps({ " + apps.join(", ") + " })\nend\n";
     }
 
     // Special workspaces (SpecialsService), always written so the file

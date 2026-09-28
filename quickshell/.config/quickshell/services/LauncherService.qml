@@ -19,8 +19,6 @@ Singleton {
     // Index into `entries` (favorites first, then the results)
     property int selectedIndex: 0
 
-    // Runs .desktop entries marked Terminal=true
-    readonly property string terminal: StateService.get("launcher.terminal", "kitty") || "kitty"
     // Most used apps first; off keeps the list alphabetical
     readonly property bool rankByUsage: StateService.get("launcher.rankByUsage", true)
 
@@ -450,7 +448,8 @@ Singleton {
         // execDetached here only takes an argv, so the cd goes in the script
         const dir = entry.workingDirectory || Quickshell.env("HOME");
         const script = "cd '" + dir.replace(/'/g, "'\\''") + "' 2>/dev/null; " + cmd;
-        const command = entry.runInTerminal ? [terminal, "-e", "sh", "-c", script] : ["sh", "-c", script];
+        // Terminal=true entries open in the default terminal (Settings › System › Apps)
+        const command = entry.runInTerminal ? AppsService.terminalArgv(["sh", "-c", script]) : ["sh", "-c", script];
         Quickshell.execDetached(command);
         hide();
     }

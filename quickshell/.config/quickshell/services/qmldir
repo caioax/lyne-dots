@@ -31,3 +31,4 @@ singleton LyricsService LyricsService.qml
 singleton LauncherActions LauncherActions.qml
 singleton DashboardService DashboardService.qml
 singleton CavaService CavaService.qml
+singleton AppsService AppsService.qml

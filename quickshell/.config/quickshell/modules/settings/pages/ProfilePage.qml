@@ -107,14 +107,7 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Apps"
-
-        TextFieldRow {
-            label: "Editor"
-            description: "Command used by lyne state to open the settings file"
-            path: "system.editor"
-            placeholder: "nvim"
-        }
+        title: "Packages"
 
         SelectRow {
             label: "AUR helper"

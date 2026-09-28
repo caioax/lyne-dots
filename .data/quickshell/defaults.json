@@ -3,6 +3,20 @@
         "editor": "nvim",
         "aurHelper": "yay"
     },
+    "apps": {
+        "terminal": {
+            "command": "kitty",
+            "desktop": "kitty"
+        },
+        "fileManager": {
+            "command": "dolphin",
+            "desktop": "org.kde.dolphin"
+        },
+        "browser": {
+            "command": "zen-browser",
+            "desktop": "zen"
+        }
+    },
     "theme": {
         "name": "tokyonight",
         "mode": "preset",
@@ -75,7 +89,6 @@
         "showDescriptions": true,
         "rankByUsage": true,
         "rows": 7,
-        "terminal": "kitty",
         "style": "spotlight",
         "position": "bottom",
         "order": "top"
