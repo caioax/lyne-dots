@@ -35,6 +35,7 @@ FloatingWindow {
             screenshot: screenshotPage,
             windows: windowsPage,
             input: inputPage,
+            specials: specialsPage,
             keybinds: keybindsPage,
             lock: lockPage,
             idle: idlePage,
@@ -132,6 +133,11 @@ FloatingWindow {
     Component {
         id: keybindsPage
         KeybindsPage {}
+    }
+
+    Component {
+        id: specialsPage
+        SpecialsPage {}
     }
 
     Component {

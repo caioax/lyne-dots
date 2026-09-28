@@ -185,6 +185,43 @@
         "overrides": [],
         "custom": []
     },
+    "specials": {
+        "list": [
+            {
+                "id": "whatsapp",
+                "name": "WhatsApp",
+                "icon": "󰖣",
+                "color": "success",
+                "command": "zapzap",
+                "class": "^(com\\.rtosta\\.zapzap)$",
+                "keys": "SUPER + W",
+                "moveKeys": "SUPER + SHIFT + W",
+                "autostart": false
+            },
+            {
+                "id": "music",
+                "name": "Music",
+                "icon": "󰓇",
+                "color": "accent",
+                "command": "spotify",
+                "class": "^([Ss]potify)$",
+                "keys": "SUPER + M",
+                "moveKeys": "SUPER + SHIFT + M",
+                "autostart": false
+            },
+            {
+                "id": "magic",
+                "name": "Scratchpad",
+                "icon": "󰀘",
+                "color": "warning",
+                "command": "",
+                "class": "",
+                "keys": "SUPER + S",
+                "moveKeys": "SUPER + SHIFT + S",
+                "autostart": false
+            }
+        ]
+    },
     "osd": {
         "style": "attached",
         "position": "bottom",

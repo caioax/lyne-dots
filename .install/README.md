@@ -10,7 +10,7 @@ Organized installation scripts for the dotfiles.
 │   ├── core.sh         # Hyprland, UWSM, portal
 │   ├── terminal.sh     # Kitty, Zsh, Tmux
 │   ├── editor.sh       # Neovim + dev tools
-│   ├── apps.sh         # Dolphin, Zen Browser, Spotify
+│   ├── apps.sh         # Dolphin, Zen Browser, Spotify, ZapZap
 │   ├── utils.sh        # Clipboard, audio, bluetooth
 │   ├── fonts.sh        # Nerd Fonts, cursors, icons
 │   ├── quickshell.sh   # QuickShell
@@ -55,7 +55,7 @@ Organized installation scripts for the dotfiles.
 | core       | Hyprland, UWSM, swww, portal (ESSENTIAL)      |
 | terminal   | Kitty, Zsh, Tmux, Fastfetch                    |
 | editor     | Neovim + development tools                     |
-| apps       | Dolphin, Zen Browser, Spotify, mpv              |
+| apps       | Dolphin, Zen Browser, Spotify, ZapZap, mpv     |
 | utils      | Clipboard, audio, bluetooth, brightnessctl     |
 | fonts      | Nerd Fonts, Bibata cursor, Tela icons          |
 | quickshell | QuickShell bar/shell + Qt6                     |

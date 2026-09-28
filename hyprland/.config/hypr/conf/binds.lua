@@ -34,7 +34,10 @@ function M.bind(id, group, description, keys, dispatcher, opts)
     LYNE_BINDS.by_id[id] = entry
     table.insert(LYNE_BINDS.list, entry)
 
-    hl.bind(keys, dispatcher, opts)
+    -- No default keys: listed in Settings, bound once keys are set
+    if keys ~= "" then
+        hl.bind(keys, dispatcher, opts)
+    end
 end
 
 -- "super + shift + q" and "SUPER+SHIFT+Q" are the same combo

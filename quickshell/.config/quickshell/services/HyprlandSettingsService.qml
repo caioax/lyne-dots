@@ -29,7 +29,8 @@ Singleton {
     readonly property var bindOverrides: StateService.get("keybinds.overrides", [])
     readonly property var customBinds: StateService.get("keybinds.custom", [])
     readonly property string bindsLua: {
-        let out = "";
+        // Before the overrides: they may move these binds
+        let out = specialsLua;
         if (bindOverrides.length > 0) {
             out += "\n-- Keybinds changed in Settings (lyne_rebind is defined in conf/binds.lua)\n";
             out += "if lyne_rebind then\n";
@@ -43,6 +44,19 @@ Singleton {
             for (const c of custom)
                 out += "hl.bind(" + _luaString(c.keys) + ", hl.dsp.exec_cmd(" + _luaString(c.command) + "), { description = " + _luaString(c.description || c.command) + " })\n";
         }
+        return out;
+    }
+
+    // Special workspaces (SpecialsService), always written so the file
+    // replaces the defaults of hypr/conf/specials.lua
+    readonly property string specialsLua: {
+        let out = "\n-- Special workspaces (lyne_specials is defined in conf/specials.lua)\n";
+        out += "if lyne_specials then\n    lyne_specials({\n";
+        for (const s of SpecialsService.list) {
+            const fields = [["id", s.id], ["name", s.name], ["command", s.command ?? ""], ["class", s["class"] ?? ""], ["keys", s.keys ?? ""], ["move_keys", s.moveKeys ?? ""]];
+            out += "        { " + fields.map(f => f[0] + " = " + _luaString(f[1])).join(", ") + ", autostart = " + (s.autostart === true) + " },\n";
+        }
+        out += "    })\nend\n";
         return out;
     }
 

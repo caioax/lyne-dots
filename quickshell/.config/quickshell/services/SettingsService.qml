@@ -115,6 +115,13 @@ Singleton {
             category: "Hyprland"
         },
         {
+            id: "specials",
+            label: "Specials",
+            icon: "\u{f0018}",
+            description: "Hidden app workspaces toggled with a shortcut, like WhatsApp and music",
+            category: "Hyprland"
+        },
+        {
             id: "keybinds",
             label: "Keybinds",
             icon: "\u{f030c}",

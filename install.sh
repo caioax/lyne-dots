@@ -135,7 +135,7 @@ show_menu() {
     echo "  1) core                - Hyprland, UWSM, portal (ESSENTIAL)"
     echo "  2) terminal            - Kitty, Zsh, Tmux, Fastfetch"
     echo "  3) editor              - Neovim + development tools"
-    echo "  4) apps                - Dolphin, Zen Browser, Spotify, mpv"
+    echo "  4) apps                - Dolphin, Zen Browser, Spotify, ZapZap, mpv"
     echo "  5) utils               - Clipboard, playerctl, audio, etc"
     echo "  6) fonts               - Nerd Fonts, cursors, icons"
     echo "  7) quickshell          - QuickShell bar/shell"

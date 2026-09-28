@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import qs.config
+import qs.services
 
 // Workspace state for one monitor, shared by every workspace style: the
 // active id, which workspaces hold windows (and which apps), urgency and the
@@ -111,29 +112,20 @@ QtObject {
     readonly property bool specialActive: specialRaw !== ""
     readonly property string specialName: specialRaw.startsWith("special:") ? specialRaw.substring(8) : specialRaw
 
-    readonly property var specialWorkspaces: ({
-            "whatsapp": {
-                icon: "󰖣",
-                color: Config.successColor,
-                name: "WhatsApp"
-            },
-            "spotify": {
-                icon: "󰓇",
-                color: Config.accentColor,
-                name: "Music"
-            },
-            "magic": {
-                icon: "󰀘",
-                color: Config.warningColor,
-                name: "Magic"
-            }
-        })
-
+    // Icon, name and color from Settings › Hyprland › Special workspaces;
+    // specials made elsewhere (hypr/local) get a generic badge
     readonly property var currentSpecialConfig: {
         if (!specialActive)
             return null;
-        return specialWorkspaces[specialName] ?? {
-            icon: "󰀘",
+        const item = SpecialsService.find(specialName);
+        if (item)
+            return {
+                icon: item.icon,
+                color: SpecialsService.colorFor(item.color),
+                name: item.name
+            };
+        return {
+            icon: "\u{f0018}",
             color: Config.accentColor,
             name: specialName.charAt(0).toUpperCase() + specialName.slice(1)
         };
@@ -141,7 +133,7 @@ QtObject {
 
     // Last special shown, kept while the badge animates out so it doesn't
     // flash back to the defaults
-    property string specialIcon: "󰀘"
+    property string specialIcon: "\u{f0018}"
     property string specialLabel: ""
     property color specialColor: Config.accentColor
 

@@ -28,7 +28,8 @@ APPS_PACKAGES=(
 # AUR packages
 APPS_AUR_PACKAGES=(
     "zen-browser-bin" # Zen Browser (Firefox fork)
-    "spotify"         # Spotify music player
+    "spotify"         # Spotify music player (music special workspace)
+    "zapzap"          # WhatsApp client (WhatsApp special workspace)
 
     "qview" # Image viewer
 )

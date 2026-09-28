@@ -5,10 +5,6 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Window-Rules/ for more
 -- See https://wiki.hypr.land/Configuring/Basics/Workspace-Rules/ for workspace rules
 
--- Workspaces especiais
-hl.workspace_rule({ workspace = "special:whatsapp", on_created_empty = "zen-browser --no-remote -P WhatsApp https://web.whatsapp.com/" })
-hl.workspace_rule({ workspace = "special:spotify",  on_created_empty = "spotify" })
-
 -- Ignore maximize requests from all apps
 hl.window_rule({
     name  = "suppress-maximize-events",

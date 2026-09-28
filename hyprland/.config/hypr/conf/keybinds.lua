@@ -70,14 +70,7 @@ hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 -- Workspace management script
 local workspaceManager = vars.scriptPath .. "/Workspace-Manager/workspace-manager.sh"
 
--- --- Special Workspaces (Global) ---
-bind("special-whatsapp", "Workspaces", "Toggle WhatsApp", mainMod .. " + W", hl.dsp.workspace.toggle_special("whatsapp"))
-bind("special-spotify",  "Workspaces", "Toggle Spotify",  mainMod .. " + M", hl.dsp.workspace.toggle_special("spotify"))
-bind("special-magic",    "Workspaces", "Toggle scratchpad", mainMod .. " + S", hl.dsp.workspace.toggle_special("magic"))
-
-bind("move-to-whatsapp", "Workspaces", "Move window to WhatsApp",   mainMod .. " + SHIFT + W", hl.dsp.window.move({ workspace = "special:whatsapp" }))
-bind("move-to-spotify",  "Workspaces", "Move window to Spotify",    mainMod .. " + SHIFT + M", hl.dsp.window.move({ workspace = "special:spotify" }))
-bind("move-to-magic",    "Workspaces", "Move window to scratchpad", mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
+-- Special workspaces (WhatsApp, music, scratchpad) are bound in conf/specials.lua
 
 -- --- Direct Access (1-10) + Move Window (1-10) ---
 -- Switch/move to workspace N on the current monitor (offset calculated by the script)
