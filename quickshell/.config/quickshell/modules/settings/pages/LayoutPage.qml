@@ -109,7 +109,7 @@ ColumnLayout {
 
         ToggleRow {
             label: "Theme color transition"
-            description: "Fade the shell's colors when switching theme or mode. Kitty, GTK/Qt apps and Neovim switch at once"
+            description: "Fade the shell's colors and the window borders when switching theme or mode. Kitty, GTK/Qt apps and Neovim switch at once"
             path: "animations.themeTransition"
         }
 

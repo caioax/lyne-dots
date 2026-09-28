@@ -7,6 +7,7 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import qs.services
 import qs.config
+import "ThemeGenerator.js" as ThemeGenerator
 
 Singleton {
     id: root
@@ -265,33 +266,111 @@ Singleton {
     // Last colors sent to Hyprland; they only live in memory (hyprctl eval),
     // so they are sent again whenever Hyprland reloads its config
     property var _hyprColors: null
+    // Border fade in progress, like the shell's (Config.themeTransition): the
+    // colors it started from and when (ms)
+    property var _hyprFadeFrom: null
+    property real _hyprFadeStart: 0
+    property int _hyprFadeDuration: 0
+    readonly property var _hyprKeys: ["activeBorder", "inactiveBorder", "shadowColor"]
 
     Connections {
         target: Hyprland
 
         function onRawEvent(event) {
             if (event.name === "configreloaded" && root._hyprColors)
-                root._applyHyprland(root._hyprColors);
+                root._applyHyprland(root._hyprColors, false);
         }
     }
 
-    function _applyHyprland(hyprColors) {
-        if (!hyprColors)
+    // "rrggbbaa" (Hyprland) <-> QML color
+    function _hyprToColor(hex: string): color {
+        return Qt.color("#" + hex.substr(6, 2) + hex.substr(0, 6));
+    }
+
+    function _hyprHex(rgba): string {
+        return rgba.map(v => {
+            const n = Math.round(Math.min(1, Math.max(0, v)) * 255);
+            return (n < 16 ? "0" : "") + n.toString(16);
+        }).join("");
+    }
+
+    // Colors Hyprland shows now: mid-fade, the point the fade has reached
+    function _hyprShown() {
+        if (!_hyprFadeFrom || !_hyprColors)
+            return _hyprColors;
+        const t = (Date.now() - _hyprFadeStart) / _hyprFadeDuration;
+        if (t >= 1)
+            return _hyprColors;
+        const shown = {};
+        for (const key of _hyprKeys) {
+            if (_hyprColors[key] && _hyprFadeFrom[key])
+                shown[key] = _hyprHex(ThemeGenerator.mixOklab(ThemeGenerator.colorToOklab(_hyprToColor(_hyprFadeFrom[key])), ThemeGenerator.colorToOklab(_hyprToColor(_hyprColors[key])), _ease(t)));
+            else
+                shown[key] = _hyprColors[key];
+        }
+        return shown;
+    }
+
+    // Easing.InOutQuad, as the shell's fade
+    function _ease(t: real): real {
+        return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    }
+
+    function _hyprLua(colors): string {
+        const parts = [];
+        const col = [];
+        if (colors.activeBorder)
+            col.push("active_border = \"rgba(" + colors.activeBorder + ")\"");
+        if (colors.inactiveBorder)
+            col.push("inactive_border = \"rgba(" + colors.inactiveBorder + ")\"");
+        if (col.length > 0)
+            parts.push("general = { col = { " + col.join(", ") + " } }");
+        if (colors.shadowColor)
+            parts.push("decoration = { shadow = { color = \"rgba(" + colors.shadowColor + ")\" } }");
+        return "{ " + parts.join(", ") + " }";
+    }
+
+    // animate: fade from the colors shown now (theme switches); the first
+    // colors since the shell started and config reloads apply at once. The
+    // fade runs inside Hyprland (an hl.timer stepping through precomputed
+    // colors), so it costs one hyprctl call
+    function _applyHyprland(hyprColors, animate = true) {
+        if (!hyprColors || !_hyprKeys.some(k => hyprColors[k]))
+            return;
+        const from = _hyprShown();
+        const same = from && _hyprKeys.every(k => String(from[k] ?? "").toLowerCase() === String(hyprColors[k] ?? "").toLowerCase());
+        // Re-applying the current theme (state reloads) mustn't cut a fade
+        if (animate && same)
             return;
         _hyprColors = hyprColors;
 
-        const cmds = [];
-        if (hyprColors.activeBorder)
-            cmds.push("hyprctl eval 'hl.config({ general = { col = { active_border = \"rgba(" + hyprColors.activeBorder + ")\" } } })'");
-        if (hyprColors.inactiveBorder)
-            cmds.push("hyprctl eval 'hl.config({ general = { col = { inactive_border = \"rgba(" + hyprColors.inactiveBorder + ")\" } } })'");
-        if (hyprColors.shadowColor)
-            cmds.push("hyprctl eval 'hl.config({ decoration = { shadow = { color = \"rgba(" + hyprColors.shadowColor + ")\" } } })'");
-
-        if (cmds.length > 0) {
-            hyprProc.command = ["bash", "-c", cmds.join(" && ")];
-            hyprProc.running = true;
+        const steps = [];
+        if (animate && from && Config.themeTransition) {
+            _hyprFadeFrom = from;
+            _hyprFadeStart = Date.now();
+            _hyprFadeDuration = Config.themeTransitionDuration;
+            const count = Math.max(1, Math.round(_hyprFadeDuration / 30));
+            for (let i = 1; i <= count; i++) {
+                const step = {};
+                for (const key of _hyprKeys) {
+                    if (hyprColors[key] && from[key])
+                        step[key] = _hyprHex(ThemeGenerator.mixOklab(ThemeGenerator.colorToOklab(_hyprToColor(from[key])), ThemeGenerator.colorToOklab(_hyprToColor(hyprColors[key])), _ease(i / count)));
+                    else
+                        step[key] = hyprColors[key];
+                }
+                steps.push(_hyprLua(step));
+            }
+        } else {
+            _hyprFadeFrom = null;
         }
+
+        let lua = "if lyne_border_fade then lyne_border_fade:set_enabled(false); lyne_border_fade = nil end ";
+        if (steps.length > 1) {
+            lua += "local steps = { " + steps.join(", ") + " } local i = 0 " + "lyne_border_fade = hl.timer(function() i = i + 1 hl.config(steps[i]) " + "if i >= #steps and lyne_border_fade then lyne_border_fade:set_enabled(false); lyne_border_fade = nil end end, " + "{ timeout = " + Math.round(_hyprFadeDuration / steps.length) + ", type = \"repeat\" })";
+        } else {
+            lua += "hl.config(" + _hyprLua(hyprColors) + ")";
+        }
+        Quickshell.execDetached(["hyprctl", "eval", lua]);
     }
 
     function _applyKitty(terminal) {
@@ -721,13 +800,6 @@ Singleton {
             if (exitCode === 0)
                 console.log("[Theme] Theme deleted");
             root.listThemes();
-        }
-    }
-
-    Process {
-        id: hyprProc
-        stderr: SplitParser {
-            onRead: data => console.error("[Theme:Hyprland] " + data)
         }
     }
 
