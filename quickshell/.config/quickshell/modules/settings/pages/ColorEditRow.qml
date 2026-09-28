@@ -6,15 +6,19 @@ import "../rows/"
 import "../../../components/"
 import "../../../services/ThemeGenerator.js" as ThemeGenerator
 
-// One color of a theme being created: swatch + hex field; clicking the row
-// opens lightness / chroma / hue sliders. `overridden` shows a reset to the
-// generated color
+// One color of a theme being created: swatch + hex field; clicking the
+// swatch or the chevron opens the visual picker (OklchPicker). `presets` adds
+// ready-made choices above it, `alwaysOpen` keeps it open. `overridden`
+// shows a reset to the generated color
 SettingRow {
     id: root
 
     property string value: "#000000"
     property bool overridden: false
-    property bool expanded: false
+    property var presets: []
+    property bool alwaysOpen: false
+    property bool open: false
+    readonly property bool expanded: alwaysOpen || open
 
     // Kept while dragging, so the hue doesn't jump when the chroma hits 0
     property var lch: ThemeGenerator.hexToOklch(value)
@@ -22,11 +26,13 @@ SettingRow {
     signal edited(string value)
     signal resetClicked
 
-    function _setLch(key: string, v: real) {
-        const next = Object.assign({}, lch);
-        next[key] = v;
-        lch = next;
-        root.edited(ThemeGenerator.oklch(next.l, next.c, next.h));
+    function _setLch(l: real, c: real, h: real) {
+        lch = {
+            l: l,
+            c: c,
+            h: h
+        };
+        root.edited(ThemeGenerator.oklch(l, c, h));
     }
 
     onValueChanged: {
@@ -44,8 +50,9 @@ SettingRow {
 
         MouseArea {
             anchors.fill: parent
+            enabled: !root.alwaysOpen
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.expanded = !root.expanded
+            onClicked: root.open = !root.open
         }
     }
 
@@ -105,6 +112,7 @@ SettingRow {
 
     // md-chevron_down / md-chevron_up
     Text {
+        visible: !root.alwaysOpen
         text: root.expanded ? "\u{f0143}" : "\u{f0140}"
         font.family: Config.font
         font.pixelSize: Config.fontSizeIconSmall
@@ -116,77 +124,66 @@ SettingRow {
             anchors.margins: -Config.padding
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.expanded = !root.expanded
+            onClicked: root.open = !root.open
         }
     }
 
     belowVisible: expanded
-    below: GridLayout {
+    below: Column {
         width: parent.width
-        columns: 3
-        columnSpacing: Config.spacing
-        rowSpacing: Config.padding
+        spacing: Config.spacing
 
-        Repeater {
-            model: [
-                {
-                    key: "l",
-                    label: "Lightness",
-                    to: 1,
-                    format: v => Math.round(v * 100) + "%"
-                },
-                {
-                    key: "c",
-                    label: "Colorfulness",
-                    to: 0.37,
-                    format: v => Math.round(v / 0.37 * 100) + "%"
-                },
-                {
-                    key: "h",
-                    label: "Hue",
-                    to: 360,
-                    format: v => Math.round(v) + "°"
-                }
-            ]
+        Flow {
+            visible: root.presets.length > 0
+            width: parent.width
+            spacing: Config.padding
 
-            ColumnLayout {
-                id: slider
+            Repeater {
+                model: root.presets
 
-                required property var modelData
+                Rectangle {
+                    id: preset
 
-                Layout.fillWidth: true
-                spacing: Math.round(Config.padding / 2)
+                    required property string modelData
+                    readonly property bool active: modelData === String(root.value).toLowerCase()
 
-                RowLayout {
-                    Layout.fillWidth: true
+                    width: Config.fontSizeIconSmall + Config.padding
+                    height: width
+                    radius: width / 2
+                    color: modelData
+                    border.width: active ? 2 : presetMouse.containsMouse ? 1 : 0
+                    border.color: Config.textColor
 
+                    // md-check
                     Text {
-                        Layout.fillWidth: true
-                        text: slider.modelData.label
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeSmall
-                        color: Config.subtextColor
-                    }
-
-                    Text {
-                        text: slider.modelData.format(root.lch[slider.modelData.key])
+                        visible: preset.active
+                        anchors.centerIn: parent
+                        text: "\u{f012c}"
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeSmall
                         font.bold: true
-                        color: Config.subtextColor
+                        color: ThemeGenerator.contrast(preset.modelData, "#000000") > 7 ? "#000000" : "#ffffff"
+                    }
+
+                    MouseArea {
+                        id: presetMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.edited(preset.modelData)
                     }
                 }
+            }
+        }
 
-                QsSlider {
-                    Layout.fillWidth: true
-                    value: root.lch[slider.modelData.key]
-                    from: 0
-                    to: slider.modelData.to
-                    stepSize: slider.modelData.to / 200
-                    showPercentage: false
-                    wheelEnabled: false
-                    onMoved: v => root._setLch(slider.modelData.key, v)
-                }
+        // Only built while shown: one shader pair per open row
+        Loader {
+            width: parent.width
+            active: root.expanded
+
+            sourceComponent: OklchPicker {
+                lch: root.lch
+                onPicked: (l, c, h) => root._setLch(l, c, h)
             }
         }
     }

@@ -459,25 +459,15 @@ ColumnLayout {
                     }
                 }
 
-                // Color: curated accents
-                SettingRow {
+                // Color: curated accents, or any color picked by eye
+                ColorEditRow {
                     visible: root.source === "color"
                     label: "Accent"
-                    description: "Or type any color in Colors › Accent"
-
-                    below: Flow {
-                        width: parent.width
-                        spacing: Config.padding
-
-                        Repeater {
-                            model: root.swatches
-
-                            Swatch {
-                                required property string modelData
-                                hex: modelData
-                            }
-                        }
-                    }
+                    description: "Pick one, drag to any color or type its hex"
+                    presets: root.swatches
+                    alwaysOpen: true
+                    value: root.seed.accent
+                    onEdited: value => root.setSeed("accent", value)
                 }
 
                 // Wallpaper: which one, and its colors
@@ -528,12 +518,9 @@ ColumnLayout {
                             }
                         }
 
-                        // Library picker
+                        // Library picker. Cells fill the columns evenly: a
+                        // width derived from the grid's collapses it to 0
                         GridLayout {
-                            id: wallGrid
-
-                            readonly property real cell: (width - columnSpacing * 3) / 4
-
                             visible: root.pickingWallpaper
                             Layout.fillWidth: true
                             columns: 4
@@ -547,13 +534,15 @@ ColumnLayout {
                                     id: thumb
 
                                     required property string modelData
+                                    readonly property bool active: modelData === root.wallpaperPath
 
-                                    Layout.preferredWidth: wallGrid.cell
-                                    Layout.preferredHeight: Math.round(wallGrid.cell * 9 / 16)
+                                    Layout.fillWidth: true
+                                    Layout.preferredWidth: 1
+                                    Layout.preferredHeight: Math.round(width * 9 / 16)
                                     radius: Config.radius
                                     color: Config.surface1Color
-                                    border.width: modelData === root.wallpaperPath ? 2 : 0
-                                    border.color: Config.accentColor
+                                    border.width: active ? 2 : thumbMouse.containsMouse ? 1 : 0
+                                    border.color: active ? Config.accentColor : Config.textColor
 
                                     Image {
                                         anchors.fill: parent
@@ -564,7 +553,9 @@ ColumnLayout {
                                     }
 
                                     MouseArea {
+                                        id: thumbMouse
                                         anchors.fill: parent
+                                        hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {
                                             root.wallpaperPath = thumb.modelData;

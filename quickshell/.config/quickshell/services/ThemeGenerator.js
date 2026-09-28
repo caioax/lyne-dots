@@ -85,24 +85,32 @@ function _inGamut(lin) {
     return lin.every(v => v >= -0.0001 && v <= 1.0001);
 }
 
+function _lchToLinear(l, c, h) {
+    const rad = h * Math.PI / 180;
+    return _oklabToLinear([l, c * Math.cos(rad), c * Math.sin(rad)]);
+}
+
+// Highest chroma (up to `limit`) that still fits sRGB at this lightness and hue
+function maxChroma(l, h, limit) {
+    l = Math.min(1, Math.max(0, l));
+    let lo = 0, hi = limit === undefined ? 0.4 : limit;
+    if (_inGamut(_lchToLinear(l, hi, h)))
+        return hi;
+    for (let i = 0; i < 24; i++) {
+        const mid = (lo + hi) / 2;
+        if (_inGamut(_lchToLinear(l, mid, h)))
+            lo = mid;
+        else
+            hi = mid;
+    }
+    return lo;
+}
+
 // OKLCH -> hex; out-of-gamut colors keep their lightness and hue and lose
 // chroma until they fit
 function oklch(l, c, h) {
     l = Math.min(1, Math.max(0, l));
-    const rad = h * Math.PI / 180;
-    const at = chroma => _oklabToLinear([l, chroma * Math.cos(rad), chroma * Math.sin(rad)]);
-    let lin = at(c);
-    if (!_inGamut(lin)) {
-        let lo = 0, hi = c;
-        for (let i = 0; i < 24; i++) {
-            const mid = (lo + hi) / 2;
-            if (_inGamut(at(mid)))
-                lo = mid;
-            else
-                hi = mid;
-        }
-        lin = at(lo);
-    }
+    const lin = _lchToLinear(l, maxChroma(l, h, c), h);
     return rgbToHex(lin.map(v => _toSrgb(Math.min(1, Math.max(0, v)))));
 }
 
