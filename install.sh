@@ -322,7 +322,7 @@ setup_wallpaper() {
     fi
     # Fallback to default if .current doesn't exist or points to a missing file
     if [[ -z "$WALLPAPER" || ! -f "$WALLPAPER" ]]; then
-        WALLPAPER="$HOME/.local/wallpapers/water.png"
+        WALLPAPER="$HOME/.local/wallpapers/themes/tokyonight/lyne-tokyonight-lake.jpg"
     fi
 
     # Check if awww is installed

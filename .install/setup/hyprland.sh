@@ -271,17 +271,13 @@ setup_wallpapers() {
     file_count=$(find "$WALLPAPERS_DIR" -maxdepth 1 -type f \( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' -o -name '*.webp' -o -name '*.gif' \) 2>/dev/null | wc -l)
 
     if [[ "$file_count" -eq 0 ]]; then
-        if [[ -d "$WALLPAPERS_DATA" ]]; then
-            # Copy root-level wallpapers
-            find "$WALLPAPERS_DATA" -maxdepth 1 -type f \( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' -o -name '*.webp' -o -name '*.gif' \) -exec cp -n {} "$WALLPAPERS_DIR/" \;
-
-            # Copy theme wallpaper folders (themes/{name}/*.jpg)
-            if [[ -d "$WALLPAPERS_DATA/themes" ]]; then
-                cp -rn "$WALLPAPERS_DATA/themes" "$WALLPAPERS_DIR/"
-                log_info "  Initial wallpapers + theme folders copied from .data/wallpapers/"
-            else
-                log_info "  Initial wallpapers copied from .data/wallpapers/"
-            fi
+        if [[ -d "$WALLPAPERS_DATA/themes" ]]; then
+            # Theme wallpaper folders (themes/{name}/lyne-{name}-{scene}.jpg,
+            # made by .data/wallpapers/generator/generate.py)
+            cp -rn "$WALLPAPERS_DATA/themes" "$WALLPAPERS_DIR/"
+            # Each theme's default (lake) also goes to the root, the "all" view
+            cp -n "$WALLPAPERS_DATA"/themes/*/lyne-*-lake.jpg "$WALLPAPERS_DIR/"
+            log_info "  Theme wallpapers copied from .data/wallpapers/"
         else
             log_warn "  Initial wallpapers directory not found: $WALLPAPERS_DATA"
         fi
