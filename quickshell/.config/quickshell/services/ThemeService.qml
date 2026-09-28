@@ -196,6 +196,33 @@ Singleton {
         previewProc.running = true;
     }
 
+    // Writes ~/.local/themes/<slug>.json (atomically) and refreshes the list;
+    // apply switches to it once written. wallpaperFrom: an image copied first
+    // to ~/.local/wallpapers/<data.wallpaper>. Emits themeSaved or
+    // themeSaveFailed
+    function saveTheme(slug: string, data, apply: bool, wallpaperFrom = "") {
+        const path = themesDir + "/" + slug + ".json";
+        const wallpaperTo = wallpaperFrom !== "" && data.wallpaper ? wallpaperDir + "/" + data.wallpaper : "";
+        saveThemeComponent.createObject(root, {
+            slug: slug,
+            apply: apply,
+            command: ["sh", "-c", "if [ -n \"$3\" ]; then mkdir -p \"$(dirname \"$4\")\" && { [ \"$3\" -ef \"$4\" ] || cp -f \"$3\" \"$4\"; } || exit 1; fi; " + "mkdir -p \"$(dirname \"$2\")\" && printf '%s\\n' \"$1\" > \"$2.tmp\" && mv \"$2.tmp\" \"$2\"", "sh", JSON.stringify(data, null, 2), path, wallpaperFrom, wallpaperTo]
+        });
+    }
+
+    // Removes a custom theme and its wallpaper folder. The theme in use can't
+    // be deleted (switch first)
+    function deleteTheme(slug: string) {
+        const preview = themePreviews[slug];
+        if (!preview || !preview.custom || slug === currentThemeName)
+            return;
+        deleteThemeProc.command = ["sh", "-c", "rm -f -- \"$1\" && rm -rf -- \"$2\"", "sh", themesDir + "/" + slug + ".json", wallpaperDir + "/themes/" + slug];
+        deleteThemeProc.running = true;
+    }
+
+    signal themeSaved(string slug)
+    signal themeSaveFailed(string slug)
+
     // ========================================================================
     // INTERNAL
     // ========================================================================
@@ -638,6 +665,8 @@ Singleton {
                         name: data.name || themeName,
                         palette: data.palette || {},
                         terminal: data.terminal || {},
+                        custom: data.custom === true,
+                        seed: data.seed || null,
                         wallpaper: data.wallpaper || "",
                         variant: data.variant || "dark",
                         lightPair: data.lightPair || "",
@@ -651,6 +680,47 @@ Singleton {
             root.themePreviews = previews;
             console.log("[Theme] Loaded previews for", Object.keys(previews).length, "themes");
             _buffer = "";
+        }
+    }
+
+    Component {
+        id: saveThemeComponent
+
+        Process {
+            id: saveProc
+
+            property string slug
+            property bool apply
+
+            running: true
+            stderr: SplitParser {
+                onRead: data => console.error("[Theme:Save] " + data)
+            }
+            onExited: exitCode => {
+                if (exitCode === 0) {
+                    console.log("[Theme] Saved theme:", slug);
+                    root.listThemes();
+                    // Edits to the theme in use keep the user's opacity and
+                    // wallpaper
+                    if (apply && slug === root.currentThemeName && !root.isAutoMode)
+                        root.applyTheme(slug, true);
+                    else if (apply)
+                        root.setPresetMode(slug);
+                    root.themeSaved(slug);
+                } else {
+                    root.themeSaveFailed(slug);
+                }
+                destroy();
+            }
+        }
+    }
+
+    Process {
+        id: deleteThemeProc
+        onExited: exitCode => {
+            if (exitCode === 0)
+                console.log("[Theme] Theme deleted");
+            root.listThemes();
         }
     }
 

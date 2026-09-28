@@ -25,6 +25,8 @@ ColumnLayout {
     readonly property string activePath: WallpaperService.themeWallpaperPath(theme)
     readonly property bool linked: WallpaperService.dynamicWallpaper && !ThemeService.isAutoMode
     property bool pickingFromLibrary: false
+    property bool confirmingDelete: false
+    readonly property bool custom: preview.custom === true
 
     // Library wallpapers that aren't in the theme's folder yet
     readonly property var libraryChoices: {
@@ -33,6 +35,8 @@ ColumnLayout {
     }
 
     signal back
+    signal editRequested
+    signal duplicateRequested
 
     function displayFileName(path: string): string {
         const name = WallpaperService.fileName(path);
@@ -47,6 +51,7 @@ ColumnLayout {
 
     onThemeChanged: {
         pickingFromLibrary = false;
+        confirmingDelete = false;
         WallpaperService.refreshThemeWallpapers(theme);
     }
     Component.onCompleted: {
@@ -93,10 +98,44 @@ ColumnLayout {
         }
     }
 
+    ContextMenu {
+        id: themeMenu
+
+        items: [
+            {
+                label: "Edit colors",
+                icon: "\u{f03eb}",
+                action: "edit",
+                hidden: !root.custom
+            },
+            {
+                label: "Duplicate",
+                icon: "\u{f0191}",
+                action: "duplicate"
+            },
+            {
+                label: "Delete",
+                icon: "\u{f09e7}",
+                action: "delete",
+                danger: true,
+                hidden: !root.custom
+            }
+        ].filter(item => !item.hidden)
+
+        onTriggered: action => {
+            if (action === "edit")
+                root.editRequested();
+            else if (action === "duplicate")
+                root.duplicateRequested();
+            else if (action === "delete")
+                root.confirmingDelete = true;
+        }
+    }
+
     PageHeader {
         title: root.displayName
         subtitle: {
-            const kind = root.preview.variant === "light" ? "Light theme" : "Dark theme";
+            const kind = (root.preview.variant === "light" ? "Light" : "Dark") + (root.custom ? " · made by you" : " theme");
             return root.inUse ? kind + " · in use" : kind;
         }
         icon: "\u{f03d8}"
@@ -110,6 +149,53 @@ ColumnLayout {
             hoverColor: Qt.lighter(Config.accentColor, 1.1)
             textColor: Config.textReverseColor
             onClicked: ThemeService.setPresetMode(root.theme)
+        }
+
+        // md-pencil: custom themes open straight in the editor
+        ActionButton {
+            visible: root.custom
+            icon: "\u{f03eb}"
+            text: "Edit"
+            onClicked: root.editRequested()
+        }
+
+        ActionButton {
+            id: themeMenuButton
+            icon: "\u{f01d9}"
+            onClicked: themeMenu.openAt(themeMenuButton, root.theme)
+        }
+    }
+
+    // Delete confirmation (custom themes)
+    SettingsGroup {
+        visible: root.confirmingDelete
+
+        SettingRow {
+            id: deleteRow
+
+            label: "Delete " + root.displayName + "?"
+            description: root.inUse ? "It's the theme in use: switch to another one first" : "Its file and its wallpaper folder are removed"
+            descriptionColor: root.inUse ? Config.warningColor : Config.subtextColor
+
+            ActionButton {
+                text: "Cancel"
+                baseColor: deleteRow.controlColor
+                onClicked: root.confirmingDelete = false
+            }
+
+            ActionButton {
+                visible: !root.inUse
+                icon: "\u{f09e7}"
+                text: "Delete"
+                baseColor: Config.errorColor
+                hoverColor: Qt.lighter(Config.errorColor, 1.1)
+                textColor: Config.textReverseColor
+                onClicked: {
+                    ThemeService.deleteTheme(root.theme);
+                    root.confirmingDelete = false;
+                    root.back();
+                }
+            }
         }
     }
 

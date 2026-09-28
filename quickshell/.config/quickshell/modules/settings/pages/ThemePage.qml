@@ -16,12 +16,23 @@ ColumnLayout {
     readonly property int columns: 3
     // Theme shown in the detail view, "" for the grid
     property string detail: ""
-    // New theme view
+    // New theme view; createEdit / createFrom open it on a custom theme to
+    // edit, or on a theme to duplicate
     property bool creating: false
+    property string createEdit: ""
+    property string createFrom: ""
     readonly property bool onGrid: detail === "" && !creating
 
     function openDetail(themeName: string) {
         detail = themeName;
+        scrollToTop();
+    }
+
+    function openCreator(editSlug: string, fromSlug: string) {
+        createEdit = editSlug;
+        createFrom = fromSlug;
+        detail = "";
+        creating = true;
         scrollToTop();
     }
 
@@ -39,6 +50,8 @@ ColumnLayout {
     function handleEscape(): bool {
         if (onGrid)
             return false;
+        if (creating && creatorLoader.item?.confirmLeave())
+            return true;
         detail = "";
         creating = false;
         scrollToTop();
@@ -68,16 +81,26 @@ ColumnLayout {
         Layout.fillWidth: true
         theme: root.detail
         onBack: root.handleEscape()
+        onEditRequested: root.openCreator(root.detail, "")
+        onDuplicateRequested: root.openCreator("", root.detail)
     }
 
     // Created on demand, so each visit starts from fresh picks
     Loader {
+        id: creatorLoader
+
         active: root.creating
         visible: active
         Layout.fillWidth: true
 
         sourceComponent: ThemeCreator {
+            editSlug: root.createEdit
+            duplicateFrom: root.createFrom
             onBack: root.handleEscape()
+            onSaved: slug => {
+                root.creating = false;
+                root.openDetail(slug);
+            }
         }
     }
 
@@ -202,10 +225,7 @@ ColumnLayout {
                 icon: "\u{f0415}"
                 text: "New theme"
                 baseColor: createRow.controlColor
-                onClicked: {
-                    root.creating = true;
-                    root.scrollToTop();
-                }
+                onClicked: root.openCreator("", "")
             }
         }
 

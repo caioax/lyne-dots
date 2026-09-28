@@ -15,6 +15,8 @@
 //   vibrance    0-1, chroma of the status and terminal colors
 //   harmony     0-1, how far the status and terminal hues lean to the accent
 // }
+// overrides: { palette: { key: "#hex" }, terminal: { key: "#hex" } } set by
+// hand; the terminal is derived from the palette after its overrides
 
 // ---------------------------------------------------------------- color math
 function _toLinear(c) {
@@ -179,7 +181,7 @@ function _readable(c, lo, hi, towardsLight, ok) {
     return oklch(l, c.c, c.h);
 }
 
-function generate(seed) {
+function generate(seed, overrides) {
     const scheme = seed.scheme === "light" ? "light" : "dark";
     const lv = _LEVELS[scheme];
     const tint = _clamp(seed.tint ?? 0.5, 0, 1);
@@ -213,7 +215,7 @@ function generate(seed) {
     const subtext = neutral(lv.subtext, 0.9);
     const muted = neutral(lv.muted, 1.4);
 
-    const palette = {
+    const palette = Object.assign({
         background: background,
         surface0: surface0,
         surface1: surface1,
@@ -230,23 +232,23 @@ function generate(seed) {
         muted: muted,
         greyBlue: oklch(lv.greyBlue, Math.max(nC * 1.5, 0.04 + 0.03 * tint), accHue),
         blueDark: neutral(lv.blueDark, 0.8)
-    };
+    }, overrides?.palette ?? {});
 
     const ansi = (name, bright) => tone(name, bright ? lv.ansiBright : lv.ansi, bright ? 0.95 : 1);
-    const terminal = {
-        background: background,
-        foreground: text,
-        selectionBackground: surface2,
-        selectionForeground: text,
+    const terminal = Object.assign({
+        background: palette.background,
+        foreground: palette.text,
+        selectionBackground: palette.surface2,
+        selectionForeground: palette.text,
         urlColor: ansi("cyan", false),
-        cursor: text,
-        cursorTextColor: background,
-        activeTabBackground: accent,
-        activeTabForeground: background,
-        inactiveTabBackground: surface1,
-        inactiveTabForeground: muted,
-        activeBorderColor: accent,
-        inactiveBorderColor: surface1,
+        cursor: palette.text,
+        cursorTextColor: palette.background,
+        activeTabBackground: palette.accent,
+        activeTabForeground: palette.background,
+        inactiveTabBackground: palette.surface1,
+        inactiveTabForeground: palette.muted,
+        activeBorderColor: palette.accent,
+        inactiveBorderColor: palette.surface1,
         color0: neutral(lv.color0, 1.2),
         color1: ansi("red", false),
         color2: ansi("green", false),
@@ -254,7 +256,7 @@ function generate(seed) {
         color4: ansi("blue", false),
         color5: ansi("magenta", false),
         color6: ansi("cyan", false),
-        color7: subtext,
+        color7: palette.subtext,
         color8: neutral(lv.color8, 1.4),
         color9: ansi("red", true),
         color10: ansi("green", true),
@@ -262,10 +264,10 @@ function generate(seed) {
         color12: ansi("blue", true),
         color13: ansi("magenta", true),
         color14: ansi("cyan", true),
-        color15: text,
+        color15: palette.text,
         color16: tone("orange", lv.ansi + 0.02),
         color17: tone("red", scheme === "dark" ? 0.60 : 0.50, 1.1)
-    };
+    }, overrides?.terminal ?? {});
 
     const bare = hex => hex.replace("#", "");
     return {
@@ -274,21 +276,146 @@ function generate(seed) {
         custom: true,
         seed: {
             accent: seed.accent,
+            scheme: scheme,
             exactAccent: !!seed.exactAccent,
             tint: tint,
             neutralHue: seed.neutralHue ?? null,
             vibrance: vibrance,
-            harmony: harmony
+            harmony: harmony,
+            overrides: {
+                palette: Object.assign({}, overrides?.palette ?? {}),
+                terminal: Object.assign({}, overrides?.terminal ?? {})
+            }
         },
         palette: palette,
         opacity: {
             background: scheme === "dark" ? 0.9 : 0.95
         },
         hyprland: {
-            activeBorder: bare(accent) + "ff",
-            inactiveBorder: bare(surface3) + "aa",
+            activeBorder: bare(palette.accent) + "ff",
+            inactiveBorder: bare(palette.surface3) + "aa",
             shadowColor: bare(palette.blueDark) + "ee"
         },
         terminal: terminal
     };
+}
+
+// ---------------------------------------------------------------- helpers
+// Seed that recreates a theme's look: its accent, scheme, background hue and
+// tint (for themes that weren't made here)
+function seedFromTheme(theme) {
+    if (theme.seed && theme.seed.accent)
+        return Object.assign({}, theme.seed, {
+            name: theme.name
+        });
+    const pal = theme.palette ?? {};
+    const bg = hexToOklch(pal.background ?? "#1a1b26");
+    const scheme = theme.variant === "light" ? "light" : "dark";
+    return {
+        name: theme.name,
+        scheme: scheme,
+        accent: pal.accent ?? "#7aa2f7",
+        exactAccent: true,
+        tint: _clamp(bg.c / (scheme === "dark" ? 0.05 : 0.025), 0, 1),
+        neutralHue: bg.c < 0.004 ? null : bg.h,
+        vibrance: 0.5,
+        harmony: 0.15
+    };
+}
+
+// Moves `fg` in lightness, away from `bg`, until their contrast reaches
+// `min`; hue and chroma stay
+function fixContrast(fg, bg, min) {
+    const c = hexToOklch(fg);
+    const lighter = hexToOklch(bg).l < 0.5;
+    return _readable(c, lighter ? c.l : 0, lighter ? 1 : c.l, lighter, hex => contrast(hex, bg) >= min);
+}
+
+// Contrast checks shown while creating a theme: { id, label, fg, bg, ratio,
+// min, ok, fixKey (palette key the Fix button changes) }
+function checks(theme) {
+    const p = theme.palette, t = theme.terminal;
+    const list = [
+        {
+            id: "text",
+            label: "Text on the background",
+            fg: "text",
+            bg: "background",
+            min: 7
+        },
+        {
+            id: "subtext",
+            label: "Secondary text",
+            fg: "subtext",
+            bg: "background",
+            min: 4.5
+        },
+        {
+            id: "cards",
+            label: "Text on cards",
+            fg: "text",
+            bg: "surface1",
+            min: 4.5
+        },
+        {
+            id: "accent",
+            label: "Accent as text",
+            fg: "accent",
+            bg: "background",
+            min: 3
+        },
+        {
+            id: "onAccent",
+            label: "Text on accent buttons",
+            fg: "textReverse",
+            bg: "accent",
+            min: 4.5,
+            fixKey: "accent"
+        }
+    ].map(ch => {
+        const ratio = contrast(p[ch.fg], p[ch.bg]);
+        return Object.assign(ch, {
+            ratio: ratio,
+            ok: ratio >= ch.min,
+            fixKey: ch.fixKey ?? ch.fg,
+            fixSection: "palette"
+        });
+    });
+
+    // Weakest of the terminal colors 1-6 and 9-14 on the terminal background
+    let worst = null;
+    for (const i of [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14]) {
+        const ratio = contrast(t["color" + i], t.background);
+        if (!worst || ratio < worst.ratio)
+            worst = {
+                key: "color" + i,
+                ratio: ratio
+            };
+    }
+    list.push({
+        id: "ansi",
+        label: "Terminal colors (weakest: " + worst.key + ")",
+        ratio: worst.ratio,
+        min: 3,
+        ok: worst.ratio >= 3,
+        fixKey: worst.key,
+        fixSection: "terminal"
+    });
+    return list;
+}
+
+// The color the Fix button of a failing check sets
+function fixFor(theme, check) {
+    const p = theme.palette, t = theme.terminal;
+    if (check.fixSection === "terminal")
+        return fixContrast(t[check.fixKey], t.background, check.min);
+    // Text on the accent: move the accent away from the text color
+    if (check.id === "onAccent")
+        return fixContrast(p.accent, p.textReverse, check.min);
+    return fixContrast(p[check.fg], p[check.bg], check.min);
+}
+
+// File name for a theme name: "My Theme!" -> "my-theme"
+function slugify(name) {
+    return String(name).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }

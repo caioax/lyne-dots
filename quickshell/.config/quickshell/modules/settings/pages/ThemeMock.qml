@@ -13,12 +13,14 @@ ClippingRectangle {
     property var theme: ({})
     // Absolute path of a wallpaper, "" for a plain gradient
     property string wallpaper: ""
+    // Tall layout (app window above the terminal) for a narrow column
+    property bool portrait: false
 
     readonly property var p: theme.palette ?? {}
     readonly property var t: theme.terminal ?? {}
 
-    // Everything is sized from the thumbnail height
-    readonly property real unit: height / 12
+    // Everything is sized from the thumbnail height (width when portrait)
+    readonly property real unit: portrait ? width / 14 : height / 12
     readonly property real textSize: Math.max(7, unit * 0.62)
     readonly property real barHeight: unit * 1.5
     readonly property real gap: unit * 0.6
@@ -168,8 +170,8 @@ ClippingRectangle {
 
         x: root.gap
         y: root.windowY
-        width: root.appWidth
-        height: root.windowHeight
+        width: root.portrait ? root.width - root.gap * 2 : root.appWidth
+        height: root.portrait ? (root.windowHeight - root.gap) * 0.47 : root.windowHeight
         radius: Config.radiusSmall
         color: root.c("surface0", Config.surface0Color)
         border.width: 1
@@ -204,7 +206,7 @@ ClippingRectangle {
                         sub: "Speakers · 65%",
                         selected: false
                     }
-                ]
+                ].slice(0, root.portrait ? 2 : 3)
 
                 Rectangle {
                     id: listRow
@@ -320,10 +322,10 @@ ClippingRectangle {
 
     // ================= TERMINAL (active) =================
     Rectangle {
-        x: app.x + app.width + root.gap
-        y: root.windowY
+        x: root.portrait ? root.gap : app.x + app.width + root.gap
+        y: root.portrait ? app.y + app.height + root.gap : root.windowY
         width: parent.width - x - root.gap
-        height: root.windowHeight
+        height: parent.height - y - root.gap
         radius: Config.radiusSmall
         color: root.tc("background")
         border.width: 2
