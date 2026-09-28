@@ -17,6 +17,12 @@ THEMING_PACKAGES=(
 
     # Material You color generation
     "matugen" # Generate Material You colors from wallpapers
+
+    # Theme creation in Settings: accent colors from a wallpaper and the
+    # lyne-dots wallpapers of a new theme (.data/wallpapers/generator)
+    "python-numpy"  # Wallpaper generator
+    "python-pillow" # Wallpaper generator, wallpaper color extraction
+    "librsvg"       # rsvg-convert, rasterizes the generator's shapes
 )
 
 # AUR packages

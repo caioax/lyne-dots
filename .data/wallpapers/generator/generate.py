@@ -21,15 +21,19 @@ to 8 bits keep the gradients free of banding. Deterministic (fixed seeds).
 Needs python-numpy, python-pillow and rsvg-convert (librsvg). The wordmark
 uses the bundled Quicksand (SIL OFL, fonts/OFL-Quicksand.txt).
 
-usage: generate.py [--themes a,b] [--scenes lake,waves,contour]
-                   [--size 3840x2160] [--out DIR] [--jobs N]
+usage: generate.py [--themes a,b] [--theme-file PATH ...]
+                   [--scenes lake,waves,contour] [--size 3840x2160]
+                   [--out DIR] [--jobs N]
+
+--theme-file renders any theme JSON (e.g. one made in Settings, from
+~/.local/themes); its id is the file name without .json.
 """
 import argparse, colorsys, io, json, math, os, re, subprocess, sys
 from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.dirname(os.path.realpath(__file__))
 DATA = os.path.dirname(os.path.dirname(HERE))
 THEMES_DIR = os.path.join(DATA, "themes")
 LOGO_SVG = os.path.join(DATA, "assets/logo/lyne-dots-tight.svg")
@@ -257,8 +261,8 @@ def brand(img, c, cx, cy, H, glow=True):
 
 
 # ---------------------------------------------------------------- palette
-def palette(theme):
-    d = json.load(open(os.path.join(THEMES_DIR, theme + ".json")))
+def palette(path):
+    d = json.load(open(path))
     c = {k: hexrgb(v) for k, v in d["palette"].items() if isinstance(v, str) and v.startswith("#")}
     for k in ("color3", "color5", "color6", "color16"):
         c[k] = hexrgb(d["terminal"][k])
@@ -513,8 +517,8 @@ def scene_contour(c, W, H):
 
 # ---------------------------------------------------------------- main
 def render(job):
-    theme, scene, W, H, out = job
-    c = palette(theme)
+    theme, path, scene, W, H, out = job
+    c = palette(path)
     img = {"lake": scene_lake, "waves": scene_waves, "contour": scene_contour}[scene](c, W, H)
     os.makedirs(os.path.dirname(out), exist_ok=True)
     finish(img).save(out, quality=92, subsampling=0, optimize=True, progressive=True)
@@ -524,14 +528,19 @@ def render(job):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--themes", help="comma-separated theme ids (default: every .data/themes/*.json)")
+    ap.add_argument("--theme-file", action="append", default=[], help="a theme JSON anywhere (repeatable); only these are rendered")
     ap.add_argument("--scenes", default=",".join(SCENES))
     ap.add_argument("--size", default="3840x2160")
     ap.add_argument("--out", default=os.path.join(DATA, "wallpapers/themes"))
     ap.add_argument("--jobs", type=int, default=3, help="parallel renders (~3 GB of RAM each at 4K)")
     a = ap.parse_args()
     W, H = (int(v) for v in a.size.lower().split("x"))
-    themes = a.themes.split(",") if a.themes else sorted(p[:-5] for p in os.listdir(THEMES_DIR) if p.endswith(".json"))
-    jobs = [(t, s, W, H, os.path.join(a.out, t, f"lyne-{t}-{s}.jpg")) for t in themes for s in a.scenes.split(",")]
+    if a.theme_file:
+        themes = [(os.path.basename(p)[:-5] if p.endswith(".json") else os.path.basename(p), p) for p in a.theme_file]
+    else:
+        ids = a.themes.split(",") if a.themes else sorted(p[:-5] for p in os.listdir(THEMES_DIR) if p.endswith(".json"))
+        themes = [(t, os.path.join(THEMES_DIR, t + ".json")) for t in ids]
+    jobs = [(t, path, s, W, H, os.path.join(a.out, t, f"lyne-{t}-{s}.jpg")) for t, path in themes for s in a.scenes.split(",")]
     with ProcessPoolExecutor(a.jobs) as ex:
         for out in ex.map(render, jobs):
             print(os.path.relpath(out))

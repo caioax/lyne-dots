@@ -96,6 +96,9 @@ ColumnLayout {
     property bool fineTune: false
     property string fineTuneSection: "palette"
     property bool applyAfter: true
+    // Render the lyne-dots scenes after saving: new themes without a picked
+    // wallpaper, and edits of themes that use one of theirs
+    property bool generateWallpapers: editSlug !== "" ? String(editPreview?.wallpaper ?? "").includes("/lyne-") : !(source === "wallpaper" && useWallpaper)
     property bool saving: false
     property string saveError: ""
     // Something was changed since opening: leaving asks for a second Escape
@@ -276,6 +279,8 @@ ColumnLayout {
                 return;
             root.saving = false;
             root.dirty = false;
+            if (root.generateWallpapers)
+                WallpaperService.generateThemeWallpapers(slug, root.editSlug === "" && !(root.source === "wallpaper" && root.useWallpaper));
             root.saved(slug);
         }
 
@@ -837,6 +842,13 @@ ColumnLayout {
                     label: root.editSlug !== "" && root.editSlug === ThemeService.currentThemeName ? "Update it now" : "Switch to it after saving"
                     checked: root.applyAfter
                     onToggled: value => root.applyAfter = value
+                }
+
+                ToggleRow {
+                    label: root.editSlug !== "" ? "Render its lyne-dots wallpapers again" : "Generate lyne-dots wallpapers"
+                    description: "Lake, waves and contour scenes in the theme's colors, ready a few seconds after saving" + (root.editSlug === "" && !(root.source === "wallpaper" && root.useWallpaper) ? "; contour becomes its wallpaper" : "")
+                    checked: root.generateWallpapers
+                    onToggled: value => root.generateWallpapers = value
                 }
 
                 SettingRow {

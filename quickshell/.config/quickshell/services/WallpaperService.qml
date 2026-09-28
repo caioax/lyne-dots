@@ -35,6 +35,16 @@ Singleton {
     readonly property string themeWallpaperDir: wallpaperDir + "/themes"
     readonly property string themesConfigDir: Quickshell.env("HOME") + "/.local/themes"
 
+    readonly property string generatorPath: Quickshell.env("HOME") + "/.lyne-dots/.data/wallpapers/generator/generate.py"
+    readonly property var generatorScenes: ["lake", "waves", "contour"]
+    // Theme whose lyne-dots wallpapers are being rendered ("" when idle)
+    property string generatingFor: ""
+    property int generatedCount: 0
+    // Last error of the generator, per theme
+    property var generateErrors: ({})
+
+    signal themeWallpapersGenerated(string themeName, bool ok)
+
     // Available transitions in awww
     readonly property var transitions: ["wipe", "wave", "grow", "center", "outer", "any"]
 
@@ -180,6 +190,33 @@ Singleton {
         const relativePath = wallpaperPath.replace(wallpaperDir + "/", "");
         const activeWallpaper = getThemeActiveWallpaper(themeName);
         return relativePath === activeWallpaper;
+    }
+
+    // Renders lake, waves and contour in the theme's colors into its folder,
+    // at the size of the largest screen. The contour one becomes the theme's
+    // wallpaper when makeActive, or when the theme has none
+    function generateThemeWallpapers(themeName: string, makeActive = false) {
+        if (generatingFor !== "")
+            return;
+        let w = 1920, h = 1080;
+        const screens = Quickshell.screens;
+        for (let i = 0; i < screens.length; i++) {
+            const screen = screens[i];
+            if (screen.width * screen.height > w * h) {
+                w = screen.width;
+                h = screen.height;
+            }
+        }
+        const errors = Object.assign({}, generateErrors);
+        delete errors[themeName];
+        generateErrors = errors;
+        generatedCount = 0;
+        generatingFor = themeName;
+        generateProc._makeActive = makeActive;
+        generateProc._error = "";
+        // ~3 GB of RAM per 4K render: one at a time above 1440p
+        generateProc.command = ["python3", generatorPath, "--theme-file", themesConfigDir + "/" + themeName + ".json", "--out", themeWallpaperDir, "--size", w + "x" + h, "--jobs", w * h > 2560 * 1440 ? "1" : "3"];
+        generateProc.running = true;
     }
 
     function toggleDynamicWallpaper() {
@@ -409,6 +446,50 @@ Singleton {
 
     Process {
         id: writeCurrentProc
+    }
+
+    Process {
+        id: generateProc
+
+        property bool _makeActive: false
+        property string _error: ""
+
+        stdout: SplitParser {
+            onRead: data => {
+                if (data.trim().endsWith(".jpg"))
+                    root.generatedCount++;
+            }
+        }
+        stderr: SplitParser {
+            onRead: data => {
+                console.error("[Wallpaper:Generate] " + data);
+                if (data.trim() !== "")
+                    generateProc._error = data.trim();
+            }
+        }
+        onExited: exitCode => {
+            const theme = root.generatingFor;
+            const ok = exitCode === 0;
+            if (ok) {
+                console.log("[Wallpaper] Generated the lyne-dots wallpapers of", theme);
+                const contour = root.themeWallpaperDir + "/" + theme + "/lyne-" + theme + "-contour.jpg";
+                const current = root.themeWallpaperPath(theme);
+                if (_makeActive || current === "")
+                    root.setThemeWallpaper(contour, theme);
+                else
+                    // Also adopts it when the configured file is gone
+                    root.addToTheme(contour, theme);
+                if (root.themeWallpapersFor === theme)
+                    root.refreshThemeWallpapers(theme);
+            } else {
+                const errors = Object.assign({}, root.generateErrors);
+                // A missing module is the usual cause: name the package
+                errors[theme] = _error.includes("No module named") ? "Missing Python modules: run lyne update (python-numpy, python-pillow)" : _error.includes("rsvg-convert") ? "rsvg-convert not found: run lyne update (librsvg)" : (_error || "The generator failed");
+                root.generateErrors = errors;
+            }
+            root.generatingFor = "";
+            root.themeWallpapersGenerated(theme, ok);
+        }
     }
 
     Process {

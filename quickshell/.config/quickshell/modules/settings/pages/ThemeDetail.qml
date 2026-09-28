@@ -26,6 +26,9 @@ ColumnLayout {
     readonly property bool linked: WallpaperService.dynamicWallpaper && !ThemeService.isAutoMode
     property bool pickingFromLibrary: false
     property bool confirmingDelete: false
+    readonly property bool generating: WallpaperService.generatingFor === theme
+    readonly property bool hasLyneWallpapers: WallpaperService.themeWallpapers.some(p => WallpaperService.fileName(p).startsWith("lyne-" + theme + "-"))
+    readonly property string generateError: WallpaperService.generateErrors[theme] ?? ""
     readonly property bool custom: preview.custom === true
 
     // Library wallpapers that aren't in the theme's folder yet
@@ -343,6 +346,48 @@ ColumnLayout {
                 text: root.pickingFromLibrary ? "Cancel" : "From library"
                 baseColor: activeRow.controlColor
                 onClicked: root.pickingFromLibrary = !root.pickingFromLibrary
+            }
+        }
+
+        // lyne-dots scenes rendered in the theme's colors
+        SettingRow {
+            id: generateRow
+
+            label: "lyne-dots wallpapers"
+            description: {
+                if (root.generating)
+                    return "Rendering the scenes… " + WallpaperService.generatedCount + " of 3 ready";
+                if (root.generateError !== "")
+                    return root.generateError;
+                if (WallpaperService.generatingFor !== "")
+                    return "Another theme's wallpapers are rendering";
+                if (root.hasLyneWallpapers)
+                    return "Lake, waves and contour in " + root.displayName + "'s colors. Render them again after changing its colors";
+                return "Render lake, waves and contour scenes in " + root.displayName + "'s colors";
+            }
+            descriptionColor: root.generateError !== "" && !root.generating ? Config.errorColor : Config.subtextColor
+
+            leading: LyneLogo {
+                height: Config.fontSizeIconSmall
+                dotColor: root.palette.accent ?? Config.accentColor
+            }
+
+            Spinner {
+                visible: root.generating
+                running: visible
+                size: Config.fontSizeIconSmall
+            }
+
+            ActionButton {
+                visible: !root.generating
+                opacity: WallpaperService.generatingFor === "" ? 1 : 0.4
+                icon: "\u{f1a00}"
+                text: root.hasLyneWallpapers ? "Render again" : "Generate"
+                baseColor: generateRow.controlColor
+                onClicked: {
+                    if (WallpaperService.generatingFor === "")
+                        WallpaperService.generateThemeWallpapers(root.theme);
+                }
             }
         }
 
