@@ -118,6 +118,7 @@ Singleton {
                 }
             } else {
                 // Reloading the current preset keeps the user's opacity
+                // and wallpaper
                 root.applyTheme(root.currentThemeName, true);
             }
         }
@@ -127,12 +128,13 @@ Singleton {
     // PUBLIC API
     // ========================================================================
 
-    // keepOpacity: re-applying the saved preset (startup, state reload) must
-    // not replace the opacity the user picked; only switching presets does
-    function applyTheme(themeName, keepOpacity = false) {
+    // restoring: re-applying the saved preset (startup, state reload) must
+    // not replace the opacity or the wallpaper the user picked; only
+    // switching presets does
+    function applyTheme(themeName, restoring = false) {
         console.log("[Theme] Loading theme:", themeName);
         loadThemeProc._themeName = themeName;
-        loadThemeProc._keepOpacity = keepOpacity;
+        loadThemeProc._restoring = restoring;
         loadThemeProc._buffer = "";
         loadThemeProc.command = ["cat", themesDir + "/" + themeName + ".json"];
         loadThemeProc.running = true;
@@ -198,14 +200,14 @@ Singleton {
     // INTERNAL
     // ========================================================================
 
-    function _applyThemeData(themeName, data, keepOpacity) {
+    function _applyThemeData(themeName, data, restoring) {
         // 1. Update palette (triggers Config.qml rebinding)
         if (data.palette) {
             root.palette = data.palette;
         }
 
         // 2. Update opacity in StateService (user preference, not theme-owned)
-        if (!keepOpacity && data.opacity && data.opacity.background !== undefined) {
+        if (!restoring && data.opacity && data.opacity.background !== undefined) {
             setState("opacity.background", data.opacity.background);
         }
 
@@ -223,7 +225,8 @@ Singleton {
         _applyNeovim(data.palette, data.terminal);
 
         // 7. Apply theme wallpaper
-        _applyWallpaper(data.wallpaper);
+        if (!restoring)
+            _applyWallpaper(data.wallpaper);
 
         // 8. Apply GTK/Qt colors from palette
         _applyGtkFromPalette(data.palette);
@@ -309,11 +312,7 @@ Singleton {
     function _applyWallpaper(wallpaperFile) {
         if (!wallpaperFile || !WallpaperService.dynamicWallpaper)
             return;
-
-        const path = wallpaperDir + "/" + wallpaperFile;
-
-        wallpaperProc.command = ["bash", "-c", "[ -f '" + path + "' ] && awww img '" + path + "'" + " --transition-type grow --transition-duration 1 --transition-fps 60 --transition-step 90" + " || echo '[ThemeService] Wallpaper not found: " + wallpaperFile + "' >&2"];
-        wallpaperProc.running = true;
+        WallpaperService.setWallpaper(wallpaperDir + "/" + wallpaperFile, "grow");
     }
 
     function _clearGtkColors() {
@@ -512,7 +511,7 @@ Singleton {
     Process {
         id: loadThemeProc
         property string _themeName: ""
-        property bool _keepOpacity: false
+        property bool _restoring: false
         property string _buffer: ""
 
         stdout: SplitParser {
@@ -527,7 +526,7 @@ Singleton {
             if (exitCode === 0) {
                 try {
                     const data = JSON.parse(_buffer.trim());
-                    root._applyThemeData(_themeName, data, _keepOpacity);
+                    root._applyThemeData(_themeName, data, _restoring);
                 } catch (e) {
                     console.error("[Theme] Failed to parse theme:", e);
                 }
@@ -568,14 +567,14 @@ Singleton {
                     } else {
                         // No pair found — re-apply current theme (fallback)
                         console.log("[Theme] No pair for scheme, re-applying current theme");
-                        root.applyTheme(root.currentThemeName);
+                        root.applyTheme(root.currentThemeName, true);
                     }
                 } catch (e) {
                     console.error("[Theme] Failed to read pair:", e);
-                    root.applyTheme(root.currentThemeName);
+                    root.applyTheme(root.currentThemeName, true);
                 }
             } else {
-                root.applyTheme(root.currentThemeName);
+                root.applyTheme(root.currentThemeName, true);
             }
             _buffer = "";
         }
@@ -684,19 +683,6 @@ Singleton {
         onExited: exitCode => {
             if (exitCode === 0)
                 console.log("[Theme] Kitty theme updated");
-        }
-    }
-
-    Process {
-        id: wallpaperProc
-        stderr: SplitParser {
-            onRead: data => console.error("[Theme:Wallpaper] " + data)
-        }
-        onExited: exitCode => {
-            if (exitCode === 0) {
-                console.log("[Theme] Theme wallpaper applied");
-                WallpaperService.getCurrentWallpaper();
-            }
         }
     }
 

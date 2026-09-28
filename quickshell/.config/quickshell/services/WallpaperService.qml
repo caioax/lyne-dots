@@ -53,6 +53,8 @@ Singleton {
             root.currentWallpaper = getState("wallpaper.current", "");
             root.dynamicWallpaper = getState("wallpaper.dynamic", true);
             root.favorites = getState("wallpaper.favorites", []);
+            // What awww shows wins over the saved path
+            root.getCurrentWallpaper();
         }
     }
 
@@ -171,26 +173,28 @@ Singleton {
         setState("wallpaper.dynamic", dynamicWallpaper);
     }
 
-    // Apply wallpaper
-    function setWallpaper(path: string) {
-        const transition = transitions[Math.floor(Math.random() * transitions.length)];
-        const duration = (Math.random() * 1.5 + 0.5).toFixed(1);
+    // Apply wallpaper. A missing file is skipped and leaves the current one.
+    // transition: an awww transition type, random when empty
+    function setWallpaper(path: string, transition = "") {
+        const type = transition || transitions[Math.floor(Math.random() * transitions.length)];
+        const duration = transition ? "1" : (Math.random() * 1.5 + 0.5).toFixed(1);
 
-        setWallpaperProc.command = ["awww", "img", path, "--transition-type", transition, "--transition-duration", duration, "--transition-fps", "60", "--transition-step", "90"];
+        setWallpaperProc._path = path;
+        setWallpaperProc.command = ["sh", "-c", "[ -f \"$1\" ] || { echo \"not found: $1\" >&2; exit 3; }; " + "awww img \"$1\" --transition-type \"$2\" --transition-duration \"$3\" --transition-fps 60 --transition-step 90", "sh", path, type, duration];
         setWallpaperProc.running = true;
+    }
 
+    function _wallpaperApplied(path: string) {
         currentWallpaper = path;
-
         root.setState("wallpaper.current", path);
 
-        // Persist for boot script
-        writeCurrentProc.command = ["sh", "-c", "echo '" + path + "' > '" + wallpaperDir + "/.current'"];
+        // Persist for the boot script
+        writeCurrentProc.command = ["sh", "-c", "printf '%s\\n' \"$1\" > \"$2/.current\"", "sh", path, wallpaperDir];
         writeCurrentProc.running = true;
 
         // In auto mode, regenerate colors from the new wallpaper
-        if (ThemeService.isAutoMode) {
+        if (ThemeService.isAutoMode)
             ThemeService.runMatugen(path);
-        }
     }
 
     function setRandomWallpaper() {
@@ -276,24 +280,33 @@ Singleton {
 
     Process {
         id: setWallpaperProc
+
+        property string _path: ""
+
+        stderr: SplitParser {
+            onRead: data => console.error("[Wallpaper] " + data)
+        }
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
                 console.log("[Wallpaper] Wallpaper changed successfully");
+                root._wallpaperApplied(_path);
             } else {
                 console.error("[Wallpaper] Failed to change wallpaper");
             }
         }
     }
 
+    // awww reports the resolved path; ~/.local/wallpapers is usually a
+    // symlink, so map it back or relativePath() and the markers stop matching
     Process {
         id: getCurrentProc
-        command: ["awww", "query"]
+        command: ["sh", "-c", "real=$(realpath \"$1\" 2>/dev/null); awww query | sed -n 's/.*image: //p' | head -n 1 | " + "while IFS= read -r p; do case \"$p\" in \"$real\"/*) p=\"$1/${p#\"$real\"/}\";; esac; printf '%s\\n' \"$p\"; done", "sh", root.wallpaperDir]
         stdout: SplitParser {
             onRead: data => {
-                const match = data.match(/image:\s*(.+)/);
-                if (match) {
-                    root.currentWallpaper = match[1].trim();
-                    root.setState("wallpaper.current", root.currentWallpaper);
+                const path = data.trim();
+                if (path) {
+                    root.currentWallpaper = path;
+                    root.setState("wallpaper.current", path);
                 }
             }
         }
