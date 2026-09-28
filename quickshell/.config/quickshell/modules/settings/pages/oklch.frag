@@ -2,19 +2,17 @@
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
 
-// OklchPicker's surfaces. mode 0: chroma (x) by lightness (y, light on top)
-// at `hue`, colors outside sRGB faded into outColor. mode 1: the hue strip
-// (x, 0-360) at `lightness` / `chroma`, clipped to sRGB
+// OklchPicker's surfaces. mode 0: chroma (x, share of the most sRGB allows
+// at that lightness and hue) by lightness (y, light on top) at `hue`.
+// mode 1: the hue strip (x, 0-360) at `lightness` / `chroma`, clipped to sRGB
 layout(std140, binding = 0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
-    vec4 outColor;      // opaque
     vec2 size;
     float mode;
     float hue;          // degrees
     float lightness;
     float chroma;
-    float maxChroma;    // chroma at the right edge (mode 0)
     float radius;
 };
 
@@ -33,6 +31,24 @@ vec3 oklchToLinear(float L, float C, float h) {
                 -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s);
 }
 
+bool inGamut(vec3 lin) {
+    return all(greaterThanEqual(lin, vec3(-0.0001))) && all(lessThanEqual(lin, vec3(1.0001)));
+}
+
+// Same search as ThemeGenerator.maxChroma
+float maxChroma(float L, float h) {
+    float lo = 0.0;
+    float hi = 0.4;
+    for (int i = 0; i < 16; i++) {
+        float mid = (lo + hi) / 2.0;
+        if (inGamut(oklchToLinear(L, mid, h)))
+            lo = mid;
+        else
+            hi = mid;
+    }
+    return lo;
+}
+
 vec3 toSrgb(vec3 c) {
     c = clamp(c, 0.0, 1.0);
     vec3 lo = c * 12.92;
@@ -49,11 +65,8 @@ void main() {
     vec2 uv = qt_TexCoord0;
     vec3 rgb;
     if (mode < 0.5) {
-        vec3 lin = oklchToLinear(1.0 - uv.y, uv.x * maxChroma, hue);
-        // How far outside sRGB, eased over a pixel-ish band
-        float over = max(max(lin.r, max(lin.g, lin.b)) - 1.0, -min(lin.r, min(lin.g, lin.b)));
-        float outside = smoothstep(0.0, 0.004, over);
-        rgb = mix(toSrgb(lin), outColor.rgb, outside * 0.8);
+        float L = 1.0 - uv.y;
+        rgb = toSrgb(oklchToLinear(L, uv.x * maxChroma(L, hue), hue));
     } else {
         rgb = toSrgb(oklchToLinear(lightness, chroma, uv.x * 360.0));
     }

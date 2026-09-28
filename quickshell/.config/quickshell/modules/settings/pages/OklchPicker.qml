@@ -5,8 +5,9 @@ import qs.config
 import "../../../services/ThemeGenerator.js" as ThemeGenerator
 
 // Visual OKLCH color picker: a chroma × lightness plane at the current hue,
-// a hue strip below and a preview. Parts of the plane outside sRGB are faded
-// and the knob stops at their edge. `lch` is { l, c, h }; dragging emits
+// a hue strip below and a preview. The plane's x is the share of the chroma
+// sRGB allows at that lightness and hue, so every point is a real color and
+// the right edge is the most vivid one. `lch` is { l, c, h }; dragging emits
 // picked() and leaves `lch` to the owner
 ColumnLayout {
     id: root
@@ -16,8 +17,10 @@ ColumnLayout {
             c: 0.1,
             h: 250
         })
-    // Chroma at the plane's right edge (sRGB tops out around 0.32)
-    readonly property real maxC: 0.33
+    // Search ceiling for maxChroma (sRGB tops out around 0.32)
+    readonly property real limitC: 0.4
+    // Chroma at the plane's right edge for the current lightness and hue
+    readonly property real edgeC: ThemeGenerator.maxChroma(lch.l, lch.h, limitC)
     readonly property string hex: ThemeGenerator.oklch(lch.l, lch.c, lch.h)
     readonly property int stripHeight: Config.fontSizeIconSmall
     readonly property int knobSize: Config.fontSizeIconSmall
@@ -35,9 +38,9 @@ ColumnLayout {
 
     function pickPlane(x: real, y: real) {
         const l = Math.min(1, Math.max(0, 1 - y / plane.height));
-        const c = Math.min(root.maxC, Math.max(0, x / plane.width * root.maxC));
+        const c = Math.min(1, Math.max(0, x / plane.width)) * ThemeGenerator.maxChroma(l, lch.h, root.limitC);
         wantedC = c;
-        root.picked(l, Math.min(c, ThemeGenerator.maxChroma(l, lch.h, c)), lch.h);
+        root.picked(l, c, lch.h);
     }
 
     function pickHue(x: real) {
@@ -55,13 +58,11 @@ ColumnLayout {
         ShaderEffect {
             id: plane
 
-            readonly property color outColor: Config.surface1Color
             readonly property size size: Qt.size(width, height)
             readonly property real mode: 0
             readonly property real hue: root.lch.h
             readonly property real lightness: root.lch.l
             readonly property real chroma: root.lch.c
-            readonly property real maxChroma: root.maxC
             readonly property real radius: Config.radius
 
             Layout.fillWidth: true
@@ -69,7 +70,7 @@ ColumnLayout {
             fragmentShader: Qt.resolvedUrl("oklch.frag.qsb")
 
             Knob {
-                x: Math.min(root.lch.c / root.maxC, 1) * plane.width - width / 2
+                x: (root.edgeC > 0 ? Math.min(root.lch.c / root.edgeC, 1) : 0) * plane.width - width / 2
                 y: (1 - root.lch.l) * plane.height - height / 2
                 color: root.hex
             }
@@ -114,10 +115,12 @@ ColumnLayout {
                 }
 
                 Repeater {
-                    model: [["L", Math.round(root.lch.l * 100) + "%"], ["C", root.lch.c.toFixed(3)], ["H", Math.round(root.lch.h) + "°"]]
+                    model: [["L", Math.round(root.lch.l * 100) + "%"], ["C", Math.round(root.edgeC > 0 ? Math.min(root.lch.c / root.edgeC, 1) * 100 : 0) + "%"], ["H", Math.round(root.lch.h) + "°"]]
 
                     Text {
                         required property var modelData
+                        width: parent.width
+                        elide: Text.ElideRight
                         text: modelData[0] + " " + modelData[1]
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeSmall
@@ -132,14 +135,12 @@ ColumnLayout {
     ShaderEffect {
         id: strip
 
-        readonly property color outColor: Config.surface1Color
         readonly property size size: Qt.size(width, height)
         readonly property real mode: 1
         readonly property real hue: root.lch.h
         // Readable at any pick: grey or very dark colors still show the hues
         readonly property real lightness: Math.min(0.85, Math.max(0.5, root.lch.l))
         readonly property real chroma: 0.13
-        readonly property real maxChroma: root.maxC
         readonly property real radius: height / 2
 
         Layout.fillWidth: true
