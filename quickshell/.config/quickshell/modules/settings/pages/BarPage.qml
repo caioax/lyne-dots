@@ -236,7 +236,7 @@ ColumnLayout {
 
         ToggleRow {
             label: "Scroll to switch"
-            description: "The mouse wheel over the workspaces moves to the next or previous one"
+            description: "The mouse wheel over the workspaces moves to the next or previous one, like the keys (Hyprland › Workspaces)"
             path: "bar.workspaces.scroll"
         }
     }

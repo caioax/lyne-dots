@@ -169,6 +169,15 @@ Item {
             z: 1
             x: leftEdge
             width: rightEdge - leftEdge
+            // Fades out while the monitor shows a guest workspace (no slot
+            // of its own is active)
+            opacity: root.activeIndex >= 0 ? 1 : 0
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Config.animDurationShort
+                }
+            }
             height: root.indicatorHeight
             anchors.verticalCenter: parent.verticalCenter
             radius: root.indicatorRadius

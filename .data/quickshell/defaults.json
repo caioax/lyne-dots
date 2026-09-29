@@ -237,6 +237,10 @@
             }
         ]
     },
+    "workspaces": {
+        "skipEmpty": false,
+        "wrap": false
+    },
     "osd": {
         "style": "attached",
         "position": "bottom",

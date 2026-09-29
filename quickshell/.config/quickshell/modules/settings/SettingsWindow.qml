@@ -39,6 +39,7 @@ FloatingWindow {
             windows: windowsPage,
             input: inputPage,
             specials: specialsPage,
+            workspaces: workspacesPage,
             keybinds: keybindsPage,
             lock: lockPage,
             idle: idlePage,
@@ -278,6 +279,11 @@ FloatingWindow {
     Component {
         id: specialsPage
         SpecialsPage {}
+    }
+
+    Component {
+        id: workspacesPage
+        WorkspacesPage {}
     }
 
     Component {

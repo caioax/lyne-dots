@@ -30,7 +30,7 @@ Singleton {
     readonly property var customBinds: StateService.get("keybinds.custom", [])
     readonly property string bindsLua: {
         // Before the overrides: they may move these binds
-        let out = appsLua + specialsLua;
+        let out = appsLua + specialsLua + workspacesLua;
         if (bindOverrides.length > 0) {
             out += "\n-- Keybinds changed in Settings (lyne_rebind is defined in conf/binds.lua)\n";
             out += "if lyne_rebind then\n";
@@ -64,6 +64,14 @@ Singleton {
         }
         out += "    })\nend\n";
         return out;
+    }
+
+    // How next/previous workspace behave (Settings › Hyprland › Workspaces),
+    // read by hypr/conf/workspaces.lua
+    readonly property string workspacesLua: {
+        const skip = StateService.get("workspaces.skipEmpty", false) === true;
+        const wrap = StateService.get("workspaces.wrap", false) === true;
+        return "\n-- Workspaces per monitor (lyne_workspaces is defined in conf/workspaces.lua)\nif lyne_workspaces then\n    lyne_workspaces({ skip_empty = " + skip + ", wrap = " + wrap + " })\nend\n";
     }
 
     // Last `hyprctl eval` error, shown by the settings pages

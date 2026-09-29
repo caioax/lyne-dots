@@ -13,7 +13,10 @@
 -- workspace rules below bring them back when it's connected again.
 -- New monitors get the first free block (left to right at login).
 --
--- Quickshell reads the blocks from $XDG_RUNTIME_DIR/lyne-workspaces.json.
+-- Settings > Hyprland > Workspaces reorders and forgets monitors (the
+-- lyne_workspaces_* functions below) and sets how next/previous behave
+-- (local/settings.lua calls lyne_workspaces()). Quickshell reads the blocks
+-- from $XDG_RUNTIME_DIR/lyne-workspaces.json.
 
 local M = {}
 
@@ -30,17 +33,40 @@ local EXPORT_FILE = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/lyne-workspace
 -- workspaces.lua, or monitors without an EDID); it's filled in once seen.
 local known = {}
 
+-- Next/previous: only stop at workspaces with windows, and go around past
+-- the ends. Set by lyne_workspaces() from local/settings.lua
+M.options = { skip_empty = false, wrap = false }
+
+function lyne_workspaces(options)
+    for key, value in pairs(options or {}) do
+        M.options[key] = value
+    end
+end
+
 -- ==============================================================================
 -- STATE FILE
 -- ==============================================================================
 
+-- A broken file is kept aside (.bad) instead of being overwritten with
+-- blocks handed out again
+local function set_aside()
+    os.rename(STATE_FILE, STATE_FILE .. ".bad")
+end
+
 local function load_state()
+    local file = io.open(STATE_FILE, "r")
+    if not file then
+        return
+    end
+    file:close()
     local chunk = loadfile(STATE_FILE)
     if not chunk then
+        set_aside()
         return
     end
     local ok, list = pcall(chunk)
     if not ok or type(list) ~= "table" then
+        set_aside()
         return
     end
     for _, entry in ipairs(list) do
@@ -138,12 +164,21 @@ local function free_slot()
     return slot
 end
 
+local function drop_rules(entry)
+    for _, rule in ipairs(entry.rules or {}) do
+        rule:set_enabled(false)
+    end
+    entry.rules = nil
+end
+
 -- Every id of the block goes to the monitor, the first one is its default
 local function add_rules(entry)
+    drop_rules(entry)
     local monitor = selector(entry)
     local base = entry.slot * M.BLOCK
+    entry.rules = {}
     for i = 1, M.MAX do
-        hl.workspace_rule({ workspace = tostring(base + i), monitor = monitor, default = i == 1 })
+        table.insert(entry.rules, hl.workspace_rule({ workspace = tostring(base + i), monitor = monitor, default = i == 1 }))
     end
 end
 
@@ -265,59 +300,201 @@ end
 -- ACTIONS (used by the binds in conf/keybinds.lua)
 -- ==============================================================================
 
--- First id of the focused monitor's block, minus one
-local function focused_base()
-    local entry = entry_for(hl.get_active_monitor())
+-- First id of a monitor's block, minus one
+local function base_of(monitor)
+    local entry = entry_for(monitor)
     return entry and entry.slot * M.BLOCK or 0
-end
-
--- Position (1..MAX) of the active workspace in the focused monitor's block;
--- nil while it shows a workspace of another block
-local function focused_position()
-    local base = focused_base()
-    local active = hl.get_active_workspace()
-    local id = active and active.id or 0
-    if id > base and id <= base + M.MAX then
-        return id - base
-    end
-    return nil
 end
 
 -- Workspace n of the focused monitor
 function M.go(n)
-    hl.dispatch(hl.dsp.focus({ workspace = focused_base() + n }))
+    hl.dispatch(hl.dsp.focus({ workspace = base_of(hl.get_active_monitor()) + n }))
 end
 
 -- Moves the active window to workspace n of the focused monitor (and follows it)
 function M.move(n)
-    hl.dispatch(hl.dsp.window.move({ workspace = focused_base() + n }))
+    hl.dispatch(hl.dsp.window.move({ workspace = base_of(hl.get_active_monitor()) + n }))
 end
 
--- Next (1) or previous (-1) workspace of the focused monitor, stopping at
--- the ends of the block; from another block's workspace, goes to the first
-local function step_target(direction)
-    local position = focused_position()
-    if not position then
-        return 1
-    end
-    local target = position + direction
-    if target < 1 or target > M.MAX then
+-- Next (1) or previous (-1) workspace id of a monitor's block, following
+-- M.options, or nil when there's none. From another block's workspace it
+-- goes to the first one (next) or the last busy one (previous)
+function M.step_target(direction, monitor)
+    if not monitor then
         return nil
     end
-    return target
+    local base = base_of(monitor)
+    local active = monitor.active_workspace
+    local id = active and active.id or 0
+    local current = (id > base and id <= base + M.MAX) and id - base or nil
+
+    local occupied, highest = {}, 0
+    for _, workspace in ipairs(hl.get_workspaces()) do
+        local position = workspace.id - base
+        if position >= 1 and position <= M.MAX and workspace.windows > 0 then
+            occupied[position] = true
+            highest = math.max(highest, position)
+        end
+    end
+
+    -- Positions next/previous can land on, in order. Going around, the end
+    -- is the last busy workspace (plus one empty one unless skipping them)
+    local stops = {}
+    if M.options.skip_empty then
+        for position = 1, M.MAX do
+            if occupied[position] or position == current then
+                table.insert(stops, position)
+            end
+        end
+    else
+        local last = M.MAX
+        if M.options.wrap then
+            last = math.min(M.MAX, math.max(highest + 1, current or 1))
+        end
+        for position = 1, last do
+            table.insert(stops, position)
+        end
+    end
+    if #stops == 0 then
+        return nil
+    end
+    if not current then
+        return base + (direction > 0 and stops[1] or (highest > 0 and highest or stops[1]))
+    end
+
+    local target
+    if direction > 0 then
+        for _, position in ipairs(stops) do
+            if position > current then
+                target = position
+                break
+            end
+        end
+        if not target and M.options.wrap then
+            target = stops[1]
+        end
+    else
+        for i = #stops, 1, -1 do
+            if stops[i] < current then
+                target = stops[i]
+                break
+            end
+        end
+        if not target and M.options.wrap then
+            target = stops[#stops]
+        end
+    end
+    if not target or target == current then
+        return nil
+    end
+    return base + target
 end
 
 function M.step(direction)
-    local target = step_target(direction)
+    local target = M.step_target(direction, hl.get_active_monitor())
     if target then
-        M.go(target)
+        hl.dispatch(hl.dsp.focus({ workspace = target }))
     end
 end
 
 function M.move_step(direction)
-    local target = step_target(direction)
+    local target = M.step_target(direction, hl.get_active_monitor())
     if target then
-        M.move(target)
+        hl.dispatch(hl.dsp.window.move({ workspace = target }))
+    end
+end
+
+-- Dispatcher for Quickshell's bar (mouse wheel over a monitor's strip):
+-- `hyprctl dispatch 'lyne_workspace_step(1, "eDP-1")'`
+function lyne_workspace_step(direction, monitor_name)
+    local target = M.step_target(direction, hl.get_monitor(monitor_name))
+    if target then
+        return hl.dsp.focus({ workspace = target })
+    end
+    return hl.dsp.no_op()
+end
+
+-- ==============================================================================
+-- MANAGING MONITORS (Settings > Hyprland > Workspaces, via hyprctl eval)
+-- ==============================================================================
+
+local function entry_at(slot)
+    for _, entry in ipairs(known) do
+        if entry.slot == slot then
+            return entry
+        end
+    end
+    return nil
+end
+
+-- Gives the workspaces open in block `from` the same positions in block
+-- `to` (windows stay where they are)
+local function renumber(from, to)
+    for _, workspace in ipairs(hl.get_workspaces()) do
+        local position = workspace.id - from * M.BLOCK
+        if position >= 1 and position <= M.MAX then
+            hl.dispatch(hl.dsp.workspace.change_id({ workspace = workspace.id, id = to * M.BLOCK + position }))
+        end
+    end
+end
+
+-- Swaps the blocks of two slots (either may be free), renumbering the
+-- open workspaces through a spare block so no id is taken midway
+function lyne_workspaces_swap(slot_a, slot_b)
+    if slot_a == slot_b or slot_a < 0 or slot_b < 0 then
+        return
+    end
+    local a, b = entry_at(slot_a), entry_at(slot_b)
+    if not a and not b then
+        return
+    end
+    local spare = math.max(slot_a, slot_b, free_slot()) + 1
+    for _, entry in ipairs(known) do
+        spare = math.max(spare, entry.slot + 1)
+    end
+    renumber(slot_a, spare)
+    renumber(slot_b, slot_a)
+    renumber(spare, slot_b)
+
+    if a then
+        a.slot = slot_b
+    end
+    if b then
+        b.slot = slot_a
+    end
+    -- Both old rule sets go before the new ones are made (a slot left free
+    -- keeps none)
+    if a then
+        drop_rules(a)
+    end
+    if b then
+        drop_rules(b)
+    end
+    if a then
+        add_rules(a)
+    end
+    if b then
+        add_rules(b)
+    end
+    save_state()
+    M.export()
+end
+
+-- Forgets a disconnected monitor: its slot is free for the next new one
+function lyne_workspaces_forget(slot)
+    for i, entry in ipairs(known) do
+        if entry.slot == slot then
+            for _, monitor in ipairs(hl.get_monitors()) do
+                if entry_for(monitor) == entry then
+                    return -- connected
+                end
+            end
+            drop_rules(entry)
+            table.remove(known, i)
+            save_state()
+            M.export()
+            return
+        end
     end
 end
 

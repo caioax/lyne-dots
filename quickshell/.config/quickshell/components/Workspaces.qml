@@ -4,8 +4,9 @@ import qs.config
 import "workspaces"
 
 // Bar workspace indicator: the monitor's workspace state (WorkspacesModel)
-// drawn by the style picked in bar.workspaces.style, with the special
-// workspace badge sliding out beside it while one is open.
+// drawn by the style picked in bar.workspaces.style, then the workspaces of
+// a disconnected monitor staying here (GuestChips) and the special
+// workspace badge, each sliding out beside it while there's one.
 Item {
     id: root
 
@@ -26,7 +27,7 @@ Item {
             "icons": iconsStyle
         })
 
-    implicitWidth: strip.implicitWidth + badgeSlot.width
+    implicitWidth: strip.implicitWidth + guestSlot.width + badgeSlot.width
     implicitHeight: strip.implicitHeight
 
     // One workspace per notch; touchpads add up small deltas to a notch
@@ -39,7 +40,7 @@ Item {
             accumulated += event.angleDelta.y;
             if (Math.abs(accumulated) < 120)
                 return;
-            workspacesModel.step(accumulated > 0 ? -1 : 1, Config.barWorkspaceHideEmpty);
+            workspacesModel.step(accumulated > 0 ? -1 : 1);
             accumulated = 0;
         }
     }
@@ -58,12 +59,44 @@ Item {
         }
     }
 
+    // Opens to the chips' width while this monitor holds guest workspaces
+    Item {
+        id: guestSlot
+        readonly property int gap: Math.round(Config.padding * 2 / 3)
+
+        x: strip.implicitWidth
+        width: guests.shown ? gap + guests.implicitWidth : 0
+        height: parent.height
+        clip: true
+
+        Behavior on width {
+            NumberAnimation {
+                duration: Config.animDuration
+                easing.type: Easing.OutCubic
+            }
+        }
+
+        GuestChips {
+            id: guests
+            model: workspacesModel
+            x: guestSlot.gap
+            anchors.verticalCenter: parent.verticalCenter
+            opacity: shown ? 1 : 0
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Config.animDurationShort
+                }
+            }
+        }
+    }
+
     // Opens to the badge's width while a special workspace is shown
     Item {
         id: badgeSlot
         readonly property int gap: Math.round(Config.padding * 2 / 3)
 
-        x: strip.implicitWidth
+        x: strip.implicitWidth + guestSlot.width
         width: badge.shown ? gap + badge.implicitWidth : 0
         height: parent.height
 

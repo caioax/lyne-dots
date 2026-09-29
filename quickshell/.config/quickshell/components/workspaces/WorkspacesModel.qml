@@ -7,8 +7,9 @@ import qs.config
 import qs.services
 
 // Workspace state for one monitor, shared by every workspace style: the
-// active id, which workspaces hold windows (and which apps), urgency and the
-// special workspace. Styles only read this and call focus()/toggleSpecial().
+// active id, which workspaces hold windows (and which apps), urgency, the
+// "guest" workspaces of other monitors shown here and the special workspace.
+// Styles only read this and call focus()/toggleSpecial().
 QtObject {
     id: root
 
@@ -29,12 +30,21 @@ QtObject {
     readonly property var activeWorkspace: monitor?.activeWorkspace ?? null
 
     // --- Normal Workspace Math ---
-    // Each monitor owns a block of 100 ids (1-99, 101-199, ...)
+    // Each monitor owns a block of 100 ids (1-99, 101-199, ...), given by
+    // hypr/conf/workspaces.lua; previews and monitors it doesn't know yet
+    // fall back to the active workspace's block
     property int activeId: (activeWorkspace && activeWorkspace.id > 0) ? activeWorkspace.id : 1
-    readonly property int monitorOffset: Math.floor((activeId - 1) / 100) * 100
-    // Derived from activeId alone: going through monitorOffset, a switch to
-    // another monitor's block briefly reads the old offset (105 - 0 -> 99)
-    readonly property int relativeActiveId: Math.max(1, Math.min(activeId - Math.floor((activeId - 1) / 100) * 100, totalWorkspaces))
+    readonly property int knownBase: live ? WorkspacesService.baseFor(monitorName) : -1
+    readonly property int monitorOffset: knownBase >= 0 ? knownBase : Math.floor((activeId - 1) / 100) * 100
+    // False while the monitor shows a guest (another block's workspace)
+    readonly property bool activeInBlock: activeId > monitorOffset && activeId <= monitorOffset + 99
+    // 0 while a guest is shown (no slot of the strip is active)
+    readonly property int relativeActiveId: activeInBlock ? Math.min(activeId - monitorOffset, totalWorkspaces) : 0
+
+    // Workspaces of other blocks on this monitor (those of a disconnected
+    // monitor, until it comes back): [{ id, position, owner }] by id, where
+    // owner is the WorkspacesService entry (null if unknown)
+    property var guests: []
 
     // --- Per-workspace info ---
     // { <id>: { windows: [appId, ...], urgent: bool } } for every workspace
@@ -79,6 +89,20 @@ QtObject {
                 info[id].windows.push(tl.wayland?.appId || tl.lastIpcObject?.class || "");
         }
         workspaces = info;
+
+        let list = [];
+        for (const ws of Hyprland.workspaces.values) {
+            if (!ws || ws.id <= 0 || ws.monitor?.name !== monitorName)
+                continue;
+            if (ws.id > monitorOffset && ws.id <= monitorOffset + 99)
+                continue;
+            list.push({
+                id: ws.id,
+                position: (ws.id - 1) % 100 + 1,
+                owner: WorkspacesService.ownerOf(ws.id)
+            });
+        }
+        guests = list.sort((a, b) => a.id - b.id);
     }
 
     // Workspaces holding a window that asked for attention, kept until the
@@ -105,6 +129,8 @@ QtObject {
         }
     }
     onUrgentIdsChanged: updateTimer.restart()
+    onMonitorOffsetChanged: updateTimer.restart()
+    onMonitorNameChanged: updateTimer.restart()
 
     // --- Special Workspace ---
     // Name as reported by activespecial ("special:magic"), "" when closed
@@ -150,16 +176,12 @@ QtObject {
         if (id !== activeId)
             Hyprland.dispatch("hl.dsp.focus({ workspace = " + id + " })");
     }
-    // Next (1) or previous (-1) workspace of this monitor's block, skipping
-    // empty ones when they're hidden
-    function step(direction, skipEmpty) {
-        const first = monitorOffset + 1;
-        const last = monitorOffset + totalWorkspaces;
-        let id = activeId + direction;
-        while (skipEmpty && id >= first && id <= last && !isOccupied(id))
-            id += direction;
-        if (id >= first && id <= last)
-            focus(id);
+    // Next (1) or previous (-1) workspace of this monitor, the same way as
+    // the keyboard (skip empty / go around from Settings › Hyprland ›
+    // Workspaces); hypr/conf/workspaces.lua picks it
+    function step(direction) {
+        if (live && monitorName !== "")
+            Hyprland.dispatch("lyne_workspace_step(" + direction + ", \"" + monitorName + "\")");
     }
     function toggleSpecial() {
         if (specialName)
@@ -190,7 +212,7 @@ QtObject {
                 root.specialRaw = "";
             if (event.name === "urgent")
                 root.markUrgent(event.data);
-            const refreshEvents = ["workspace", "createworkspace", "destroyworkspace", "movewindow", "openwindow", "closewindow"];
+            const refreshEvents = ["workspace", "createworkspace", "destroyworkspace", "movewindow", "openwindow", "closewindow", "moveworkspace", "moveworkspacev2", "renameworkspace", "monitoradded", "monitoraddedv2", "monitorremoved", "monitorremovedv2"];
             if (refreshEvents.includes(event.name))
                 root.updateTimer.restart();
         }

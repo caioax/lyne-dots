@@ -133,6 +133,13 @@ Singleton {
             category: "Hyprland"
         },
         {
+            id: "workspaces",
+            label: "Workspaces",
+            icon: "\u{f0570}",
+            description: "Each monitor's own workspaces, their order and how next/previous move",
+            category: "Hyprland"
+        },
+        {
             id: "keybinds",
             label: "Keybinds",
             icon: "\u{f030c}",
