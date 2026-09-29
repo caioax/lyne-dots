@@ -21,6 +21,9 @@
 
 local M = {}
 
+-- Internal outputs the lid turned off in this config (see LAPTOP LID)
+M.lid_off_outputs = {}
+
 M.BLOCK = 100 -- ids per monitor
 M.MAX = 99    -- workspaces per monitor
 
@@ -29,9 +32,11 @@ local STATE_DIR = (os.getenv("XDG_STATE_HOME") or (HOME .. "/.local/state")) .. 
 local STATE_FILE = STATE_DIR .. "/workspace-monitors.lua"
 local EXPORT_FILE = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/lyne-workspaces.json"
 
--- Known monitors: { slot = 0.., desc = "...", name = "HDMI-A-1" }. `desc`
--- is empty for entries only known by port (migrated from the old
+-- Known monitors: { slot = 0.., desc = "...", name = "HDMI-A-1", twin }.
+-- `desc` is empty for entries only known by port (migrated from the old
 -- workspaces.lua, or monitors without an EDID); it's filled in once seen.
+-- `twin`: two monitors share the description (same model, no serial), so
+-- they're told apart by port for good.
 local known = {}
 
 -- Next/previous: only stop at workspaces with windows, and go around past
@@ -72,11 +77,13 @@ local function load_state()
         return
     end
     for _, entry in ipairs(list) do
-        if type(entry) == "table" and math.type(entry.slot) == "integer" and entry.slot >= 0 then
+        if type(entry) == "table" and math.type(entry.slot) == "integer" and entry.slot >= 0
+            and entry.name ~= "FALLBACK" then
             table.insert(known, {
                 slot = entry.slot,
                 desc = type(entry.desc) == "string" and entry.desc or "",
                 name = type(entry.name) == "string" and entry.name or "",
+                twin = entry.twin == true,
             })
         end
     end
@@ -98,8 +105,8 @@ local function save_state()
     local lines = { "-- Workspace blocks per monitor (conf/workspaces.lua). Slot N owns ids N*100+1..N*100+99", "return {" }
     for _, entry in ipairs(known) do
         if persistent(entry) then
-            table.insert(lines, string.format("    { slot = %d, desc = %s, name = %s },",
-                entry.slot, lua_string(entry.desc), lua_string(entry.name)))
+            table.insert(lines, string.format("    { slot = %d, desc = %s, name = %s%s },",
+                entry.slot, lua_string(entry.desc), lua_string(entry.name), entry.twin and ", twin = true" or ""))
         end
     end
     table.insert(lines, "}")
@@ -125,29 +132,51 @@ end
 -- MONITORS
 -- ==============================================================================
 
--- Rule selector of an entry: its description when known, else its port
+-- Rule selector of an entry: its description when it tells it apart,
+-- else its port
 local function selector(entry)
-    if entry.desc ~= "" then
+    if entry.desc ~= "" and not entry.twin then
         return "desc:" .. entry.desc
     end
     return entry.name
 end
 
+-- Outputs that never get a block: the FALLBACK one Hyprland makes when no
+-- monitor is left, and mirrors (they show another monitor's workspaces)
+local function ignored(monitor)
+    return monitor.name == "FALLBACK" or monitor.is_mirror == true
+end
+
+-- Another connected monitor has the same description
+local function shared_desc(monitor)
+    local desc = monitor.description or ""
+    if desc == "" then
+        return false
+    end
+    for _, other in ipairs(hl.get_monitors()) do
+        if other.name ~= monitor.name and (other.description or "") == desc then
+            return true
+        end
+    end
+    return false
+end
+
 local function entry_for(monitor)
-    if not monitor then
+    if not monitor or ignored(monitor) then
         return nil
     end
     local desc = monitor.description or ""
-    if desc ~= "" then
+    if desc ~= "" and not shared_desc(monitor) then
         for _, entry in ipairs(known) do
-            if entry.desc == desc then
+            if entry.desc == desc and not entry.twin then
                 return entry
             end
         end
     end
-    -- Known by port only, or a monitor without a description
+    -- By port: known only by port, a monitor without a description, or
+    -- one of two alike
     for _, entry in ipairs(known) do
-        if entry.desc == "" and entry.name == monitor.name then
+        if entry.name == monitor.name and (entry.desc == "" or entry.desc == desc) then
             return entry
         end
     end
@@ -201,9 +230,9 @@ function M.export()
     end
     local items = {}
     for _, entry in ipairs(known) do
-        table.insert(items, string.format('{"slot":%d,"base":%d,"desc":%s,"name":%s,"connected":%s}',
+        table.insert(items, string.format('{"slot":%d,"base":%d,"desc":%s,"name":%s,"connected":%s,"lidOff":%s}',
             entry.slot, entry.slot * M.BLOCK, json_string(entry.desc), json_string(entry.name),
-            json_string(connected[entry] or "")))
+            json_string(connected[entry] or ""), tostring(M.lid_off_outputs[entry.name] == true)))
     end
     local file = io.open(EXPORT_FILE, "w")
     if file then
@@ -215,11 +244,26 @@ end
 -- Remembers a monitor, filling in what changed (description of a port-only
 -- entry, current port); returns its entry and whether it's new
 local function remember(monitor)
-    local entry = entry_for(monitor)
     local desc = monitor.description or ""
+    -- Two alike: every entry with this description goes by port from now on
+    if shared_desc(monitor) then
+        local split = false
+        for _, other in ipairs(known) do
+            if other.desc == desc and not other.twin then
+                other.twin = true
+                split = true
+                add_rules(other)
+            end
+        end
+        if split then
+            save_state()
+        end
+    end
+
+    local entry = entry_for(monitor)
     if entry then
         local changed = false
-        if entry.desc == "" and desc ~= "" then
+        if entry.desc == "" and desc ~= "" and not entry.twin and not shared_desc(monitor) then
             entry.desc = desc
             changed = true
             add_rules(entry) -- by description from now on
@@ -234,7 +278,7 @@ local function remember(monitor)
         return entry, false
     end
 
-    entry = { slot = free_slot(), desc = desc, name = monitor.name }
+    entry = { slot = free_slot(), desc = desc, name = monitor.name, twin = shared_desc(monitor) }
     table.insert(known, entry)
     add_rules(entry)
     save_state()
@@ -281,9 +325,11 @@ local function adopt_all()
     end)
     local new = {}
     for _, monitor in ipairs(monitors) do
-        local entry, is_new = remember(monitor)
-        if is_new then
-            table.insert(new, { name = monitor.name, entry = entry })
+        if not ignored(monitor) then
+            local entry, is_new = remember(monitor)
+            if is_new then
+                table.insert(new, { name = monitor.name, entry = entry })
+            end
         end
     end
     -- Dispatches are dropped while the config is being read (reloads)
@@ -485,9 +531,10 @@ function lyne_workspaces_swap(slot_a, slot_b)
 end
 
 -- Forgets a disconnected monitor: its slot is free for the next new one
+-- (not a laptop screen the lid turned off)
 function lyne_workspaces_forget(slot)
     for i, entry in ipairs(known) do
-        if entry.slot == slot then
+        if entry.slot == slot and not M.lid_off_outputs[entry.name] then
             for _, monitor in ipairs(hl.get_monitors()) do
                 if entry_for(monitor) == entry then
                     return -- connected
@@ -515,9 +562,12 @@ local function is_internal(name)
     return name:match("^eDP") or name:match("^LVDS") or name:match("^DSI")
 end
 
--- LYNE_LID_STATE_FILE points the tests at a fake lid
+-- LYNE_LID_STATE_FILE points the tests at a fake lid. Without an ACPI lid
+-- file, the state the lid switch last reported is used (saved below)
+local LID_EVENT_FILE = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/lyne-lid-state"
 local LID_FILES = { os.getenv("LYNE_LID_STATE_FILE") or "/proc/acpi/button/lid/LID0/state",
-    "/proc/acpi/button/lid/LID/state", "/proc/acpi/button/lid/LID1/state" }
+    "/proc/acpi/button/lid/LID/state", "/proc/acpi/button/lid/LID1/state",
+    "/proc/acpi/button/lid/LID2/state", LID_EVENT_FILE }
 
 function M.lid_closed()
     for _, path in ipairs(LID_FILES) do
@@ -529,6 +579,15 @@ function M.lid_closed()
         end
     end
     return false
+end
+
+local function lid_switched(state)
+    local file = io.open(LID_EVENT_FILE, "w")
+    if file then
+        file:write(state, "\n")
+        file:close()
+    end
+    M.apply_lid()
 end
 
 -- A real other screen: not the laptop's, nor the FALLBACK output Hyprland
@@ -568,8 +627,10 @@ function lyne_lid_rules()
     if lid_turns_off() then
         for _, name in ipairs(internal_outputs()) do
             hl.monitor({ output = name, disabled = true })
+            M.lid_off_outputs[name] = true
             turned_off = true
         end
+        M.export() -- Settings shows it as off, not disconnected
     end
 end
 
@@ -620,8 +681,8 @@ function M.apply_lid()
     hl.exec_cmd("hyprctl reload")
 end
 
-hl.bind("switch:on:Lid Switch", M.apply_lid, { locked = true })
-hl.bind("switch:off:Lid Switch", M.apply_lid, { locked = true })
+hl.bind("switch:on:Lid Switch", function() lid_switched("closed") end, { locked = true })
+hl.bind("switch:off:Lid Switch", function() lid_switched("open") end, { locked = true })
 
 -- ==============================================================================
 -- SETUP
@@ -648,6 +709,10 @@ end
 -- Monitors plugged in later
 hl.on("monitor.added", function(monitor)
     if not started then
+        return
+    end
+    if ignored(monitor) then
+        M.export()
         return
     end
     local entry, is_new = remember(monitor)

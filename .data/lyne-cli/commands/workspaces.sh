@@ -50,6 +50,7 @@ case "$subcmd" in
             "  \($m.base + 1)–\($m.base + $max)  \(if $m.desc != "" then $m.desc else $m.name end)",
             "    " + (if $m.connected != ""
                 then "\($m.connected)\(if $live.focused then " (focused)" else "" end) · showing \(shown($m; $live.activeWorkspace.id))"
+                elif $m.lidOff == true then "screen off (lid closed)"
                 else "disconnected (last on \($m.name))" end),
             (if ($own | length) > 0 then
                 "    open: " + ($own | map("\(.id - $m.base) (\(if .windows == 0 then "empty" elif .windows == 1 then "1 window" else "\(.windows) windows" end)\(if .monitor != $m.connected then ", on \(.monitor)" else "" end))") | join(" · "))

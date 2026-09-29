@@ -37,15 +37,17 @@ ColumnLayout {
                 required property int index
 
                 readonly property bool connected: modelData.connected !== ""
+                // Laptop screen turned off by its closed lid (not gone)
+                readonly property bool lidOff: modelData.lidOff === true
                 readonly property string range: (modelData.base + 1) + "–" + (modelData.base + WorkspacesService.max)
                 readonly property int buttonSize: Config.fontSizeIconSmall + Config.padding * 2
 
                 label: WorkspacesService.labelOf(modelData)
-                description: connected ? modelData.connected + " · workspaces " + range : "Disconnected (last on " + modelData.name + ") · workspaces " + range
+                description: connected ? modelData.connected + " · workspaces " + range : lidOff ? "Screen off (lid closed) · workspaces " + range : "Disconnected (last on " + modelData.name + ") · workspaces " + range
 
                 // md-laptop / md-monitor / md-monitor_off
                 leading: Text {
-                    text: !monitorRow.connected ? "\u{f0d90}" : WorkspacesService.isInternal(monitorRow.modelData) ? "\u{f0322}" : "\u{f0379}"
+                    text: monitorRow.lidOff ? "\u{f0322}" : !monitorRow.connected ? "\u{f0d90}" : WorkspacesService.isInternal(monitorRow.modelData) ? "\u{f0322}" : "\u{f0379}"
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeIcon
                     color: monitorRow.connected ? Config.textColor : Config.subtextColor
@@ -71,7 +73,7 @@ ColumnLayout {
 
                 // md-close
                 ActionButton {
-                    visible: !monitorRow.connected
+                    visible: !monitorRow.connected && !monitorRow.lidOff
                     icon: "\u{f0156}"
                     text: "Forget"
                     size: monitorRow.buttonSize
