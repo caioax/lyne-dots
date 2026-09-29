@@ -65,7 +65,8 @@ if [[ -f "$monitors_file" && -f "$state" ]] && command -v jq &>/dev/null &&
                     | ($mons | map(select(.name != $m.name and (.description // "") == $d)) | length) as $alike
                     | .output = (if $d != "" and $alike == 0 then "desc:" + $d else $m.name end)
                     | .name = $m.name
-                    | .label = (if ($m.model // "") != "" then $m.model elif $d != "" then $d else $m.name end)
+                    | .label = (if ($m.name | test("^(eDP|LVDS|DSI)")) then "Built-in display"
+                        elif ($m.model // "") != "" then $m.model elif $d != "" then $d else $m.name end)
                   end
             end)
     ' "$monitors_file")" || rules=""

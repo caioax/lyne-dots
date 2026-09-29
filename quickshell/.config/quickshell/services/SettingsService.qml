@@ -133,6 +133,13 @@ Singleton {
             category: "Hyprland"
         },
         {
+            id: "monitors",
+            label: "Monitors",
+            icon: "\u{f0379}",
+            description: "Resolution, refresh rate, scale, rotation and layout of each monitor, tried before they're kept",
+            category: "Hyprland"
+        },
+        {
             id: "workspaces",
             label: "Workspaces",
             icon: "\u{f0570}",

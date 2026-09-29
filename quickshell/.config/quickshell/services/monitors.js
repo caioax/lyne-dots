@@ -125,6 +125,14 @@ function isInternal(name) {
     return /^(eDP|LVDS|DSI)/.test(name || "");
 }
 
+// Name shown for a monitor: laptop panels report a code as their model
+// (0xB39E), so they're the built-in display
+function labelFor(monitor) {
+    if (isInternal(monitor.name))
+        return "Built-in display";
+    return monitor.model || monitor.description || monitor.name;
+}
+
 // Selector of a connected monitor: its description, unless another
 // connected monitor shares it (two alike without a serial) or it has none
 function selectorFor(monitor, all) {
@@ -301,7 +309,7 @@ function upgradeSelectors(rules, monitors) {
                 copy.output = selector;
                 copy.name = m.name;
                 if (!copy.label)
-                    copy.label = m.model || m.description || m.name;
+                    copy.label = labelFor(m);
                 return copy;
             }
         }
@@ -316,7 +324,7 @@ function ruleFromLive(monitor, all, stored) {
     var rule = stored ? JSON.parse(JSON.stringify(stored)) : {};
     rule.output = selectorFor(monitor, all);
     rule.name = monitor.name;
-    rule.label = monitor.model || monitor.description || monitor.name;
+    rule.label = labelFor(monitor);
     if (monitor.disabled) {
         rule.disabled = true;
         if (!rule.mode)
@@ -386,4 +394,166 @@ function trialLua(rules) {
     return rules.map(function (r) {
         return ruleToLua(r, true);
     }).join("\n");
+}
+
+// --- Layout (the Settings map) ---
+// Rects are { x, y, width, height } in layout (logical) pixels, one per rule,
+// null for monitors that take no room: turned off, mirroring another, or
+// kept off by the lid (`skip` names)
+
+// Pixel size a rule gives a monitor: its mode, else what it shows now, else
+// its first (preferred) mode
+function pixelSize(rule, monitor) {
+    var mode = parseMode(rule.mode);
+    if (mode)
+        return { width: mode.width, height: mode.height };
+    if (monitor && monitor.width > 0 && !monitor.disabled)
+        return { width: monitor.width, height: monitor.height };
+    var first = monitor ? modes(monitor)[0] : null;
+    return first ? { width: first.width, height: first.height } : { width: 1920, height: 1080 };
+}
+
+function _position(rule) {
+    var m = /^(-?\d+)x(-?\d+)$/.exec(rule.position || "");
+    return m ? { x: parseInt(m[1]), y: parseInt(m[2]) } : null;
+}
+
+function rects(rules, monitors, skip) {
+    return rules.map(function (rule) {
+        if (rule.disabled || rule.mirror || (skip && skip.indexOf(rule.name) >= 0))
+            return null;
+        var monitor = null;
+        for (var i = 0; i < monitors.length; i++) {
+            if (monitors[i].name === rule.name)
+                monitor = monitors[i];
+        }
+        var px = pixelSize(rule, monitor);
+        var scale = typeof rule.scale === "number" ? rule.scale : (monitor && monitor.scale > 0 ? monitor.scale : 1);
+        var size = logicalSize(px.width, px.height, scale, rule.transform || 0);
+        var pos = _position(rule) || { x: 0, y: 0 };
+        return { x: pos.x, y: pos.y, width: size.width, height: size.height };
+    });
+}
+
+function _overlap(a, b) {
+    return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+}
+
+// Would monitor `index` at x, y cover another one
+function overlaps(list, index, x, y) {
+    var me = { x: x, y: y, width: list[index].width, height: list[index].height };
+    for (var i = 0; i < list.length; i++) {
+        if (i !== index && list[i] && _overlap(me, list[i]))
+            return true;
+    }
+    return false;
+}
+
+// Candidates on one axis: side by side (both ways) and aligned (start with
+// start, end with end), like DankMaterialShell's snapToEdges
+function _axisSnaps(edge, extent, pos, size) {
+    return [
+        { value: edge + extent, distance: Math.abs(pos - (edge + extent)) },
+        { value: edge - size, distance: Math.abs(pos + size - edge) },
+        { value: edge, distance: Math.abs(pos - edge) },
+        { value: edge + extent - size, distance: Math.abs(pos + size - (edge + extent)) }
+    ];
+}
+
+// Where a dragged monitor lands: each axis snaps to the nearest edge of
+// another monitor within `threshold`; an axis whose snap would make it
+// overlap is left free. `overlap` tells the result still covers one
+function snap(list, index, x, y, threshold) {
+    var me = list[index];
+    var bestX = { value: x, distance: threshold };
+    var bestY = { value: y, distance: threshold };
+    for (var i = 0; i < list.length; i++) {
+        var o = list[i];
+        if (i === index || !o)
+            continue;
+        _axisSnaps(o.x, o.width, x, me.width).forEach(function (c) {
+            if (c.distance < bestX.distance)
+                bestX = c;
+        });
+        _axisSnaps(o.y, o.height, y, me.height).forEach(function (c) {
+            if (c.distance < bestY.distance)
+                bestY = c;
+        });
+    }
+    var tries = [[bestX.value, bestY.value], [bestX.value, y], [x, bestY.value], [x, y]];
+    for (var t = 0; t < tries.length; t++) {
+        if (!overlaps(list, index, tries[t][0], tries[t][1]))
+            return { x: Math.round(tries[t][0]), y: Math.round(tries[t][1]), overlap: false };
+    }
+    return { x: Math.round(x), y: Math.round(y), overlap: true };
+}
+
+// Shares an edge (or part of one) with another monitor: the cursor can
+// only cross between monitors that touch
+function touches(list, index) {
+    var a = list[index];
+    if (!a)
+        return true;
+    var others = 0;
+    for (var i = 0; i < list.length; i++) {
+        var b = list[i];
+        if (i === index || !b)
+            continue;
+        others++;
+        var sideBySide = (a.x + a.width === b.x || b.x + b.width === a.x) && a.y < b.y + b.height && b.y < a.y + a.height;
+        var stacked = (a.y + a.height === b.y || b.y + b.height === a.y) && a.x < b.x + b.width && b.x < a.x + a.width;
+        if (sideBySide || stacked)
+            return true;
+    }
+    return others === 0;
+}
+
+// Shift so the layout starts at 0,0 (what nwg-displays and most setups use)
+function normalized(list) {
+    var minX = Infinity;
+    var minY = Infinity;
+    list.forEach(function (r) {
+        if (r) {
+            minX = Math.min(minX, r.x);
+            minY = Math.min(minY, r.y);
+        }
+    });
+    if (minX === Infinity)
+        return list;
+    return list.map(function (r) {
+        return r ? { x: r.x - minX, y: r.y - minY, width: r.width, height: r.height } : null;
+    });
+}
+
+// Monitor `index` got a new size: the ones right of its old right edge (or
+// below its old bottom) move by the difference, so neighbours keep touching
+function resized(list, index, width, height) {
+    var old = list[index];
+    var dw = width - old.width;
+    var dh = height - old.height;
+    return list.map(function (r, i) {
+        if (!r)
+            return null;
+        if (i === index)
+            return { x: r.x, y: r.y, width: width, height: height };
+        return {
+            x: r.x >= old.x + old.width ? r.x + dw : r.x,
+            y: r.y >= old.y + old.height ? r.y + dh : r.y,
+            width: r.width,
+            height: r.height
+        };
+    });
+}
+
+// Spot for a monitor turned back on: right of the others, top aligned
+function placeRight(list) {
+    var right = 0;
+    var top = Infinity;
+    list.forEach(function (r) {
+        if (r) {
+            right = Math.max(right, r.x + r.width);
+            top = Math.min(top, r.y);
+        }
+    });
+    return { x: right, y: top === Infinity ? 0 : top };
 }

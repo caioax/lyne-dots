@@ -87,7 +87,7 @@ Singleton {
                 };
                 rule.output = Lib.selectorFor(m, monitors);
                 rule.name = m.name;
-                rule.label = m.model || m.description || m.name;
+                rule.label = Lib.labelFor(m);
                 rule.disabled = false;
                 return rule;
             }
