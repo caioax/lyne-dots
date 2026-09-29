@@ -239,7 +239,8 @@
     },
     "workspaces": {
         "skipEmpty": false,
-        "wrap": false
+        "wrap": false,
+        "lidOff": true
     },
     "osd": {
         "style": "attached",

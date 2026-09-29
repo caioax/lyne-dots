@@ -8,7 +8,8 @@ import "../../../components/"
 
 // Workspaces per monitor (hypr/conf/workspaces.lua): every monitor Hyprland
 // has seen keeps its own block of workspaces, also while disconnected. The
-// order of the blocks and how next/previous move are set here.
+// order of the blocks, how next/previous move and what the laptop lid does
+// are set here.
 ColumnLayout {
     id: root
 
@@ -108,6 +109,18 @@ ColumnLayout {
             label: "Go around"
             description: StateService.get("workspaces.skipEmpty", false) ? "From the last busy workspace back to the first, and the other way" : "After the last busy workspace and one empty one, back to the first, and the other way"
             path: "workspaces.wrap"
+        }
+    }
+
+    // Only with a laptop screen among the known monitors
+    SettingsGroup {
+        title: "Laptop lid"
+        visible: WorkspacesService.monitors.some(m => WorkspacesService.isInternal(m))
+
+        ToggleRow {
+            label: "Turn the screen off when closed"
+            description: "While another monitor is connected: the laptop's workspaces move there and come back when you open the lid"
+            path: "workspaces.lidOff"
         }
     }
 }

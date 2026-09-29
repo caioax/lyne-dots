@@ -30,3 +30,9 @@ end
 
 -- Display Settings
 require("monitors")
+
+-- Laptop screen off while its lid is closed and another monitor is
+-- connected (conf/workspaces.lua): after monitors.lua, so it wins
+if lyne_lid_rules then
+    lyne_lid_rules()
+end

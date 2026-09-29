@@ -14,8 +14,9 @@
 -- New monitors get the first free block (left to right at login).
 --
 -- Settings > Hyprland > Workspaces reorders and forgets monitors (the
--- lyne_workspaces_* functions below) and sets how next/previous behave
--- (local/settings.lua calls lyne_workspaces()). Quickshell reads the blocks
+-- lyne_workspaces_* functions below), sets how next/previous behave and
+-- whether closing the laptop lid turns its screen off while another monitor
+-- is connected (local/settings.lua calls lyne_workspaces()). Quickshell reads the blocks
 -- from $XDG_RUNTIME_DIR/lyne-workspaces.json.
 
 local M = {}
@@ -34,8 +35,9 @@ local EXPORT_FILE = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/lyne-workspace
 local known = {}
 
 -- Next/previous: only stop at workspaces with windows, and go around past
--- the ends. Set by lyne_workspaces() from local/settings.lua
-M.options = { skip_empty = false, wrap = false }
+-- the ends; lid_off: see LAPTOP LID. Set by lyne_workspaces() from
+-- local/settings.lua
+M.options = { skip_empty = false, wrap = false, lid_off = true }
 
 function lyne_workspaces(options)
     for key, value in pairs(options or {}) do
@@ -245,7 +247,8 @@ local function in_block(id, entry)
 end
 
 -- A monitor that had no rules yet got some other workspace from Hyprland
--- (the first id free of rules, like 11): show the first one of its block,
+-- (the first id free of rules, like 11), or a known one came back on an
+-- empty leftover (the FALLBACK output's): show the first one of its block,
 -- keeping the focus where it was
 local function show_own_block(monitor, entry)
     local active = monitor.active_workspace
@@ -254,8 +257,9 @@ local function show_own_block(monitor, entry)
     end
     local target = entry.slot * M.BLOCK + 1
     local previous = hl.get_active_monitor()
-    if hl.get_workspace(target) then
-        -- Already open elsewhere: rules only place new workspaces
+    local existing = hl.get_workspace(target)
+    if existing and existing.monitor and existing.monitor.name ~= monitor.name then
+        -- Open on another monitor: rules only place new workspaces
         hl.dispatch(hl.dsp.workspace.move({ workspace = target, monitor = monitor.name }))
     else
         hl.dispatch(hl.dsp.focus({ monitor = monitor.name }))
@@ -499,6 +503,127 @@ function lyne_workspaces_forget(slot)
 end
 
 -- ==============================================================================
+-- LAPTOP LID
+-- ==============================================================================
+
+-- With lid_off and another monitor connected, closing the lid turns the
+-- laptop screen off: its workspaces move to the other monitor (shown there
+-- as guests) and come back when the lid opens. logind ignores the lid while
+-- another monitor is connected, so the laptop doesn't suspend.
+
+local function is_internal(name)
+    return name:match("^eDP") or name:match("^LVDS") or name:match("^DSI")
+end
+
+-- LYNE_LID_STATE_FILE points the tests at a fake lid
+local LID_FILES = { os.getenv("LYNE_LID_STATE_FILE") or "/proc/acpi/button/lid/LID0/state",
+    "/proc/acpi/button/lid/LID/state", "/proc/acpi/button/lid/LID1/state" }
+
+function M.lid_closed()
+    for _, path in ipairs(LID_FILES) do
+        local file = io.open(path, "r")
+        if file then
+            local text = file:read("a") or ""
+            file:close()
+            return text:find("closed") ~= nil
+        end
+    end
+    return false
+end
+
+-- A real other screen: not the laptop's, nor the FALLBACK output Hyprland
+-- makes when none is left, nor a virtual one
+local function external_connected()
+    for _, monitor in ipairs(hl.get_monitors()) do
+        local name = monitor.name
+        if not is_internal(name) and name ~= "FALLBACK" and not name:match("^HEADLESS") then
+            return true
+        end
+    end
+    return false
+end
+
+local function lid_turns_off()
+    return M.options.lid_off and M.lid_closed() and external_connected()
+end
+
+-- Laptop screens known here (their ports), also while turned off
+local function internal_outputs()
+    local names = {}
+    for _, entry in ipairs(known) do
+        if is_internal(entry.name) then
+            table.insert(names, entry.name)
+        end
+    end
+    return names
+end
+
+-- Monitor rules only apply when the config is read, so the lid works
+-- through reloads: hyprland.lua calls this after monitors.lua, turning the
+-- laptop screen off while the lid keeps it closed (on every reload, so it
+-- never flashes on). `turned_off` tells whether this config did
+local turned_off = false
+
+function lyne_lid_rules()
+    if lid_turns_off() then
+        for _, name in ipairs(internal_outputs()) do
+            hl.monitor({ output = name, disabled = true })
+            turned_off = true
+        end
+    end
+end
+
+-- "<time of the last lid reload> <reloads within a minute>"
+local RELOAD_MARK = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/lyne-lid-reload"
+local retry_pending = false
+
+-- Reloads when the lid (or a monitor coming or going) changed whether the
+-- laptop screen should be off. At most one reload every few seconds (a
+-- change meanwhile is retried after it) and eight a minute, so a rule that
+-- doesn't take can't loop fast
+function M.apply_lid()
+    if turned_off == lid_turns_off() then
+        return
+    end
+
+    local now = os.time()
+    local last, count = 0, 0
+    local mark = io.open(RELOAD_MARK, "r")
+    if mark then
+        local text = mark:read("a") or ""
+        mark:close()
+        last, count = text:match("(%d+) (%d+)")
+        last, count = tonumber(last) or 0, tonumber(count) or 0
+    end
+    if now - last > 60 then
+        count = 0
+    end
+    if count >= 8 then
+        return
+    end
+    if now - last < 5 then
+        if not retry_pending then
+            retry_pending = true
+            hl.timer(function()
+                retry_pending = false
+                M.apply_lid()
+            end, { timeout = (5 - (now - last)) * 1000 + 200, type = "oneshot" })
+        end
+        return
+    end
+
+    mark = io.open(RELOAD_MARK, "w")
+    if mark then
+        mark:write(now, " ", count + 1)
+        mark:close()
+    end
+    hl.exec_cmd("hyprctl reload")
+end
+
+hl.bind("switch:on:Lid Switch", M.apply_lid, { locked = true })
+hl.bind("switch:off:Lid Switch", M.apply_lid, { locked = true })
+
+-- ==============================================================================
 -- SETUP
 -- ==============================================================================
 
@@ -516,6 +641,7 @@ else
     hl.on("hyprland.start", function()
         started = true
         adopt_all()
+        M.apply_lid() -- docked with the lid closed at login
     end)
 end
 
@@ -525,15 +651,46 @@ hl.on("monitor.added", function(monitor)
         return
     end
     local entry, is_new = remember(monitor)
-    if is_new then
-        show_own_block(monitor, entry)
+    local active = monitor.active_workspace
+    if is_new or (active and active.windows == 0) then
+        -- Deferred: this can run while a reload (the lid's) reads the config
+        local name = monitor.name
+        hl.timer(function()
+            local current = hl.get_monitor(name)
+            if current then
+                show_own_block(current, entry)
+            end
+        end, { timeout = 100, type = "oneshot" })
     end
     M.export()
+    -- A monitor plugged in with the lid closed
+    if not is_internal(monitor.name) then
+        M.apply_lid()
+    end
 end)
 
 -- The removed monitor is still listed while its event runs
 hl.on("monitor.removed", function()
-    hl.timer(M.export, { timeout = 200, type = "oneshot" })
+    hl.timer(function()
+        -- A removed output's workspaces land on the others; an empty one
+        -- left active there (the FALLBACK output's) gives way to the
+        -- monitor's own block
+        for _, monitor in ipairs(hl.get_monitors()) do
+            local entry = entry_for(monitor)
+            local active = monitor.active_workspace
+            if entry and active and active.windows == 0 then
+                show_own_block(monitor, entry)
+            end
+        end
+        M.export()
+        -- The last other monitor left: the laptop screen comes back
+        M.apply_lid()
+    end, { timeout = 200, type = "oneshot" })
+end)
+
+-- Settings may have switched lid_off; the lid may have changed during a reload
+hl.on("config.reloaded", function()
+    M.apply_lid()
 end)
 
 return M
