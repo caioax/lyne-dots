@@ -508,7 +508,7 @@ show_summary() {
     echo "  2. Or start manually with: uwsm start hyprland-uwsm.desktop"
     echo ""
     echo "  3. Configure your monitors with: nwg-displays"
-    echo "  4. Workspaces will be configured automatically by workspace-manager"
+    echo "  4. Each monitor gets its own workspaces automatically"
     echo ""
 
     if [[ " ${CATEGORIES[*]} " =~ " terminal " ]]; then

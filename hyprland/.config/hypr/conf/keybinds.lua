@@ -91,32 +91,47 @@ hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 -- WORKSPACES MULTI-MONITOR
 -- ==============================================================================
 
--- Workspace management script
-local workspaceManager = vars.scriptPath .. "/Workspace-Manager/workspace-manager.sh"
+-- Each monitor has its own workspaces (conf/workspaces.lua): the binds act
+-- on the focused monitor's block. Without it, they fall back to plain ids
+local ok_ws, workspaces = pcall(require, "conf/workspaces")
+if not ok_ws then
+    print("[keybinds] conf/workspaces.lua failed, workspaces aren't per monitor: " .. tostring(workspaces))
+    local function active_id()
+        local active = hl.get_active_workspace()
+        return active and active.id or 1
+    end
+    workspaces = {
+        go = function(n) hl.dispatch(hl.dsp.focus({ workspace = n })) end,
+        move = function(n) hl.dispatch(hl.dsp.window.move({ workspace = n })) end,
+        step = function(d) hl.dispatch(hl.dsp.focus({ workspace = math.max(1, active_id() + d) })) end,
+        move_step = function(d) hl.dispatch(hl.dsp.window.move({ workspace = math.max(1, active_id() + d) })) end,
+    }
+end
 
 -- Special workspaces (WhatsApp, music, scratchpad) are bound in conf/specials.lua
 
 -- --- Direct Access (1-10) + Move Window (1-10) ---
--- Switch/move to workspace N on the current monitor (offset calculated by the script)
 for i = 1, 10 do
     local key = i % 10 -- 10 maps to key 0
-    bind("workspace-" .. i,         "Workspaces", "Go to workspace " .. i,          mainMod .. " + " .. key,         hl.dsp.exec_cmd(workspaceManager .. " switch " .. i))
-    bind("move-to-workspace-" .. i, "Workspaces", "Move window to workspace " .. i, mainMod .. " + SHIFT + " .. key, hl.dsp.exec_cmd(workspaceManager .. " move " .. i))
+    bind("workspace-" .. i,         "Workspaces", "Go to workspace " .. i,          mainMod .. " + " .. key,         function() workspaces.go(i) end)
+    bind("move-to-workspace-" .. i, "Workspaces", "Move window to workspace " .. i, mainMod .. " + SHIFT + " .. key, function() workspaces.move(i) end)
 end
 
 -- --- Navigation (Next/Previous) ---
 local navOpts = { repeating = true, locked = true }
+local function go_step(direction) return function() workspaces.step(direction) end end
+local function move_step(direction) return function() workspaces.move_step(direction) end end
 
-bind("workspace-next",     "Workspaces", "Next workspace",           mainMod .. " + CTRL + L",     hl.dsp.exec_cmd(workspaceManager .. " next"), { repeating = true, locked = true })
-bind("workspace-next-alt", "Workspaces", "Next workspace (arrow)",   mainMod .. " + CTRL + right", hl.dsp.exec_cmd(workspaceManager .. " next"), { repeating = true, locked = true })
-bind("workspace-prev",     "Workspaces", "Previous workspace",       mainMod .. " + CTRL + H",     hl.dsp.exec_cmd(workspaceManager .. " prev"), { repeating = true, locked = true })
-bind("workspace-prev-alt", "Workspaces", "Previous workspace (arrow)", mainMod .. " + CTRL + left", hl.dsp.exec_cmd(workspaceManager .. " prev"), navOpts)
+bind("workspace-next",     "Workspaces", "Next workspace",             mainMod .. " + CTRL + L",     go_step(1),  navOpts)
+bind("workspace-next-alt", "Workspaces", "Next workspace (arrow)",     mainMod .. " + CTRL + right", go_step(1),  navOpts)
+bind("workspace-prev",     "Workspaces", "Previous workspace",         mainMod .. " + CTRL + H",     go_step(-1), navOpts)
+bind("workspace-prev-alt", "Workspaces", "Previous workspace (arrow)", mainMod .. " + CTRL + left",  go_step(-1), navOpts)
 
 -- --- Move Window + Navigation ---
-bind("move-to-next",     "Workspaces", "Move window to next workspace",             mainMod .. " + CTRL + SHIFT + L",     hl.dsp.exec_cmd(workspaceManager .. " move_next"), { repeating = true, locked = true })
-bind("move-to-next-alt", "Workspaces", "Move window to next workspace (arrow)",     mainMod .. " + CTRL + SHIFT + right", hl.dsp.exec_cmd(workspaceManager .. " move_next"), { repeating = true, locked = true })
-bind("move-to-prev",     "Workspaces", "Move window to previous workspace",         mainMod .. " + CTRL + SHIFT + H",     hl.dsp.exec_cmd(workspaceManager .. " move_prev"), { repeating = true, locked = true })
-bind("move-to-prev-alt", "Workspaces", "Move window to previous workspace (arrow)", mainMod .. " + CTRL + SHIFT + left",  hl.dsp.exec_cmd(workspaceManager .. " move_prev"), { repeating = true, locked = true })
+bind("move-to-next",     "Workspaces", "Move window to next workspace",             mainMod .. " + CTRL + SHIFT + L",     move_step(1),  navOpts)
+bind("move-to-next-alt", "Workspaces", "Move window to next workspace (arrow)",     mainMod .. " + CTRL + SHIFT + right", move_step(1),  navOpts)
+bind("move-to-prev",     "Workspaces", "Move window to previous workspace",         mainMod .. " + CTRL + SHIFT + H",     move_step(-1), navOpts)
+bind("move-to-prev-alt", "Workspaces", "Move window to previous workspace (arrow)", mainMod .. " + CTRL + SHIFT + left",  move_step(-1), navOpts)
 
 -- ==============================================================================
 -- AUDIO, BRIGHTNESS & MEDIA

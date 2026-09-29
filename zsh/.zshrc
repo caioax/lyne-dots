@@ -61,7 +61,6 @@ function zvm_after_init() {
 }
 
 # === ALIASES ===
-alias ws='cd ~/facu-workspace/'
 alias tk='tmux kill-server'
 all-update() {
     local STATE_FILE="$HOME/.config/quickshell/state.json"

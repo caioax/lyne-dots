@@ -69,7 +69,6 @@ On first install, templates from `.data/` are copied to generate machine-specifi
 Configuration templates are in `.data/hyprland/templates/`:
 
 - `monitors.conf` - Generic monitor configuration
-- `workspaces.conf` - Workspace mapping
 - `extra_environment.conf` - Local environment variables
 - `extra_environment_nvidia.conf` - NVIDIA variables
 - `autostart.conf` - Local autostart
