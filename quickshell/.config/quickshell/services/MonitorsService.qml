@@ -51,6 +51,8 @@ Singleton {
     property string _token: ""
 
     property bool busy: false
+    // Big name and number on every screen for a moment (Identify)
+    property bool identifying: false
     // Last error (eval or write), for the settings page
     property string error: ""
 
@@ -101,7 +103,7 @@ Singleton {
     function problemWith(rules): string {
         if (!rules.some(r => !r.disabled && !r.mirror && !lidOffNames.includes(r.name)))
             return "At least one monitor has to stay on";
-        return "";
+        return Lib.mirrorProblem(rules, lidOffNames);
     }
 
     // Tries `rules` (one per connected monitor) live
@@ -166,6 +168,11 @@ Singleton {
         _write(fileRules);
     }
 
+    function identify() {
+        identifying = true;
+        identifyTimer.restart();
+    }
+
     function refresh() {
         if (!listProc.running)
             listProc.running = true;
@@ -211,6 +218,12 @@ Singleton {
     property Timer refreshSoon: Timer {
         interval: 400
         onTriggered: root.refresh()
+    }
+
+    Timer {
+        id: identifyTimer
+        interval: 3000
+        onTriggered: root.identifying = false
     }
 
     Timer {

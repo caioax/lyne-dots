@@ -34,6 +34,11 @@ ColumnLayout {
     readonly property var rule: draft[selected] ?? null
     readonly property var monitor: rule ? monitors.find(m => m.name === rule.name) ?? null : null
     readonly property bool ruleLidOff: rule !== null && lidOff.includes(rule.name)
+    // On and editable (not turned off, not kept off by the lid)
+    readonly property bool ruleOn: rule !== null && !rule.disabled && !ruleLidOff
+    // Showing another monitor's picture: no place, scale or rotation of its own
+    readonly property bool ruleMirrors: ruleOn && !!rule.mirror
+    readonly property var mirrorers: rule ? Lib.mirroredBy(draft, selected) : []
     readonly property var mode: rule ? Lib.pixelSize(rule, monitor) : ({ width: 0, height: 0 })
     readonly property var modeList: monitor ? Lib.modes(monitor) : []
     // The monitor's preferred mode: the first one it reports
@@ -88,8 +93,33 @@ ColumnLayout {
             setRule(index, {
                 disabled: true
             });
+            // Monitors mirroring it would show nothing: they get their own
+            // picture back, right of the others
+            for (const i of Lib.mirroredBy(draft, index))
+                setMirror(i, -1);
         }
         placeAll(Lib.rects(draft, monitors, lidOff));
+    }
+
+    // Monitor `index` shows the picture of monitor `target` (-1: its own)
+    function setMirror(index: int, target: int) {
+        if (target >= 0) {
+            setRule(index, {
+                mirror: draft[target].output
+            });
+        } else {
+            const spot = Lib.placeRight(Lib.rects(draft, monitors, lidOff));
+            setRule(index, {
+                mirror: "",
+                position: spot.x + "x" + spot.y
+            });
+        }
+        placeAll(Lib.rects(draft, monitors, lidOff));
+    }
+
+    function labelOf(output: string): string {
+        const r = draft.find(x => x.output === output);
+        return r ? (r.label || r.name) : output;
     }
 
     function setMode(width: int, height: int, refresh: real) {
@@ -110,7 +140,7 @@ ColumnLayout {
         if (r.disabled)
             return "Off";
         if (r.mirror)
-            return "Mirroring";
+            return "Mirroring " + labelOf(r.mirror);
         const m = monitors.find(x => x.name === r.name);
         const px = Lib.pixelSize(r, m);
         const hz = Lib.parseMode(r.mode)?.refresh ?? 0;
@@ -172,7 +202,8 @@ ColumnLayout {
                     Layout.fillWidth: true
                     Layout.preferredHeight: Math.min(Config.fontSizeNormal * 16, width * 0.45)
                     rects: root.layoutRects
-                    infos: root.draft.map(r => ({
+                    infos: root.draft.map((r, i) => ({
+                                number: i + 1,
                                 label: r.label || r.name,
                                 detail: root.describe(r),
                                 internal: Lib.isInternal(r.name)
@@ -207,7 +238,7 @@ ColumnLayout {
 
                             // md-laptop / md-monitor / md-monitor_off
                             icon: root.layoutRects[index] === null ? "\u{f0d90}" : Lib.isInternal(modelData.name) ? "\u{f0322}" : "\u{f0379}"
-                            text: (modelData.label || modelData.name) + " · " + root.describe(modelData)
+                            text: (index + 1) + "  " + (modelData.label || modelData.name) + " · " + root.describe(modelData)
                             size: Config.fontSizeIconSmall + Config.padding * 2
                             baseColor: isSelected ? Qt.alpha(Config.accentColor, 0.2) : Config.surface1Color
                             hoverColor: isSelected ? Qt.alpha(Config.accentColor, 0.3) : Config.surface2Color
@@ -217,18 +248,33 @@ ColumnLayout {
                     }
                 }
 
-                Text {
+                RowLayout {
                     Layout.fillWidth: true
-                    wrapMode: Text.Wrap
-                    text: {
-                        const r = root.layoutRects[root.selected];
-                        const where = r ? "At " + r.x + ", " + r.y + " · " : "";
-                        const apart = r && !Lib.touches(root.layoutRects, root.selected) ? "Not touching another monitor: the pointer can't move between them · " : "";
-                        return where + apart + "Drag to arrange; arrow keys move the selected one (Shift: 10× further)";
+                    spacing: Config.spacing * 2
+
+                    Text {
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        text: {
+                            const r = root.layoutRects[root.selected];
+                            const where = r ? "At " + r.x + ", " + r.y + " · " : "";
+                            const apart = r && !Lib.touches(root.layoutRects, root.selected) ? "Not touching another monitor: the pointer can't move between them · " : "";
+                            return where + apart + "Drag to arrange; arrow keys move the selected one (Shift: 10× further)";
+                        }
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeSmall
+                        color: root.layoutRects[root.selected] && !Lib.touches(root.layoutRects, root.selected) ? Config.warningColor : Config.subtextColor
                     }
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeSmall
-                    color: root.layoutRects[root.selected] && !Lib.touches(root.layoutRects, root.selected) ? Config.warningColor : Config.subtextColor
+
+                    // md-numeric (which screen is which)
+                    ActionButton {
+                        Layout.alignment: Qt.AlignTop
+                        icon: "\u{f03a0}"
+                        text: "Identify"
+                        size: Config.fontSizeIconSmall + Config.padding * 2
+                        baseColor: Config.surface1Color
+                        onClicked: MonitorsService.identify()
+                    }
                 }
             }
         }
@@ -288,6 +334,43 @@ ColumnLayout {
             enabled: !root.ruleLidOff
             checked: root.rule ? !root.rule.disabled || root.ruleLidOff : false
             onToggled: value => root.setEnabled(root.selected, value)
+        }
+
+        SettingRow {
+            id: mirrorRow
+
+            readonly property var targets: root.rule ? Lib.mirrorTargets(root.draft, root.selected, root.lidOff) : []
+
+            label: "Mirror"
+            description: root.mirrorers.length > 0 ? "Mirrored by " + root.mirrorers.map(i => root.draft[i].label || root.draft[i].name).join(", ") + ", so it can't mirror another one" : root.ruleMirrors ? "Shows the picture of " + root.labelOf(root.rule.mirror) + "; its workspaces go to the other monitors meanwhile" : "Show another monitor's picture instead of its own"
+            enabled: root.ruleOn && root.mirrorers.length === 0 && (targets.length > 0 || root.ruleMirrors)
+
+            ActionButton {
+                id: mirrorButton
+
+                text: (root.ruleMirrors ? root.labelOf(root.rule.mirror) : "Off") + "  \u{f0140}"
+                size: Config.fontSizeIconSmall + Config.padding * 2
+                baseColor: mirrorRow.controlColor
+                onClicked: {
+                    const items = [
+                        {
+                            // md-check
+                            label: "Off (its own picture)",
+                            icon: root.ruleMirrors ? "" : "\u{f012c}",
+                            action: "-1"
+                        }
+                    ];
+                    for (const i of mirrorRow.targets)
+                        items.push({
+                            label: (i + 1) + "  " + (root.draft[i].label || root.draft[i].name),
+                            icon: root.rule.mirror === root.draft[i].output ? "\u{f012c}" : "",
+                            action: String(i)
+                        });
+                    menu.kind = "mirror";
+                    menu.items = items;
+                    menu.openAt(mirrorButton, null);
+                }
+            }
         }
 
         SettingRow {
@@ -363,7 +446,7 @@ ColumnLayout {
 
             label: "Scale"
             description: "Things look like on a " + looks.width + " × " + looks.height + " screen"
-            enabled: root.rule !== null && !root.rule.disabled && !root.ruleLidOff
+            enabled: root.ruleOn && !root.ruleMirrors
 
             ActionButton {
                 id: scaleButton
@@ -396,7 +479,7 @@ ColumnLayout {
 
         SelectRow {
             label: "Rotation"
-            enabled: root.rule !== null && !root.rule.disabled && !root.ruleLidOff
+            enabled: root.ruleOn && !root.ruleMirrors
             segmentWidth: Config.fontSizeNormal * 4
             options: [
                 {
@@ -425,7 +508,7 @@ ColumnLayout {
         ToggleRow {
             label: "Flipped"
             description: "Mirror the picture horizontally, e.g. for a projector behind glass"
-            enabled: root.rule !== null && !root.rule.disabled && !root.ruleLidOff
+            enabled: root.ruleOn && !root.ruleMirrors
             checked: (root.rule?.transform ?? 0) >= 4
             onToggled: value => root.setRule(root.selected, {
                     transform: (root.rule.transform % 4) + (value ? 4 : 0)
@@ -449,6 +532,8 @@ ColumnLayout {
                 root.setRule(root.selected, {
                     mode: Lib.modeString(root.mode.width, root.mode.height, Number(action))
                 });
+            } else if (kind === "mirror") {
+                root.setMirror(root.selected, Number(action));
             } else if (kind === "scale") {
                 root.resize(root.selected, {
                     scale: Number(action)

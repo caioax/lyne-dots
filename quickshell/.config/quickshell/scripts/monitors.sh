@@ -88,7 +88,7 @@ write() {
 
     # Same directory, then rename: Hyprland never reads a half-written file
     local tmp="$HYPR_DIR/.monitors.lua.new"
-    cp "$check" "$tmp" && mv -f "$tmp" "$TARGET"
+    cp "$check" "$tmp" && chmod 644 "$tmp" && mv -f "$tmp" "$TARGET"
     rm -f "$check"
 
     # Writing the file makes Hyprland reload; reload anyway in case the

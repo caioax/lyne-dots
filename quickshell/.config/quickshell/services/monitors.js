@@ -557,3 +557,53 @@ function placeRight(list) {
     });
     return { x: right, y: top === Infinity ? 0 : top };
 }
+
+// --- Mirroring ---
+// Hyprland mirrors by selector and refuses mirroring a mirror or itself;
+// a turned off monitor has nothing to show
+
+// Rules another one can mirror: on, not mirroring, not the lid's
+function mirrorTargets(rules, index, skip) {
+    var out = [];
+    for (var i = 0; i < rules.length; i++) {
+        var r = rules[i];
+        if (i !== index && !r.disabled && !r.mirror && !(skip && skip.indexOf(r.name) >= 0))
+            out.push(i);
+    }
+    return out;
+}
+
+// Indices of the rules mirroring rule `index`
+function mirroredBy(rules, index) {
+    var out = [];
+    for (var i = 0; i < rules.length; i++) {
+        if (i !== index && rules[i].mirror && rules[i].mirror === rules[index].output && !rules[i].disabled)
+            out.push(i);
+    }
+    return out;
+}
+
+// Why the mirrors of a draft can't work ("" = they can)
+function mirrorProblem(rules, skip) {
+    for (var i = 0; i < rules.length; i++) {
+        var r = rules[i];
+        if (!r.mirror || r.disabled)
+            continue;
+        var target = null;
+        for (var j = 0; j < rules.length; j++) {
+            if (rules[j].output === r.mirror)
+                target = rules[j];
+        }
+        var name = r.label || r.name;
+        if (!target)
+            return name + " mirrors a monitor that isn't connected";
+        if (target === r)
+            return name + " can't mirror itself";
+        var targetName = target.label || target.name;
+        if (target.disabled || (skip && skip.indexOf(target.name) >= 0))
+            return name + " mirrors " + targetName + ", which is off";
+        if (target.mirror)
+            return name + " mirrors " + targetName + ", which mirrors another one";
+    }
+    return "";
+}

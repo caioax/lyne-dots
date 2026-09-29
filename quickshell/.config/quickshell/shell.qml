@@ -178,6 +178,13 @@ ShellRoot {
         MonitorsConfirm {}
     }
 
+    // Settings › Monitors › Identify: which screen is which
+    LazyLoader {
+        active: MonitorsService.identifying
+
+        MonitorsIdentify {}
+    }
+
     // Settings window (imported statically: Quickshell only resolves the
     // pages/ and rows/ directories through static imports)
     Loader {

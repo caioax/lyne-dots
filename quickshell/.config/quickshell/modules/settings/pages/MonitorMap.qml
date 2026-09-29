@@ -14,7 +14,8 @@ Item {
     // One per rule: { x, y, width, height } in layout pixels, null for
     // monitors that take no room (off, mirroring, lid closed)
     property var rects: []
-    // One per rule: { label, detail, internal }
+    // One per rule: { number, label, detail, internal }; the number is the
+    // one Identify shows on the screen
     property var infos: []
     property int selected: -1
     property bool interactive: true
@@ -99,7 +100,7 @@ Item {
             required property int index
 
             readonly property var rect: root.rects[index]
-            readonly property var info: root.infos[index] ?? { label: "", detail: "", internal: false }
+            readonly property var info: root.infos[index] ?? { number: index + 1, label: "", detail: "", internal: false }
             readonly property bool isSelected: root.selected === index
             // While dragging: where the pointer puts it, and where it lands
             property bool dragging: false
@@ -177,6 +178,28 @@ Item {
                     font.pixelSize: Config.fontSizeSmall
                     color: Config.subtextColor
                     visible: tile.height > Config.fontSizeNormal * 4
+                }
+            }
+
+            // Its number, as Identify shows it on the screen
+            Rectangle {
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.margins: Math.round(Config.padding / 2)
+                visible: tile.height > Config.fontSizeNormal * 3
+                implicitWidth: Math.max(implicitHeight, numberText.implicitWidth + Config.padding)
+                implicitHeight: numberText.implicitHeight + Math.round(Config.padding / 3)
+                radius: height / 2
+                color: tile.isSelected ? Config.accentColor : Config.surface2Color
+
+                Text {
+                    id: numberText
+                    anchors.centerIn: parent
+                    text: tile.info.number
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    font.bold: true
+                    color: tile.isSelected ? Config.textReverseColor : Config.subtextColor
                 }
             }
 
