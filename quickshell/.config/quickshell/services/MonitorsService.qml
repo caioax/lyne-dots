@@ -44,6 +44,8 @@ Singleton {
     property bool trialActive: false
     property int trialRemaining: 0
     property var _pendingRules: []
+    // Ports connected when the trial started: a hotplug ends it
+    property string _trialPorts: ""
     // Saved rules before a write, restored if it fails
     property var _previousRules: []
     property string _token: ""
@@ -111,6 +113,7 @@ Singleton {
         // The lid keeps its monitors off until it opens: not tried now
         const live = rules.filter(r => !lidOffNames.includes(r.name));
         _pendingRules = Lib.mergeRules(storedRules, rules, monitors);
+        _trialPorts = _ports(monitors);
         _token = Date.now().toString(36);
         busy = true;
         trialProc.command = ["hyprctl", "eval", Lib.trialLua(live)];
@@ -126,13 +129,35 @@ Singleton {
         kept();
     }
 
-    function revert() {
+    // `reason` (reverted on its own) goes into a notification
+    function revert(reason: string) {
         if (!trialActive)
             return;
         _stopTrial();
         Quickshell.execDetached(["bash", script, "revert"]);
         refreshSoon.restart();
+        if (reason)
+            _notify(reason);
         reverted();
+    }
+
+    // A config reload not started here (the laptop lid, another setting
+    // saved to hypr/) already dropped the trial's rules: only end it
+    function _endedByReload() {
+        _stopTrial();
+        // Stops the watcher (it would reload once more)
+        Quickshell.execDetached(["bash", script, "keep"]);
+        refreshSoon.restart();
+        _notify("Hyprland reloaded its config (e.g. the laptop lid), which brought the saved monitor settings back");
+        reverted();
+    }
+
+    function _notify(body: string) {
+        Quickshell.execDetached(["notify-send", "-a", "Settings", "-i", "preferences-desktop-display", "Display settings reverted", body]);
+    }
+
+    function _ports(list): string {
+        return list.map(m => m.name).sort().join(" ");
     }
 
     // Takes over a monitors.lua written by another tool: its rules become
@@ -175,7 +200,10 @@ Singleton {
         target: Hyprland
 
         function onRawEvent(event) {
-            if (["monitoradded", "monitoraddedv2", "monitorremoved", "monitorremovedv2", "configreloaded"].includes(event.name))
+            // Keeping and reverting end the trial before they reload
+            if (event.name === "configreloaded" && root.trialActive)
+                root._endedByReload();
+            else if (["monitoradded", "monitoraddedv2", "monitorremoved", "monitorremovedv2", "configreloaded"].includes(event.name))
                 root.refreshSoon.restart();
         }
     }
@@ -192,7 +220,7 @@ Singleton {
         onTriggered: {
             root.trialRemaining -= 1;
             if (root.trialRemaining <= 0)
-                root.revert();
+                root.revert("They weren't kept within " + root.trialSeconds + " seconds");
         }
     }
 
@@ -205,6 +233,10 @@ Singleton {
                 try {
                     root.monitors = JSON.parse(text).filter(m => !Lib.ignored(m));
                     root.ready = true;
+                    // Turned off monitors stay listed: only a plug or unplug
+                    // changes the ports, and the trial's rules don't cover it
+                    if (root.trialActive && root._ports(root.monitors) !== root._trialPorts)
+                        root.revert("A monitor was connected or disconnected during the trial");
                 } catch (e) {
                     console.warn("[Monitors] can't read hyprctl monitors:", e);
                 }

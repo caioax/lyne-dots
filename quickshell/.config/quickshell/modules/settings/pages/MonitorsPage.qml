@@ -244,7 +244,7 @@ ColumnLayout {
                 text: root.trial ? "Revert" : "Discard"
                 size: Config.fontSizeIconSmall + Config.padding * 2
                 baseColor: Config.surface1Color
-                onClicked: root.trial ? MonitorsService.revert() : root.reset()
+                onClicked: root.trial ? MonitorsService.revert("") : root.reset()
             }
 
             ActionButton {

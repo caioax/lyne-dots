@@ -170,6 +170,14 @@ ShellRoot {
         sourceComponent: OsdOverlay {}
     }
 
+    // "Keep these display settings?" on every monitor while Settings ›
+    // Monitors tries new ones
+    LazyLoader {
+        active: MonitorsService.trialActive
+
+        MonitorsConfirm {}
+    }
+
     // Settings window (imported statically: Quickshell only resolves the
     // pages/ and rows/ directories through static imports)
     Loader {
