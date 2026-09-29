@@ -242,6 +242,9 @@
         "wrap": false,
         "lidOff": true
     },
+    "monitors": {
+        "rules": []
+    },
     "osd": {
         "style": "attached",
         "position": "bottom",

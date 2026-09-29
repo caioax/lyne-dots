@@ -33,3 +33,4 @@ singleton LauncherActions LauncherActions.qml
 singleton DashboardService DashboardService.qml
 singleton CavaService CavaService.qml
 singleton AppsService AppsService.qml
+singleton MonitorsService MonitorsService.qml

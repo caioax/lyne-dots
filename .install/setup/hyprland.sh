@@ -75,18 +75,13 @@ setup_monitors() {
     local MONITORS_FILE="$HYPR_CONFIG_DIR/monitors.lua"
 
     if [[ ! -f "$MONITORS_FILE" ]]; then
-        # Create file with generic Hyprland configuration
+        # Automatic settings for every monitor; Settings › Hyprland ›
+        # Monitors rewrites it
         cat >"$MONITORS_FILE" <<'EOF'
--- =============================================================================
--- Monitor Configuration
--- =============================================================================
--- This file is created on first installation.
--- Use 'nwg-displays' to configure your monitors graphically.
--- This file is not tracked by git.
--- See https://wiki.hypr.land/Configuring/Basics/Monitors/
--- =============================================================================
+-- Monitors: managed by lyne (Settings › Hyprland › Monitors)
+-- Automatic settings for every monitor until they're set up in Settings,
+-- which rewrites this file (not tracked by git)
 
--- Generic configuration - auto-detects resolution and refresh rate
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
 EOF
         log_info "  Created: monitors.lua (generic configuration)"

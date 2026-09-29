@@ -1,11 +1,5 @@
--- =============================================================================
--- Monitor Configuration - Template
--- =============================================================================
--- This file is a template for first installation.
--- After installation, use 'nwg-displays' to configure your monitors.
--- This file is not tracked by git after installation.
--- =============================================================================
+-- Monitors: managed by lyne (Settings › Hyprland › Monitors)
+-- Automatic settings for every monitor until they're set up in Settings,
+-- which rewrites this file (not tracked by git)
 
--- Generic configuration - works with any monitor
--- Hyprland will automatically detect the resolution and refresh rate
-hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1 })
+hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
