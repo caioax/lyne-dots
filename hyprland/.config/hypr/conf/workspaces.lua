@@ -617,10 +617,11 @@ local function internal_outputs()
     return names
 end
 
--- Monitor rules only apply when the config is read, so the lid works
--- through reloads: hyprland.lua calls this after monitors.lua, turning the
--- laptop screen off while the lid keeps it closed (on every reload, so it
--- never flashes on). `turned_off` tells whether this config did
+-- A monitor rule sent at runtime is dropped by the next config reload
+-- (Settings saving a hypr file, a monitor trial reverting), so the lid works
+-- through reloads: hyprland.lua calls this after the monitor rules, turning
+-- the laptop screen off while the lid keeps it closed (on every reload, so
+-- it never flashes on). `turned_off` tells whether this config did
 local turned_off = false
 
 function lyne_lid_rules()

@@ -507,7 +507,7 @@ show_summary() {
     echo "  1. Log out and select 'Hyprland (uwsm)' in your display manager"
     echo "  2. Or start manually with: uwsm start hyprland-uwsm.desktop"
     echo ""
-    echo "  3. Configure your monitors with: nwg-displays"
+    echo "  3. Set up your monitors in Settings › Hyprland › Monitors"
     echo "  4. Each monitor gets its own workspaces automatically"
     echo ""
 

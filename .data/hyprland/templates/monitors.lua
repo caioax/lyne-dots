@@ -3,3 +3,5 @@
 -- which rewrites this file (not tracked by git)
 
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
+
+lyne_monitors_file = "automatic"

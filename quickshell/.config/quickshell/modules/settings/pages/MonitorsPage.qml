@@ -117,6 +117,28 @@ ColumnLayout {
         placeAll(Lib.rects(draft, monitors, lidOff));
     }
 
+    // Puts rules from another file (the old monitors.lua) into the draft:
+    // each connected monitor takes the rule written for it, if any
+    function loadRules(rules) {
+        const next = draft.map(d => {
+            const m = monitors.find(x => x.name === d.name);
+            const found = m ? Lib.ruleFor(rules, m, monitors) : null;
+            if (!found)
+                return d;
+            const r = Object.assign({}, d, found, {
+                output: d.output,
+                name: d.name,
+                label: d.label
+            });
+            // nwg-displays mirrors by port: by the monitor's own selector here
+            const target = r.mirror ? draft.find(x => x.name === r.mirror || x.output === r.mirror) : null;
+            r.mirror = target ? target.output : "";
+            return r;
+        });
+        draft = next;
+        placeAll(Lib.rects(draft, monitors, lidOff));
+    }
+
     function labelOf(output: string): string {
         const r = draft.find(x => x.output === output);
         return r ? (r.label || r.name) : output;
@@ -316,10 +338,39 @@ ColumnLayout {
             descriptionColor: Config.errorColor
         }
 
+        // Settings writes hypr/local/monitors.lua; the one in hypr/ is from
+        // nwg-displays (or from before an update moved it)
         SettingRow {
-            visible: MonitorsService.fileText !== "" && !MonitorsService.fileManaged
-            label: "monitors.lua comes from another tool"
-            description: "Written by nwg-displays or by hand: its settings show here, and the first Apply rewrites it"
+            visible: MonitorsService.legacyText !== "" && MonitorsService.fileManaged
+            label: "Old monitors.lua found"
+            description: "~/.config/hypr/monitors.lua (nwg-displays writes there) isn't read anymore. Load its settings to try them, or remove it"
+
+            ActionButton {
+                text: "Load"
+                size: Config.fontSizeIconSmall + Config.padding * 2
+                baseColor: Config.surface1Color
+                opacity: root.trial ? 0.4 : 1
+                onClicked: {
+                    if (!root.trial)
+                        root.loadRules(MonitorsService.legacyRules);
+                }
+            }
+
+            ActionButton {
+                text: "Remove"
+                size: Config.fontSizeIconSmall + Config.padding * 2
+                baseColor: Config.surface1Color
+                onClicked: MonitorsService.removeLegacy()
+            }
+        }
+
+        SettingRow {
+            visible: !MonitorsService.fileManaged && (MonitorsService.fileText !== "" || MonitorsService.legacyText !== "")
+            // Saved here before migration 025 moved the file, or by nwg-displays
+            readonly property bool oldPlace: Lib.isManaged(MonitorsService.legacyText)
+
+            label: MonitorsService.fileText !== "" ? "local/monitors.lua was written by hand" : oldPlace ? "monitors.lua is in the old place" : "Monitors set up by nwg-displays"
+            description: MonitorsService.fileText !== "" ? "Its settings show here, and the first Apply rewrites it" : oldPlace ? "lyne update moves ~/.config/hypr/monitors.lua to hypr/local/, and so does the next Apply here" : "Hyprland reads ~/.config/hypr/monitors.lua until the first Apply here, which saves the settings to hypr/local/monitors.lua"
         }
     }
 

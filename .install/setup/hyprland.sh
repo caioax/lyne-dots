@@ -72,7 +72,10 @@ setup_monitors() {
     echo ""
     log_info "Configuring monitors.lua..."
 
-    local MONITORS_FILE="$HYPR_CONFIG_DIR/monitors.lua"
+    # In local/ with the other machine-specific files (hyprland.lua loads
+    # every local/*.lua)
+    local MONITORS_FILE="$HYPR_CONFIG_DIR/local/monitors.lua"
+    mkdir -p "$HYPR_CONFIG_DIR/local"
 
     if [[ ! -f "$MONITORS_FILE" ]]; then
         # Automatic settings for every monitor; Settings › Hyprland ›
@@ -83,10 +86,12 @@ setup_monitors() {
 -- which rewrites this file (not tracked by git)
 
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
+
+lyne_monitors_file = "automatic"
 EOF
-        log_info "  Created: monitors.lua (generic configuration)"
+        log_info "  Created: local/monitors.lua (generic configuration)"
     else
-        log_warn "  Skipping (already exists): monitors.lua"
+        log_warn "  Skipping (already exists): local/monitors.lua"
     fi
 }
 
@@ -315,7 +320,7 @@ run_hyprland_main() {
     echo "=================================================="
     echo ""
     log_info "Files created/verified:"
-    echo "  - ~/.config/hypr/monitors.lua"
+    echo "  - ~/.config/hypr/local/monitors.lua"
     echo "  - ~/.config/hypr/local/extra_environment.lua"
     echo "  - ~/.config/hypr/local/autostart.lua"
     echo "  - ~/.config/hypr/local/extra_keybinds.lua"
@@ -325,7 +330,7 @@ run_hyprland_main() {
     echo "  - ~/.local/wallpapers/ (wallpapers)"
     echo "  - ~/.local/themes/ (theme definitions)"
     echo ""
-    log_info "Use 'nwg-displays' to configure your monitors."
+    log_info "Set up your monitors in Settings › Hyprland › Monitors."
     log_info "Each monitor gets its own workspaces (conf/workspaces.lua), also after hotplug."
     echo ""
 }

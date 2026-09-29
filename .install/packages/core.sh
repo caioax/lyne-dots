@@ -18,8 +18,7 @@ CORE_PACKAGES=(
     "hyprpolkitagent" # Polkit agent for Hyprland
 
     # Display & Wallpaper
-    "awww"         # Wallpaper daemon for Wayland
-    "nwg-displays" # Monitor configuration tool
+    "awww" # Wallpaper daemon for Wayland
 
     # XDG & Portal
     "xdg-desktop-portal-hyprland" # Portal for Hyprland

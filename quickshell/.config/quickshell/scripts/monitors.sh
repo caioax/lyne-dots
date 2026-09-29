@@ -3,7 +3,7 @@
 # `lyne monitors`.
 #
 #   monitors.sh write <content>        validate with Hyprland, install
-#                                      ~/.config/hypr/monitors.lua atomically,
+#                                      ~/.config/hypr/local/monitors.lua atomically,
 #                                      wait until the reload ran it (ends a
 #                                      trial: the rules are kept)
 #   monitors.sh watch <token> <secs>   revert a trial unless it was kept
@@ -20,7 +20,8 @@
 set -u
 
 HYPR_DIR="${LYNE_HYPR_DIR:-$HOME/.config/hypr}"
-TARGET="$HYPR_DIR/monitors.lua"
+# In local/ (hyprland.lua loads every local/*.lua), not tracked by git
+TARGET="$HYPR_DIR/local/monitors.lua"
 RUNTIME="${XDG_RUNTIME_DIR:-/tmp}"
 MARK="$RUNTIME/lyne-monitors-trial"
 
@@ -86,7 +87,9 @@ write() {
         return 1
     fi
 
-    # Same directory, then rename: Hyprland never reads a half-written file
+    # Same filesystem, then rename: Hyprland never reads a half-written
+    # file (and local/ is watched: the temporary one stays outside)
+    mkdir -p "$(dirname "$TARGET")"
     local tmp="$HYPR_DIR/.monitors.lua.new"
     cp "$check" "$tmp" && chmod 644 "$tmp" && mv -f "$tmp" "$TARGET"
     rm -f "$check"

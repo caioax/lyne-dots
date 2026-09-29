@@ -8,8 +8,8 @@ import Quickshell.Hyprland
 import "monitors.js" as Lib
 
 // Monitor rules edited in Settings › Hyprland › Monitors. state.json keeps
-// them (monitors.rules, see monitors.js) and ~/.config/hypr/monitors.lua is
-// generated from them. Applying first tries the rules live with `hyprctl
+// them (monitors.rules, see monitors.js) and ~/.config/hypr/local/monitors.lua
+// is generated from them. Applying first tries the rules live with `hyprctl
 // eval` (the file stays as it was) and asks to keep them: keeping saves and
 // writes the file, reverting (or no answer within trialSeconds) reloads the
 // config, which brings the saved file back. A detached watcher reverts too,
@@ -18,7 +18,10 @@ Singleton {
     id: root
 
     readonly property string script: Qt.resolvedUrl("../scripts/monitors.sh").toString().replace("file://", "")
-    readonly property string filePath: Quickshell.env("HOME") + "/.config/hypr/monitors.lua"
+    readonly property string filePath: Quickshell.env("HOME") + "/.config/hypr/local/monitors.lua"
+    // Where nwg-displays writes (and lyne kept it before migration 025):
+    // hyprland.lua only reads it while local/monitors.lua isn't there
+    readonly property string legacyPath: Quickshell.env("HOME") + "/.config/hypr/monitors.lua"
     readonly property int trialSeconds: 15
 
     // hyprctl monitors all -j, without the FALLBACK and virtual outputs
@@ -32,9 +35,12 @@ Singleton {
     // hand: its rules can be imported)
     readonly property bool fileManaged: Lib.isManaged(_fileText)
     readonly property var fileRules: Lib.upgradeSelectors(Lib.importLua(_fileText), monitors)
-    // What the editor starts from: the saved rules, or the file's before
-    // anything was saved here
-    readonly property var storedRules: savedRules.length > 0 || fileManaged ? savedRules : fileRules
+    // ~/.config/hypr/monitors.lua ("" = none): nwg-displays or an old copy
+    property string legacyText: ""
+    readonly property var legacyRules: Lib.upgradeSelectors(Lib.importLua(legacyText), monitors)
+    // What the editor starts from: the saved rules, or the rules Hyprland
+    // reads before anything was saved here
+    readonly property var storedRules: savedRules.length > 0 || fileManaged ? savedRules : _fileText !== "" ? fileRules : legacyRules
 
     // Ports the lid logic turned off (conf/workspaces.lua): shown as off,
     // never edited or saved as disabled
@@ -46,6 +52,7 @@ Singleton {
     property var _pendingRules: []
     // Ports connected when the trial started: a hotplug ends it
     property string _trialPorts: ""
+    property bool _dropLegacy: false
     // Saved rules before a write, restored if it fails
     property var _previousRules: []
     property string _token: ""
@@ -127,6 +134,9 @@ Singleton {
         if (!trialActive)
             return;
         _stopTrial();
+        // Rules taken from ~/.config/hypr/monitors.lua now live in
+        // local/monitors.lua: the old file goes aside once that's written
+        _dropLegacy = !fileManaged && _fileText === "" && legacyText !== "";
         _write(_pendingRules);
         kept();
     }
@@ -162,10 +172,9 @@ Singleton {
         return list.map(m => m.name).sort().join(" ");
     }
 
-    // Takes over a monitors.lua written by another tool: its rules become
-    // the saved ones, and the file is rewritten from them
-    function importFile() {
-        _write(fileRules);
+    // Moves ~/.config/hypr/monitors.lua aside (monitors.lua.old)
+    function removeLegacy() {
+        Quickshell.execDetached(["mv", "-f", legacyPath, legacyPath + ".old"]);
     }
 
     function identify() {
@@ -176,6 +185,9 @@ Singleton {
     function refresh() {
         if (!listProc.running)
             listProc.running = true;
+        // A file created since (nwg-displays) isn't watched yet
+        file.reload();
+        legacyFile.reload();
     }
 
     function _stopTrial() {
@@ -201,6 +213,16 @@ Singleton {
         onFileChanged: reload()
         onLoaded: root._fileText = text()
         onLoadFailed: root._fileText = ""
+    }
+
+    FileView {
+        id: legacyFile
+        path: root.legacyPath
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: root.legacyText = text()
+        onLoadFailed: root.legacyText = ""
     }
 
     Connections {
@@ -295,7 +317,10 @@ Singleton {
                     StateService.set("monitors.rules", root._previousRules);
                     // The trial's rules are still live: back to the saved file
                     Quickshell.execDetached(["bash", root.script, "revert"]);
+                } else if (root._dropLegacy) {
+                    root.removeLegacy();
                 }
+                root._dropLegacy = false;
                 root.refreshSoon.restart();
             }
         }
