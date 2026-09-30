@@ -38,6 +38,7 @@ FloatingWindow {
             screenshot: screenshotPage,
             windows: windowsPage,
             input: inputPage,
+            keyboard: keyboardPage,
             specials: specialsPage,
             monitors: monitorsPage,
             workspaces: workspacesPage,
@@ -271,6 +272,11 @@ FloatingWindow {
     Component {
         id: inputPage
         InputPage {}
+    }
+
+    Component {
+        id: keyboardPage
+        KeyboardPage {}
     }
 
     Component {

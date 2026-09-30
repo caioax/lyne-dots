@@ -192,6 +192,11 @@
             "force_no_accel": true,
             "repeat_delay": 250,
             "repeat_rate": 25,
+            "kb_layout": "us",
+            "kb_variant": "alt-intl",
+            "kb_options": "",
+            "kb_model": "",
+            "numlock_by_default": false,
             "touchpad": {
                 "natural_scroll": false,
                 "tap_to_click": true,

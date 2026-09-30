@@ -35,3 +35,4 @@ singleton CavaService CavaService.qml
 singleton AppsService AppsService.qml
 singleton MonitorsService MonitorsService.qml
 singleton AutostartService AutostartService.qml
+singleton KeyboardService KeyboardService.qml

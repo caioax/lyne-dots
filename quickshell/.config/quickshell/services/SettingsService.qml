@@ -122,7 +122,14 @@ Singleton {
             id: "input",
             label: "Input",
             icon: "\u{f037d}",
-            description: "Mouse, keyboard repeat and touchpad. Saved to hypr/local/settings.lua",
+            description: "Mouse and touchpad. Saved to hypr/local/settings.lua",
+            category: "Hyprland"
+        },
+        {
+            id: "keyboard",
+            label: "Keyboard",
+            icon: "\u{f0313}",
+            description: "Layouts, Caps Lock, Compose and key repeat",
             category: "Hyprland"
         },
         {

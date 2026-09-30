@@ -2,7 +2,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.services
 import "../rows/"
+import "../../../components/"
 
 ColumnLayout {
     spacing: Config.spacing * 3
@@ -33,29 +35,17 @@ ColumnLayout {
     SettingsGroup {
         title: "Keyboard"
 
-        SliderRow {
-            label: "Repeat delay"
-            description: "How long a key is held before it repeats"
-            path: "hyprland.input.repeat_delay"
-            from: 150
-            to: 800
-            stepSize: 25
-            format: v => v + " ms"
-        }
+        SettingRow {
+            resettable: false
+            label: "Layouts, keys and repeat"
+            description: "In their own page now"
 
-        SliderRow {
-            label: "Repeat rate"
-            description: "Repeats per second while a key is held"
-            path: "hyprland.input.repeat_rate"
-            from: 10
-            to: 80
-            format: v => v + "/s"
-        }
-
-        InfoRow {
-            label: "Layouts"
-            description: "Set per keyboard in hypr/local/extra_input.lua"
-            value: "Per device"
+            // md-chevron_right
+            ActionButton {
+                icon: "\u{f0142}"
+                text: "Keyboard"
+                onClicked: SettingsService.currentPage = "keyboard"
+            }
         }
     }
 
