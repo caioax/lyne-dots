@@ -173,6 +173,14 @@ Scope {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
 
+                        KeyboardLayoutButton {
+                            id: layoutButton
+                        }
+
+                        BarDivider {
+                            visible: layoutButton.visible
+                        }
+
                         TrayWidget {}
 
                         BarDivider {

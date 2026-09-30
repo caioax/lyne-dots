@@ -16,6 +16,10 @@ Item {
     property string icon: ""
     // Line above the level bar (device name), "" for none
     property string caption: ""
+    // Text instead of a level (keyboard layout): the line under the caption
+    // and a short tag where the percentage goes
+    property string text: ""
+    property string badge: ""
     // "top" | "bottom"
     property string edge: "top"
     property bool shown: false
@@ -25,7 +29,8 @@ Item {
     readonly property color textTone: muted ? Config.mutedColor : boosted ? Config.warningColor : Config.textColor
 
     // Room on both sides for the fillets
-    implicitWidth: Config.fontSizeNormal * 18 + Config.radiusLarge * 2
+    // A bit wider for a layout name
+    implicitWidth: Config.fontSizeNormal * (root.text !== "" ? 22 : 18) + Config.radiusLarge * 2
     implicitHeight: Config.fontSizeIcon + Config.padding * 3
 
     TextMetrics {
@@ -75,7 +80,19 @@ Item {
                     color: Config.subtextColor
                 }
 
+                Text {
+                    Layout.fillWidth: true
+                    visible: root.text !== ""
+                    text: root.text
+                    elide: Text.ElideRight
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeNormal
+                    font.weight: Font.DemiBold
+                    color: Config.textColor
+                }
+
                 LevelBar {
+                    visible: root.text === ""
                     Layout.fillWidth: true
                     Layout.preferredHeight: Config.padding
                     value: root.value
@@ -88,7 +105,7 @@ Item {
                 id: percent
 
                 Layout.preferredWidth: percentMetrics.advanceWidth
-                text: Math.round(root.value * 100) + "%"
+                text: root.text !== "" ? root.badge : Math.round(root.value * 100) + "%"
                 horizontalAlignment: Text.AlignRight
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeNormal

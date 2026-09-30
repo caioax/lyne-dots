@@ -282,6 +282,26 @@ ColumnLayout {
             path: "bar.showWeather"
             enabled: !Config.barCenterClock && DashboardService.hasTab("weather")
         }
+
+        SelectRow {
+            label: "Keyboard layout"
+            description: "The layout in use: click to pick one, scroll to switch. Auto shows it with two or more layouts"
+            path: "bar.keyboardLayout"
+            options: [
+                {
+                    label: "Auto",
+                    value: "auto"
+                },
+                {
+                    label: "Always",
+                    value: "always"
+                },
+                {
+                    label: "Never",
+                    value: "never"
+                }
+            ]
+        }
     }
 
     SettingsGroup {

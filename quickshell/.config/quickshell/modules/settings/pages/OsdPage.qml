@@ -136,6 +136,12 @@ ColumnLayout {
             path: "osd.device"
         }
 
+        ToggleRow {
+            label: "Keyboard layout"
+            description: "Switching layouts shows the new one, whatever \"Show on\" says"
+            path: "osd.layout"
+        }
+
         SelectRow {
             label: "Monitor"
             description: "Where the OSD shows up"

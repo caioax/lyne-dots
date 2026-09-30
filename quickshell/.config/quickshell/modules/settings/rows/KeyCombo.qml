@@ -134,10 +134,15 @@ Rectangle {
         id: catcher
 
         focus: root.recording
+        // Super pressed with nothing else: tapping it alone is a shortcut too
+        property bool superAlone: false
+
         Keys.onPressed: event => {
             if (!root.recording)
                 return;
             event.accepted = true;
+            const isSuper = event.key === Qt.Key_Super_L || event.key === Qt.Key_Super_R || event.key === Qt.Key_Meta;
+            superAlone = isSuper && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.ShiftModifier));
             if (root._modifierKeys.includes(event.key))
                 return;
             const combo = root._combo(event);
@@ -146,6 +151,16 @@ Rectangle {
                 return;
             }
             root.recorded(combo);
+        }
+        Keys.onReleased: event => {
+            if (!root.recording)
+                return;
+            event.accepted = true;
+            const isSuper = event.key === Qt.Key_Super_L || event.key === Qt.Key_Super_R || event.key === Qt.Key_Meta;
+            if (isSuper && superAlone && !event.isAutoRepeat) {
+                superAlone = false;
+                root.recorded("SUPER + SUPER_L");
+            }
         }
     }
 

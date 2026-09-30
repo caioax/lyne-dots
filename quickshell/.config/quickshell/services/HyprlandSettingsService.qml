@@ -42,7 +42,7 @@ Singleton {
         if (custom.length > 0) {
             out += "\n-- Custom shortcuts\n";
             for (const c of custom)
-                out += "hl.bind(" + _luaString(c.keys) + ", hl.dsp.exec_cmd(" + _luaString(c.command) + "), { description = " + _luaString(c.description || c.command) + " })\n";
+                out += "hl.bind(" + _luaString(c.keys) + ", hl.dsp.exec_cmd(" + _luaString(c.command) + "), { description = " + _luaString(c.description || c.command) + (KeybindsService.isLoneModifier(c.keys) ? ", release = true" : "") + " })\n";
         }
         return out;
     }

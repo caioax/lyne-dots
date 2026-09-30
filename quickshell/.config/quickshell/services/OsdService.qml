@@ -47,7 +47,13 @@ Singleton {
     readonly property string deviceName: AudioService.deviceName(AudioService.sink)
     // Which monitor, when more than one can be dimmed
     readonly property string monitorName: BrightnessService.controllable.length > 1 ? (BrightnessService.current?.label ?? "") : ""
+    // Keyboard layout switched (kind "layout"): its name and short tag
+    property string layoutName: ""
+    property string layoutBadge: ""
+
     readonly property string label: {
+        if (kind === "layout")
+            return layoutName;
         if (kind === "brightness")
             return monitorName || "Brightness";
         if (kind === "mic")
@@ -57,9 +63,11 @@ Singleton {
         return muted ? "Muted" : "Volume";
     }
     // Line of text above the level bar (pill and attached styles)
-    readonly property string caption: kind === "device" ? deviceName : kind === "brightness" ? monitorName : ""
+    readonly property string caption: kind === "device" ? deviceName : kind === "brightness" ? monitorName : kind === "layout" ? "Keyboard layout" : ""
 
     readonly property string icon: {
+        if (kind === "layout")
+            return "\u{f030c}"; // md-keyboard
         if (kind === "mic")
             return AudioService.sourceIcon;
         if (kind === "device")
@@ -109,7 +117,7 @@ Singleton {
     // ========================================================================
 
     function show(kind: string) {
-        if ((kind === "mic" && !Config.osdMic) || (kind === "device" && !Config.osdDevice))
+        if ((kind === "mic" && !Config.osdMic) || (kind === "device" && !Config.osdDevice) || (kind === "layout" && !Config.osdLayout))
             return;
         root.kind = kind;
         if (!root.shown)
@@ -130,8 +138,18 @@ Singleton {
             hideTimer.restart();
     }
 
-    // Wheel on the OSD: steps the level it shows
+    function showLayout(name: string, badge: string) {
+        layoutName = name;
+        layoutBadge = badge;
+        show("layout");
+    }
+
+    // Wheel on the OSD: steps the level it shows (the layout for "layout")
     function adjust(steps: int) {
+        if (root.kind === "layout") {
+            KeyboardService.switchLayout(steps > 0 ? "next" : "prev");
+            return;
+        }
         if (root.kind === "brightness")
             BrightnessService.current?.set(BrightnessService.current.brightness + Config.brightnessStep * steps);
         else if (root.kind === "mic")

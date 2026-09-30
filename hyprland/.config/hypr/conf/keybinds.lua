@@ -161,7 +161,8 @@ local zoom = vars.scriptPath .. "/Zoom/run.sh" -- Script
 bind("zoom-in",  "Shell", "Zoom in",  mainMod .. " + equal", hl.dsp.exec_cmd(zoom .. " in"))
 bind("zoom-out", "Shell", "Zoom out", mainMod .. " + minus", hl.dsp.exec_cmd(zoom .. " out"))
 
-bind("launcher",          "Shell", "App launcher",      mainMod .. " + Space",     hl.dsp.global("quickshell:app_launcher"))
+-- Tapping Super alone (bound on release, conf/binds.lua)
+bind("launcher",          "Shell", "App launcher",      mainMod .. " + SUPER_L",   hl.dsp.global("quickshell:app_launcher"))
 bind("clipboard-history", "Shell", "Clipboard history", mainMod .. " + V",         hl.dsp.global("quickshell:clipboard_history"))
 bind("screenshot",        "Shell", "Screenshot",        "Print",                   hl.dsp.global("quickshell:take_screenshot"))
 bind("power-menu",        "Shell", "Power menu",        mainMod .. " + End",       hl.dsp.global("quickshell:power_menu"))
@@ -170,5 +171,13 @@ bind("wallpapers",        "Shell", "Wallpapers",        mainMod .. " + B",      
 bind("settings",          "Shell", "Settings",          mainMod .. " + I",         hl.dsp.global("quickshell:settings"))
 bind("keybinds",          "Shell", "Keybinds",          mainMod .. " + slash",     hl.dsp.global("quickshell:keybinds_help"))
 bind("reload",            "Shell", "Reload Quickshell", mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("lyne reload"))
+
+-- ==============================================================================
+-- KEYBOARD
+-- ==============================================================================
+
+-- Layouts of Settings › Hyprland › Keyboard, on every keyboard
+bind("switch-layout",   "Keyboard", "Next keyboard layout",     mainMod .. " + Space", hl.dsp.exec_cmd("hyprctl switchxkblayout all next"))
+bind("previous-layout", "Keyboard", "Previous keyboard layout", "",                    hl.dsp.exec_cmd("hyprctl switchxkblayout all prev"))
 
 binds.export()

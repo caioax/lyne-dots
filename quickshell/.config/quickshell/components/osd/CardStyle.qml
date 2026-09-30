@@ -14,6 +14,8 @@ Rectangle {
     property bool muted: false
     property string icon: ""
     property string label: ""
+    // Short tag instead of the percentage (keyboard layout), full ring
+    property string badge: ""
 
     readonly property color tone: muted ? Config.mutedColor : Config.accentColor
     readonly property bool boosted: value > 1.005
@@ -34,7 +36,7 @@ Rectangle {
             Layout.alignment: Qt.AlignHCenter
             Layout.preferredWidth: Config.fontSizeIconLarge * 2.5
             Layout.preferredHeight: Layout.preferredWidth
-            value: root.value / root.max * 100
+            value: root.badge !== "" ? 100 : root.value / root.max * 100
             strokeWidth: Config.padding
             color: root.boosted && !root.muted ? Config.warningColor : root.tone
             trackColor: Config.surface1Color
@@ -57,7 +59,7 @@ Rectangle {
 
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: Math.round(root.value * 100) + "%"
+            text: root.badge !== "" ? root.badge : Math.round(root.value * 100) + "%"
             font.family: Config.font
             font.pixelSize: Config.fontSizeLarge
             font.weight: Font.DemiBold
@@ -76,6 +78,10 @@ Rectangle {
             Layout.maximumWidth: root.width - Config.padding * 4
             text: root.label
             elide: Text.ElideRight
+            // Layout names take two lines
+            wrapMode: Text.WordWrap
+            maximumLineCount: root.badge !== "" ? 2 : 1
+            horizontalAlignment: Text.AlignHCenter
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             color: Config.subtextColor

@@ -77,9 +77,18 @@ Singleton {
         return [...mods, key].join("+");
     }
 
-    // For keycaps: ["SUPER", "SHIFT", "Q"]
+    // For keycaps: ["SUPER", "SHIFT", "Q"]; a modifier alone
+    // ("SUPER + SUPER_L") is just ["SUPER"]
     function split(keys: string): var {
-        return keys ? keys.split("+").map(p => p.trim()).filter(p => p !== "") : [];
+        const parts = keys ? keys.split("+").map(p => p.trim()).filter(p => p !== "") : [];
+        return isLoneModifier(keys) ? parts.slice(0, -1) : parts;
+    }
+
+    // Tapping a modifier alone ("SUPER + SUPER_L"): bound on release, see
+    // hypr/conf/binds.lua
+    function isLoneModifier(keys: string): bool {
+        const last = (keys ?? "").split("+").pop().trim().toUpperCase();
+        return /^(SUPER|ALT|CONTROL|SHIFT)_[LR]$/.test(last);
     }
 
     // Labels of the other binds using `keys` (id / custom index excluded)

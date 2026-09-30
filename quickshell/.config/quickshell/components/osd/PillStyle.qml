@@ -14,12 +14,17 @@ Rectangle {
     property string icon: ""
     // Line above the level bar (device name), "" for none
     property string caption: ""
+    // Text instead of a level (keyboard layout): the line under the caption
+    // and a short tag where the percentage goes
+    property string text: ""
+    property string badge: ""
 
     readonly property color tone: muted ? Config.mutedColor : Config.accentColor
     readonly property bool boosted: value > 1.005
     readonly property color textTone: muted ? Config.mutedColor : boosted ? Config.warningColor : Config.textColor
 
-    implicitWidth: Config.fontSizeNormal * 20
+    // A bit wider for a layout name
+    implicitWidth: Config.fontSizeNormal * (root.text !== "" ? 24 : 20)
     implicitHeight: Config.fontSizeIcon + Config.padding * 4
     radius: height / 2
     color: Config.backgroundTransparentColor
@@ -82,7 +87,19 @@ Rectangle {
                 color: Config.subtextColor
             }
 
+            Text {
+                Layout.fillWidth: true
+                visible: root.text !== ""
+                text: root.text
+                elide: Text.ElideRight
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeNormal
+                font.weight: Font.DemiBold
+                color: Config.textColor
+            }
+
             LevelBar {
+                visible: root.text === ""
                 Layout.fillWidth: true
                 Layout.preferredHeight: Config.padding
                 value: root.value
@@ -95,7 +112,7 @@ Rectangle {
             id: percent
 
             Layout.preferredWidth: percentMetrics.advanceWidth
-            text: Math.round(root.value * 100) + "%"
+            text: root.text !== "" ? root.badge : Math.round(root.value * 100) + "%"
             horizontalAlignment: Text.AlignRight
             font.family: Config.font
             font.pixelSize: Config.fontSizeNormal

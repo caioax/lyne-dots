@@ -13,6 +13,8 @@ Rectangle {
     property real max: 1
     property bool muted: false
     property string icon: ""
+    // Short tag instead of the percentage (keyboard layout), full bar
+    property string badge: ""
 
     readonly property color tone: muted ? Config.mutedColor : Config.accentColor
     readonly property bool boosted: value > 1.005
@@ -33,7 +35,7 @@ Rectangle {
 
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: Math.round(root.value * 100)
+            text: root.badge !== "" ? root.badge : Math.round(root.value * 100)
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             font.weight: Font.DemiBold
@@ -52,8 +54,8 @@ Rectangle {
             Layout.fillHeight: true
             Layout.preferredWidth: Config.padding
             vertical: true
-            value: root.value
-            max: root.max
+            value: root.badge !== "" ? 1 : root.value
+            max: root.badge !== "" ? 1 : root.max
             tone: root.tone
         }
 

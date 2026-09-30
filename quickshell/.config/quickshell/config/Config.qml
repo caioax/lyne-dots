@@ -188,6 +188,8 @@ Singleton {
     readonly property bool barTrayTooltips: getState("bar.tray.tooltips", true)
     // Quick Settings button style: "icons", "pill", "chips" or "minimal"
     readonly property string barQsStyle: getState("bar.quickSettings.style", "icons")
+    // Keyboard layout button: auto (2+ layouts) | always | never
+    readonly property string barKeyboardLayout: getState("bar.keyboardLayout", "auto")
     // Battery percentage next to the battery icon
     readonly property bool barQsBatteryPercent: getState("bar.quickSettings.batteryPercent", true)
     // Indicators the Quick Settings button may show, by id
@@ -284,6 +286,7 @@ Singleton {
     // Microphone mute key, and a switch of the default output
     readonly property bool osdMic: getState("osd.mic", true)
     readonly property bool osdDevice: getState("osd.device", true)
+    readonly property bool osdLayout: getState("osd.layout", true)
 
     // ========================================================================
     // BRIGHTNESS

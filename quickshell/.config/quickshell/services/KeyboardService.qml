@@ -117,6 +117,7 @@ Singleton {
 
     // Refuses lists with an unknown layout (never sent to Hyprland)
     function setLayouts(list): bool {
+        _hush();
         if (!ready || list.length === 0 || list.length > maxLayouts || !Lib.acceptable(db, list, layouts)) {
             console.warn("[Keyboard] refused layouts", JSON.stringify(list));
             return false;
@@ -161,6 +162,7 @@ Singleton {
     }
 
     function setOptions(list) {
+        _hush();
         if (!ready)
             return;
         StateService.set("hyprland.input.kb_options", Lib.validOptions(db, list).join(","));
@@ -179,6 +181,7 @@ Singleton {
     }
 
     function setModel(name: string) {
+        _hush();
         if (name !== "" && !db.models.some(m => m.name === name))
             return;
         StateService.set("hyprland.input.kb_model", name);
@@ -193,6 +196,50 @@ Singleton {
     readonly property var mainKeyboard: keyboards.find(k => k.main) ?? null
     // What you're typing with now ("English (US, alt. intl.)")
     readonly property string activeKeymap: mainKeyboard?.active_keymap ?? ""
+    // Layouts of the keyboard typed on last, and the one in use
+    readonly property var activeLayouts: mainKeyboard ? Lib.parseLayouts(mainKeyboard.layout, mainKeyboard.variant) : []
+    readonly property int activeIndex: mainKeyboard?.active_layout_index ?? 0
+    readonly property var activeEntry: activeLayouts[activeIndex] ?? activeLayouts[0] ?? null
+    readonly property string activeShort: activeEntry ? Lib.shortName(activeEntry) : ""
+
+    // Switches the keyboard typed on last, and the others with the same
+    // layouts, to the layout at `index` ("next" / "prev" work too)
+    function switchLayout(index) {
+        if (!mainKeyboard)
+            return;
+        const targets = keyboards.filter(k => k.layout === mainKeyboard.layout && k.variant === mainKeyboard.variant).map(k => k.name);
+        const commands = targets.map(n => "switchxkblayout " + n + " " + index);
+        Quickshell.execDetached(["hyprctl", "--batch", commands.join(" ; ")]);
+    }
+
+    // ========================================================================
+    // OSD ON SWITCH
+    // ========================================================================
+
+    // Keymap each keyboard had: the OSD shows when the SAME keyboard changes
+    // (typing on another keyboard isn't a switch)
+    property var _lastKeymap: ({})
+    property string _osdKeyboard: ""
+    // Settings changing the layouts also changes keymaps: no OSD for that
+    property bool _quiet: false
+
+    Timer {
+        id: quietTimer
+        interval: 2500
+        onTriggered: root._quiet = false
+    }
+
+    function _hush() {
+        _quiet = true;
+        quietTimer.restart();
+    }
+
+    // Values settle while the shell starts
+    Timer {
+        id: armTimer
+        interval: 3000
+        running: true
+    }
 
     function refreshDevices() {
         if (!devicesProc.running)
@@ -205,6 +252,17 @@ Singleton {
         target: Hyprland
 
         function onRawEvent(event) {
+            if (event.name === "configreloaded")
+                root._hush();
+            if (event.name === "activelayout") {
+                const comma = event.data.indexOf(",");
+                const name = event.data.slice(0, comma);
+                const keymap = event.data.slice(comma + 1);
+                const before = root._lastKeymap[name];
+                root._lastKeymap[name] = keymap;
+                if (before !== undefined && before !== keymap && !root._quiet && !armTimer.running)
+                    root._osdKeyboard = name;
+            }
             if (event.name === "activelayout" || event.name === "configreloaded")
                 root.refreshDevices();
         }
@@ -230,6 +288,21 @@ Singleton {
                     root.keyboards = JSON.parse(text).keyboards ?? [];
                 } catch (e) {
                     root.keyboards = [];
+                }
+                // Keymaps known before any switch, so the first one shows too
+                for (const k of root.keyboards) {
+                    if (root._lastKeymap[k.name] === undefined)
+                        root._lastKeymap[k.name] = k.active_keymap;
+                }
+                // The switch the OSD waits for: its layout's short name
+                if (root._osdKeyboard !== "") {
+                    const k = root.keyboards.find(x => x.name === root._osdKeyboard);
+                    root._osdKeyboard = "";
+                    if (k) {
+                        const list = Lib.parseLayouts(k.layout, k.variant);
+                        const entry = list[k.active_layout_index] ?? list[0];
+                        OsdService.showLayout(k.active_keymap, entry ? Lib.shortName(entry) : "");
+                    }
                 }
             }
         }
@@ -268,6 +341,7 @@ Singleton {
     }
 
     function _saveDevice(name: string, list): bool {
+        _hush();
         const previous = deviceLayouts(name);
         if (!ready || list.length === 0 || list.length > maxLayouts || !Lib.acceptable(db, list, previous)) {
             console.warn("[Keyboard] refused layouts for", name, JSON.stringify(list));
@@ -314,6 +388,7 @@ Singleton {
 
     // Back to the layouts of every keyboard (also forgets a disconnected one)
     function followGlobal(name: string) {
+        _hush();
         StateService.set("keyboard.devices", devices.filter(d => d.name !== name));
     }
 

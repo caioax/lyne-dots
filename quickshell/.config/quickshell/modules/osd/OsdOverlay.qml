@@ -173,6 +173,8 @@ Scope {
                     muted: OsdService.muted
                     icon: OsdService.icon
                     caption: OsdService.caption
+                    text: OsdService.kind === "layout" ? OsdService.layoutName : ""
+                    badge: OsdService.layoutBadge
                 }
             }
 
@@ -184,6 +186,7 @@ Scope {
                     max: OsdService.max
                     muted: OsdService.muted
                     icon: OsdService.icon
+                    badge: OsdService.kind === "layout" ? OsdService.layoutBadge : ""
                 }
             }
 
@@ -196,6 +199,7 @@ Scope {
                     muted: OsdService.muted
                     icon: OsdService.icon
                     label: OsdService.label
+                    badge: OsdService.kind === "layout" ? OsdService.layoutBadge : ""
                 }
             }
 
@@ -208,6 +212,8 @@ Scope {
                     muted: OsdService.muted
                     icon: OsdService.icon
                     caption: OsdService.caption
+                    text: OsdService.kind === "layout" ? OsdService.layoutName : ""
+                    badge: OsdService.layoutBadge
                     edge: osdWindow.edge
                     shown: OsdService.shown
                 }

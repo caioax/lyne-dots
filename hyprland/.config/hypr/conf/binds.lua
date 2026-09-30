@@ -13,6 +13,28 @@ local M = {}
 -- Rebuilt on every config (re)load
 LYNE_BINDS = { list = {}, by_id = {} }
 
+-- A modifier alone ("SUPER + SUPER_L": tap Super) is bound on release:
+-- Hyprland then runs it only when no other key was pressed meanwhile, so
+-- Super + 1 still goes to workspace 1
+local function lone_modifier(keys)
+    local last = (keys:match("([^+]+)$") or ""):match("^%s*(.-)%s*$"):upper()
+    return last:match("^SUPER_[LR]$") or last:match("^ALT_[LR]$")
+        or last:match("^CONTROL_[LR]$") or last:match("^SHIFT_[LR]$")
+end
+
+local function opts_for(opts, keys)
+    if not lone_modifier(keys) then
+        return opts
+    end
+    local copy = {}
+    for k, v in pairs(opts) do
+        copy[k] = v
+    end
+    copy.release = true
+    return copy
+end
+M.lone_modifier = lone_modifier
+
 function M.bind(id, group, description, keys, dispatcher, opts)
     -- Copy: callers may share one options table between binds
     local copy = {}
@@ -36,7 +58,7 @@ function M.bind(id, group, description, keys, dispatcher, opts)
 
     -- No default keys: listed in Settings, bound once keys are set
     if keys ~= "" then
-        hl.bind(keys, dispatcher, opts)
+        hl.bind(keys, dispatcher, opts_for(opts, keys))
     end
 end
 
@@ -74,12 +96,12 @@ function lyne_rebind(id, keys)
         local combo = normalize(old)
         for _, other in ipairs(LYNE_BINDS.list) do
             if other ~= entry and other.keys ~= "" and normalize(other.keys) == combo then
-                hl.bind(other.keys, other.dispatcher, other.opts)
+                hl.bind(other.keys, other.dispatcher, opts_for(other.opts, other.keys))
             end
         end
     end
     if keys ~= "" then
-        hl.bind(keys, entry.dispatcher, entry.opts)
+        hl.bind(keys, entry.dispatcher, opts_for(entry.opts, keys))
     end
 end
 

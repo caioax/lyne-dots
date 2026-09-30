@@ -38,6 +38,7 @@
         "intensity": 0.5
     },
     "bar": {
+        "keyboardLayout": "auto",
         "autoHide": false,
         "height": 33,
         "style": "docked-corners",
@@ -264,7 +265,8 @@
         "trigger": "shortcuts",
         "interactive": true,
         "mic": true,
-        "device": true
+        "device": true,
+        "layout": true
     },
     "audio": {
         "maxVolume": 100
