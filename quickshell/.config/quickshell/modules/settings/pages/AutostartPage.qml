@@ -7,8 +7,9 @@ import "../rows/"
 import "../../../components/"
 
 // Programs started at login: your apps (AutostartService), the special
-// workspaces opened hidden (SpecialsService) and the essential ones of
-// hypr/conf/autostart.lua, which always start
+// workspaces opened hidden (SpecialsService), XDG autostart entries started by
+// systemd (on/off only) and the essential ones of hypr/conf/autostart.lua,
+// which always start
 ColumnLayout {
     id: root
 
@@ -17,6 +18,34 @@ ColumnLayout {
                 item: s,
                 index: i
             })).filter(s => (s.item.command ?? "") !== "")
+
+    // XDG entries that start here (or would, if switched on), and those
+    // meant for other desktops, listed only on demand
+    readonly property var xdgShown: AutostartService.xdgEntries.filter(e => e.reason === "")
+    readonly property var xdgElsewhere: AutostartService.xdgEntries.filter(e => e.reason !== "")
+    property bool showElsewhere: false
+
+    function xdgStatus(entry): string {
+        if (!entry.enabled)
+            return "Off from the next login";
+        switch (entry.status) {
+        case "running":
+            return "Running";
+        case "exited":
+            return "Ran at login";
+        case "failed":
+            return "Failed at login";
+        }
+        return AutostartService.xdgActive ? "Starts at the next login" : "";
+    }
+
+    function elsewhereReason(entry): string {
+        if (entry.reason === "desktop")
+            return entry.meantFor !== "" ? "Only for " + entry.meantFor : "Not for this desktop";
+        if (entry.reason === "skip")
+            return "Started another way (by systemd or its desktop)";
+        return "Not an app";
+    }
 
     // Called by SettingsWindow before Escape closes the window
     function handleEscape(): bool {
@@ -38,7 +67,9 @@ ColumnLayout {
     Component.onCompleted: {
         AutostartService.refresh();
         AutostartService.checkInstalled("");
+        AutostartService.watching = true;
     }
+    Component.onDestruction: AutostartService.watching = false
 
     spacing: Config.spacing * 3
 
@@ -251,6 +282,11 @@ ColumnLayout {
                         font.pixelSize: Config.fontSizeIconSmall
                         color: Config.subtextColor
                     }
+
+                    RunningDot {
+                        visible: AutostartService.isRunning(appRow.modelData.command)
+                        ring: appRow.color
+                    }
                 }
 
                 // md-dots_vertical
@@ -319,6 +355,111 @@ ColumnLayout {
         }
     }
 
+    // ================= XDG AUTOSTART =================
+    SettingsGroup {
+        title: "Other programs"
+        visible: AutostartService.xdgLoaded && AutostartService.xdgEntries.length > 0
+
+        SettingRow {
+            visible: !AutostartService.xdgActive
+            resettable: false
+            label: "Not started in this session"
+            description: "systemd starts these in sessions opened with uwsm (Hyprland (uwsm) on the login screen)"
+            descriptionColor: Config.warningColor
+        }
+
+        Repeater {
+            model: root.xdgShown
+
+            ToggleRow {
+                id: xdgRow
+
+                required property var modelData
+                readonly property string statusText: root.xdgStatus(modelData)
+
+                resettable: false
+                label: modelData.name
+                descriptionColor: modelData.enabled && modelData.status === "failed" ? Config.warningColor : Config.subtextColor
+                description: {
+                    const parts = [modelData.exec.replace(/\s*%[uUfFdDnNickvm]/g, "")];
+                    parts.push(modelData.source === "user" && !modelData.systemPath ? "added by you" : "installed by a package");
+                    if (xdgRow.statusText !== "" && xdgRow.statusText !== "Running")
+                        parts.push(xdgRow.statusText);
+                    return parts.filter(p => p !== "").join("  ·  ");
+                }
+                checked: modelData.enabled
+                onToggled: value => AutostartService.setXdgEnabled(modelData.id, value)
+
+                leading: Rectangle {
+                    implicitWidth: Config.fontSizeIconSmall * 2
+                    implicitHeight: implicitWidth
+                    radius: Config.radius
+                    color: Config.surface1Color
+
+                    Image {
+                        visible: xdgRow.modelData.icon !== ""
+                        anchors.centerIn: parent
+                        width: Config.fontSizeIconSmall + Config.padding
+                        height: width
+                        sourceSize.width: width
+                        sourceSize.height: height
+                        source: xdgRow.modelData.icon !== "" ? "image://icon/" + xdgRow.modelData.icon : ""
+                    }
+
+                    // md-application
+                    Text {
+                        visible: xdgRow.modelData.icon === ""
+                        anchors.centerIn: parent
+                        text: "\u{f08c6}"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeIconSmall
+                        color: Config.subtextColor
+                    }
+
+                    RunningDot {
+                        visible: xdgRow.modelData.enabled && xdgRow.modelData.status === "running"
+                        ring: xdgRow.color
+                    }
+                }
+            }
+        }
+
+        SettingRow {
+            visible: root.xdgElsewhere.length > 0
+            resettable: false
+            label: root.xdgElsewhere.length + (root.xdgElsewhere.length === 1 ? " program for other desktops" : " programs for other desktops")
+            description: "Installed by packages for KDE, GNOME and others; they don't start here"
+
+            ActionButton {
+                text: root.showElsewhere ? "Hide" : "Show"
+                onClicked: root.showElsewhere = !root.showElsewhere
+            }
+        }
+
+        Repeater {
+            model: root.showElsewhere ? root.xdgElsewhere : []
+
+            SettingRow {
+                required property var modelData
+
+                resettable: false
+                label: modelData.name
+                description: root.elsewhereReason(modelData) + "  ·  " + AutostartService.shortCommand(modelData.path)
+            }
+        }
+    }
+
+    Text {
+        visible: AutostartService.xdgLoaded && root.xdgShown.length > 0
+        Layout.fillWidth: true
+        Layout.topMargin: -Config.spacing * 2
+        text: "XDG autostart entries (~/.config/autostart and /etc/xdg/autostart), started by systemd. Switching one changes it from the next login"
+        wrapMode: Text.WordWrap
+        font.family: Config.font
+        font.pixelSize: Config.fontSizeSmall
+        color: Config.subtextColor
+    }
+
     // ================= SYSTEM =================
     SettingsGroup {
         title: "System"
@@ -328,11 +469,17 @@ ColumnLayout {
             model: AutostartService.system
 
             SettingRow {
+                id: systemRow
+
                 required property var modelData
 
                 resettable: false
                 label: modelData.name
                 description: modelData.about
+
+                RunningBadge {
+                    visible: AutostartService.isRunning(systemRow.modelData.command)
+                }
 
                 // md-lock_outline
                 Text {
@@ -354,5 +501,39 @@ ColumnLayout {
         font.family: Config.font
         font.pixelSize: Config.fontSizeSmall
         color: Config.subtextColor
+    }
+
+    // "● Running" before a row's controls
+    component RunningBadge: RowLayout {
+        spacing: Config.padding
+
+        Rectangle {
+            implicitWidth: Config.padding + Config.padding / 2
+            implicitHeight: implicitWidth
+            radius: width / 2
+            color: Config.successColor
+        }
+
+        Text {
+            text: "Running"
+            font.family: Config.font
+            font.pixelSize: Config.fontSizeSmall
+            color: Config.successColor
+        }
+    }
+
+    // Corner of a row's icon: the program is running
+    component RunningDot: Rectangle {
+        property color ring
+
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: -Math.round(Config.padding / 3)
+        implicitWidth: Config.padding * 2
+        implicitHeight: implicitWidth
+        radius: width / 2
+        color: Config.successColor
+        border.width: Math.max(2, Math.round(Config.padding / 3))
+        border.color: ring
     }
 }

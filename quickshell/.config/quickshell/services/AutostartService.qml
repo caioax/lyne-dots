@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "autostart.js" as Lib
 
 // Programs started at login (Settings › System › Autostart).
 // Your apps live in state.json (autostart.apps: [{ name, command, desktop,
@@ -13,7 +14,10 @@ import Quickshell.Io
 // conf/autostart.lua are read from $XDG_RUNTIME_DIR/lyne-autostart.json.
 // A hand-written hypr/local/autostart.lua (from before this page) keeps
 // running until it's imported: Hyprland reads it with a stand-in `hl`
-// (lyne_autostart_import) so the exact commands come out without running
+// (lyne_autostart_import) so the exact commands come out without running.
+// XDG autostart entries (~/.config/autostart, /etc/xdg/autostart) are
+// started by systemd in uwsm sessions; they're listed with scripts/autostart.sh
+// and only switched on or off here
 Singleton {
     id: root
 
@@ -31,11 +35,18 @@ Singleton {
     readonly property bool legacyImportable: legacy !== null && legacy.ok === true && legacy.other === 0
     property bool importing: false
 
+    readonly property string script: Qt.resolvedUrl("../scripts/autostart.sh").toString().replace("file://", "")
+
     // Called by the page when it opens (new or renamed files aren't watched)
     function refresh() {
         systemFile.reload();
         legacyFile.reload();
+        refreshXdg();
+        psProc.running = true;
     }
+
+    // Set by the page while it's shown: which programs run is checked then
+    property bool watching: false
 
     // ========================================================================
     // CHANGES
@@ -298,5 +309,94 @@ Singleton {
             root.importing = false;
             legacyFile.reload();
         }
+    }
+
+    // ========================================================================
+    // RUNNING PROGRAMS
+    // ========================================================================
+
+    // Program basenames running now (Lib.runningPrograms)
+    property var running: ({})
+
+    function isRunning(command: string): bool {
+        return Lib.isRunning(command, running);
+    }
+
+    Timer {
+        interval: 5000
+        repeat: true
+        running: root.watching
+        onTriggered: {
+            if (!psProc.running)
+                psProc.running = true;
+        }
+    }
+
+    Process {
+        id: psProc
+
+        command: ["ps", "-eo", "args="]
+        stdout: StdioCollector {
+            onStreamFinished: root.running = Lib.runningPrograms(text)
+        }
+    }
+
+    // ========================================================================
+    // XDG AUTOSTART
+    // ========================================================================
+
+    property var _xdg: ({
+            user: [],
+            system: [],
+            units: "",
+            target: ""
+        })
+    // Lib.entries plus `status` ("running" | "exited" | "failed" | "")
+    readonly property var xdgEntries: {
+        const units = Lib.parseUnits(_xdg.units);
+        return Lib.entries(_xdg.user, _xdg.system, Quickshell.env("XDG_CURRENT_DESKTOP") || "Hyprland").map(e => Object.assign(e, {
+                    status: Lib.unitStatus(units[e.path])
+                }));
+    }
+    // This session starts them (uwsm's xdg-desktop-autostart.target)
+    readonly property bool xdgActive: _xdg.target === "active"
+    property bool xdgLoaded: false
+
+    function refreshXdg() {
+        if (listProc.running)
+            return;
+        listProc.command = ["bash", script, "list"];
+        listProc.running = true;
+    }
+
+    // Takes effect from the next login
+    function setXdgEnabled(id: string, value: bool) {
+        if (toggleProc.running)
+            return;
+        toggleProc.command = ["bash", script, value ? "show" : "hide", id];
+        toggleProc.running = true;
+    }
+
+    Process {
+        id: listProc
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root._xdg = Lib.parseList(text);
+                root.xdgLoaded = true;
+            }
+        }
+    }
+
+    Process {
+        id: toggleProc
+
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (text.trim() !== "")
+                    console.warn("[Autostart]", text.trim());
+            }
+        }
+        onExited: Qt.callLater(root.refreshXdg)
     }
 }
