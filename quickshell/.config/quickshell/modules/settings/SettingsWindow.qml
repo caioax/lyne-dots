@@ -41,6 +41,7 @@ FloatingWindow {
             keyboard: keyboardPage,
             specials: specialsPage,
             monitors: monitorsPage,
+            graphics: graphicsPage,
             workspaces: workspacesPage,
             keybinds: keybindsPage,
             lock: lockPage,
@@ -292,6 +293,11 @@ FloatingWindow {
     Component {
         id: monitorsPage
         MonitorsPage {}
+    }
+
+    Component {
+        id: graphicsPage
+        GraphicsPage {}
     }
 
     Component {

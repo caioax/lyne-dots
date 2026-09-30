@@ -147,6 +147,13 @@ Singleton {
             category: "Hyprland"
         },
         {
+            id: "graphics",
+            label: "Graphics",
+            icon: "\u{f08ae}",
+            description: "Your GPUs, which one renders Hyprland, their links and the NVIDIA driver",
+            category: "Hyprland"
+        },
+        {
             id: "workspaces",
             label: "Workspaces",
             icon: "\u{f0570}",

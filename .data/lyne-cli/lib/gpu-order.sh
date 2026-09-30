@@ -25,8 +25,10 @@
 #                              stderr, so the output is only addresses
 #   gpu_order_from_aq <value>  an AQ_DRM_DEVICES value → PCI addresses
 #   gpu_lua_content <pci>...   the gpus.lua for an order
+#   gpu_lua_write <pci>...     gpus.lua for an order (atomic)
 #   gpu_order_write <pci>...   state.json + gpus.lua
 #   gpu_order_saved            the order in state.json
+#   gpu_running_order          the order the running Hyprland uses
 #
 # LYNE_UDEV_DIR, LYNE_HYPR_DIR and LYNE_STATE_FILE point it at test files.
 # Usage: source gpus.sh and log.sh, run gpu_detect, then use these
@@ -229,12 +231,43 @@ EOF
     printf '\nlyne_gpus_file = "%s"\n' "$label"
 }
 
+# This session's Hyprland log ("" without one)
+_gpu_hypr_log() {
+    local log="${LYNE_HYPR_LOG:-}"
+    if [[ -z "$log" && -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+        log="${XDG_RUNTIME_DIR:-/run/user/$UID}/hypr/$HYPRLAND_INSTANCE_SIGNATURE/hyprland.log"
+    fi
+    [[ -r "$log" ]] && echo "$log"
+}
+
+# The GPUs the running Hyprland uses, in its order (first renders): the DRM
+# backends Aquamarine started, from this session's log. Card numbers there
+# belong to this boot, so sysfs still maps them. Nothing without a log
+gpu_running_order() {
+    local log card dev
+    local -A seen=()
+    log="$(_gpu_hypr_log)" || return 0
+    while read -r card; do
+        [[ -n "${seen[$card]:-}" ]] && continue
+        seen[$card]=1
+        dev="$(readlink -e "$GPU_SYSFS/class/drm/$card/device" 2>/dev/null)" || continue
+        echo "${dev##*/}"
+    done < <(grep -oE 'drm: Starting backend for /dev/dri/card[0-9]+' "$log" | grep -oE 'card[0-9]+$')
+}
+
+# 0 when the running Hyprland got an explicit list (AQ_DRM_DEVICES)
+gpu_running_explicit() {
+    local log
+    log="$(_gpu_hypr_log)" && grep -q 'drm: Explicit device list' "$log"
+}
+
 gpu_order_saved() {
     command -v jq &>/dev/null || return 0
     jq -r '(.gpus.order // [])[]' "$GPU_STATE" 2>/dev/null
 }
 
-gpu_order_write() {
+# gpus.lua alone (Quickshell keeps state.json itself)
+gpu_lua_write() {
     mkdir -p "$GPU_HYPR_DIR/local"
     # Temp file outside local/ (Hyprland loads every local/*.lua), then one
     # move: Hyprland reloads on the write and must not see half a file
@@ -244,6 +277,10 @@ gpu_order_write() {
         rm -f "$tmp"
         return 1
     }
+}
+
+gpu_order_write() {
+    gpu_lua_write "$@" || return 1
     if [[ -f "$GPU_STATE" ]] && command -v jq &>/dev/null; then
         local state
         state="$(mktemp)"

@@ -52,6 +52,14 @@ case "$subcmd" in
                     n=$((n + 1))
                 done
             fi
+            local running=() names=()
+            mapfile -t running < <(gpu_running_order)
+            if ((${#running[@]})); then
+                for pci in "${running[@]}"; do
+                    i="$(_gpu_index_of_pci "$pci")" && names+=("${GPU_LINK[i]}")
+                done
+                echo "In use now: ${names[*]}$(gpu_running_explicit || echo " (automatic)")"
+            fi
             echo ""
             for ((i = 0; i < GPU_COUNT; i++)); do
                 [[ -n "${GPU_LINK[i]}" ]] || continue
