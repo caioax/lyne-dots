@@ -18,12 +18,12 @@ ui_setup() {
     if [[ "${LYNE_ASCII:-}" == 1 || "$TERM" == linux || "$charmap" != UTF-8 ]]; then
         G_CURSOR=">" G_ON="[x]" G_OFF="[ ]" G_RADIO_ON="(*)" G_RADIO_OFF="( )"
         G_OK="+" G_FAIL="x" G_WARN="!" G_SKIP="-" G_TODO=" " G_DOT="-"
-        G_FULL="#" G_EMPTY="-" G_PIPE="|" G_RULE="-" G_ELLIPSIS="..."
+        G_FULL="#" G_EMPTY="-" G_PIPE="|" G_RULE="-" G_ELLIPSIS="..." G_UPDOWN="up/down"
         G_SPIN=('|' '/' '-' '\')
     else
         G_CURSOR="▶" G_ON="[x]" G_OFF="[ ]" G_RADIO_ON="(•)" G_RADIO_OFF="( )"
         G_OK="✓" G_FAIL="✗" G_WARN="!" G_SKIP="–" G_TODO=" " G_DOT="·"
-        G_FULL="█" G_EMPTY="░" G_PIPE="│" G_RULE="─" G_ELLIPSIS="…"
+        G_FULL="█" G_EMPTY="░" G_PIPE="│" G_RULE="─" G_ELLIPSIS="…" G_UPDOWN="↑/↓"
         G_SPIN=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
     fi
 

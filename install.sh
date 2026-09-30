@@ -413,11 +413,33 @@ q_categories() {
         "${CATEGORY_OPTIONS[@]}"
 }
 
-q_nvidia() {
-    ask_single nvidia_env "Do you have an NVIDIA GPU?" \
-        "With one, Hyprland and UWSM get the NVIDIA environment variables (files in ~/.config/hypr/local and ~/.config/uwsm/env.d)." \
-        "no|No|Intel or AMD graphics only|1" \
-        "yes|Yes|hybrid laptop or a dedicated card"
+# The GPUs found (gpus.sh), then whether to add the NVIDIA environment,
+# answered from what was found
+_graphics_rows() {
+    local i name_w=$((UI_WIDTH - 2 - 8 - 22 - 12))
+    ((name_w > 34)) && name_w=34
+    # (none found: the text above already says it)
+    for ((i = 0; i < GPU_COUNT; i++)); do
+        local outputs
+        outputs="$(gpu_connected "$i")"
+        ui_add "  $C_BOLD$(ui_pad "${GPU_BRAND[i]}" 8)$C_RESET$(ui_pad "${GPU_NAME[i]}" "$name_w") $C_DIM$(ui_pad "$(gpu_kind_label "$i")" 21)$(ui_fit "$outputs" 11)$C_RESET"
+        if [[ -n "${GPU_FAMILY[i]}" ]]; then
+            ui_add "          $C_DIM$(ui_fit "$(gpu_driver_note "${GPU_FAMILY[i]}")" $((UI_WIDTH - 10)))$C_RESET"
+        fi
+    done
+    UI_LINES+=("")
+    ui_add "NVIDIA environment variables for Hyprland and UWSM?"
+}
+
+q_graphics() {
+    local ASK_EXTRA=_graphics_rows setup yes no
+    setup="$(gpu_setup_label)"
+    if ((GPU_NVIDIA >= 0)); then
+        yes="yes|Yes|an NVIDIA GPU was found|1" no="no|No|leave them out"
+    else
+        yes="yes|Yes|for an NVIDIA GPU not listed here" no="no|No|no NVIDIA GPU was found|1"
+    fi
+    ask_single nvidia_env "Graphics" "${setup^}." "$yes" "$no"
 }
 
 q_reboot() {
@@ -445,6 +467,7 @@ q_review() {
     local -a rows=()
     local categories=${ANSWERS[categories]}
     rows+=("Packages|${categories:-none, only the dotfiles}")
+    rows+=("Graphics|$(gpu_summary)")
     if [[ "${ANSWERS[nvidia_env]}" == yes ]]; then
         rows+=("NVIDIA|environment variables for NVIDIA")
     else
@@ -470,7 +493,7 @@ q_review() {
         "${rows[@]}"
 }
 
-QUESTIONS=(q_categories q_nvidia q_reboot q_review)
+QUESTIONS=(q_categories q_graphics q_reboot q_review)
 
 # Answers not in an --answers file
 answer_defaults() {
@@ -481,7 +504,10 @@ answer_defaults() {
             ANSWERS[categories]+="${opt%%|*} "
         done
     fi
-    [[ -v "ANSWERS[nvidia_env]" ]] || ANSWERS[nvidia_env]=no
+    if [[ ! -v "ANSWERS[nvidia_env]" ]]; then
+        ANSWERS[nvidia_env]=no
+        ((GPU_NVIDIA >= 0)) && ANSWERS[nvidia_env]=yes
+    fi
     [[ -v "ANSWERS[reboot]" ]] || ANSWERS[reboot]=no
 }
 
@@ -594,6 +620,10 @@ main() {
 
     STAMP="$(date +%Y%m%d-%H%M%S)"
     export LYNE_BACKUP_DIR="$HOME/.lyne-dots-backup/$STAMP"
+    # The GPUs, for the Graphics question and the log
+    source "$DOTFILES_DIR/.data/lyne-cli/lib/gpus.sh"
+    gpu_detect
+
     ui_setup
     # Plain summary when the output goes to a file
     [[ -t 1 ]] || C_RESET="" C_DIM="" C_OK="" C_WARN="" C_FAIL=""
@@ -635,6 +665,8 @@ main() {
         local key
         for key in "${!ANSWERS[@]}"; do echo "answer $key=${ANSWERS[$key]}"; done
         [[ -n "${LYNE_DRY_RUN:-}" ]] && echo "dry run, HOME=$HOME"
+        echo ""
+        gpu_status
     } >>"$LOG_FILE"
 
     plan_steps
@@ -666,8 +698,8 @@ usage() {
     echo "  --setup-only      Only run Hyprland setup"
     echo "  --packages PKG    Install only the specified category"
     echo "  --answers FILE    Take the answers from FILE (id=value lines) instead of"
-    echo "                    asking: categories=core terminal ..., nvidia_env=yes|no,"
-    echo "                    reboot=yes|no"
+    echo "                    asking: categories=core terminal ..., nvidia_env=yes|no"
+    echo "                    (default: whether an NVIDIA GPU was found), reboot=yes|no"
     echo "  --dry-run         Change nothing: a throwaway HOME and stand-ins for sudo,"
     echo "                    pacman -S, yay, stow, systemctl... (LYNE_DRY_HOME=dir"
     echo "                    reuses one)"

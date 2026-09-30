@@ -34,8 +34,9 @@ Organized installation scripts for the dotfiles.
 ./install.sh
 ```
 
-Every question comes first (packages, NVIDIA environment, reboot), then a
-review screen. After the sudo password (asked once and kept alive) the
+Every question comes first (packages; graphics: the GPUs found and whether
+to add the NVIDIA environment, preselected from them; reboot), then a review
+screen. After the sudo password (asked once and kept alive) the
 install runs without further questions, showing each step, a progress bar and
 the latest output. Everything goes to `~/.cache/lyne/install-<date>.log`.
 Files already where the dotfiles are linked are moved to
@@ -46,11 +47,13 @@ Files already where the dotfiles are linked are moved to
 ```bash
 cat > answers <<EOF
 categories=core terminal utils fonts quickshell theming
-nvidia_env=no
 reboot=no
 EOF
 ./install.sh --answers answers
 ```
+
+Without `nvidia_env`, it follows the GPUs found. `lyne gpu` lists them
+(`.data/lyne-cli/lib/gpus.sh`, reading sysfs and pci.ids only).
 
 ### Dry run
 

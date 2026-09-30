@@ -46,6 +46,8 @@ _ask_parse() {
     done
 }
 
+# A question can draw more between its text and its options: it sets
+# ASK_EXTRA (local) to a function that adds the lines
 _ask_header() {
     ui_frame
     ui_banner
@@ -54,6 +56,9 @@ _ask_header() {
         ui_text "$2" "$C_DIM"
     fi
     UI_LINES+=("")
+    if [[ -n "${ASK_EXTRA:-}" ]]; then
+        "$ASK_EXTRA"
+    fi
 }
 
 # One list row: cursor, mark, padded label and the description in what's left
@@ -95,7 +100,7 @@ ask_multi() {
             ((on[i])) && mark=$G_ON
             _ask_row $((i == cur)) "$mark" "${_labels[i]}" "${_descs[i]}"
         done
-        ui_hint "↑/↓ move $G_DOT space toggle $G_DOT a all/none $G_DOT enter next $G_DOT esc back $G_DOT q quit"
+        ui_hint "$G_UPDOWN move $G_DOT space toggle $G_DOT a all/none $G_DOT enter next $G_DOT esc back $G_DOT q quit"
         ui_flush
 
         ui_read_key
@@ -148,7 +153,7 @@ ask_single() {
             ((i == cur)) && mark=$G_RADIO_ON
             _ask_row $((i == cur)) "$mark" "${_labels[i]}" "${_descs[i]}"
         done
-        ui_hint "↑/↓ move $G_DOT enter choose $G_DOT esc back $G_DOT q quit"
+        ui_hint "$G_UPDOWN move $G_DOT enter choose $G_DOT esc back $G_DOT q quit"
         ui_flush
 
         ui_read_key
