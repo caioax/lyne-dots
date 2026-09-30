@@ -33,6 +33,26 @@ local function opts_for(opts, keys)
     copy.release = true
     return copy
 end
+
+-- Inside a release bind Hyprland sends global shortcuts as "released" only,
+-- and Quickshell acts on "pressed": the dispatcher runs a moment later,
+-- outside the bind, where a global is a normal press
+LYNE_LONE_TIMER = nil
+local function dispatcher_for(dispatcher, keys)
+    if not lone_modifier(keys) then
+        return dispatcher
+    end
+    return function()
+        -- Kept referenced until it fires
+        LYNE_LONE_TIMER = hl.timer(function()
+            if type(dispatcher) == "function" then
+                dispatcher()
+            else
+                hl.dispatch(dispatcher)
+            end
+        end, { timeout = 1, type = "oneshot" })
+    end
+end
 M.lone_modifier = lone_modifier
 
 function M.bind(id, group, description, keys, dispatcher, opts)
@@ -58,7 +78,7 @@ function M.bind(id, group, description, keys, dispatcher, opts)
 
     -- No default keys: listed in Settings, bound once keys are set
     if keys ~= "" then
-        hl.bind(keys, dispatcher, opts_for(opts, keys))
+        hl.bind(keys, dispatcher_for(dispatcher, keys), opts_for(opts, keys))
     end
 end
 
@@ -96,12 +116,12 @@ function lyne_rebind(id, keys)
         local combo = normalize(old)
         for _, other in ipairs(LYNE_BINDS.list) do
             if other ~= entry and other.keys ~= "" and normalize(other.keys) == combo then
-                hl.bind(other.keys, other.dispatcher, opts_for(other.opts, other.keys))
+                hl.bind(other.keys, dispatcher_for(other.dispatcher, other.keys), opts_for(other.opts, other.keys))
             end
         end
     end
     if keys ~= "" then
-        hl.bind(keys, entry.dispatcher, opts_for(entry.opts, keys))
+        hl.bind(keys, dispatcher_for(entry.dispatcher, keys), opts_for(entry.opts, keys))
     end
 end
 

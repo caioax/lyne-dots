@@ -234,12 +234,13 @@ ShellRoot {
         }
     }
 
-    // Shortcut: Launcher
+    // Shortcut: Launcher (tapping Super by default). Pressed again while
+    // open, in any mode, it closes
     GlobalShortcut {
         name: "app_launcher"
         description: "App Launcher"
 
-        onPressed: LauncherService.show()
+        onPressed: LauncherService.toggle()
     }
 
     // Shortcut: Volume Up
