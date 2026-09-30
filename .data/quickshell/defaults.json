@@ -146,6 +146,7 @@
         "style": "card",
         "side": "right",
         "countdown": 5,
+        "reversed": false,
         "hiddenActions": []
     },
     "profile": {

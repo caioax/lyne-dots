@@ -115,10 +115,13 @@ Singleton {
         // "inhibited": an app blocks it for now (the menu warns about it)
         return ["yes", "challenge", "inhibited"].includes(answer);
     })
+    // Shut down first instead of lock (Settings › Power)
+    readonly property bool reversed: StateService.get("power.reversed", false)
     // What the menu shows
     readonly property var actions: {
         const shown = availableActions.filter(a => !hiddenActions.includes(a.id));
-        return shown.length > 0 ? shown : availableActions.slice(0, 1);
+        const list = shown.length > 0 ? shown : availableActions.slice(0, 1);
+        return reversed ? [...list].reverse() : list;
     }
 
     readonly property string style: StateService.get("power.style", "card")
@@ -168,7 +171,8 @@ Singleton {
 
     function show(): void {
         cancel();
-        selectedId = actions.some(a => a.id === "lock") ? "lock" : actions[0].id;
+        // The first one: lock, or shut down in the reversed order
+        selectedId = actions[0].id;
         screen = Hyprland.focusedMonitor?.name ?? "";
         refresh();
         closeTimer.stop();
