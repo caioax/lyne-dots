@@ -158,11 +158,6 @@ setup_nvidia() {
         "$UWSM_TEMPLATES_DIR/hyprland_hardware.sh" \
         "$UWSM_ENV_DIR/hyprland_hardware.sh" \
         "uwsm/hyprland_hardware.sh (Hyprland hardware)"
-
-    echo ""
-    log_info "NOTE: If you have a hybrid GPU (Intel + NVIDIA), you may need to"
-    log_info "      edit the files in ~/.config/hypr/local/ and"
-    log_info "      ~/.config/uwsm/env.d/ to uncomment AQ_DRM_DEVICES."
 }
 
 # =============================================================================

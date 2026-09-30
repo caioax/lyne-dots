@@ -167,6 +167,27 @@ step_nvidia() {
     nvidia_apply
 }
 
+# step_gpus <order spec>: /dev/dri links by PCI (udev) and the order
+# Hyprland uses them in (local/gpus.lua, state.json)
+step_gpus() {
+    source "$DOTFILES_DIR/.data/lyne-cli/lib/gpus.sh"
+    source "$DOTFILES_DIR/.data/lyne-cli/lib/gpu-order.sh"
+    gpu_detect
+    gpu_links
+    gpu_rules_install
+    [[ $? -eq 2 ]] && return 1
+    local dup order=()
+    for dup in $(gpu_rules_duplicates); do
+        log_step "Removing $dup (makes the same links)"
+        sudo rm -f "$dup"
+    done
+    local resolved
+    resolved="$(gpu_order_resolve "${1:-auto}")" || return 1
+    [[ -n "$resolved" ]] && mapfile -t order <<<"$resolved"
+    gpu_order_write "${order[@]}" || return 1
+    log_info "GPU order: ${order[*]:-automatic} (local/gpus.lua)"
+}
+
 step_stow() {
     source "$SETUP_DIR/stow.sh"
     run_stow_main
@@ -411,6 +432,7 @@ plan_steps() {
     step_add step_stow "Linking the dotfiles (stow)" 1
     step_add step_icons "lyne-dots icon"
     step_add step_hyprland "Hyprland local files"
+    gpu_multi && step_add "step_gpus ${ANSWERS[gpu_order]:-auto}" "GPU links and order"
     step_add step_state_aur_helper "Quickshell settings"
     step_add step_mimetypes "Default apps"
     has_category fonts && step_add step_tela_icons "Tela icon theme" 2
@@ -484,6 +506,34 @@ q_graphics() {
     ask_single nvidia "Graphics" "${setup^}." "${options[@]}"
 }
 
+# Hybrid machines: which GPU renders Hyprland (gpu-order.sh). Same screen
+# title and GPU list as the question before
+q_gpu_order() {
+    ((GPU_HYBRID)) && gpu_multi || return 3
+    local ASK_EXTRA=_graphics_rows _GRAPHICS_ASK="Which GPU renders the desktop?"
+    local igpu dgpu i
+    for ((i = 0; i < GPU_COUNT; i++)); do
+        [[ "${GPU_KIND[i]}" == integrated && -z "${igpu:-}" ]] && igpu=${GPU_BRAND[i]}
+        [[ "${GPU_KIND[i]}" == dedicated && -z "${dgpu:-}" ]] && dgpu=${GPU_BRAND[i]}
+    done
+    ask_single gpu_order "Graphics" "Both GPUs stay in use: the other one drives the monitors plugged into it. Change it later with lyne gpu order." \
+        "igpu|$igpu (integrated)|uses less power, recommended for laptops|1" \
+        "dgpu|$dgpu (dedicated)|faster, and no copy for monitors on it" \
+        "auto|Automatic|Hyprland picks: the GPU of the built-in screen"
+}
+
+# "Intel renders, then NVIDIA"
+_gpu_order_label() {
+    local spec=$1 pci i names=()
+    [[ "$spec" == auto ]] && { echo "automatic"; return; }
+    while read -r pci; do
+        i="$(_gpu_index_of_pci "$pci")" && names+=("${GPU_BRAND[i]}")
+    done < <(gpu_order_resolve "$spec" 2>/dev/null)
+    local label="${names[0]} renders"
+    ((${#names[@]} > 1)) && label+=", then ${names[*]:1}"
+    echo "$label"
+}
+
 q_reboot() {
     ask_single reboot "Reboot when it's done?" \
         "Hyprland needs a new session. The reboot waits $REBOOT_SECONDS seconds (any key cancels it) and never happens after a failure." \
@@ -521,6 +571,11 @@ q_review() {
     env) rows+=("NVIDIA|environment variables only") ;;
     *) rows+=("NVIDIA|no") ;;
     esac
+    if gpu_multi; then
+        local order=auto
+        ((GPU_HYBRID)) && order=${ANSWERS[gpu_order]:-auto}
+        rows+=("GPU order|$(_gpu_order_label "$order") (/dev/dri links by PCI)")
+    fi
     local backup
     backup="$(backup_summary)"
     rows+=("Backup|${backup:-nothing to move}")
@@ -541,7 +596,7 @@ q_review() {
         "${rows[@]}"
 }
 
-QUESTIONS=(q_categories q_graphics q_reboot q_review)
+QUESTIONS=(q_categories q_graphics q_gpu_order q_reboot q_review)
 
 # Answers not in an --answers file
 answer_defaults() {
@@ -566,6 +621,11 @@ answer_defaults() {
     fi
     if [[ "${ANSWERS[nvidia]}" == driver && "${ANSWERS[multilib]:-}" == yes ]]; then
         ANSWERS[nvidia]=driver+multilib
+    fi
+    # GPU order (hybrid machines): integrated first unless answered
+    if [[ ! -v "ANSWERS[gpu_order]" ]]; then
+        ANSWERS[gpu_order]=auto
+        ((GPU_HYBRID)) && ANSWERS[gpu_order]=igpu
     fi
     # Only a GPU with a driver can get one
     if [[ "${ANSWERS[nvidia]}" == driver* ]]; then
@@ -631,12 +691,17 @@ show_summary() {
         echo "  5. In tmux, use prefix + I to install plugins"
     fi
 
+    if gpu_multi; then
+        echo ""
+        echo -e "${C_WARN}GPUs:${C_RESET}"
+        echo "  - Links and order: lyne gpu (lyne gpu order changes which GPU renders)"
+    fi
+
     if [[ "$LYNE_NVIDIA_ENV" == yes ]]; then
         echo ""
         echo -e "${C_WARN}NVIDIA:${C_RESET}"
         [[ "${ANSWERS[nvidia]}" == driver* ]] && echo "  - After the reboot, check the driver with: lyne nvidia"
         echo "  - Review ~/.config/hypr/local/extra_environment.lua"
-        echo "  - For hybrid GPUs, uncomment the AQ_DRM_DEVICES line"
     fi
 
     echo ""
@@ -690,7 +755,9 @@ main() {
     # The GPUs, for the Graphics question and the log
     source "$DOTFILES_DIR/.data/lyne-cli/lib/gpus.sh"
     source "$DOTFILES_DIR/.data/lyne-cli/lib/nvidia.sh"
+    source "$DOTFILES_DIR/.data/lyne-cli/lib/gpu-order.sh"
     gpu_detect
+    gpu_links
     nvidia_plan 0
 
     ui_setup
@@ -771,7 +838,8 @@ usage() {
     echo "  --answers FILE    Take the answers from FILE (id=value lines) instead of"
     echo "                    asking: categories=core terminal ...,"
     echo "                    nvidia=driver|env|none (default: the driver when the GPU"
-    echo "                    found has one), multilib=yes (lib32 driver), reboot=yes|no"
+    echo "                    found has one), multilib=yes (lib32 driver),"
+    echo "                    gpu_order=igpu|dgpu|auto (hybrid machines), reboot=yes|no"
     echo "  --dry-run         Change nothing: a throwaway HOME and stand-ins for sudo,"
     echo "                    pacman -S, yay, stow, systemctl... (LYNE_DRY_HOME=dir"
     echo "                    reuses one)"

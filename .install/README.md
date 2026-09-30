@@ -47,6 +47,7 @@ Files already where the dotfiles are linked are moved to
 ```bash
 cat > answers <<EOF
 categories=core terminal utils fonts quickshell theming
+gpu_order=igpu
 reboot=no
 EOF
 ./install.sh --answers answers
@@ -56,6 +57,17 @@ EOF
 added; without it, the NVIDIA driver is installed when the GPU found has one.
 `lyne gpu` lists the GPUs (`.data/lyne-cli/lib/gpus.sh`, reading sysfs and
 pci.ids only).
+
+### GPU order (more than one GPU)
+
+`/dev/dri/card*` numbers change between boots, so each GPU gets a link by PCI
+address in `/etc/udev/rules.d/90-lyne-gpus.rules` (`/dev/dri/intel-igpu`,
+`nvidia-dgpu`...). The order Hyprland uses them in (`AQ_DRM_DEVICES`: the
+first renders, GPUs left out aren't used) is kept in state.json
+(`gpus.order`) and written to `~/.config/hypr/local/gpus.lua`, which only
+sets the GPUs present when Hyprland starts. The installer asks for it on
+hybrid machines; `lyne gpu order igpu|dgpu|auto|only-igpu|only-dgpu` changes
+it (next login) and `lyne gpu links` rewrites the rules.
 
 ### NVIDIA driver
 

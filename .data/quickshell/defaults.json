@@ -258,6 +258,9 @@
     "monitors": {
         "rules": []
     },
+    "gpus": {
+        "order": []
+    },
     "osd": {
         "style": "attached",
         "position": "bottom",
