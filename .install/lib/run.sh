@@ -13,7 +13,7 @@
 
 STEP_FNS=() STEP_LABELS=() STEP_WEIGHTS=() STEP_TOTALS=() STEP_CRITICAL=()
 STEP_STATUS=() STEP_NOTES=()
-RUN_PID="" RUN_SUDO_PID="" RUN_PLAIN=${RUN_PLAIN:-0} RUN_ABORTED=0 RUN_CANCELLED=0 RUN_SECONDS=0
+RUN_PID="" RUN_SUDO_PID="" RUN_SUDO_DIR="" RUN_SUDO_REQUEST="" RUN_PLAIN=${RUN_PLAIN:-0} RUN_ABORTED=0 RUN_CANCELLED=0 RUN_SECONDS=0
 RUN_TAIL_LINES=6
 
 # pacman prints one of these per package when its output isn't a terminal
@@ -60,16 +60,72 @@ run_sudo_start() {
     sudo -v || return 1
     (
         while kill -0 "$$" 2>/dev/null; do
-            sleep 50
-            sudo -n -v 2>/dev/null || exit 0
+            sleep "${RUN_SUDO_KEEPALIVE:-50}"
+            sudo -n -v 2>/dev/null
         done
     ) </dev/null >/dev/null 2>&1 &
     RUN_SUDO_PID=$!
+
+    # The steps' sudo (theirs, makepkg's, yay's): never a prompt hidden
+    # behind the progress screen. makepkg runs `sudo -k pacman ...`, which
+    # ignores the cached password and asks again every time (twice for
+    # `makepkg -si`): the -k goes, the password was just checked. When it
+    # was forgotten anyway (a suspend, a very long build) it asks run_steps
+    # to get it again in the foreground, and waits
+    RUN_SUDO_DIR="$(mktemp -d "${TMPDIR:-/tmp}/lyne-sudo.XXXXXX")" || return 1
+    RUN_SUDO_REQUEST="$RUN_SUDO_DIR/request"
+    cat >"$RUN_SUDO_DIR/sudo" <<'EOF'
+#!/bin/bash
+# sudo for the lyne-dots install steps (.install/lib/run.sh)
+dir="$(dirname "$(realpath "$0")")"
+real="$(PATH="${PATH//$dir:/}" command -v sudo)"
+# -k (ignore the cached password) dropped when a command follows
+args=() command=0
+for a in "$@"; do
+    if ((!command)) && [[ "$a" == -* ]]; then
+        [[ "$a" == -k || "$a" == --reset-timestamp ]] && continue
+    else
+        command=1
+    fi
+    args+=("$a")
+done
+((command)) || args=("$@")
+for _ in 1 2 3; do
+    if "$real" -n true 2>/dev/null; then
+        exec "$real" "${args[@]}"
+    fi
+    echo "[sudo] the password is needed again: asking for it" >&2
+    rm -f "$dir/failed"
+    touch "$dir/request"
+    while [[ -e "$dir/request" ]]; do sleep 0.3; done
+    [[ -e "$dir/failed" ]] && break
+done
+echo "sudo: no password, $* not run" >&2
+exit 1
+EOF
+    chmod +x "$RUN_SUDO_DIR/sudo"
+}
+
+# A step's sudo asked for the password: out of the progress screen, ask for
+# it where it can be seen, back in
+_run_sudo_again() {
+    local ok=0
+    if ((!RUN_PLAIN)) && [[ -t 0 ]]; then
+        ui_leave
+        printf '\n%s\n' "The installation needs your sudo password again."
+        sudo -v && ok=1
+        ui_enter
+        ui_keys_off
+    fi
+    ((ok)) || touch "$RUN_SUDO_DIR/failed"
+    rm -f "$RUN_SUDO_REQUEST"
 }
 
 run_sudo_stop() {
     [[ -n "$RUN_SUDO_PID" ]] && kill "$RUN_SUDO_PID" 2>/dev/null
     RUN_SUDO_PID=""
+    [[ -n "${RUN_SUDO_DIR:-}" ]] && rm -rf "$RUN_SUDO_DIR"
+    RUN_SUDO_DIR=""
 }
 
 # ---------------------------------------------------------------------------
@@ -117,6 +173,7 @@ run_steps() {
             # shellcheck disable=SC1090
             source "$RUN_STATE"
             set -o pipefail
+            [[ -n "$RUN_SUDO_DIR" ]] && PATH="$RUN_SUDO_DIR:$PATH"
             # "function arg..." (install_packages core)
             read -ra cmd <<<"${STEP_FNS[i]}"
             "${cmd[@]}"
@@ -125,6 +182,7 @@ run_steps() {
 
         local frame=0
         while kill -0 "$RUN_PID" 2>/dev/null; do
+            [[ -n "$RUN_SUDO_REQUEST" && -e "$RUN_SUDO_REQUEST" ]] && _run_sudo_again
             ((RUN_PLAIN)) || _run_draw "$i" "$offset" "$frame" "$start" "$done_w" "$total_w"
             frame=$((frame + 1))
             sleep 0.15
@@ -383,6 +441,28 @@ fake_install() {
 case "$name" in
 sudo)
     all="$*"
+    # LYNE_DRY_SUDO_TTL=<seconds>: a password cache that expires, asked on
+    # the terminal like the real sudo (tests of the password asked again)
+    if [[ -n "${LYNE_DRY_SUDO_TTL:-}" ]]; then
+        ts="$HOME/.dry-sudo-ts" now="$(date +%s)" nonint=0 reset=0
+        for a in "$@"; do
+            [[ "$a" == -* ]] || break
+            [[ "$a" == -n ]] && nonint=1
+            [[ "$a" == -k ]] && reset=1
+        done
+        # -k with a command ignores the cache (makepkg does that)
+        if ((reset)) || [[ ! -f "$ts" ]] || ((now - $(<"$ts") >= LYNE_DRY_SUDO_TTL)); then
+            if ((nonint)); then
+                echo "sudo: a password is required" >&2
+                exit 1
+            fi
+            printf '[sudo] password for %s: ' "$USER" >/dev/tty
+            IFS= read -rs _ </dev/tty
+            printf '\n' >/dev/tty
+            echo "[dry-run] password asked: $all" >>"$HOME/.dry-sudo-prompts"
+        fi
+        echo "$now" >"$ts"
+    fi
     while [[ "${1:-}" == -* ]]; do shift; done
     # sudo tee FILE: what would be written goes to the log (on stderr: the
     # caller usually sends tee's output to /dev/null)
@@ -430,6 +510,13 @@ git)
     else
         real git "$@"
     fi
+    ;;
+makepkg)
+    echo "[dry-run] makepkg $*"
+    # Like makepkg: deps (-s) and the install (-i) through `sudo -k pacman`
+    [[ " $* " == *" -s"* || " $* " == *" -si "* ]] && sudo -k pacman -S --asdeps --noconfirm go
+    [[ " $* " == *" -i"* || " $* " == *" -si "* ]] && sudo -k pacman -U --noconfirm ./fake.pkg.tar.zst
+    exit 0
     ;;
 systemctl)
     case "${1:-}" in

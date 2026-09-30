@@ -29,7 +29,7 @@ ui_setup() {
 
     # 16-color escapes only: the Linux console has nothing else
     C_RESET=$'\033[0m' C_BOLD=$'\033[1m' C_DIM=$'\033[2m'
-    C_ACCENT=$'\033[35m' C_SEL=$'\033[1;36m' C_OK=$'\033[32m'
+    C_ACCENT=$'\033[34m' C_SEL=$'\033[1;36m' C_OK=$'\033[32m'
     C_WARN=$'\033[33m' C_FAIL=$'\033[31m'
 }
 

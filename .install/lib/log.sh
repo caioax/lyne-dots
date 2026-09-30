@@ -24,7 +24,7 @@ log_question() { _log "0;34" "[?]" "$1"; }
 log_header() {
     local rule="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     if [[ -t 1 ]]; then
-        printf '\n\033[0;35m%s\n  %s\n%s\033[0m\n\n' "$rule" "$1" "$rule"
+        printf '\n\033[0;34m%s\n  %s\n%s\033[0m\n\n' "$rule" "$1" "$rule"
     else
         printf '\n== %s ==\n\n' "$1"
     fi
