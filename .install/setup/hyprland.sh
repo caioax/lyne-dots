@@ -84,23 +84,6 @@ EOF
 }
 
 # =============================================================================
-# Configure local Hyprland files
-# =============================================================================
-setup_local_configs() {
-    echo ""
-    log_info "Configuring local Hyprland files..."
-
-    # Apps started at login are added in Settings › System › Autostart
-    # (written to local/settings.lua)
-
-    # extra_keybinds.lua
-    copy_template \
-        "$TEMPLATES_DIR/extra_keybinds.lua" \
-        "$HYPR_LOCAL_DIR/extra_keybinds.lua" \
-        "local/extra_keybinds.lua (local keybinds)"
-}
-
-# =============================================================================
 # Configure QuickShell state.json
 # =============================================================================
 setup_quickshell() {
@@ -177,9 +160,9 @@ setup_nvidia() {
         "uwsm/hyprland_hardware.sh (Hyprland hardware)"
 
     echo ""
-    log_warn "NOTE: If you have a hybrid GPU (Intel + NVIDIA), you may need to"
-    log_warn "      edit the files in ~/.config/hypr/local/ and"
-    log_warn "      ~/.config/uwsm/env.d/ to uncomment AQ_DRM_DEVICES."
+    log_info "NOTE: If you have a hybrid GPU (Intel + NVIDIA), you may need to"
+    log_info "      edit the files in ~/.config/hypr/local/ and"
+    log_info "      ~/.config/uwsm/env.d/ to uncomment AQ_DRM_DEVICES."
 }
 
 # =============================================================================
@@ -289,7 +272,6 @@ run_hyprland_main() {
 
     create_directories
     setup_monitors
-    setup_local_configs
     setup_quickshell
     setup_wallpapers
     setup_themes
@@ -312,7 +294,6 @@ run_hyprland_main() {
     log_info "Files created/verified:"
     echo "  - ~/.config/hypr/local/monitors.lua"
     echo "  - ~/.config/hypr/local/extra_environment.lua"
-    echo "  - ~/.config/hypr/local/extra_keybinds.lua"
     echo "  - ~/.config/uwsm/env.d/global_hardware.sh"
     echo "  - ~/.config/uwsm/env.d/hyprland_hardware.sh"
     echo "  - ~/.config/quickshell/state.json"

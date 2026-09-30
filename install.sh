@@ -157,6 +157,16 @@ step_base() {
     sudo pacman -S --needed --noconfirm stow git
 }
 
+# step_nvidia <multilib 0|1>
+step_nvidia() {
+    source "$DOTFILES_DIR/.data/lyne-cli/lib/gpus.sh"
+    source "$DOTFILES_DIR/.data/lyne-cli/lib/nvidia.sh"
+    gpu_detect
+    nvidia_plan "${1:-0}"
+    nvidia_plan_lines | sed 's/^/[>>] Plan: /'
+    nvidia_apply
+}
+
 step_stow() {
     source "$SETUP_DIR/stow.sh"
     run_stow_main
@@ -388,6 +398,16 @@ plan_steps() {
             $((1 + official + aur * 4)) $((official + aur))
     done
 
+    if [[ "${ANSWERS[nvidia]}" == driver* ]]; then
+        # DKMS builds the module for every kernel: a long step
+        local multilib=0
+        [[ "${ANSWERS[nvidia]}" == driver+multilib ]] && multilib=1
+        nvidia_plan "$multilib"
+        local count
+        count=$(_nv_missing "${NV_REPO[@]}" "${NV_AUR[@]}" | wc -l)
+        step_add "step_nvidia $multilib" "NVIDIA driver" $((2 + count * 2)) "$count"
+    fi
+
     step_add step_stow "Linking the dotfiles (stow)" 1
     step_add step_icons "lyne-dots icon"
     step_add step_hyprland "Hyprland local files"
@@ -413,8 +433,8 @@ q_categories() {
         "${CATEGORY_OPTIONS[@]}"
 }
 
-# The GPUs found (gpus.sh), then whether to add the NVIDIA environment,
-# answered from what was found
+# The GPUs found (gpus.sh), then what to do about NVIDIA: the driver
+# (nvidia.sh) and the environment variables, only the variables, or nothing
 _graphics_rows() {
     local i name_w=$((UI_WIDTH - 2 - 8 - 22 - 12))
     ((name_w > 34)) && name_w=34
@@ -428,18 +448,40 @@ _graphics_rows() {
         fi
     done
     UI_LINES+=("")
-    ui_add "NVIDIA environment variables for Hyprland and UWSM?"
+    ui_add "$_GRAPHICS_ASK"
+}
+
+# The package that installs the driver for this GPU
+_nvidia_driver_pkg() {
+    [[ "$NV_FAMILY" == open ]] && echo nvidia-open-dkms || echo "nvidia-580xx-dkms (AUR)"
 }
 
 q_graphics() {
-    local ASK_EXTRA=_graphics_rows setup yes no
+    local ASK_EXTRA=_graphics_rows setup options=()
     setup="$(gpu_setup_label)"
-    if ((GPU_NVIDIA >= 0)); then
-        yes="yes|Yes|an NVIDIA GPU was found|1" no="no|No|leave them out"
-    else
-        yes="yes|Yes|for an NVIDIA GPU not listed here" no="no|No|no NVIDIA GPU was found|1"
-    fi
-    ask_single nvidia_env "Graphics" "${setup^}." "$yes" "$no"
+    case "$NV_ACTION" in
+    install | replace | ok)
+        local driver
+        case "$NV_ACTION" in
+        install) driver="install $(_nvidia_driver_pkg)" ;;
+        replace) driver="switch to $(_nvidia_driver_pkg)" ;;
+        ok) driver="$NV_CURRENT is installed: check it" ;;
+        esac
+        _GRAPHICS_ASK="NVIDIA driver and environment variables for Hyprland and UWSM?"
+        options+=("driver|Driver + environment|$driver|1")
+        nv_multilib_on || options+=("driver+multilib|Driver + 32-bit|also enables multilib (Steam, Wine)")
+        options+=("env|Environment only|the driver is set up another way" "none|Nothing|")
+        ;;
+    unsupported)
+        _GRAPHICS_ASK="NVIDIA environment variables for Hyprland and UWSM?"
+        options+=("none|No|nouveau drives this GPU|1" "env|Yes|only with a driver you set up yourself")
+        ;;
+    *)
+        _GRAPHICS_ASK="NVIDIA environment variables for Hyprland and UWSM?"
+        options+=("env|Yes|for an NVIDIA GPU not listed here" "none|No|no NVIDIA GPU was found|1")
+        ;;
+    esac
+    ask_single nvidia "Graphics" "${setup^}." "${options[@]}"
 }
 
 q_reboot() {
@@ -468,11 +510,17 @@ q_review() {
     local categories=${ANSWERS[categories]}
     rows+=("Packages|${categories:-none, only the dotfiles}")
     rows+=("Graphics|$(gpu_summary)")
-    if [[ "${ANSWERS[nvidia_env]}" == yes ]]; then
-        rows+=("NVIDIA|environment variables for NVIDIA")
-    else
-        rows+=("NVIDIA|no")
-    fi
+    case "${ANSWERS[nvidia]}" in
+    driver*)
+        local driver="$(_nvidia_driver_pkg), kernel headers, initramfs drop-in"
+        [[ "$NV_ACTION" == replace ]] && driver="replaces $NV_CURRENT with $driver"
+        [[ "$NV_ACTION" == ok ]] && driver="check $NV_CURRENT (headers, initramfs drop-in)"
+        [[ "${ANSWERS[nvidia]}" == driver+multilib ]] && driver+=", multilib"
+        rows+=("NVIDIA|$driver; environment")
+        ;;
+    env) rows+=("NVIDIA|environment variables only") ;;
+    *) rows+=("NVIDIA|no") ;;
+    esac
     local backup
     backup="$(backup_summary)"
     rows+=("Backup|${backup:-nothing to move}")
@@ -504,9 +552,27 @@ answer_defaults() {
             ANSWERS[categories]+="${opt%%|*} "
         done
     fi
-    if [[ ! -v "ANSWERS[nvidia_env]" ]]; then
-        ANSWERS[nvidia_env]=no
-        ((GPU_NVIDIA >= 0)) && ANSWERS[nvidia_env]=yes
+    # nvidia=driver|driver+multilib|env|none; nvidia_env=yes|no (the step 2
+    # answer) still means env or none; multilib=yes adds it to the driver
+    if [[ ! -v "ANSWERS[nvidia]" ]]; then
+        if [[ -v "ANSWERS[nvidia_env]" ]]; then
+            [[ "${ANSWERS[nvidia_env]}" == yes ]] && ANSWERS[nvidia]=env || ANSWERS[nvidia]=none
+        else
+            case "$NV_ACTION" in
+            install | replace | ok) ANSWERS[nvidia]=driver ;;
+            *) ANSWERS[nvidia]=none ;;
+            esac
+        fi
+    fi
+    if [[ "${ANSWERS[nvidia]}" == driver && "${ANSWERS[multilib]:-}" == yes ]]; then
+        ANSWERS[nvidia]=driver+multilib
+    fi
+    # Only a GPU with a driver can get one
+    if [[ "${ANSWERS[nvidia]}" == driver* ]]; then
+        case "$NV_ACTION" in
+        install | replace | ok) ;;
+        *) ANSWERS[nvidia]=none ;;
+        esac
     fi
     [[ -v "ANSWERS[reboot]" ]] || ANSWERS[reboot]=no
 }
@@ -568,6 +634,7 @@ show_summary() {
     if [[ "$LYNE_NVIDIA_ENV" == yes ]]; then
         echo ""
         echo -e "${C_WARN}NVIDIA:${C_RESET}"
+        [[ "${ANSWERS[nvidia]}" == driver* ]] && echo "  - After the reboot, check the driver with: lyne nvidia"
         echo "  - Review ~/.config/hypr/local/extra_environment.lua"
         echo "  - For hybrid GPUs, uncomment the AQ_DRM_DEVICES line"
     fi
@@ -622,7 +689,9 @@ main() {
     export LYNE_BACKUP_DIR="$HOME/.lyne-dots-backup/$STAMP"
     # The GPUs, for the Graphics question and the log
     source "$DOTFILES_DIR/.data/lyne-cli/lib/gpus.sh"
+    source "$DOTFILES_DIR/.data/lyne-cli/lib/nvidia.sh"
     gpu_detect
+    nvidia_plan 0
 
     ui_setup
     # Plain summary when the output goes to a file
@@ -649,7 +718,9 @@ main() {
     fi
 
     read -ra CATEGORIES <<<"${ANSWERS[categories]}"
-    export LYNE_NVIDIA_ENV="${ANSWERS[nvidia_env]}"
+    LYNE_NVIDIA_ENV=no
+    [[ "${ANSWERS[nvidia]}" == none ]] || LYNE_NVIDIA_ENV=yes
+    export LYNE_NVIDIA_ENV
 
     # sudo once, kept alive until the end
     log_step "The installation needs your sudo password (asked only now)."
@@ -698,8 +769,9 @@ usage() {
     echo "  --setup-only      Only run Hyprland setup"
     echo "  --packages PKG    Install only the specified category"
     echo "  --answers FILE    Take the answers from FILE (id=value lines) instead of"
-    echo "                    asking: categories=core terminal ..., nvidia_env=yes|no"
-    echo "                    (default: whether an NVIDIA GPU was found), reboot=yes|no"
+    echo "                    asking: categories=core terminal ...,"
+    echo "                    nvidia=driver|env|none (default: the driver when the GPU"
+    echo "                    found has one), multilib=yes (lib32 driver), reboot=yes|no"
     echo "  --dry-run         Change nothing: a throwaway HOME and stand-ins for sudo,"
     echo "                    pacman -S, yay, stow, systemctl... (LYNE_DRY_HOME=dir"
     echo "                    reuses one)"
@@ -771,7 +843,13 @@ packages)
     step_aur_helper || exit 1
     source "$RUN_STATE"
     rm -f "$RUN_STATE"
-    install_packages "$PACKAGE_CATEGORY"
+    if [[ "$PACKAGE_CATEGORY" == nvidia ]]; then
+        # The driver for the GPU found (like lyne nvidia install, no questions)
+        sudo -v || exit 1
+        step_nvidia 0
+    else
+        install_packages "$PACKAGE_CATEGORY"
+    fi
     ;;
 *)
     main

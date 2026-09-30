@@ -283,7 +283,8 @@ _run_draw() {
 # (pacman -Q, systemctl list-unit-files) still ask the real system. Files the
 # steps write land in the throwaway HOME, to be looked at afterwards.
 # LYNE_DRY_HOME reuses one; LYNE_DRY_DELAY sets the time per fake package;
-# LYNE_DRY_FRESH=1 acts as if no package were installed; LYNE_DRY_FAIL="cmd
+# LYNE_DRY_FRESH=1 acts as if no package were installed, LYNE_DRY_INSTALLED=
+# "name=version ..." as if only those were; LYNE_DRY_FAIL="cmd
 # ..." makes those stand-ins fail (tests of the failure paths).
 # ---------------------------------------------------------------------------
 run_dry_setup() {
@@ -312,7 +313,47 @@ bin="$(dirname "$(realpath "$0")")"
 real() { PATH="${PATH//$bin:/}" command "$@"; }
 delay="${LYNE_DRY_DELAY:-0.02}"
 
-installed() { [[ -z "${LYNE_DRY_FRESH:-}" ]] && real pacman -Qq "$1" &>/dev/null; }
+# LYNE_DRY_FRESH / LYNE_DRY_INSTALLED ("name=version ..."): a made-up
+# package database instead of the real one (queries and -T read it)
+fake_db() { [[ -n "${LYNE_DRY_FRESH:-}${LYNE_DRY_INSTALLED:-}" ]]; }
+fake_version() {
+    local entry
+    for entry in ${LYNE_DRY_INSTALLED:-}; do
+        [[ "${entry%%=*}" == "$1" ]] && { echo "${entry#*=}"; return 0; }
+    done
+    return 1
+}
+installed() {
+    if fake_db; then fake_version "$1" >/dev/null; else real pacman -Qq "$1" &>/dev/null; fi
+}
+
+# pacman -Q/-Qq [names] and -Qs/-Qqs regex against the made-up database
+fake_query() {
+    local flags=$1 quiet=0 search=0 entry name rc=0
+    shift
+    [[ "$flags" == *q* ]] && quiet=1
+    [[ "$flags" == *s* ]] && search=1
+    if ((search)) || (($# == 0)); then
+        rc=1
+        for entry in ${LYNE_DRY_INSTALLED:-}; do
+            name=${entry%%=*}
+            if (($# == 0)) || [[ "$name" =~ $1 ]]; then
+                ((quiet)) && echo "$name" || echo "$name ${entry#*=}"
+                rc=0
+            fi
+        done
+        return $rc
+    fi
+    for name in "$@"; do
+        if entry="$(fake_version "$name")"; then
+            ((quiet)) && echo "$name" || echo "$name $entry"
+        else
+            echo "error: package '$name' was not found" >&2
+            rc=1
+        fi
+    done
+    return $rc
+}
 
 if [[ " ${LYNE_DRY_FAIL:-} " == *" $name "* ]]; then
     echo "[dry-run] $name $* (made to fail)"
@@ -341,22 +382,36 @@ fake_install() {
 
 case "$name" in
 sudo)
-    echo "[dry-run] sudo $*"
+    all="$*"
     while [[ "${1:-}" == -* ]]; do shift; done
+    # sudo tee FILE: what would be written goes to the log (on stderr: the
+    # caller usually sends tee's output to /dev/null)
+    if [[ "${1:-}" == tee ]]; then
+        echo "[dry-run] sudo $all" >&2
+        sed 's/^/[dry-run]   /' >&2
+        exit 0
+    fi
+    echo "[dry-run] sudo $all"
     [[ $# -eq 0 ]] && exit 0
     # Only stand-ins run: sudo never runs a real command here
     if [[ -x "$bin/$1" && "$1" != dry-stub ]]; then
         exec "$bin/$1" "${@:2}"
     fi
-    # sudo tee FILE: what would be written goes to the log
-    [[ "$1" == tee ]] && sed 's/^/[dry-run]   /'
     exit 0
     ;;
 pacman)
     case "${1:-}" in
     -S*) echo "[dry-run] pacman $*"; fake_install "${@:2}" ;;
     -U* | -R* | -D*) echo "[dry-run] pacman $*" ;;
-    -T) if [[ -n "${LYNE_DRY_FRESH:-}" ]]; then printf '%s\n' "${@:2}"; exit 127; fi
+    -T)
+        if fake_db; then
+            rc=0
+            for pkg in "${@:2}"; do installed "$pkg" || { echo "$pkg"; rc=127; }; done
+            exit $rc
+        fi
+        exec -a pacman "$(PATH="${PATH//$bin:/}" command -v pacman)" "$@" ;;
+    -Q*)
+        if fake_db; then fake_query "$@"; exit $?; fi
         exec -a pacman "$(PATH="${PATH//$bin:/}" command -v pacman)" "$@" ;;
     *) exec -a pacman "$(PATH="${PATH//$bin:/}" command -v pacman)" "$@" ;;
     esac

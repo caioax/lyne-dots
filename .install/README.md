@@ -34,9 +34,9 @@ Organized installation scripts for the dotfiles.
 ./install.sh
 ```
 
-Every question comes first (packages; graphics: the GPUs found and whether
-to add the NVIDIA environment, preselected from them; reboot), then a review
-screen. After the sudo password (asked once and kept alive) the
+Every question comes first (packages; graphics: the GPUs found and, for an
+NVIDIA GPU, the driver and environment variables, preselected from them;
+reboot), then a review screen. After the sudo password (asked once and kept alive) the
 install runs without further questions, showing each step, a progress bar and
 the latest output. Everything goes to `~/.cache/lyne/install-<date>.log`.
 Files already where the dotfiles are linked are moved to
@@ -52,8 +52,22 @@ EOF
 ./install.sh --answers answers
 ```
 
-Without `nvidia_env`, it follows the GPUs found. `lyne gpu` lists them
-(`.data/lyne-cli/lib/gpus.sh`, reading sysfs and pci.ids only).
+`nvidia=driver|env|none` (and `multilib=yes` for the 32-bit driver) can be
+added; without it, the NVIDIA driver is installed when the GPU found has one.
+`lyne gpu` lists the GPUs (`.data/lyne-cli/lib/gpus.sh`, reading sysfs and
+pci.ids only).
+
+### NVIDIA driver
+
+`.data/lyne-cli/lib/nvidia.sh` picks the driver for the GPU: `nvidia-open-dkms`
+for Turing and newer, `nvidia-580xx-dkms` from the AUR for Maxwell to Volta,
+nouveau for older cards. It installs the headers of every kernel,
+`libva-nvidia-driver`, `nvidia-prime` on hybrid machines and, with multilib,
+the lib32 utils; it writes `/etc/mkinitcpio.conf.d/lyne-nvidia.conf` (no `kms`
+hook, the integrated GPU's module early, the NVIDIA ones not: that would break
+hibernation) and rebuilds the initramfs. `lyne nvidia` shows the state and
+what's off; `lyne nvidia install` (or `./install.sh --packages nvidia`)
+installs or fixes the driver on an existing system.
 
 ### Dry run
 
@@ -105,11 +119,13 @@ On first install, templates from `.data/` are copied to generate machine-specifi
 
 Configuration templates are in `.data/hyprland/templates/`:
 
-- `monitors.conf` - Generic monitor configuration
-- `extra_environment.conf` - Local environment variables
-- `extra_environment_nvidia.conf` - NVIDIA variables
-- `autostart.conf` - Local autostart
-- `extra_keybinds.conf` - Local keybinds
+- `monitors.lua` - Automatic settings for every monitor (Settings › Hyprland › Monitors rewrites it)
+- `extra_environment.lua` - Local environment variables
+- `extra_environment_nvidia.lua` - NVIDIA variables
+
+Keybinds, apps started at login and keyboard layouts are set in Settings
+(written to `local/settings.lua`). Any other `local/*.lua` you write by hand
+is loaded too.
 
 NVIDIA UWSM templates are in `.data/hyprland/uwsm/`:
 
