@@ -23,7 +23,9 @@ Card {
         spacing: 2
 
         Text {
-            Layout.alignment: Qt.AlignHCenter
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+            elide: Text.ElideRight
             text: SystemMonitorService.formatGiB(SystemMonitorService.memUsed) + " / " + SystemMonitorService.formatGiB(SystemMonitorService.memTotal) + " GiB"
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
@@ -32,7 +34,9 @@ Card {
         }
 
         Text {
-            Layout.alignment: Qt.AlignHCenter
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+            elide: Text.ElideRight
             visible: SystemMonitorService.swapTotal > 0
             text: "Swap " + SystemMonitorService.formatGiB(SystemMonitorService.swapUsed) + " / " + SystemMonitorService.formatGiB(SystemMonitorService.swapTotal) + " GiB"
             font.family: Config.font

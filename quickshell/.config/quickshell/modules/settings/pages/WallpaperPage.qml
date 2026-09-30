@@ -468,7 +468,8 @@ ColumnLayout {
                     spacing: Config.padding
 
                     Text {
-                        Layout.alignment: Qt.AlignHCenter
+                        Layout.fillWidth: true
+                        horizontalAlignment: Text.AlignHCenter
                         text: root.category === "favorites" ? "\u{f02d5}" : "\u{f11d1}"
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeIconLarge
@@ -476,7 +477,9 @@ ColumnLayout {
                     }
 
                     Text {
-                        Layout.alignment: Qt.AlignHCenter
+                        Layout.fillWidth: true
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.Wrap
                         text: {
                             if (root.query !== "")
                                 return "No wallpapers match \"" + root.query + "\"";

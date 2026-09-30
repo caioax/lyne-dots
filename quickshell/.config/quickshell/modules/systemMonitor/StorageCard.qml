@@ -33,7 +33,9 @@ Card {
                 required property var modelData
                 required property int index
 
-                Layout.alignment: Qt.AlignHCenter
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
                 text: (index > 0 ? modelData.mount + "  " : "") + SystemMonitorService.formatGiB(modelData.used) + " / " + SystemMonitorService.formatGiB(modelData.total) + " GiB"
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
@@ -43,7 +45,9 @@ Card {
         }
 
         Text {
-            Layout.alignment: Qt.AlignHCenter
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+            elide: Text.ElideRight
             visible: SystemMonitorService.disks.length === 1
             text: SystemMonitorService.formatGiB(root.primary?.total - root.primary?.used) + " GiB free"
             font.family: Config.font
