@@ -20,6 +20,9 @@
     "autostart": {
         "apps": []
     },
+    "keyboard": {
+        "devices": []
+    },
     "theme": {
         "name": "tokyonight",
         "mode": "preset",

@@ -13,7 +13,13 @@ import "xkb.js" as Lib
 // HyprlandSettingsService applies them live and writes them to
 // hypr/local/settings.lua like any other input option. Every layout, variant
 // and option is checked against xkeyboard-config's list first: Hyprland
-// silently falls back to plain US on an unknown one
+// silently falls back to plain US on an unknown one.
+// Keyboards with their own layouts are kept in keyboard.devices
+// ([{ name, names, layout, variant, options?, model? }], name = the keyboard,
+// names = every interface it shows up as) and written by
+// HyprlandSettingsService as hl.device() lines. A hand-written
+// hypr/local/extra_input.lua keeps working until it's imported: Hyprland reads
+// it with a stand-in `hl` (lyne_keyboard_import in conf/input.lua)
 Singleton {
     id: root
 
@@ -111,7 +117,7 @@ Singleton {
 
     // Refuses lists with an unknown layout (never sent to Hyprland)
     function setLayouts(list): bool {
-        if (!ready || list.length === 0 || list.length > maxLayouts || !list.every(e => Lib.isValid(db, e))) {
+        if (!ready || list.length === 0 || list.length > maxLayouts || !Lib.acceptable(db, list, layouts)) {
             console.warn("[Keyboard] refused layouts", JSON.stringify(list));
             return false;
         }
@@ -226,6 +232,217 @@ Singleton {
                     root.keyboards = [];
                 }
             }
+        }
+    }
+
+    // ========================================================================
+    // KEYBOARDS WITH THEIR OWN LAYOUTS
+    // ========================================================================
+
+    // One entry per keyboard (its interfaces grouped): Lib.keyboardGroups
+    readonly property var groups: Lib.keyboardGroups(keyboards)
+    readonly property var devices: StateService.get("keyboard.devices", StateService.getDefault("keyboard.devices", []))
+
+    function deviceEntry(name: string): var {
+        return devices.find(d => d.name === name) ?? null;
+    }
+
+    function deviceLayouts(name: string): var {
+        const entry = deviceEntry(name);
+        return entry && entry.layout ? Lib.parseLayouts(entry.layout, entry.variant ?? "") : [];
+    }
+
+    // What the hand-written extra_input.lua sets for a keyboard (null: nothing)
+    function legacyFor(name: string): var {
+        if (!legacyExists || !legacy)
+            return null;
+        return (legacy.devices ?? []).find(d => Lib.baseName(d.name) === name) ?? null;
+    }
+
+    function parseLayoutsOf(layout: string, variant: string): var {
+        return Lib.parseLayouts(layout, variant);
+    }
+
+    function labelFor(name: string): string {
+        return Lib.labelFor(name);
+    }
+
+    function _saveDevice(name: string, list): bool {
+        const previous = deviceLayouts(name);
+        if (!ready || list.length === 0 || list.length > maxLayouts || !Lib.acceptable(db, list, previous)) {
+            console.warn("[Keyboard] refused layouts for", name, JSON.stringify(list));
+            return false;
+        }
+        const joined = Lib.joinLayouts(list);
+        const group = groups.find(g => g.name === name);
+        const old = deviceEntry(name);
+        const names = [...new Set([...(old?.names ?? []), ...(group?.names ?? []), name])];
+        const entry = Object.assign({}, old ?? {
+            name
+        }, {
+            names,
+            layout: joined.layout,
+            variant: joined.variant
+        });
+        StateService.set("keyboard.devices", old ? devices.map(d => d.name === name ? entry : d) : [...devices, entry]);
+        return true;
+    }
+
+    // index -1 adds a layout
+    function setDeviceLayout(name: string, index: int, entry): bool {
+        const list = [...deviceLayouts(name)];
+        const item = {
+            layout: entry.layout,
+            variant: entry.variant ?? ""
+        };
+        if (index < 0) {
+            if (list.some(l => l.layout === item.layout && l.variant === item.variant))
+                return false;
+            list.push(item);
+        } else {
+            list[index] = item;
+        }
+        return _saveDevice(name, list);
+    }
+
+    function removeDeviceLayout(name: string, index: int): bool {
+        const list = deviceLayouts(name);
+        if (list.length <= 1)
+            return false;
+        return _saveDevice(name, list.filter((_, i) => i !== index));
+    }
+
+    // Back to the layouts of every keyboard (also forgets a disconnected one)
+    function followGlobal(name: string) {
+        StateService.set("keyboard.devices", devices.filter(d => d.name !== name));
+    }
+
+    // A saved keyboard seen with interfaces it didn't have yet
+    onGroupsChanged: {
+        let changed = false;
+        const next = devices.map(d => {
+            const group = groups.find(g => g.name === d.name);
+            const missing = group ? group.names.filter(n => !(d.names ?? []).includes(n)) : [];
+            if (missing.length === 0)
+                return d;
+            changed = true;
+            return Object.assign({}, d, {
+                names: [...(d.names ?? [d.name]), ...missing]
+            });
+        });
+        if (changed && !StateService.isLoading)
+            StateService.set("keyboard.devices", next);
+    }
+
+    // ========================================================================
+    // HAND-WRITTEN local/extra_input.lua
+    // ========================================================================
+
+    readonly property string legacyPath: Quickshell.env("HOME") + "/.config/hypr/local/extra_input.lua"
+    property bool legacyExists: false
+    // { ok, error, devices: [{ name, kb_layout?, kb_variant?, kb_options?, kb_model? }], notes, other }
+    property var legacy: null
+    readonly property bool legacyImportable: legacy !== null && legacy.ok === true && legacy.other === 0
+    property bool importing: false
+    readonly property string _importOut: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/lyne-keyboard-import.json"
+
+    // Called by the page when it opens (new or renamed files aren't watched)
+    function refreshLegacy() {
+        legacyFile.reload();
+    }
+
+    FileView {
+        id: legacyFile
+
+        path: root.legacyPath
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            root.legacyExists = true;
+            root._preview();
+        }
+        onLoadFailed: {
+            root.legacyExists = false;
+            root.legacy = null;
+        }
+    }
+
+    function _preview() {
+        if (previewProc.running)
+            return;
+        const lua = "if lyne_keyboard_import then lyne_keyboard_import(" + JSON.stringify(legacyPath) + ", " + JSON.stringify(_importOut) + ", " + JSON.stringify(lstFile.path) + ") end";
+        previewProc.command = ["sh", "-c", 'rm -f "$2"; hyprctl eval "$1" >/dev/null 2>&1; cat "$2" 2>/dev/null; rm -f "$2"', "sh", lua, _importOut];
+        previewProc.running = true;
+    }
+
+    Process {
+        id: previewProc
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    root.legacy = JSON.parse(text);
+                } catch (e) {
+                    root.legacy = {
+                        ok: false,
+                        error: "Hyprland couldn't read it (config not reloaded yet?)",
+                        devices: [],
+                        notes: [],
+                        other: 0
+                    };
+                }
+            }
+        }
+    }
+
+    // Adds the file's keyboards (grouping interfaces; keyboards already set
+    // up here stay as they are) and renames it to extra_input.lua.imported,
+    // which Hyprland no longer loads
+    function importLegacy() {
+        if (!legacyImportable || importing)
+            return;
+        const next = [...devices];
+        for (const d of legacy.devices) {
+            const base = Lib.baseName(d.name);
+            let entry = next.find(e => e.name === base);
+            if (entry && !entry.imported)
+                continue;
+            if (!entry) {
+                entry = {
+                    name: base,
+                    names: [],
+                    imported: true
+                };
+                next.push(entry);
+            }
+            if (!entry.names.includes(d.name))
+                entry.names.push(d.name);
+            if (d.kb_layout !== undefined) {
+                entry.layout = d.kb_layout;
+                entry.variant = d.kb_variant ?? "";
+            }
+            if (d.kb_options !== undefined)
+                entry.options = d.kb_options;
+            if (d.kb_model !== undefined)
+                entry.model = d.kb_model;
+        }
+        StateService.set("keyboard.devices", next.map(e => {
+            const copy = Object.assign({}, e);
+            delete copy.imported;
+            return copy;
+        }));
+        importing = true;
+        importProc.command = ["mv", "-f", legacyPath, legacyPath + ".imported"];
+        importProc.running = true;
+    }
+
+    Process {
+        id: importProc
+
+        onExited: {
+            root.importing = false;
+            legacyFile.reload();
         }
     }
 }

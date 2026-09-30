@@ -130,11 +130,24 @@ function isValid(db, entry) {
     return findLayout(db, entry.layout) !== null && (!entry.variant || findVariant(db, entry.layout, entry.variant) !== null);
 }
 
+// Every entry is listed, or was already saved (`previous`): values imported
+// from a hand-written file can use variants the list doesn't name (br's
+// abnt2 lives in symbols/br but isn't listed)
+function acceptable(db, list, previous) {
+    return list.every(e => isValid(db, e) || (previous ?? []).some(p => p.layout === e.layout && (p.variant ?? "") === (e.variant ?? "")));
+}
+
 // "English (US, alt. intl.)"; the raw names when unknown
 function describe(db, entry) {
     if (entry.variant) {
         const v = findVariant(db, entry.layout, entry.variant);
-        return v ? v.description : entry.layout + " (" + entry.variant + ")";
+        if (v)
+            return v.description;
+        // Not listed: "Portuguese (Brazil, abnt2)"
+        const base = findLayout(db, entry.layout)?.description;
+        if (!base)
+            return entry.layout + " (" + entry.variant + ")";
+        return base.endsWith(")") ? base.slice(0, -1) + ", " + entry.variant + ")" : base + " (" + entry.variant + ")";
     }
     return findLayout(db, entry.layout)?.description ?? entry.layout;
 }
@@ -222,4 +235,64 @@ function findOption(db, option) {
 // Options the lists don't know are dropped before they reach Hyprland
 function validOptions(db, options) {
     return options.filter(o => findOption(db, o) !== null);
+}
+
+// ============================================================================
+// KEYBOARDS
+// ============================================================================
+
+// Devices Hyprland lists as keyboards that aren't keyboards to type on
+const NOT_TYPING = /(power-button|sleep-button|lid-switch|video-bus|consumer-control|system-control|wireless-radio|radio-control|wmi|hotkeys|avrcp|intel-hid|virtual|ydotool|headset|speaker|webcam|camera|extra-buttons|tablet-mode)/;
+
+// "-------akko-keyboard-1" -> "-------akko-keyboard": the interfaces one
+// keyboard shows up as
+function baseName(name) {
+    return String(name).replace(/-\d+$/, "");
+}
+
+// "at-translated-set-2-keyboard" -> "Built-in keyboard",
+// "-------akko-keyboard" -> "Akko keyboard"
+function labelFor(name) {
+    const base = baseName(name);
+    if (base === "at-translated-set-2-keyboard")
+        return "Built-in keyboard";
+    const words = base.replace(/^-+/, "").replace(/-+/g, " ").trim();
+    return words === "" ? base : words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function isTyping(name) {
+    return !NOT_TYPING.test(name);
+}
+
+// `hyprctl devices -j` keyboards -> one entry per keyboard:
+// [{ name (base), names, label, layout, variant, activeKeymap, main, typing }]
+// (layout/variant/keymap of the base-named interface when there is one)
+function keyboardGroups(keyboards) {
+    const groups = {};
+    const order = [];
+    for (const k of keyboards ?? []) {
+        const base = baseName(k.name);
+        let g = groups[base];
+        if (!g) {
+            g = groups[base] = {
+                name: base,
+                names: [],
+                label: labelFor(base),
+                layout: k.layout,
+                variant: k.variant,
+                activeKeymap: k.active_keymap,
+                main: false,
+                typing: isTyping(base)
+            };
+            order.push(base);
+        }
+        g.names.push(k.name);
+        g.main = g.main || k.main === true;
+        if (k.name === base) {
+            g.layout = k.layout;
+            g.variant = k.variant;
+            g.activeKeymap = k.active_keymap;
+        }
+    }
+    return order.map(b => groups[b]);
 }

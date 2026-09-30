@@ -30,7 +30,7 @@ Singleton {
     readonly property var customBinds: StateService.get("keybinds.custom", [])
     readonly property string bindsLua: {
         // Before the overrides: they may move these binds
-        let out = appsLua + specialsLua + workspacesLua + autostartLua;
+        let out = appsLua + specialsLua + workspacesLua + autostartLua + keyboardsLua;
         if (bindOverrides.length > 0) {
             out += "\n-- Keybinds changed in Settings (lyne_rebind is defined in conf/binds.lua)\n";
             out += "if lyne_rebind then\n";
@@ -87,6 +87,31 @@ Singleton {
             out += "        { name = " + _luaString(a.name ?? "") + ", command = " + _luaString(a.command ?? "") + ", delay = " + delay + ", workspace = " + _luaString(a.workspace ?? "") + ", enabled = " + (a.enabled !== false) + " },\n";
         }
         out += "    })\nend\n";
+        return out;
+    }
+
+    // Keyboards with their own layouts (Settings › Hyprland › Keyboard,
+    // KeyboardService), one hl.device() per interface of each keyboard.
+    // Only in the file: an eval can't take a device rule back, the reload
+    // after writing it can. Fields left out come from the input options
+    readonly property string keyboardsLua: {
+        const devices = StateService.get("keyboard.devices", StateService.getDefault("keyboard.devices", []));
+        let out = "\n-- Keyboards with their own layouts\n";
+        for (const d of devices) {
+            const fields = [];
+            if (d.layout) {
+                fields.push("kb_layout = " + _luaString(d.layout));
+                fields.push("kb_variant = " + _luaString(d.variant ?? ""));
+            }
+            if (d.options !== undefined)
+                fields.push("kb_options = " + _luaString(d.options));
+            if (d.model !== undefined)
+                fields.push("kb_model = " + _luaString(d.model));
+            if (fields.length === 0)
+                continue;
+            for (const name of (d.names && d.names.length > 0 ? d.names : [d.name]))
+                out += "hl.device({ name = " + _luaString(name) + ", " + fields.join(", ") + " })\n";
+        }
         return out;
     }
 

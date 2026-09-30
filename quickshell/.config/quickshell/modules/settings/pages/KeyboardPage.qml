@@ -13,9 +13,28 @@ ColumnLayout {
 
     readonly property var layouts: KeyboardService.layouts
     readonly property var options: KeyboardService.options
-    readonly property string globalLayout: layouts.map(l => l.layout).join(",")
-    // Keyboards set up on their own (hypr/local/extra_input.lua)
-    readonly property var ownLayouts: KeyboardService.keyboards.filter(k => k.layout !== root.globalLayout)
+    // Keyboards to type on (connected, or saved with their own layouts),
+    // then the other input devices Hyprland calls keyboards on demand
+    property bool showAllDevices: false
+    readonly property var keyboardRows: {
+        const saved = KeyboardService.devices.map(d => d.name);
+        const connected = KeyboardService.groups.filter(g => root.showAllDevices || g.typing || saved.includes(g.name));
+        const rows = connected.map(g => ({
+                    name: g.name,
+                    connected: true,
+                    main: g.main
+                }));
+        for (const d of KeyboardService.devices) {
+            if (!rows.some(r => r.name === d.name))
+                rows.push({
+                    name: d.name,
+                    connected: false,
+                    main: false
+                });
+        }
+        return rows;
+    }
+    readonly property int hiddenDevices: KeyboardService.groups.filter(g => !g.typing).length
 
     readonly property var capsChoices: [
         {
@@ -90,12 +109,16 @@ ColumnLayout {
         KeyboardService.setOptions(list);
     }
 
-    // Index of the layout the picker changes; -1 = adds one
+    // What the layout picker changes: a keyboard ("" = every keyboard) and
+    // the index of the layout (-1 = adds one)
+    property string pickerDevice: ""
     property int pickerIndex: -1
+    readonly property var pickerLayouts: pickerDevice === "" ? layouts : KeyboardService.deviceLayouts(pickerDevice)
 
-    function openLayoutPicker(index: int) {
+    function openLayoutPicker(device: string, index: int) {
+        pickerDevice = device;
         pickerIndex = index;
-        layoutPicker.openWith(index >= 0 ? layouts[index].layout : "");
+        layoutPicker.openWith(index >= 0 ? pickerLayouts[index].layout : "");
     }
 
     // Called by SettingsWindow before Escape closes the window
@@ -109,7 +132,10 @@ ColumnLayout {
         return false;
     }
 
-    Component.onCompleted: KeyboardService.refreshDevices()
+    Component.onCompleted: {
+        KeyboardService.refreshDevices();
+        KeyboardService.refreshLegacy();
+    }
 
     spacing: Config.spacing * 3
 
@@ -117,7 +143,7 @@ ColumnLayout {
     XkbPicker {
         id: layoutPicker
 
-        title: root.pickerIndex >= 0 ? "Change layout" : "Add a layout"
+        title: (root.pickerIndex >= 0 ? "Change layout" : "Add a layout") + (root.pickerDevice !== "" ? " · " + KeyboardService.labelFor(root.pickerDevice) : "")
         placeholder: "Search layouts, languages and variants"
         items: KeyboardService.allEntries.map(e => ({
                     key: e.layout + "(" + e.variant + ")",
@@ -125,9 +151,11 @@ ColumnLayout {
                     detail: e.variant ? e.layout + " · " + e.variant : e.layout,
                     entry: e
                 }))
-        selected: root.pickerIndex >= 0 ? [root.layouts[root.pickerIndex].layout + "(" + root.layouts[root.pickerIndex].variant + ")"] : root.layouts.map(l => l.layout + "(" + l.variant + ")")
+        selected: root.pickerIndex >= 0 ? [root.pickerLayouts[root.pickerIndex]?.layout + "(" + root.pickerLayouts[root.pickerIndex]?.variant + ")"] : root.pickerLayouts.map(l => l.layout + "(" + l.variant + ")")
         onPicked: item => {
-            if (root.pickerIndex >= 0)
+            if (root.pickerDevice !== "")
+                KeyboardService.setDeviceLayout(root.pickerDevice, root.pickerIndex, item.entry);
+            else if (root.pickerIndex >= 0)
                 KeyboardService.replaceLayout(root.pickerIndex, item.entry);
             else
                 KeyboardService.addLayout(item.entry);
@@ -187,8 +215,18 @@ ColumnLayout {
                 root.setCaps(action);
             } else if (kind === "compose") {
                 KeyboardService.setGroupOption("compose", action);
+            } else if (kind === "device") {
+                const [what, index] = action.split(":");
+                if (what === "change")
+                    root.openLayoutPicker(target, Number(index));
+                else if (what === "add")
+                    root.openLayoutPicker(target, -1);
+                else if (what === "remove")
+                    KeyboardService.removeDeviceLayout(target, Number(index));
+                else if (what === "follow")
+                    KeyboardService.followGlobal(target);
             } else if (action === "change") {
-                root.openLayoutPicker(target);
+                root.openLayoutPicker("", target);
             } else if (action === "up") {
                 KeyboardService.moveLayout(target, -1);
             } else if (action === "down") {
@@ -299,10 +337,182 @@ ColumnLayout {
                 opacity: root.layouts.length < KeyboardService.maxLayouts ? 1 : 0.4
                 onClicked: {
                     if (root.layouts.length < KeyboardService.maxLayouts)
-                        root.openLayoutPicker(-1);
+                        root.openLayoutPicker("", -1);
                 }
             }
         }
+    }
+
+    // ================= KEYBOARDS =================
+    SettingsGroup {
+        title: "Your hypr/local/extra_input.lua"
+        visible: KeyboardService.legacyExists && KeyboardService.legacy !== null && (KeyboardService.legacy.devices.length > 0 || KeyboardService.legacy.other > 0 || !KeyboardService.legacy.ok)
+
+        SettingRow {
+            resettable: false
+            label: "Keyboards set up by hand"
+            descriptionColor: KeyboardService.legacyImportable ? Config.subtextColor : Config.warningColor
+            description: {
+                const legacy = KeyboardService.legacy;
+                if (!legacy)
+                    return "";
+                if (!legacy.ok)
+                    return "It couldn't be read: " + legacy.error;
+                if (legacy.other > 0)
+                    return "It also sets up other things (mouse or touchpad options...), so it stays as it is. Move those to another hypr/local/*.lua file to import it";
+                return "Written by hand before this page. It keeps working until you import it here, then it's renamed to extra_input.lua.imported" + (legacy.notes.length > 0 ? ". " + legacy.notes.join(". ") : "");
+            }
+
+            // md-file_import
+            ActionButton {
+                visible: KeyboardService.legacyImportable
+                icon: "\u{f0220}"
+                text: KeyboardService.importing ? "Importing..." : "Import"
+                baseColor: Config.accentColor
+                hoverColor: Qt.lighter(Config.accentColor, 1.1)
+                textColor: Config.textReverseColor
+                onClicked: KeyboardService.importLegacy()
+            }
+        }
+
+        Repeater {
+            model: KeyboardService.legacy?.devices ?? []
+
+            SettingRow {
+                required property var modelData
+
+                resettable: false
+                label: KeyboardService.labelFor(modelData.name)
+                description: {
+                    const parts = [];
+                    if (modelData.kb_layout)
+                        parts.push(KeyboardService.parseLayoutsOf(modelData.kb_layout, modelData.kb_variant ?? "").map(l => KeyboardService.describe(l)).join(" + "));
+                    if (modelData.kb_options)
+                        parts.push("options " + modelData.kb_options);
+                    if (modelData.kb_model)
+                        parts.push("model " + modelData.kb_model);
+                    return modelData.name + "  ·  " + parts.join("  ·  ");
+                }
+            }
+        }
+    }
+
+    SettingsGroup {
+        title: "Keyboards"
+
+        Repeater {
+            model: root.keyboardRows
+
+            SettingRow {
+                id: keyboardRow
+
+                required property var modelData
+                readonly property var own: KeyboardService.deviceLayouts(modelData.name)
+                readonly property var entry: KeyboardService.deviceEntry(modelData.name)
+                readonly property var legacy: entry ? null : KeyboardService.legacyFor(modelData.name)
+
+                resettable: false
+                label: KeyboardService.labelFor(modelData.name)
+                description: {
+                    const parts = [];
+                    if (keyboardRow.legacy)
+                        parts.push("From extra_input.lua: " + (keyboardRow.legacy.kb_layout ? KeyboardService.parseLayoutsOf(keyboardRow.legacy.kb_layout, keyboardRow.legacy.kb_variant ?? "").map(l => KeyboardService.describe(l)).join(" + ") : "own options"));
+                    else
+                        parts.push(keyboardRow.own.length > 0 ? keyboardRow.own.map(l => KeyboardService.describe(l)).join(" + ") : (keyboardRow.entry ? "Same layouts as above, own options" : "Same layouts as above"));
+                    if (keyboardRow.entry?.options !== undefined && keyboardRow.own.length > 0)
+                        parts.push("own key options");
+                    if (!modelData.connected)
+                        parts.push("not connected");
+                    else if (modelData.main && KeyboardService.groups.filter(g => g.typing).length > 1)
+                        parts.push("typing now");
+                    return parts.join("  ·  ");
+                }
+
+                leading: Rectangle {
+                    implicitWidth: Config.fontSizeIconSmall * 2
+                    implicitHeight: implicitWidth
+                    radius: Config.radius
+                    color: keyboardRow.own.length > 0 ? Qt.alpha(Config.accentColor, 0.2) : Config.surface1Color
+                    opacity: keyboardRow.modelData.connected ? 1 : 0.5
+
+                    // md-keyboard_outline
+                    Text {
+                        anchors.centerIn: parent
+                        text: "\u{f097b}"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeIconSmall
+                        color: keyboardRow.own.length > 0 ? Config.accentColor : Config.subtextColor
+                    }
+                }
+
+                ActionButton {
+                    visible: keyboardRow.own.length === 0 && !keyboardRow.entry && !keyboardRow.legacy
+                    text: "Own layout"
+                    baseColor: keyboardRow.controlColor
+                    enabled: KeyboardService.ready
+                    onClicked: root.openLayoutPicker(keyboardRow.modelData.name, -1)
+                }
+
+                // md-dots_vertical
+                ActionButton {
+                    visible: !!keyboardRow.entry
+                    size: Config.fontSizeIconSmall + Config.padding * 3
+                    icon: "\u{f01d9}"
+                    baseColor: keyboardRow.controlColor
+                    onClicked: {
+                        const own = keyboardRow.own;
+                        const list = own.map((l, i) => ({
+                                    label: "Change " + KeyboardService.describe(l),
+                                    icon: "\u{f03eb}",
+                                    action: "change:" + i
+                                }));
+                        if (own.length < KeyboardService.maxLayouts)
+                            list.push({
+                                label: own.length > 0 ? "Add another layout" : "Give it its own layout",
+                                icon: "\u{f0415}",
+                                action: "add:-1"
+                            });
+                        if (own.length > 1)
+                            own.forEach((l, i) => list.push({
+                                        label: "Remove " + KeyboardService.describe(l),
+                                        icon: "\u{f09e7}",
+                                        action: "remove:" + i
+                                    }));
+                        list.push({
+                            label: keyboardRow.modelData.connected ? "Use the layouts above" : "Forget this keyboard",
+                            icon: "\u{f054c}",
+                            action: "follow:0",
+                            danger: !keyboardRow.modelData.connected
+                        });
+                        menu.kind = "device";
+                        menu.items = list;
+                        menu.openAt(this, keyboardRow.modelData.name);
+                    }
+                }
+            }
+        }
+
+        SettingRow {
+            visible: root.hiddenDevices > 0
+            resettable: false
+            label: root.showAllDevices ? "Every input device" : root.hiddenDevices + " more input devices"
+            description: "Buttons and media keys Hyprland also counts as keyboards"
+
+            ActionButton {
+                text: root.showAllDevices ? "Hide" : "Show"
+                onClicked: root.showAllDevices = !root.showAllDevices
+            }
+        }
+    }
+
+    Text {
+        Layout.fillWidth: true
+        Layout.topMargin: -Config.spacing * 2
+        text: "A keyboard with its own layouts uses them instead of the ones above; key options and repeat are shared. Changes here reload Hyprland's config"
+        wrapMode: Text.WordWrap
+        font.family: Config.font
+        font.pixelSize: Config.fontSizeSmall
+        color: Config.subtextColor
     }
 
     // ================= TRY IT =================
@@ -445,24 +655,6 @@ ColumnLayout {
                 text: KeyboardService.model === "" ? "Default" : KeyboardService.model
                 baseColor: modelRow.controlColor
                 onClicked: modelPicker.openWith("")
-            }
-        }
-    }
-
-    // ================= PER KEYBOARD =================
-    SettingsGroup {
-        title: "Keyboards with their own layout"
-        visible: root.ownLayouts.length > 0
-
-        Repeater {
-            model: root.ownLayouts
-
-            InfoRow {
-                required property var modelData
-
-                label: modelData.name
-                description: "Set in hypr/local/extra_input.lua, so the layouts above don't apply to it"
-                value: modelData.active_keymap
             }
         }
     }
