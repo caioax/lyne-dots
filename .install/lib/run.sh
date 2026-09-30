@@ -319,7 +319,7 @@ _run_draw() {
     local filled=$((pct * bar_w / 100)) bar_on bar_off
     printf -v bar_on '%*s' "$filled" ""
     printf -v bar_off '%*s' $((bar_w - filled)) ""
-    ui_add "$C_ACCENT${bar_on// /$G_FULL}$C_DIM${bar_off// /$G_EMPTY}$C_RESET $(printf '%4s' "$pct%")"
+    ui_add "$C_ACCENT${bar_on// /$G_FULL}$C_RESET$C_DIM${bar_off// /$G_EMPTY}$C_RESET $(printf '%4s' "$pct%")"
 
     UI_LINES+=("")
     if ((cur >= 0 && tail_n > 0)); then

@@ -147,7 +147,17 @@ install_yay() {
     sudo pacman -S --needed --noconfirm git base-devel || return 1
     local TEMP_DIR
     TEMP_DIR=$(mktemp -d)
-    git clone https://aur.archlinux.org/yay.git "$TEMP_DIR/yay" || return 1
+    # The AUR (aur.archlinux.org) has been down for days at a time (DDoS),
+    # and git would wait for it forever: a minute, then the same PKGBUILD
+    # from the AUR's official GitHub mirror (one branch per package). No
+    # credential prompt either: it would sit behind the progress screen
+    if ! GIT_TERMINAL_PROMPT=0 timeout 60 git clone --progress --depth 1 \
+        https://aur.archlinux.org/yay.git "$TEMP_DIR/yay"; then
+        log_warn "The AUR isn't answering: yay comes from its GitHub mirror"
+        rm -rf "$TEMP_DIR/yay"
+        GIT_TERMINAL_PROMPT=0 timeout 300 git clone --progress --depth 1 --single-branch \
+            --branch yay https://github.com/archlinux/aur.git "$TEMP_DIR/yay" || return 1
+    fi
     (cd "$TEMP_DIR/yay" && makepkg -si --noconfirm) || return 1
     rm -rf "$TEMP_DIR"
 }
