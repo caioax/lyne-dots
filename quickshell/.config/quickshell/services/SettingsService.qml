@@ -182,6 +182,13 @@ Singleton {
             category: "System"
         },
         {
+            id: "autostart",
+            label: "Autostart",
+            icon: "\u{f14de}",
+            description: "Apps and scripts started when you log in",
+            category: "System"
+        },
+        {
             id: "profile",
             label: "Profile & Region",
             icon: "\u{f0009}",

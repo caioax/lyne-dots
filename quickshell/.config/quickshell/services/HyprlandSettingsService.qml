@@ -30,7 +30,7 @@ Singleton {
     readonly property var customBinds: StateService.get("keybinds.custom", [])
     readonly property string bindsLua: {
         // Before the overrides: they may move these binds
-        let out = appsLua + specialsLua + workspacesLua;
+        let out = appsLua + specialsLua + workspacesLua + autostartLua;
         if (bindOverrides.length > 0) {
             out += "\n-- Keybinds changed in Settings (lyne_rebind is defined in conf/binds.lua)\n";
             out += "if lyne_rebind then\n";
@@ -74,6 +74,20 @@ Singleton {
         const wrap = StateService.get("workspaces.wrap", false) === true;
         const lidOff = StateService.get("workspaces.lidOff", true) !== false;
         return "\n-- Workspaces per monitor (lyne_workspaces is defined in conf/workspaces.lua)\nif lyne_workspaces then\n    lyne_workspaces({ skip_empty = " + skip + ", wrap = " + wrap + ", lid_off = " + lidOff + " })\nend\n";
+    }
+
+    // Your apps started at login (Settings › System › Autostart,
+    // AutostartService), always written so removing the last one sticks
+    readonly property string autostartLua: {
+        const apps = StateService.get("autostart.apps", StateService.getDefault("autostart.apps", []));
+        let out = "\n-- Apps started at login (lyne_autostart is defined in conf/autostart.lua)\n";
+        out += "if lyne_autostart then\n    lyne_autostart({\n";
+        for (const a of apps) {
+            const delay = Math.max(0, Math.round(Number(a.delay) || 0));
+            out += "        { name = " + _luaString(a.name ?? "") + ", command = " + _luaString(a.command ?? "") + ", delay = " + delay + ", workspace = " + _luaString(a.workspace ?? "") + ", enabled = " + (a.enabled !== false) + " },\n";
+        }
+        out += "    })\nend\n";
+        return out;
     }
 
     // Last `hyprctl eval` error, shown by the settings pages

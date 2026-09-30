@@ -17,6 +17,9 @@
             "desktop": "zen"
         }
     },
+    "autostart": {
+        "apps": []
+    },
     "theme": {
         "name": "tokyonight",
         "mode": "preset",

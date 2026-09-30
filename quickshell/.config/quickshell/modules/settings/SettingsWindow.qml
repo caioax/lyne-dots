@@ -46,6 +46,7 @@ FloatingWindow {
             idle: idlePage,
             brightness: brightnessPage,
             apps: appsPage,
+            autostart: autostartPage,
             profile: profilePage,
             about: aboutPage
         })
@@ -305,6 +306,11 @@ FloatingWindow {
     Component {
         id: appsPage
         AppsPage {}
+    }
+
+    Component {
+        id: autostartPage
+        AutostartPage {}
     }
 
     Component {

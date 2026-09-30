@@ -102,11 +102,8 @@ setup_local_configs() {
     echo ""
     log_info "Configuring local Hyprland files..."
 
-    # autostart.lua
-    copy_template \
-        "$TEMPLATES_DIR/autostart.lua" \
-        "$HYPR_LOCAL_DIR/autostart.lua" \
-        "local/autostart.lua (local autostart)"
+    # Apps started at login are added in Settings › System › Autostart
+    # (written to local/settings.lua)
 
     # extra_keybinds.lua
     copy_template \
@@ -322,7 +319,6 @@ run_hyprland_main() {
     log_info "Files created/verified:"
     echo "  - ~/.config/hypr/local/monitors.lua"
     echo "  - ~/.config/hypr/local/extra_environment.lua"
-    echo "  - ~/.config/hypr/local/autostart.lua"
     echo "  - ~/.config/hypr/local/extra_keybinds.lua"
     echo "  - ~/.config/uwsm/env.d/global_hardware.sh"
     echo "  - ~/.config/uwsm/env.d/hyprland_hardware.sh"
