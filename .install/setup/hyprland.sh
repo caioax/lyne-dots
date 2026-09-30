@@ -16,19 +16,7 @@ HYPR_LOCAL_DIR="$HYPR_CONFIG_DIR/local"
 UWSM_ENV_DIR="$HOME/.config/uwsm/env.d"
 QUICKSHELL_CONFIG_DIR="$HOME/.config/quickshell"
 
-# Colors
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-RED='\033[0;31m'
-CYAN='\033[0;36m'
-NC='\033[0m'
-
-log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
-log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-log_question() { echo -e "${BLUE}[?]${NC} $1"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
-log_step() { echo -e "${CYAN}[>>]${NC} $1"; }
+source "$DOTFILES_DIR/.install/lib/log.sh"
 
 # =============================================================================
 # Create directories
@@ -148,11 +136,12 @@ EOF
 }
 
 # =============================================================================
-# Ask about NVIDIA
+# Ask about NVIDIA (only when run on its own: install.sh asks beforehand and
+# sets LYNE_NVIDIA_ENV to yes or no)
 # =============================================================================
 ask_nvidia() {
     echo ""
-    echo -ne "${BLUE}[?]${NC} Do you have an NVIDIA GPU (hybrid or dedicated)? [y/N]: "
+    echo -ne "\033[0;34m[?]\033[0m Do you have an NVIDIA GPU (hybrid or dedicated)? [y/N]: "
     read -r is_nvidia
 
     if [[ $is_nvidia =~ ^[Yy]$ ]]; then
@@ -305,7 +294,11 @@ run_hyprland_main() {
     setup_wallpapers
     setup_themes
 
-    if ask_nvidia; then
+    if [[ -z "${LYNE_NVIDIA_ENV:-}" ]]; then
+        ask_nvidia && LYNE_NVIDIA_ENV=yes || LYNE_NVIDIA_ENV=no
+    fi
+
+    if [[ "$LYNE_NVIDIA_ENV" == yes ]]; then
         setup_nvidia
     else
         setup_no_nvidia

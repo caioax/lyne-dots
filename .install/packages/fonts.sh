@@ -32,10 +32,10 @@ install_tela_icons() {
     local TEMP_DIR=$(mktemp -d)
     local ICON_COLOR="blue" # Color to install (generates Tela-blue and Tela-blue-dark)
 
-    echo -e "\033[0;36m[>>]\033[0m Installing Tela Icon Theme (${ICON_COLOR}) from Git..."
+    log_step "Installing Tela Icon Theme (${ICON_COLOR}) from Git..."
 
     if ! git clone --depth=1 https://github.com/vinceliuice/Tela-icon-theme.git "$TEMP_DIR/tela"; then
-        echo -e "\033[0;31m[ERROR]\033[0m Failed to clone Tela icon theme"
+        log_error "Failed to clone Tela icon theme"
         rm -rf "$TEMP_DIR"
         return 1
     fi
@@ -44,9 +44,9 @@ install_tela_icons() {
 
     # Install only the blue color (generates Tela-blue and Tela-blue-dark)
     if ./install.sh "$ICON_COLOR"; then
-        echo -e "\033[0;32m[INFO]\033[0m Tela-${ICON_COLOR} and Tela-${ICON_COLOR}-dark installed successfully!"
+        log_info "Tela-${ICON_COLOR} and Tela-${ICON_COLOR}-dark installed successfully!"
     else
-        echo -e "\033[0;31m[ERROR]\033[0m Failed to install Tela icon theme"
+        log_error "Failed to install Tela icon theme"
         cd - >/dev/null
         rm -rf "$TEMP_DIR"
         return 1

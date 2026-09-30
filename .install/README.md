@@ -6,6 +6,11 @@ Organized installation scripts for the dotfiles.
 
 ```
 .install/
+├── lib/                # Installer building blocks (plain bash)
+│   ├── log.sh          # log_info/log_warn/... (plain text in the log file)
+│   ├── ui.sh           # Full-screen drawing, keys, ASCII set for the console
+│   ├── ask.sh          # Questionnaire: every question before installing
+│   └── run.sh          # Unattended steps: progress, log, sudo keepalive, dry run
 ├── packages/           # Package lists by category
 │   ├── core.sh         # Hyprland, UWSM, portal
 │   ├── terminal.sh     # Kitty, Zsh, Tmux
@@ -23,11 +28,40 @@ Organized installation scripts for the dotfiles.
 
 ## Usage
 
-### Full installation (interactive)
+### Full installation
 
 ```bash
 ./install.sh
 ```
+
+Every question comes first (packages, NVIDIA environment, reboot), then a
+review screen. After the sudo password (asked once and kept alive) the
+install runs without further questions, showing each step, a progress bar and
+the latest output. Everything goes to `~/.cache/lyne/install-<date>.log`.
+Files already where the dotfiles are linked are moved to
+`~/.lyne-dots-backup/<date>/`.
+
+### Unattended, with the answers in a file
+
+```bash
+cat > answers <<EOF
+categories=core terminal utils fonts quickshell theming
+nvidia_env=no
+reboot=no
+EOF
+./install.sh --answers answers
+```
+
+### Dry run
+
+```bash
+./install.sh --dry-run
+```
+
+Changes nothing: HOME is a throwaway folder and sudo, `pacman -S`, yay, stow,
+systemctl, chsh, reboot... are stand-ins that only log what they would do.
+`LYNE_DRY_HOME=dir` reuses a folder, `LYNE_DRY_FRESH=1` acts as if no
+package were installed, `LYNE_DRY_FAIL="git ping"` makes those commands fail.
 
 ### Create symlinks only
 

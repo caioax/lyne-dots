@@ -8,8 +8,10 @@
 #   https://github.com/caioax/lyne-dots
 #
 # =============================================================================
-
-set -e
+# Every question comes first (.install/lib/ask.sh); after the review screen
+# and the sudo password the install runs on its own, showing its progress
+# (.install/lib/run.sh) and writing everything to ~/.cache/lyne/install-*.log
+# =============================================================================
 
 # =============================================================================
 # Configuration
@@ -17,31 +19,28 @@ set -e
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PACKAGES_DIR="$DOTFILES_DIR/.install/packages"
 SETUP_DIR="$DOTFILES_DIR/.install/setup"
+LIB_DIR="$DOTFILES_DIR/.install/lib"
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-MAGENTA='\033[0;35m'
-CYAN='\033[0;36m'
-NC='\033[0m'
+source "$LIB_DIR/log.sh"
+source "$LIB_DIR/ui.sh"
+source "$LIB_DIR/ask.sh"
+source "$LIB_DIR/run.sh"
 
-# =============================================================================
-# Logging functions
-# =============================================================================
-log_header() {
-    echo ""
-    echo -e "${MAGENTA}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${MAGENTA}  $1${NC}"
-    echo -e "${MAGENTA}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo ""
-}
+# Categories offered in the questionnaire (value|label|description|default).
+# nvidia.sh has no packages yet: its environment files are a question of
+# their own, and `--packages nvidia` still installs the list
+CATEGORY_OPTIONS=(
+    "core|core|Hyprland, UWSM, portals (essential)|1"
+    "terminal|terminal|Kitty, Zsh, Tmux, Fastfetch|1"
+    "editor|editor|Neovim + development tools|1"
+    "apps|apps|Dolphin, Zen Browser, Spotify, ZapZap, mpv|1"
+    "utils|utils|Clipboard, audio, bluetooth, brightness|1"
+    "fonts|fonts|Nerd Fonts, cursors, Tela icons|1"
+    "quickshell|quickshell|QuickShell bar/shell|1"
+    "theming|theming|Qt/GTK theming, matugen|1"
+)
 
-log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
-log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
-log_step() { echo -e "${CYAN}[>>]${NC} $1"; }
+REBOOT_SECONDS=10
 
 # =============================================================================
 # Initial checks
@@ -53,37 +52,16 @@ check_arch() {
     fi
 }
 
-check_internet() {
-    log_step "Checking internet connection..."
-    if ! ping -c 1 google.com &>/dev/null; then
-        log_error "No internet connection!"
+# makepkg refuses to run as root, and the files belong in the user's HOME
+check_not_root() {
+    if [[ $EUID -eq 0 ]]; then
+        log_error "Run the installer as your user, not as root (it asks for sudo)."
         exit 1
     fi
-    log_info "Connection OK"
 }
 
-check_aur_helper() {
-    if command -v yay &>/dev/null; then
-        AUR_HELPER="yay"
-    elif command -v paru &>/dev/null; then
-        AUR_HELPER="paru"
-    else
-        log_warn "No AUR helper found (yay/paru)"
-        log_info "Installing yay..."
-        install_yay
-        AUR_HELPER="yay"
-    fi
-    log_info "AUR helper: $AUR_HELPER"
-}
-
-install_yay() {
-    sudo pacman -S --needed --noconfirm git base-devel
-    local TEMP_DIR=$(mktemp -d)
-    git clone https://aur.archlinux.org/yay.git "$TEMP_DIR/yay"
-    cd "$TEMP_DIR/yay"
-    makepkg -si --noconfirm
-    cd "$DOTFILES_DIR"
-    rm -rf "$TEMP_DIR"
+has_category() {
+    [[ " ${CATEGORIES[*]} " == *" $1 "* ]]
 }
 
 # =============================================================================
@@ -125,99 +103,122 @@ install_packages() {
     fi
 }
 
-# =============================================================================
-# Category selection menu
-# =============================================================================
-show_menu() {
-    echo ""
-    echo -e "${CYAN}Select categories to install:${NC}"
-    echo ""
-    echo "  1) core                - Hyprland, UWSM, portal (ESSENTIAL)"
-    echo "  2) terminal            - Kitty, Zsh, Tmux, Fastfetch"
-    echo "  3) editor              - Neovim + development tools"
-    echo "  4) apps                - Dolphin, Zen Browser, Spotify, ZapZap, mpv"
-    echo "  5) utils               - Clipboard, playerctl, audio, etc"
-    echo "  6) fonts               - Nerd Fonts, cursors, icons"
-    echo "  7) quickshell          - QuickShell bar/shell"
-    echo "  8) theming             - Qt/GTK theming"
-    echo "  9) nvidia(developing)  - NVIDIA drivers (only if you have an NVIDIA GPU)"
-    echo ""
-    echo "  a) ALL                 - Install everything (except nvidia)"
-    echo "  n) ALL+NVIDIA          - Install everything (including nvidia)"
-    echo "  q) QUIT                - Exit"
-    echo ""
-}
-
-get_selection() {
-    local SELECTED=()
-
-    while true; do
-        show_menu
-        echo -ne "${BLUE}Select numbers or letters separated by spaces: ${NC}"
-        read -r input
-
-        case "$input" in
-        q | Q)
-            log_info "Installation cancelled."
-            exit 0
-            ;;
-        a | A)
-            SELECTED=("core" "terminal" "editor" "apps" "utils" "fonts" "quickshell" "theming")
-            break
-            ;;
-        n | N)
-            SELECTED=("core" "terminal" "editor" "apps" "utils" "fonts" "quickshell" "theming" "nvidia")
-            break
-            ;;
-        *)
-            for num in $input; do
-                case "$num" in
-                1) SELECTED+=("core") ;;
-                2) SELECTED+=("terminal") ;;
-                3) SELECTED+=("editor") ;;
-                4) SELECTED+=("apps") ;;
-                5) SELECTED+=("utils") ;;
-                6) SELECTED+=("fonts") ;;
-                7) SELECTED+=("quickshell") ;;
-                8) SELECTED+=("theming") ;;
-                9) SELECTED+=("nvidia") ;;
-                *) log_warn "Invalid option: $num" ;;
-                esac
-            done
-
-            if [[ ${#SELECTED[@]} -gt 0 ]]; then
-                break
-            fi
-            ;;
-        esac
-    done
-
-    # Remove duplicates
-    CATEGORIES=($(printf "%s\n" "${SELECTED[@]}" | sort -u))
+# Prints "<missing official> <missing AUR>" for a category: the packages its
+# step still has to install (pacman -T also knows provides and groups)
+missing_packages() {
+    (
+        source "$PACKAGES_DIR/$1.sh"
+        local -n official="${1^^}_PACKAGES" aur="${1^^}_AUR_PACKAGES"
+        local a=0 b=0
+        ((${#official[@]})) && a=$(pacman -T "${official[@]}" 2>/dev/null | wc -l)
+        ((${#aur[@]})) && b=$(pacman -T "${aur[@]}" 2>/dev/null | wc -l)
+        echo "$a $b"
+    )
 }
 
 # =============================================================================
-# Setup functions
+# Install steps (each runs unattended, its output in the log file)
 # =============================================================================
-run_stow() {
-    log_header "Creating Symlinks (Stow)"
+step_connection() {
+    log_step "Checking internet connection..."
+    if ! ping -c 1 -W 5 google.com &>/dev/null; then
+        log_error "No internet connection!"
+        return 1
+    fi
+    log_info "Connection OK"
+}
+
+step_aur_helper() {
+    local helper
+    if command -v yay &>/dev/null; then
+        helper=yay
+    elif command -v paru &>/dev/null; then
+        helper=paru
+    else
+        log_warn "No AUR helper found (yay/paru), installing yay"
+        install_yay || return 1
+        helper=yay
+    fi
+    step_export AUR_HELPER "$helper"
+    log_info "AUR helper: $helper"
+}
+
+install_yay() {
+    sudo pacman -S --needed --noconfirm git base-devel || return 1
+    local TEMP_DIR
+    TEMP_DIR=$(mktemp -d)
+    git clone https://aur.archlinux.org/yay.git "$TEMP_DIR/yay" || return 1
+    (cd "$TEMP_DIR/yay" && makepkg -si --noconfirm) || return 1
+    rm -rf "$TEMP_DIR"
+}
+
+step_base() {
+    log_step "Installing GNU Stow and git..."
+    sudo pacman -S --needed --noconfirm stow git
+}
+
+step_stow() {
     source "$SETUP_DIR/stow.sh"
     run_stow_main
 }
 
-run_hyprland_setup() {
-    log_header "Configuring Hyprland"
+# The lyne-dots logo as a system icon (used by lyne update notifications)
+step_icons() {
+    log_step "Installing the lyne-dots icon..."
+    local DOTS_DIR="$DOTFILES_DIR"
+    source "$DOTFILES_DIR/.data/lyne-cli/lib/install-icons.sh"
+}
+
+step_hyprland() {
     source "$SETUP_DIR/hyprland.sh"
     run_hyprland_main
 }
 
-setup_zsh() {
-    log_header "Configuring Zsh"
+step_state_aur_helper() {
+    local STATE_FILE="$HOME/.config/quickshell/state.json"
 
-    # Change default shell to zsh
+    if [[ ! -f "$STATE_FILE" ]]; then
+        log_warn "state.json not found. Skipping AUR helper configuration."
+        return 0
+    fi
+
+    if ! command -v jq &>/dev/null; then
+        log_warn "jq not found. Skipping AUR helper configuration."
+        return 0
+    fi
+
+    log_step "Setting AUR helper in state.json..."
+    local TEMP_FILE
+    TEMP_FILE=$(mktemp)
+    jq --arg helper "$AUR_HELPER" '.system.aurHelper = $helper' "$STATE_FILE" >"$TEMP_FILE" && mv "$TEMP_FILE" "$STATE_FILE"
+    log_info "AUR helper set to: $AUR_HELPER"
+}
+
+step_mimetypes() {
+    # Folders, links and text files open with the default apps of
+    # Settings > System > Apps (Dolphin, Zen Browser and Neovim at first),
+    # and Dolphin's "Open terminal here" uses the default terminal
+    log_step "Setting the default apps for xdg-open..."
+    "$DOTFILES_DIR/quickshell/.config/quickshell/scripts/default-apps.sh" apply-all
+
+    # Update KDE services database
+    if command -v kbuildsycoca6 &>/dev/null; then
+        log_step "Updating KDE services cache..."
+        kbuildsycoca6 >/dev/null 2>&1
+    fi
+}
+
+step_tela_icons() {
+    source "$PACKAGES_DIR/fonts.sh"
+    install_tela_icons
+}
+
+step_zsh() {
+    # Change default shell to zsh (sudo: the install can't stop for chsh's
+    # password prompt)
     if [[ "$SHELL" != *"zsh"* ]]; then
         log_step "Changing default shell to Zsh..."
-        chsh -s $(which zsh)
+        sudo chsh -s "$(command -v zsh)" "$USER" || return 1
         log_info "Shell changed to Zsh. Log out/in to apply."
     else
         log_info "Zsh is already the default shell."
@@ -227,7 +228,7 @@ setup_zsh() {
     local ZSH_DIR="$HOME/.oh-my-zsh"
     if [[ ! -d "$ZSH_DIR" ]]; then
         log_step "Installing Oh-My-Zsh..."
-        git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$ZSH_DIR"
+        git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$ZSH_DIR" || return 1
         log_info "Oh-My-Zsh installed."
     else
         log_info "Oh-My-Zsh is already installed."
@@ -242,48 +243,49 @@ setup_zsh() {
         "https://github.com/romkatv/powerlevel10k|themes/powerlevel10k"
     )
 
+    local item
     for item in "${ZSH_DEPS[@]}"; do
         local URL="${item%%|*}"
         local DEST="${item##*|}"
-        local NAME=$(basename "$DEST")
+        local NAME
+        NAME=$(basename "$DEST")
 
         if [[ ! -d "$ZSH_CUSTOM_DIR/$DEST" ]]; then
             log_step "Installing $NAME..."
-            git clone --depth=1 "$URL" "$ZSH_CUSTOM_DIR/$DEST"
-            log_info "$NAME installed."
+            if git clone --depth=1 "$URL" "$ZSH_CUSTOM_DIR/$DEST"; then
+                log_info "$NAME installed."
+            else
+                log_warn "Could not install $NAME"
+            fi
         else
             log_info "$NAME is already installed."
         fi
     done
 }
 
-setup_tmux() {
-    log_header "Configuring Tmux"
-
+step_tmux() {
     # Install TPM (Tmux Plugin Manager)
     local TPM_DIR="$HOME/.tmux/plugins/tpm"
     if [[ ! -d "$TPM_DIR" ]]; then
         log_step "Installing TPM (Tmux Plugin Manager)..."
-        git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
+        git clone https://github.com/tmux-plugins/tpm "$TPM_DIR" || return 1
         log_info "TPM installed. Use prefix + I inside tmux to install plugins."
     else
         log_info "TPM is already installed."
     fi
 }
 
-setup_services() {
-    log_header "Enabling Services"
-
+step_services() {
     # Bluetooth
     if systemctl list-unit-files | grep -q "bluetooth.service"; then
         log_step "Enabling Bluetooth..."
-        sudo systemctl enable --now bluetooth.service
+        sudo systemctl enable --now bluetooth.service || log_warn "Could not enable Bluetooth"
     fi
 
     # NetworkManager
     if systemctl list-unit-files | grep -q "NetworkManager.service"; then
         log_step "Enabling NetworkManager..."
-        sudo systemctl enable --now NetworkManager.service
+        sudo systemctl enable --now NetworkManager.service || log_warn "Could not enable NetworkManager"
     fi
 
     # i2c-dev: ddcutil reaches external monitors through /dev/i2c-* (brightness)
@@ -296,25 +298,7 @@ setup_services() {
     sudo udevadm trigger --subsystem-match=i2c-dev
 }
 
-setup_mimetypes() {
-    log_header "Configuring Default Applications (MIME)"
-
-    # Folders, links and text files open with the default apps of
-    # Settings > System > Apps (Dolphin, Zen Browser and Neovim at first),
-    # and Dolphin's "Open terminal here" uses the default terminal
-    log_step "Setting the default apps for xdg-open..."
-    "$DOTFILES_DIR/quickshell/.config/quickshell/scripts/default-apps.sh" apply-all
-
-    # Update KDE services database
-    if command -v kbuildsycoca6 &>/dev/null; then
-        log_step "Updating KDE services cache..."
-        kbuildsycoca6 >/dev/null 2>&1
-    fi
-}
-
-setup_wallpaper() {
-    log_header "Configuring Initial Wallpaper"
-
+step_wallpaper() {
     local CURRENT_FILE="$HOME/.local/wallpapers/.current"
     local WALLPAPER
     if [[ -f "$CURRENT_FILE" ]]; then
@@ -339,8 +323,7 @@ setup_wallpaper() {
 
     # Check if running in a Wayland session
     if [[ -z "$WAYLAND_DISPLAY" ]]; then
-        log_warn "Not in a Wayland session."
-        log_info "The wallpaper will be applied automatically when Hyprland starts."
+        log_info "Not in a Wayland session: the wallpaper will be applied when Hyprland starts."
         return 0
     fi
 
@@ -365,9 +348,12 @@ setup_wallpaper() {
     fi
 }
 
-setup_migrations() {
-    log_header "Initializing Lyne CLI"
+step_theming() {
+    source "$PACKAGES_DIR/theming.sh"
+    setup_theming
+}
 
+step_migrations() {
     local MIGRATIONS_DIR="$DOTFILES_DIR/.data/lyne-cli/migrations"
     local DONE_FILE="$HOME/.local/share/lyne/migrations-done"
 
@@ -375,135 +361,173 @@ setup_migrations() {
     touch "$DONE_FILE"
 
     # Mark all current migrations as done (fresh installs don't need them)
-    local count=0
+    local count=0 migration name
     for migration in "$MIGRATIONS_DIR"/*.sh; do
         [[ -f "$migration" ]] || continue
-        local name
         name="$(basename "$migration")"
         if ! grep -qxF "$name" "$DONE_FILE" 2>/dev/null; then
             echo "$name" >>"$DONE_FILE"
-            ((count++)) || true
+            count=$((count + 1))
         fi
     done
 
     log_info "Marked $count migrations as done (fresh install)"
 }
 
-# The lyne-dots logo as a system icon (used by lyne update notifications)
-install_lyne_icons() {
-    log_step "Installing the lyne-dots icon..."
-    local DOTS_DIR="$DOTFILES_DIR"
-    source "$DOTFILES_DIR/.data/lyne-cli/lib/install-icons.sh"
-}
+# The steps for the answers, in install order
+plan_steps() {
+    step_add step_connection "Checking the internet connection" 1 0 1
+    step_add step_aur_helper "AUR helper (yay or paru)" 2 0 1
+    step_add step_base "GNU Stow and git" 1 2 1
 
-setup_state_aur_helper() {
-    local STATE_FILE="$HOME/.config/quickshell/state.json"
-
-    if [[ ! -f "$STATE_FILE" ]]; then
-        log_warn "state.json not found. Skipping AUR helper configuration."
-        return 0
-    fi
-
-    if ! command -v jq &>/dev/null; then
-        log_warn "jq not found. Skipping AUR helper configuration."
-        return 0
-    fi
-
-    log_step "Setting AUR helper in state.json..."
-    local TEMP_FILE
-    TEMP_FILE=$(mktemp)
-    jq --arg helper "$AUR_HELPER" '.system.aurHelper = $helper' "$STATE_FILE" >"$TEMP_FILE" && mv "$TEMP_FILE" "$STATE_FILE"
-    log_info "AUR helper set to: $AUR_HELPER"
-}
-
-# =============================================================================
-# Full installation
-# =============================================================================
-full_install() {
-    log_header "Starting Full Installation"
-
-    # Check internet and AUR helper now (after selection)
-    check_internet
-    check_aur_helper
-
-    # Install stow first
-    log_step "Installing GNU Stow..."
-    sudo pacman -S --needed --noconfirm stow git
-
-    # Install selected packages
+    local category missing official aur
     for category in "${CATEGORIES[@]}"; do
-        log_header "Installing: ${category^^}"
-        install_packages "$category"
+        read -r official aur <<<"$(missing_packages "$category")"
+        # AUR packages are built here: they weigh more
+        step_add "install_packages $category" "Packages $G_DOT $category" \
+            $((1 + official + aur * 4)) $((official + aur))
     done
 
-    # Run setup scripts
-    run_stow
-    install_lyne_icons
-    run_hyprland_setup
-    setup_state_aur_helper
-    setup_mimetypes
-
-    # Install Tela icons from git (if fonts was selected)
-    if [[ " ${CATEGORIES[*]} " =~ " fonts " ]]; then
-        log_header "Installing Tela Icon Theme"
-        install_tela_icons
+    step_add step_stow "Linking the dotfiles (stow)" 1
+    step_add step_icons "lyne-dots icon"
+    step_add step_hyprland "Hyprland local files"
+    step_add step_state_aur_helper "Quickshell settings"
+    step_add step_mimetypes "Default apps"
+    has_category fonts && step_add step_tela_icons "Tela icon theme" 2
+    if has_category terminal; then
+        step_add step_zsh "Zsh and Oh My Zsh" 2
+        step_add step_tmux "Tmux plugin manager"
     fi
-
-    # Additional setup based on installed categories
-    if [[ " ${CATEGORIES[*]} " =~ " terminal " ]]; then
-        setup_zsh
-        setup_tmux
-    fi
-
-    # Enable services
-    if [[ " ${CATEGORIES[*]} " =~ " utils " ]]; then
-        setup_services
-    fi
-
-    # Configure initial wallpaper
-    if [[ " ${CATEGORIES[*]} " =~ " core " ]]; then
-        setup_wallpaper
-    fi
-
-    # Apply GTK theme
-    if [[ " ${CATEGORIES[*]} " =~ " theming " ]]; then
-        setup_theming
-    fi
-
-    # Mark all existing migrations as done (fresh install)
-    setup_migrations
+    has_category utils && step_add step_services "Services (Bluetooth, network, i2c)"
+    has_category core && step_add step_wallpaper "Wallpaper"
+    has_category theming && step_add step_theming "GTK theme and matugen"
+    step_add step_migrations "Lyne CLI"
 }
 
 # =============================================================================
-# Reboot prompt
+# Questionnaire
 # =============================================================================
-ask_reboot() {
-    echo ""
-    echo -ne "${YELLOW}Do you want to reboot the system now to apply all changes? [Y/n]: ${NC}"
-    read -r do_reboot
+q_categories() {
+    ask_multi categories "What should be installed?" \
+        "The dotfiles are always linked; these are the packages that go with them." \
+        "${CATEGORY_OPTIONS[@]}"
+}
 
-    if [[ $do_reboot =~ ^[Yy]$ ]] || [[ -z "$do_reboot" ]]; then
-        log_info "Rebooting..."
-        sleep 2
-        sudo reboot
+q_nvidia() {
+    ask_single nvidia_env "Do you have an NVIDIA GPU?" \
+        "With one, Hyprland and UWSM get the NVIDIA environment variables (files in ~/.config/hypr/local and ~/.config/uwsm/env.d)." \
+        "no|No|Intel or AMD graphics only|1" \
+        "yes|Yes|hybrid laptop or a dedicated card"
+}
+
+q_reboot() {
+    ask_single reboot "Reboot when it's done?" \
+        "Hyprland needs a new session. The reboot waits $REBOOT_SECONDS seconds (any key cancels it) and never happens after a failure." \
+        "yes|Reboot|after a $REBOOT_SECONDS second countdown|1" \
+        "no|Don't reboot|reboot or log out yourself later"
+}
+
+# Short list of the targets that go to the backup: "hypr, kitty, +2"
+backup_summary() {
+    local -a names=()
+    local target
+    while IFS= read -r target; do
+        [[ -n "$target" ]] && names+=("$(basename "$target")")
+    done < <(source "$SETUP_DIR/stow.sh" && stow_existing_targets)
+    ((${#names[@]} == 0)) && return
+    local shown="${names[*]:0:3}"
+    shown="${shown// /, }"
+    ((${#names[@]} > 3)) && shown+=", +$((${#names[@]} - 3))"
+    printf '%s to %s' "$shown" "${LYNE_BACKUP_DIR/#$HOME/\~}"
+}
+
+q_review() {
+    local -a rows=()
+    local categories=${ANSWERS[categories]}
+    rows+=("Packages|${categories:-none, only the dotfiles}")
+    if [[ "${ANSWERS[nvidia_env]}" == yes ]]; then
+        rows+=("NVIDIA|environment variables for NVIDIA")
     else
-        log_info "Remember to reboot the system to apply all changes."
+        rows+=("NVIDIA|no")
     fi
+    local backup
+    backup="$(backup_summary)"
+    rows+=("Backup|${backup:-nothing to move}")
+    if [[ " $categories " == *" terminal "* && "$SHELL" != *zsh* ]]; then
+        rows+=("Shell|Zsh becomes the default shell")
+    fi
+    if [[ "${ANSWERS[reboot]}" == yes ]]; then
+        rows+=("Reboot|after a $REBOOT_SECONDS second countdown")
+    else
+        rows+=("Reboot|no")
+    fi
+    local log="${XDG_CACHE_HOME:-$HOME/.cache}/lyne/install-$STAMP.log"
+    rows+=("Log|${log/#$HOME/\~}")
+    [[ -n "${LYNE_DRY_RUN:-}" ]] && rows+=("Dry run|HOME is ${LYNE_DRY_HOME}")
+
+    ask_review "Ready to install" \
+        "Nothing else is asked after this: the sudo password comes next, then everything runs on its own." \
+        "${rows[@]}"
+}
+
+QUESTIONS=(q_categories q_nvidia q_reboot q_review)
+
+# Answers not in an --answers file
+answer_defaults() {
+    if [[ ! -v "ANSWERS[categories]" ]]; then
+        local opt
+        ANSWERS[categories]=""
+        for opt in "${CATEGORY_OPTIONS[@]}"; do
+            ANSWERS[categories]+="${opt%%|*} "
+        done
+    fi
+    [[ -v "ANSWERS[nvidia_env]" ]] || ANSWERS[nvidia_env]=no
+    [[ -v "ANSWERS[reboot]" ]] || ANSWERS[reboot]=no
 }
 
 # =============================================================================
-# Final summary
+# Summary and reboot
 # =============================================================================
 show_summary() {
-    log_header "Installation Complete!"
+    local i mark
+    echo ""
+    if ((RUN_CANCELLED)); then
+        log_warn "Installation cancelled."
+    elif ((RUN_ABORTED)); then
+        log_header "Installation stopped"
+    elif run_ok; then
+        log_header "Installation Complete!"
+    else
+        log_header "Installation finished with problems"
+    fi
 
-    echo -e "${GREEN}Installed categories:${NC}"
-    for cat in "${CATEGORIES[@]}"; do
-        echo "  - $cat"
+    for i in "${!STEP_FNS[@]}"; do
+        case ${STEP_STATUS[i]} in
+        ok) mark="$C_OK$G_OK" ;;
+        warn) mark="$C_WARN$G_WARN" ;;
+        fail) mark="$C_FAIL$G_FAIL" ;;
+        *) mark="$C_DIM$G_SKIP" ;;
+        esac
+        printf '  %s%s %s' "$mark" "$C_RESET" "${STEP_LABELS[i]}"
+        [[ -n "${STEP_NOTES[i]}" ]] && printf '  %s%s%s' "$C_DIM" "${STEP_NOTES[i]}" "$C_RESET"
+        printf '\n'
     done
+    echo ""
+    echo "  Took $(_run_clock "$RUN_SECONDS"). Full output: ${LOG_FILE/#$HOME/\~}"
+    if [[ -d "$LYNE_BACKUP_DIR" ]]; then
+        echo "  Your previous files are in ${LYNE_BACKUP_DIR/#$HOME/\~}"
+    fi
+    [[ -n "${LYNE_DRY_RUN:-}" ]] && echo "  Dry run: the files written are in $LYNE_DRY_HOME"
+
+    if ((RUN_CANCELLED || RUN_ABORTED)); then
+        echo ""
+        echo "  The steps marked $G_SKIP didn't run. Run ./install.sh again to finish."
+        echo ""
+        return
+    fi
 
     echo ""
-    echo -e "${YELLOW}Next steps:${NC}"
+    echo -e "${C_WARN}Next steps:${C_RESET}"
     echo "  1. Log out and select 'Hyprland (uwsm)' in your display manager"
     echo "  2. Or start manually with: uwsm start hyprland-uwsm.desktop"
     echo ""
@@ -511,13 +535,13 @@ show_summary() {
     echo "  4. Each monitor gets its own workspaces automatically"
     echo ""
 
-    if [[ " ${CATEGORIES[*]} " =~ " terminal " ]]; then
+    if has_category terminal; then
         echo "  5. In tmux, use prefix + I to install plugins"
     fi
 
-    if [[ " ${CATEGORIES[*]} " =~ " nvidia " ]]; then
+    if [[ "$LYNE_NVIDIA_ENV" == yes ]]; then
         echo ""
-        echo -e "${YELLOW}NVIDIA:${NC}"
+        echo -e "${C_WARN}NVIDIA:${C_RESET}"
         echo "  - Review ~/.config/hypr/local/extra_environment.lua"
         echo "  - For hybrid GPUs, uncomment the AQ_DRM_DEVICES line"
     fi
@@ -527,99 +551,195 @@ show_summary() {
     echo ""
 }
 
-# =============================================================================
-# Show banner
-# =============================================================================
-show_banner() {
-    echo ""
-    echo -e "${CYAN}"
-    cat <<'EOF'
-    ╔═══════════════════════════════════════════════════════════════╗
-    ║                                                               ║
-    ║   █   █▄█ █▄ █ █▀▀ ▄▄ █▀▄ █▀█ ▀█▀ █▀                          ║
-    ║   █▄▄  █  █ ▀█ ██▄    █▄▀ █▄█  █  ▄█                          ║
-    ║                                                               ║
-    ║   https://github.com/caioax/lyne-dots                         ║
-    ║   Installation Script                                         ║
-    ║                                                               ║
-    ╚═══════════════════════════════════════════════════════════════╝
-EOF
-    echo -e "${NC}"
+# The reboot chosen in the questionnaire: a countdown any key cancels, and
+# only after a clean install
+reboot_countdown() {
+    [[ "${ANSWERS[reboot]}" == yes ]] || {
+        log_info "Remember to reboot the system to apply all changes."
+        return
+    }
+    if ! run_ok; then
+        log_warn "Not rebooting: some steps failed (see the log). Reboot when they're fixed."
+        return
+    fi
+
+    local left key
+    # Keys pressed during the install would cancel it at once
+    while IFS= read -rsn1 -t 0.01 key </dev/tty 2>/dev/null; do :; done
+    for ((left = REBOOT_SECONDS; left > 0; left--)); do
+        printf '\r%sRebooting in %2d s%s %s press any key to cancel ' "$C_WARN" "$left" "$C_RESET" "$G_DOT"
+        if IFS= read -rsn1 -t 1 key </dev/tty 2>/dev/null; then
+            printf '\n'
+            log_info "Reboot cancelled. Remember to reboot to apply all changes."
+            return
+        fi
+    done
+    printf '\n'
+    log_info "Rebooting..."
+    sudo reboot
 }
 
 # =============================================================================
 # Main
 # =============================================================================
+cleanup() {
+    ui_leave
+    run_sudo_stop
+    [[ -n "${RUN_STATE:-}" ]] && rm -f "$RUN_STATE"
+}
+
 main() {
-    show_banner
-
-    # Check if running on Arch Linux
     check_arch
+    check_not_root
 
-    # FIRST: Category selection (before any installation)
-    get_selection
+    STAMP="$(date +%Y%m%d-%H%M%S)"
+    export LYNE_BACKUP_DIR="$HOME/.lyne-dots-backup/$STAMP"
+    ui_setup
+    # Plain summary when the output goes to a file
+    [[ -t 1 ]] || C_RESET="" C_DIM="" C_OK="" C_WARN="" C_FAIL=""
+    trap cleanup EXIT
 
-    echo ""
-    log_info "Selected categories: ${CATEGORIES[*]}"
-    echo ""
-    echo -ne "${YELLOW}Continue with the installation? [Y/n]: ${NC}"
-    read -r confirm
-
-    if [[ $confirm =~ ^[Nn]$ ]]; then
-        log_info "Installation cancelled."
-        exit 0
+    # FIRST: every question (nothing is installed before the review)
+    if [[ -n "$ANSWERS_FILE" ]]; then
+        ask_load "$ANSWERS_FILE"
+        answer_defaults
+    else
+        if [[ ! -t 0 || ! -t 1 ]]; then
+            log_error "The installer needs a terminal (or answers from a file: --answers FILE)."
+            exit 1
+        fi
+        trap 'ui_leave; echo; log_info "Installation cancelled."; exit 130' INT TERM
+        ui_enter
+        if ! ask_run "${QUESTIONS[@]}"; then
+            ui_leave
+            log_info "Installation cancelled."
+            exit 0
+        fi
+        ui_leave
     fi
 
-    # Run installation (checks and AUR helper here)
-    full_install
+    read -ra CATEGORIES <<<"${ANSWERS[categories]}"
+    export LYNE_NVIDIA_ENV="${ANSWERS[nvidia_env]}"
 
-    # Show summary
+    # sudo once, kept alive until the end
+    log_step "The installation needs your sudo password (asked only now)."
+    if ! run_sudo_start; then
+        log_error "sudo failed; nothing was installed."
+        exit 1
+    fi
+
+    run_log_init "$STAMP"
+    {
+        echo "lyne-dots install $(date -Iseconds)"
+        echo "dotfiles: $DOTFILES_DIR ($(git -C "$DOTFILES_DIR" rev-parse --short HEAD 2>/dev/null))"
+        local key
+        for key in "${!ANSWERS[@]}"; do echo "answer $key=${ANSWERS[$key]}"; done
+        [[ -n "${LYNE_DRY_RUN:-}" ]] && echo "dry run, HOME=$HOME"
+    } >>"$LOG_FILE"
+
+    plan_steps
+
+    trap run_cancel INT TERM
+    if [[ -t 1 ]]; then
+        ui_enter
+        ui_keys_off
+        run_steps
+        ui_leave
+    else
+        RUN_PLAIN=1 run_steps
+    fi
+    trap - INT TERM
+
     show_summary
+    ((RUN_CANCELLED)) && exit 130
+    ((RUN_ABORTED)) && exit 1
+    reboot_countdown
+    run_ok
+}
 
-    # Prompt for reboot
-    ask_reboot
+usage() {
+    echo "Usage: ./install.sh [options]"
+    echo ""
+    echo "Options:"
+    echo "  --help, -h        Show this help"
+    echo "  --stow-only       Only run stow (symlinks; existing files go to a backup)"
+    echo "  --setup-only      Only run Hyprland setup"
+    echo "  --packages PKG    Install only the specified category"
+    echo "  --answers FILE    Take the answers from FILE (id=value lines) instead of"
+    echo "                    asking: categories=core terminal ..., nvidia_env=yes|no,"
+    echo "                    reboot=yes|no"
+    echo "  --dry-run         Change nothing: a throwaway HOME and stand-ins for sudo,"
+    echo "                    pacman -S, yay, stow, systemctl... (LYNE_DRY_HOME=dir"
+    echo "                    reuses one)"
+    echo ""
+    echo "Available categories:"
+    echo "  core, terminal, editor, apps, utils, fonts, quickshell, theming, nvidia"
 }
 
 # =============================================================================
 # Command line arguments
 # =============================================================================
-case "${1:-}" in
---help | -h)
-    echo "Usage: ./install.sh [option]"
-    echo ""
-    echo "Options:"
-    echo "  --help, -h      Show this help"
-    echo "  --stow-only     Only run stow (symlinks)"
-    echo "  --setup-only    Only run Hyprland setup"
-    echo "  --packages PKG  Install only the specified category"
-    echo ""
-    echo "Available categories:"
-    echo "  core, terminal, editor, apps, utils, fonts, quickshell, theming, nvidia"
-    exit 0
-    ;;
---stow-only)
+MODE=install
+ANSWERS_FILE=""
+PACKAGE_CATEGORY=""
+while (($#)); do
+    case "$1" in
+    --help | -h)
+        usage
+        exit 0
+        ;;
+    --stow-only) MODE=stow ;;
+    --setup-only) MODE=setup ;;
+    --packages)
+        MODE=packages
+        PACKAGE_CATEGORY="${2:-}"
+        [[ $# -gt 1 ]] && shift
+        ;;
+    --answers)
+        ANSWERS_FILE="${2:-}"
+        if [[ ! -f "$ANSWERS_FILE" ]]; then
+            log_error "Answers file not found: $ANSWERS_FILE"
+            exit 1
+        fi
+        ANSWERS_FILE="$(realpath "$ANSWERS_FILE")"
+        shift
+        ;;
+    --dry-run) DRY_RUN=1 ;;
+    *)
+        log_error "Unknown option: $1"
+        usage
+        exit 1
+        ;;
+    esac
+    shift
+done
+
+[[ -n "${DRY_RUN:-}" ]] && run_dry_setup
+
+case "$MODE" in
+stow)
     check_arch
     sudo pacman -S --needed --noconfirm stow
     source "$SETUP_DIR/stow.sh"
     run_stow_main
-    exit 0
     ;;
---setup-only)
+setup)
     check_arch
     source "$SETUP_DIR/hyprland.sh"
     run_hyprland_main
-    exit 0
     ;;
---packages)
+packages)
     check_arch
-    check_internet
-    check_aur_helper
-    if [[ -z "${2:-}" ]]; then
+    if [[ -z "$PACKAGE_CATEGORY" ]]; then
         log_error "Please specify a category!"
         exit 1
     fi
-    install_packages "$2"
-    exit 0
+    RUN_STATE="$(mktemp)"
+    step_connection || exit 1
+    step_aur_helper || exit 1
+    source "$RUN_STATE"
+    rm -f "$RUN_STATE"
+    install_packages "$PACKAGE_CATEGORY"
     ;;
 *)
     main

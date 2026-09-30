@@ -36,19 +36,19 @@ THEMING_AUR_PACKAGES=(
 # Setup - Apply theme settings
 # =============================================================================
 setup_theming() {
-    echo "[>>] Applying GTK theme settings..."
+    log_step "Applying GTK theme settings..."
     gsettings set org.gnome.desktop.interface gtk-theme "adw-gtk3-dark"
     gsettings set org.gnome.desktop.interface icon-theme "Tela-blue-dark"
     gsettings set org.gnome.desktop.interface font-name "CaskaydiaCove Nerd Font 10"
     gsettings set org.gnome.desktop.interface cursor-theme "Bibata-Modern-Classic"
     gsettings set org.gnome.desktop.interface cursor-size 24
     gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
-    echo "[OK] GTK theme applied!"
+    log_info "GTK theme applied!"
 
-    echo "[>>] Setting up matugen..."
+    log_step "Setting up matugen..."
     mkdir -p "$HOME/.cache/matugen"
     mkdir -p "$HOME/.local/share/color-schemes"
     mkdir -p "$HOME/.config/matugen"
     ln -sf "$HOME/.lyne-dots/.data/matugen/config.toml" "$HOME/.config/matugen/config.toml"
-    echo "[OK] Matugen configured!"
+    log_info "Matugen configured!"
 }

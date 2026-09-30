@@ -7,17 +7,7 @@
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
-# Colors
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-CYAN='\033[0;36m'
-NC='\033[0m'
-
-log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
-log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
-log_step() { echo -e "${CYAN}[>>]${NC} $1"; }
+source "$DOTFILES_DIR/.install/lib/log.sh"
 
 # =============================================================================
 # Directories to stow
@@ -92,63 +82,70 @@ get_stow_targets() {
 }
 
 # =============================================================================
-# Remove existing targets with confirmation
+# Existing targets
 # =============================================================================
-remove_existing_targets() {
+# Links into the dotfiles are ours (an earlier install) and empty folders
+# hold nothing: both are just replaced. Anything else is the user's and is
+# moved to the backup folder instead
+is_own_link() {
+    [[ -L "$1" ]] || return 1
+    local dest
+    dest="$(realpath -m "$1")"
+    [[ "$dest" == "$DOTFILES_DIR"/* ]]
+}
+
+is_empty_dir() {
+    [[ -d "$1" && ! -L "$1" && -z "$(ls -A "$1")" ]]
+}
+
+# Prints the targets that would be moved to the backup (one per line)
+stow_existing_targets() {
+    local dir target targets
+    for dir in "${STOW_DIRS[@]}"; do
+        read -ra targets <<<"$(get_stow_targets "$dir")"
+        for target in "${targets[@]}"; do
+            if [[ -e "$target" || -L "$target" ]] && ! is_own_link "$target" && ! is_empty_dir "$target"; then
+                echo "$target"
+            fi
+        done
+    done
+}
+
+# Moves the user's files out of the way (keeping their path under HOME in
+# the backup folder) and drops our old links
+backup_existing_targets() {
     log_info "Checking existing targets..."
 
-    local ITEMS_TO_REMOVE=()
-
-    # Collect all existing items
+    local BACKUP_DIR="${LYNE_BACKUP_DIR:-$HOME/.lyne-dots-backup/$(date +%Y%m%d-%H%M%S)}"
+    local dir target targets moved=0
     for dir in "${STOW_DIRS[@]}"; do
-        local targets
-        targets=($(get_stow_targets "$dir"))
-
+        read -ra targets <<<"$(get_stow_targets "$dir")"
         for target in "${targets[@]}"; do
-            if [[ -e "$target" || -L "$target" ]]; then
-                ITEMS_TO_REMOVE+=("$target")
+            [[ -e "$target" || -L "$target" ]] || continue
+            if is_own_link "$target"; then
+                rm "$target"
+                continue
+            fi
+            if is_empty_dir "$target"; then
+                rmdir "$target"
+                continue
+            fi
+            local dest="$BACKUP_DIR/${target#"$HOME"/}"
+            mkdir -p "$(dirname "$dest")"
+            if mv "$target" "$dest"; then
+                log_step "  Moved to the backup: ${target/#$HOME/\~}"
+                moved=$((moved + 1))
+            else
+                log_error "Could not move $target to $dest"
+                return 1
             fi
         done
     done
 
-    # If no items to remove, return
-    if [[ ${#ITEMS_TO_REMOVE[@]} -eq 0 ]]; then
-        log_info "No existing targets found. Ready for stow!"
-        return 0
-    fi
-
-    # Show found items
-    echo ""
-    log_warn "The following target files/directories were found:"
-    echo ""
-    for item in "${ITEMS_TO_REMOVE[@]}"; do
-        if [[ -L "$item" ]]; then
-            echo -e "  ${CYAN}[symlink]${NC} $item"
-        elif [[ -d "$item" ]]; then
-            echo -e "  ${YELLOW}[dir]${NC}     $item"
-        else
-            echo -e "  ${GREEN}[file]${NC}    $item"
-        fi
-    done
-    echo ""
-
-    # Ask for confirmation
-    echo -ne "${RED}Do you want to REMOVE these items to create new symlinks? [Y/n]: ${NC}"
-    read -r confirm
-
-    if [[ ! $confirm =~ ^[Nn]$ ]]; then
-        log_info "Removing existing targets..."
-        for item in "${ITEMS_TO_REMOVE[@]}"; do
-            if [[ -e "$item" || -L "$item" ]]; then
-                log_step "  Removing: $item"
-                rm -rf "$item"
-            fi
-        done
-        log_info "Targets removed successfully!"
+    if ((moved > 0)); then
+        log_info "Existing files backed up in ${BACKUP_DIR/#$HOME/\~}"
     else
-        log_error "Removal cancelled. Stow cannot create symlinks over existing files."
-        log_info "Remove the files manually or run the script again."
-        return 1
+        log_info "No existing targets found. Ready for stow!"
     fi
 }
 
@@ -158,20 +155,20 @@ remove_existing_targets() {
 execute_stow() {
     log_info "Running stow to create symlinks..."
 
-    cd "$DOTFILES_DIR"
-
+    local failed=0
     for dir in "${STOW_DIRS[@]}"; do
-        if [[ -d "$dir" ]]; then
+        if [[ -d "$DOTFILES_DIR/$dir" ]]; then
             log_step "  Stowing: $dir"
-            if ! stow -R "$dir" 2>&1; then
-                log_error "    Failed to stow $dir"
-                log_info "    Check for conflicts and try again."
+            if ! stow -d "$DOTFILES_DIR" -t "$HOME" -R "$dir" 2>&1; then
+                log_error "Failed to stow $dir (check for conflicts and try again)"
+                failed=1
             fi
         else
             log_warn "  Directory not found: $dir"
         fi
     done
 
+    ((failed)) && return 1
     log_info "Symlinks created successfully!"
 }
 
@@ -191,11 +188,8 @@ run_stow_main() {
 
     create_dirs
 
-    if ! remove_existing_targets; then
-        return 1
-    fi
-
-    execute_stow
+    backup_existing_targets || return 1
+    execute_stow || return 1
 
     echo ""
     log_info "Stow completed successfully!"
