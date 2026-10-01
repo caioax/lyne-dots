@@ -82,7 +82,8 @@ color-scheme: var(--lyne-scheme) !important;
 --arrowpanel-border-color: var(--lyne-surface1) !important;
 --arrowpanel-dimmed: color-mix(in srgb, var(--lyne-text) 8%, transparent) !important;
 --arrowpanel-dimmed-further: color-mix(in srgb, var(--lyne-text) 14%, transparent) !important;
---panel-separator-color: var(--lyne-surface1) !important;
+--panel-separator-color: var(--lyne-surface2) !important;
+--menuitem-separator-color: var(--lyne-surface2) !important;
 --menu-background-color: var(--lyne-surface0) !important;
 --menu-color: var(--lyne-text) !important;
 --menu-border-color: var(--lyne-surface1) !important;
@@ -130,6 +131,17 @@ color-scheme: var(--lyne-scheme) !important;
 }
 & .urlbarView-url {
   color: var(--lyne-accent) !important;
+}
+
+/* Toasts ("Copied current URL!"): accent with the text that reads on it */
+& #zen-toast-container .zen-toast {
+  background: var(--lyne-accent) !important;
+  color: var(--lyne-on-accent) !important;
+
+  & button {
+    color: var(--lyne-on-accent) !important;
+    background: color-mix(in srgb, var(--lyne-on-accent) 15%, transparent) !important;
+  }
 }
 
 /* What a page shows before it paints, and an empty tab */
