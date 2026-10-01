@@ -16,14 +16,14 @@ One theme follows the bar, terminal, editor, GTK/Qt apps, Hyprland and Zen Brows
 
 [![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?style=flat-square&logo=archlinux&logoColor=white)](https://archlinux.org) [![Hyprland](https://img.shields.io/badge/Hyprland-0.56-58E1FF?style=flat-square&logo=hyprland&logoColor=white)](https://hypr.land) [![Quickshell](https://img.shields.io/badge/Quickshell-QML-7aa2f7?style=flat-square)](https://quickshell.org) [![License](https://img.shields.io/github/license/caioax/lyne-dots?style=flat-square&color=bb9af7)](LICENSE) [![Last commit](https://img.shields.io/github/last-commit/caioax/lyne-dots?style=flat-square&color=9ece6a)](https://github.com/caioax/lyne-dots/commits)
 
-<!-- Provisional recording. For a player inside the README, upload the final
-     MP4 to GitHub (drag it into an issue) and put its user-attachments URL on
-     a line of its own here. -->
+<!-- demo.webp is a 27 s cut of demo.mp4 (media branch). For a player inside
+     the README, upload demo.mp4 to GitHub (drag it into an issue) and put its
+     user-attachments URL on a line of its own here. -->
 <a href="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/demo.mp4">
-  <img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/demo.webp" alt="lyne-dots demo: launcher, dashboard and theme switching" width="100%">
+  <img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/demo.webp" alt="lyne-dots demo: launcher, dashboard and theme switching in Settings" width="100%">
 </a>
 
-<sub>Click for the full video (50 s).</sub>
+<sub>Click for the full video (3 min).</sub>
 
 ```bash
 git clone https://github.com/caioax/lyne-dots.git ~/.lyne-dots && ~/.lyne-dots/install.sh
