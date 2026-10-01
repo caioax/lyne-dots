@@ -1,0 +1,147 @@
+/* lyne-dots Zen theme: the browser UI.
+ *
+ * `lyne zen apply` copies this into each enabled profile as chrome/lyne.css,
+ * nested in a root selector (`:root`, or `:root[zen-default-theme="true"]`
+ * when workspaces with their own gradient keep Zen's look) after the
+ * --lyne-* colors of the current shell theme. Zen sets its background,
+ * accent and text colors as inline styles from the workspace gradient, so
+ * the overrides need !important. Read at startup: restart Zen to apply.
+ */
+
+color-scheme: var(--lyne-scheme) !important;
+
+/* Zen derives most of its colors from these */
+--zen-primary-color: var(--lyne-accent) !important;
+--zen-branding-bg: var(--lyne-background) !important;
+--zen-branding-bg-reverse: var(--lyne-text) !important;
+--zen-colors-primary: var(--lyne-surface1) !important;
+--zen-colors-secondary: var(--lyne-surface2) !important;
+--zen-colors-tertiary: var(--lyne-background) !important;
+--zen-colors-hover-bg: var(--lyne-surface1) !important;
+--zen-colors-primary-foreground: var(--lyne-accent) !important;
+--zen-colors-border: var(--lyne-surface1) !important;
+--zen-colors-border-contrast: var(--lyne-surface1) !important;
+--zen-colors-input-bg: var(--lyne-surface0) !important;
+--zen-dialog-background: var(--lyne-surface0) !important;
+--zen-urlbar-background: var(--lyne-surface0) !important;
+--zen-themed-toolbar-bg-transparent: var(--lyne-window) !important;
+--zen-sidebar-themed-icon-fill: var(--lyne-subtext) !important;
+--zen-loading-progress-bar-color: var(--lyne-accent) !important;
+
+/* Window background (sidebar, top bar, the frame around pages) */
+--zen-main-browser-background: var(--lyne-window) !important;
+--zen-main-browser-background-toolbar: var(--lyne-window) !important;
+
+/* The gradient is set as inline styles on the background layers too (the
+   "-old" pair is what it fades from on a workspace switch) */
+& .zen-browser-generic-background {
+  --zen-main-browser-background: var(--lyne-window) !important;
+  --zen-main-browser-background-toolbar: var(--lyne-window) !important;
+  --zen-main-browser-background-old: var(--lyne-window) !important;
+  --zen-main-browser-background-toolbar-old: var(--lyne-window) !important;
+}
+/* ...and each workspace's tab list gets the gradient's text color */
+& zen-workspace {
+  color-scheme: var(--lyne-scheme) !important;
+  --toolbox-textcolor: var(--lyne-text) !important;
+  --zen-primary-color: var(--lyne-accent) !important;
+}
+& .zen-browser-grain {
+  display: none !important;
+}
+
+/* Text and toolbar */
+--toolbox-textcolor: var(--lyne-text) !important;
+--toolbox-textcolor-inactive: var(--lyne-text) !important;
+--toolbar-color: var(--lyne-text) !important;
+--toolbar-color-scheme: var(--lyne-scheme) !important;
+--toolbar-field-color: var(--lyne-text) !important;
+--toolbar-field-background-color: var(--lyne-surface0) !important;
+--toolbar-field-focus-color: var(--lyne-text) !important;
+--toolbar-field-focus-background-color: var(--lyne-surface0) !important;
+--toolbar-field-focus-border-color: var(--lyne-accent) !important;
+--toolbarbutton-background-color-hover: color-mix(in srgb, var(--lyne-text) 10%, transparent) !important;
+--toolbarbutton-background-color-active: color-mix(in srgb, var(--lyne-text) 16%, transparent) !important;
+--zen-toolbar-element-bg: color-mix(in srgb, var(--lyne-text) 8%, transparent) !important;
+--zen-toolbar-element-bg-hover: color-mix(in srgb, var(--lyne-text) 12%, transparent) !important;
+--input-border-color: var(--lyne-surface2) !important;
+--zen-input-border-color: var(--lyne-surface2) !important;
+--focus-outline-color: var(--lyne-accent) !important;
+
+/* Tabs */
+--tab-background-color-selected: color-mix(in srgb, var(--lyne-text) 12%, transparent) !important;
+--tab-selected-bgcolor: color-mix(in srgb, var(--lyne-text) 12%, transparent) !important;
+--tab-hover-background-color: color-mix(in srgb, var(--lyne-text) 7%, transparent) !important;
+--tab-background-color-hover: color-mix(in srgb, var(--lyne-text) 7%, transparent) !important;
+--tab-selected-textcolor: var(--lyne-text) !important;
+--tab-loading-fill: var(--lyne-accent) !important;
+
+/* Popups, menus and panels */
+--arrowpanel-background: var(--lyne-surface0) !important;
+--arrowpanel-color: var(--lyne-text) !important;
+--arrowpanel-border-color: var(--lyne-surface1) !important;
+--arrowpanel-dimmed: color-mix(in srgb, var(--lyne-text) 8%, transparent) !important;
+--arrowpanel-dimmed-further: color-mix(in srgb, var(--lyne-text) 14%, transparent) !important;
+--panel-separator-color: var(--lyne-surface1) !important;
+--menu-background-color: var(--lyne-surface0) !important;
+--menu-color: var(--lyne-text) !important;
+--menu-border-color: var(--lyne-surface1) !important;
+--menuitem-hover-background-color: var(--lyne-surface1) !important;
+--zen-sidebar-notification-bg: var(--lyne-surface0) !important;
+
+/* Buttons and links */
+--button-background-color-primary: var(--lyne-accent) !important;
+--button-primary-hover-bgcolor: color-mix(in srgb, var(--lyne-accent) 88%, var(--lyne-text)) !important;
+--button-primary-active-bgcolor: color-mix(in srgb, var(--lyne-accent) 76%, var(--lyne-text)) !important;
+--button-primary-color: var(--lyne-on-accent) !important;
+--button-text-color-primary: var(--lyne-on-accent) !important;
+--in-content-primary-button-background: var(--lyne-accent) !important;
+--in-content-primary-button-background-hover: color-mix(in srgb, var(--lyne-accent) 88%, var(--lyne-text)) !important;
+--in-content-primary-button-background-active: color-mix(in srgb, var(--lyne-accent) 76%, var(--lyne-text)) !important;
+--in-content-primary-button-text-color: var(--lyne-on-accent) !important;
+--color-accent-primary: var(--lyne-accent) !important;
+--link-color: var(--lyne-accent) !important;
+--link-color-hover: color-mix(in srgb, var(--lyne-accent) 80%, var(--lyne-text)) !important;
+--zen-accent-button-color: var(--lyne-accent) !important;
+--zen-accent-button-background: var(--lyne-accent) !important;
+
+/* Zen sets color-scheme on these from its own light/dark setting (system
+   by default); the palette decides instead. Pages keep following the system */
+& :is(#browser, panel, menupopup, .zen-browser-generic-background, #urlbar[breakout-extend], #zen-toast-container) {
+  color-scheme: var(--lyne-scheme) !important;
+}
+
+/* Omnibox results */
+& .urlbarView-row[selected] {
+  background-color: color-mix(in srgb, var(--lyne-accent) 30%, var(--lyne-surface0)) !important;
+
+  & *,
+  & .urlbarView-title-separator::before {
+    color: var(--lyne-text) !important;
+  }
+}
+& #urlbar[breakout-extend] #urlbar-background {
+  background: var(--lyne-surface0) !important;
+  border-color: var(--lyne-surface1) !important;
+}
+& .urlbarView-title,
+& .urlbarView-action {
+  color: var(--lyne-text);
+}
+& .urlbarView-url {
+  color: var(--lyne-accent) !important;
+}
+
+/* What a page shows before it paints, and an empty tab */
+& #tabbrowser-tabpanels browser[type="content"]:not([transparent="true"]) {
+  background: var(--lyne-background) !important;
+}
+& #tabbrowser-tabpanels .browserSidebarContainer {
+  --zen-transparent-browser-background: var(--lyne-surface0) !important;
+}
+
+/* Text selection */
+& ::selection {
+  background: color-mix(in srgb, var(--lyne-accent) 35%, transparent);
+  color: var(--lyne-text);
+}

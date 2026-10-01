@@ -1,0 +1,73 @@
+/* lyne-dots Zen theme: the browser's own pages (about:preferences,
+ * about:newtab, about:addons...).
+ *
+ * `lyne zen apply` copies this into each enabled profile as
+ * chrome/lyne-content.css, nested in `@-moz-document url-prefix("about:")`
+ * and `:root` after the --lyne-* colors. Only variables the pages already
+ * use are set, so websites and blank frames are left alone.
+ */
+
+color-scheme: var(--lyne-scheme) !important;
+
+/* Zen's settings pages derive their colors from these */
+--zen-primary-color: var(--lyne-accent) !important;
+--zen-branding-bg: var(--lyne-background) !important;
+--zen-branding-bg-reverse: var(--lyne-text) !important;
+--zen-colors-primary: var(--lyne-surface1) !important;
+--zen-colors-secondary: var(--lyne-surface2) !important;
+--zen-colors-tertiary: var(--lyne-background) !important;
+--zen-colors-border: var(--lyne-surface1) !important;
+--zen-colors-input-bg: var(--lyne-surface0) !important;
+--zen-colors-primary-foreground: var(--lyne-accent) !important;
+--zen-dialog-background: var(--lyne-surface0) !important;
+--zen-in-content-dialog-background: var(--lyne-surface0) !important;
+
+/* Firefox design tokens */
+--background-color-canvas: var(--lyne-background) !important;
+--background-color-box: var(--lyne-surface0) !important;
+--background-color-box-info: var(--lyne-surface0) !important;
+--text-color: var(--lyne-text) !important;
+--text-color-deemphasized: var(--lyne-subtext) !important;
+--border-color: var(--lyne-surface1) !important;
+--border-color-interactive: var(--lyne-surface2) !important;
+--border-color-deemphasized: var(--lyne-surface1) !important;
+--color-accent-primary: var(--lyne-accent) !important;
+--color-accent-primary-hover: color-mix(in srgb, var(--lyne-accent) 88%, var(--lyne-text)) !important;
+--color-accent-primary-active: color-mix(in srgb, var(--lyne-accent) 76%, var(--lyne-text)) !important;
+--focus-outline-color: var(--lyne-accent) !important;
+--link-color: var(--lyne-accent) !important;
+--link-color-hover: color-mix(in srgb, var(--lyne-accent) 80%, var(--lyne-text)) !important;
+--button-background-color: var(--lyne-surface1) !important;
+--button-background-color-hover: var(--lyne-surface2) !important;
+--button-text-color: var(--lyne-text) !important;
+--button-background-color-primary: var(--lyne-accent) !important;
+--button-text-color-primary: var(--lyne-on-accent) !important;
+--button-primary-color: var(--lyne-on-accent) !important;
+
+/* Older in-content variables */
+--in-content-page-background: var(--lyne-background) !important;
+--in-content-page-color: var(--lyne-text) !important;
+--in-content-text-color: var(--lyne-text) !important;
+--in-content-deemphasized-text: var(--lyne-subtext) !important;
+--in-content-box-background: var(--lyne-surface0) !important;
+--in-content-box-border-color: var(--lyne-surface1) !important;
+--in-content-box-info-background: var(--lyne-surface0) !important;
+--in-content-item-hover: var(--lyne-surface1) !important;
+--in-content-item-selected: var(--lyne-accent) !important;
+--in-content-item-selected-text: var(--lyne-on-accent) !important;
+--in-content-border-color: var(--lyne-surface1) !important;
+--in-content-accent-color: var(--lyne-accent) !important;
+--in-content-primary-button-background: var(--lyne-accent) !important;
+--in-content-primary-button-text-color: var(--lyne-on-accent) !important;
+--in-content-button-background: var(--lyne-surface1) !important;
+--in-content-button-text-color: var(--lyne-text) !important;
+
+/* New tab page */
+--newtab-background-color: var(--lyne-background) !important;
+--newtab-background-color-secondary: var(--lyne-surface0) !important;
+--newtab-text-primary-color: var(--lyne-text) !important;
+--newtab-text-secondary-color: var(--lyne-subtext) !important;
+--newtab-primary-action-background: var(--lyne-accent) !important;
+--newtab-element-hover-color: var(--lyne-surface1) !important;
+--newtab-element-active-color: var(--lyne-surface2) !important;
+--newtab-border-color: var(--lyne-surface1) !important;
