@@ -31,7 +31,7 @@ Singleton {
             id: "theme",
             label: "Theme",
             icon: "\u{f03d8}",
-            description: "Colors, light or dark mode, transparency and the wallpaper each theme brings",
+            description: "Themes, colors, light or dark mode, the wallpaper each theme brings and Zen Browser",
             category: "Appearance"
         },
         {
@@ -45,7 +45,7 @@ Singleton {
             id: "layout",
             label: "Layout",
             icon: "\u{f0607}",
-            description: "Corners, spacing and motion",
+            description: "Corners, spacing, transparency and motion",
             category: "Appearance"
         },
         {

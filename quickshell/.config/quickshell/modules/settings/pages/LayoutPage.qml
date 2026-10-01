@@ -92,6 +92,20 @@ ColumnLayout {
     }
 
     SettingsGroup {
+        title: "Transparency"
+
+        SliderRow {
+            label: "Background opacity"
+            description: "Bar, panels, launcher, notifications, Settings and their cards. Themes may set their own when applied"
+            path: "opacity.background"
+            from: 0.5
+            to: 1
+            stepSize: 0.01
+            format: v => Math.round(v * 100) + "%"
+        }
+    }
+
+    SettingsGroup {
         title: "Motion"
 
         SelectRow {
