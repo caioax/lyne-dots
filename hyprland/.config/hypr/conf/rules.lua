@@ -61,7 +61,8 @@ hl.window_rule({
     pin    = true,
 })
 
--- Quickshell settings window
+-- Quickshell settings window (size = SettingsWindow.defaultSize; its size
+-- buttons extend or fill from there)
 hl.window_rule({
     name  = "quickshell-settings-float",
     match = { class = "^(org\\.quickshell)$", title = "^(Settings)$" },

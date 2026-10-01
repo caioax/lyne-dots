@@ -297,5 +297,8 @@
         "hints": true,
         "animations": true,
         "dim": 60
+    },
+    "settings": {
+        "windowSize": "default"
     }
 }

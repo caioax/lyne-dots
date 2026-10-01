@@ -20,6 +20,8 @@ FloatingWindow {
     readonly property int boxSize: Config.fontSizeIconSmall * 2
     // Room on both sides of the page column, so the scrollbar never covers it
     readonly property int pageGutter: Config.padding * 2
+    // Same as the size of the window rule in hypr/conf/rules.lua (which wins)
+    readonly property size defaultSize: Qt.size(960, 680)
 
     // Page id (SettingsService.pages) -> component. Pages are imported
     // statically: Quickshell only resolves directories it can reach that way
@@ -336,8 +338,8 @@ FloatingWindow {
     }
 
     title: "Settings"
-    implicitWidth: 960
-    implicitHeight: 680
+    implicitWidth: defaultSize.width
+    implicitHeight: defaultSize.height
     minimumSize: Qt.size(720, 480)
     color: Config.backgroundTransparentColor
     visible: true
@@ -714,17 +716,24 @@ FloatingWindow {
             spacing: Config.spacing * 2
 
             // Header: page icon, title and description, lined up with the
-            // page column below
+            // page column below; the window size buttons in the corner
             Item {
+                id: headerArea
+
+                // Page column (as the page loaders below)
+                readonly property int columnWidth: Math.min(width - root.pageGutter * 2, root.maxContentWidth)
+                readonly property int columnX: Math.round((width - columnWidth) / 2)
+
                 Layout.fillWidth: true
                 Layout.topMargin: Config.padding * 2
-                implicitHeight: header.implicitHeight
+                implicitHeight: Math.max(header.implicitHeight, sizeControls.implicitHeight)
 
                 RowLayout {
                     id: header
 
-                    x: Math.round((parent.width - width) / 2)
-                    width: Math.min(parent.width - root.pageGutter * 2, root.maxContentWidth)
+                    x: headerArea.columnX
+                    // Stops short of the size buttons when they reach the column
+                    width: Math.min(headerArea.columnWidth, sizeControls.x - Config.spacing * 2 - x)
                     spacing: Config.spacing + Config.padding
 
                     Rectangle {
@@ -767,6 +776,16 @@ FloatingWindow {
                             color: Config.subtextColor
                         }
                     }
+                }
+
+                WindowSizeControls {
+                    id: sizeControls
+
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    window: root
+                    defaultSize: root.defaultSize
+                    buttonSize: root.boxSize
                 }
             }
 
