@@ -261,6 +261,10 @@
     "gpus": {
         "order": []
     },
+    "zen": {
+        "themeBackground": true,
+        "transparent": false
+    },
     "osd": {
         "style": "attached",
         "position": "bottom",

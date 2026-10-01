@@ -211,6 +211,49 @@ ColumnLayout {
         }
     }
 
+    // Profiles found in ~/.zen (none until Zen has run once)
+    SettingsGroup {
+        visible: root.onGrid && ZenService.installed
+        title: "Zen Browser"
+
+        Component.onCompleted: ZenService.refresh()
+
+        Repeater {
+            model: ZenService.profiles
+
+            ToggleRow {
+                required property var modelData
+
+                label: modelData.name
+                description: [modelData.enabled ? "Follows the theme" : "Zen's own colors", modelData.default ? "default profile" : "", modelData.running ? "open" : ""].filter(s => s !== "").join(" · ")
+                checked: modelData.enabled
+                resettable: false
+                onToggled: value => ZenService.setEnabled(modelData.dir, value)
+            }
+        }
+
+        ToggleRow {
+            label: "Theme background"
+            description: checked ? "Every workspace uses the theme's background" : "Workspaces with their own gradient keep it"
+            path: "zen.themeBackground"
+            enabled: ZenService.enabledProfiles.length > 0
+        }
+
+        ToggleRow {
+            label: "Transparency"
+            description: "The window follows Background opacity, blurred like the shell"
+            path: "zen.transparent"
+            enabled: ZenService.enabledProfiles.length > 0
+        }
+
+        SettingRow {
+            visible: ZenService.restartNeeded
+            label: "Zen is open"
+            description: "Restart it to see the new colors (Zen reads its theme at startup)"
+            descriptionColor: Config.warningColor
+        }
+    }
+
     SettingsGroup {
         visible: root.onGrid
         title: "Themes"

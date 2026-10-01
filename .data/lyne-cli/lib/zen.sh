@@ -26,8 +26,9 @@
 # Options (state.json): zen.themeBackground (true: the theme background in
 # every workspace; false: workspaces with their own gradient keep Zen's
 # look), zen.transparent (the window follows the theme opacity, blurred).
-# LYNE_ZEN_ROOTS (colon separated), LYNE_STATE_FILE and LYNE_ZEN_PALETTE
-# point it at test files.
+# LYNE_ZEN_OPTIONS ({"themeBackground": .., "transparent": ..}) overrides
+# them. LYNE_ZEN_ROOTS (colon separated), LYNE_STATE_FILE and
+# LYNE_ZEN_PALETTE point it at test files.
 # =============================================================================
 
 ZEN_TEMPLATES="$DOTS_DIR/.data/zen"
@@ -37,13 +38,16 @@ ZEN_MARK="/* lyne-dots */"
 ZEN_USERJS_BEGIN="// lyne-dots: begin (managed by lyne zen, edits here are lost)"
 ZEN_USERJS_END="// lyne-dots: end"
 
-# Profile roots: native, XDG and Flatpak installs
+# Profile roots Zen reads: like Firefox, a native install keeps the legacy
+# ~/.zen while it exists and uses the XDG folder otherwise; plus Flatpak
 _zen_roots() {
     local roots=()
     if [[ -n "${LYNE_ZEN_ROOTS:-}" ]]; then
         IFS=: read -ra roots <<< "$LYNE_ZEN_ROOTS"
+    elif [[ -d "$HOME/.zen" ]]; then
+        roots=("$HOME/.zen" "$HOME/.var/app/app.zen_browser.zen/.zen")
     else
-        roots=("$HOME/.zen" "$HOME/.config/zen" "$HOME/.var/app/app.zen_browser.zen/.zen")
+        roots=("${XDG_CONFIG_HOME:-$HOME/.config}/zen" "$HOME/.var/app/app.zen_browser.zen/.zen")
     fi
     local r
     for r in "${roots[@]}"; do
@@ -95,20 +99,26 @@ zen_running() {
 zen_json() {
     local root name dir def
     while IFS=$'\t' read -r root name dir def; do
-        local en=false run=false
+        local en=false run=false used=false
         zen_enabled "$dir" && en=true
         zen_running "$dir" && run=true
+        # Zen creates an empty "Default Profile" it never opens
+        [[ -f "$dir/prefs.js" ]] && used=true
         jq -nc --arg root "$root" --arg name "$name" --arg dir "$dir" \
             --argjson def "$([[ $def == 1 ]] && echo true || echo false)" \
-            --argjson en "$en" --argjson run "$run" \
-            '{root: $root, name: $name, dir: $dir, default: $def, enabled: $en, running: $run}'
+            --argjson en "$en" --argjson run "$run" --argjson used "$used" \
+            '{root: $root, name: $name, dir: $dir, default: $def, enabled: $en, running: $run, used: $used}'
     done < <(zen_profiles) | jq -sc '.'
 }
 
-# A boolean option from state.json (the default when it's unset or unreadable)
+# A boolean option: LYNE_ZEN_OPTIONS (a JSON object, from Quickshell, which
+# saves state.json a moment later), then state.json, then the default
 _zen_option() {
-    local v
-    v=$(jq -r --arg k "$1" '.zen[$k] | if type == "boolean" then . else empty end' "$ZEN_STATE" 2>/dev/null)
+    local v=""
+    [[ -n "${LYNE_ZEN_OPTIONS:-}" ]] &&
+        v=$(jq -r --arg k "$1" '.[$k] | if type == "boolean" then . else empty end' <<< "$LYNE_ZEN_OPTIONS" 2>/dev/null)
+    [[ -z "$v" ]] &&
+        v=$(jq -r --arg k "$1" '.zen[$k] | if type == "boolean" then . else empty end' "$ZEN_STATE" 2>/dev/null)
     echo "${v:-$2}"
 }
 

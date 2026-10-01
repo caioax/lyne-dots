@@ -252,11 +252,14 @@ Singleton {
         // 6. Apply to Neovim
         _applyNeovim(data.palette, data.terminal);
 
-        // 7. Apply theme wallpaper
+        // 7. Zen Browser (profiles where it's on in Settings)
+        ZenService.applyPalette(data.palette);
+
+        // 8. Apply theme wallpaper
         if (!restoring)
             _applyWallpaper(data.wallpaper);
 
-        // 8. Apply GTK/Qt colors from palette
+        // 9. Apply GTK/Qt colors from palette
         _applyGtkFromPalette(data.palette);
         _applyQtFromPalette(data.palette);
 
@@ -922,6 +925,8 @@ Singleton {
                     // Neovim needs the terminal colors too
                     loadMatugenTerminalProc._buffer = "";
                     loadMatugenTerminalProc.running = true;
+
+                    ZenService.applyPalette(pal);
                 } catch (e) {
                     console.error("[Theme] Failed to parse matugen palette:", e);
                 }
