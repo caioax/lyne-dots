@@ -24,7 +24,9 @@ color-scheme: var(--lyne-scheme) !important;
 --zen-colors-input-bg: var(--lyne-surface0) !important;
 --zen-dialog-background: var(--lyne-surface0) !important;
 --zen-urlbar-background: var(--lyne-surface0) !important;
---zen-themed-toolbar-bg-transparent: var(--lyne-window) !important;
+/* The base under the background layers: transparent with transparency on,
+   or the layers' translucent color would be painted twice */
+--zen-themed-toolbar-bg-transparent: var(--lyne-base) !important;
 --zen-sidebar-themed-icon-fill: var(--lyne-subtext) !important;
 --zen-loading-progress-bar-color: var(--lyne-accent) !important;
 
