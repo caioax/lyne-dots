@@ -1,87 +1,200 @@
-# 📦 Lyne Dots
+<!-- Images and videos live on the orphan `media` branch (readme/), so cloning
+     main stays light. Keybindings: regenerate with
+     `lua .data/readme/keybinds.lua README.md`. -->
 
-> Arch Linux dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/), featuring a Hyprland (Wayland) desktop environment with a custom QuickShell bar and a unified theme system that applies across the entire setup.
+<div align="center">
 
----
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/logo-dark.svg">
+  <img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/logo-light.svg" alt="lyne-dots" width="150">
+</picture>
 
-## 📸 Screenshots
+# lyne-dots
 
-### Tokyo Night
+**A Hyprland desktop for Arch Linux, with a Quickshell shell you set up from its own Settings app.**<br>
+One theme follows the bar, terminal, editor, GTK/Qt apps, Hyprland and Zen Browser.
 
-![Tokyo Night](./.data/assets/tokyonight.png)
+[![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?style=flat-square&logo=archlinux&logoColor=white)](https://archlinux.org) [![Hyprland](https://img.shields.io/badge/Hyprland-0.56-58E1FF?style=flat-square&logo=hyprland&logoColor=white)](https://hypr.land) [![Quickshell](https://img.shields.io/badge/Quickshell-QML-7aa2f7?style=flat-square)](https://quickshell.org) [![License](https://img.shields.io/github/license/caioax/lyne-dots?style=flat-square&color=bb9af7)](LICENSE) [![Last commit](https://img.shields.io/github/last-commit/caioax/lyne-dots?style=flat-square&color=9ece6a)](https://github.com/caioax/lyne-dots/commits)
 
-### Catppuccin Mocha
+<!-- Provisional recording. For a player inside the README, upload the final
+     MP4 to GitHub (drag it into an issue) and put its user-attachments URL on
+     a line of its own here. -->
+<a href="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/demo.mp4">
+  <img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/demo.webp" alt="lyne-dots demo: launcher, dashboard and theme switching" width="100%">
+</a>
 
-![Catppuccin Mocha](./.data/assets/catppuccin-mocha.png)
+<sub>Click for the full video (50 s).</sub>
 
-### Dracula
+```bash
+git clone https://github.com/caioax/lyne-dots.git ~/.lyne-dots && ~/.lyne-dots/install.sh
+```
 
-![Dracula](./.data/assets/dracula.png)
+[Highlights](#highlights) · [Gallery](#gallery) · [Themes](#themes) · [Install](#install) · [Update](#update) · [Reference](#reference) · [Credits](#credits)
 
-### Gruvbox Dark
+</div>
 
-![Gruvbox Dark](./.data/assets/gruvbox-dark.png)
+## Highlights
 
-### Nord
+<table>
+<tr>
+<td width="33%" valign="top">
 
-![Nord](./.data/assets/nord.png)
+**A Settings app for everything**<br>
+27 pages: appearance, bar, launcher, dashboard, lock screen, monitors, GPUs, workspaces, keybinds, autostart. Searchable, applied live, no config files to edit.
 
-### Rose Pine
+</td>
+<td width="33%" valign="top">
 
-![Rose Pine](./.data/assets/rosepine.png)
+**Themes that reach every app**<br>
+11 presets plus Material You from the wallpaper. Switching fades the shell and Hyprland's borders and recolors kitty, Neovim, GTK/Qt and Zen Browser.
 
-## ✨ Features
+</td>
+<td width="33%" valign="top">
 
-- 🪟 **Hyprland** - Tiling Wayland compositor with modular configuration
-- 🖥️ **QuickShell** - Custom QML-based status bar, launcher, notifications, quick settings, and power menu
-- 🎨 **Dynamic Theming** - 11 themes (6 dark + 5 light variants) applied live across the entire system, plus a **Material You** auto mode that generates colors from your wallpaper
-- 🖼️ **Wallpaper Picker** - Built-in wallpaper manager with search, favorites, and per-theme wallpaper folders
-- 📸 **Screenshot Tool** - Multi-monitor region/fullscreen capture with annotation overlay
-- ✏️ **Neovim** - Lua-based configuration with LSP, Telescope, Smart Splits, and lazy.nvim
-- 📟 **Tmux** - Terminal multiplexer with seamless Neovim navigation (Smart Splits)
-- 🐱 **Kitty** - GPU-accelerated terminal with dynamic theme switching
-- ⚡ **Zsh** - Oh-My-Zsh with autosuggestions, syntax highlighting, vi-mode, and Powerlevel10k
-- 🔧 **Lyne CLI** - Built-in command-line tool for managing the dotfiles
+**Make your own theme**<br>
+Start from a color, a wallpaper or another theme; an OKLCH picker and a live preview do the rest. Wallpapers in the theme's colors are rendered for it.
 
-### 🎨 Theme System
+</td>
+</tr>
+<tr>
+<td valign="top">
 
-Switching themes from the Quick Settings panel or CLI applies colors instantly to:
+**A shell with templates**<br>
+Bar, launcher, Quick Settings, OSD, lock screen and power menu each come in several styles, previewed in Settings before you pick one.
 
-| Component                                 | What changes                                |
-| ----------------------------------------- | ------------------------------------------- |
-| QuickShell (bar, launcher, notifications) | All UI colors                               |
-| Kitty                                     | Terminal colors, cursor, tabs, borders      |
-| Neovim                                    | Colorscheme (sent to all running instances) |
-| Hyprland                                  | Active/inactive border colors, shadow       |
-| GTK / Qt                                  | Application theme colors                    |
-| Wallpaper                                 | Theme-linked wallpaper applied via awww     |
+</td>
+<td valign="top">
 
-No restarts required.
+**Monitors and workspaces**<br>
+Drag monitors on a map with a keep-or-revert timer, give each monitor its own workspaces, choose which GPU renders on hybrid laptops.
 
-**Available presets:**
+</td>
+<td valign="top">
 
-| Dark             | Light            |
-| ---------------- | ---------------- |
-| Tokyo Night      | Tokyo Night Day  |
-| Catppuccin Mocha | Catppuccin Latte |
-| Dracula          | —                |
-| Gruvbox Dark     | Gruvbox Light    |
-| Nord             | Nord Light       |
-| Rose Pine        | Rose Pine Dawn   |
+**A guided installer and a CLI**<br>
+Every question first, then an unattended install with a progress bar. `lyne update` pulls, syncs your settings and runs migrations.
 
-**Material You mode** generates a color palette from your current wallpaper using [matugen](https://github.com/InioX/matugen), supporting both dark and light schemes. Enable it from Quick Settings or with `lyne theme auto`.
+</td>
+</tr>
+</table>
 
----
+## Gallery
 
-## 📦 Installation
+<table>
+<tr>
+<td width="50%"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/desktop.webp" alt="Desktop"></td>
+<td width="50%"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/launcher.webp" alt="Launcher"></td>
+</tr>
+<tr>
+<td align="center"><sub>Desktop: kitty, Neovim and fastfetch in Tokyo Night</sub></td>
+<td align="center"><sub>Launcher: apps, actions (<code>&gt;</code>) and a calculator (<code>=</code>)</sub></td>
+</tr>
+<tr>
+<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/dashboard.webp" alt="Dashboard overview"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/dashboard-media.webp" alt="Dashboard media"></td>
+</tr>
+<tr>
+<td align="center"><sub>Dashboard: clock, weather, calendar with holidays, resources, player</sub></td>
+<td align="center"><sub>Media tab: cava ring, synced lyrics, a dancing GIF</sub></td>
+</tr>
+<tr>
+<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/dashboard-system.webp" alt="Dashboard system"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/dashboard-weather.webp" alt="Dashboard weather"></td>
+</tr>
+<tr>
+<td align="center"><sub>System tab: CPU, GPU, memory, storage and network</sub></td>
+<td align="center"><sub>Weather tab: next 24 hours and 7 days (Open-Meteo)</sub></td>
+</tr>
+<tr>
+<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/quick-settings.webp" alt="Quick Settings"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/notifications.webp" alt="Notifications"></td>
+</tr>
+<tr>
+<td align="center"><sub>Quick Settings: toggles, audio and notification history</sub></td>
+<td align="center"><sub>Notifications with actions and inline replies</sub></td>
+</tr>
+<tr>
+<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/clipboard.webp" alt="Clipboard"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/screenshot.webp" alt="Screenshot tool"></td>
+</tr>
+<tr>
+<td align="center"><sub>Clipboard history with image thumbnails and color swatches</sub></td>
+<td align="center"><sub>Screenshots: region, window or screen; edit, copy text (OCR)</sub></td>
+</tr>
+<tr>
+<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/color-picker.webp" alt="Color picker"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/lock.webp" alt="Lock screen"></td>
+</tr>
+<tr>
+<td align="center"><sub>Color picker with a magnifier and hex / rgb / hsl</sub></td>
+<td align="center"><sub>Lock screen with the player and power buttons</sub></td>
+</tr>
+<tr>
+<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/power.webp" alt="Power menu"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/settings-osd.webp" alt="OSD settings"></td>
+</tr>
+<tr>
+<td align="center"><sub>Power menu with a key for each action</sub></td>
+<td align="center"><sub>OSD styles, previewed in Settings</sub></td>
+</tr>
+<tr>
+<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/settings-theme.webp" alt="Theme settings"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/settings-creator.webp" alt="Theme creator"></td>
+</tr>
+<tr>
+<td align="center"><sub>Settings › Theme: presets, Material You, light or dark</sub></td>
+<td align="center"><sub>Theme creator with an OKLCH picker and a live preview</sub></td>
+</tr>
+<tr>
+<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/settings-bar.webp" alt="Bar settings"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/settings-wallpaper.webp" alt="Wallpaper settings"></td>
+</tr>
+<tr>
+<td align="center"><sub>Bar templates: docked, docked corners, floating, islands</sub></td>
+<td align="center"><sub>Wallpaper library with favorites and per-theme wallpapers</sub></td>
+</tr>
+</table>
 
-### Requirements
+## Themes
 
-- Arch Linux
-- Git
-- Internet connection
+Switch from Settings › Theme, the Quick Settings palette button or `lyne theme set <name>`. Each theme brings its own generated wallpaper.
 
-### Steps
+<table>
+<tr>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/tokyonight.webp" alt="Tokyo Night"><br><sub>Tokyo Night</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/catppuccin-mocha.webp" alt="Catppuccin Mocha"><br><sub>Catppuccin Mocha</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/dracula.webp" alt="Dracula"><br><sub>Dracula</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/gruvbox.webp" alt="Gruvbox Dark"><br><sub>Gruvbox Dark</sub></td>
+</tr>
+<tr>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/nord.webp" alt="Nord"><br><sub>Nord</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/rose-pine.webp" alt="Rose Pine"><br><sub>Rose Pine</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/tokyonight-light.webp" alt="Tokyo Night Day"><br><sub>Tokyo Night Day</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/catppuccin-latte.webp" alt="Catppuccin Latte"><br><sub>Catppuccin Latte</sub></td>
+</tr>
+<tr>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/gruvbox-light.webp" alt="Gruvbox Light"><br><sub>Gruvbox Light</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/nord-light.webp" alt="Nord Light"><br><sub>Nord Light</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/rose-pine-dawn.webp" alt="Rose Pine Dawn"><br><sub>Rose Pine Dawn</sub></td>
+<td align="center" valign="middle"><b>+ Material You</b><br><sub>colors from your wallpaper<br>(<code>lyne theme auto</code>)</sub></td>
+</tr>
+</table>
+
+A theme sets the colors of:
+
+| Target | What changes |
+| --- | --- |
+| Quickshell | Every panel, with a color fade on switches |
+| Hyprland | Active and inactive borders, shadow (faded too) |
+| kitty | Terminal palette, cursor, tabs |
+| Neovim | The `lyne` colorscheme, sent to running instances |
+| GTK / Qt / KDE apps | Colors and light or dark variant |
+| Zen Browser | Toolbars, tabs and menus (`lyne zen enable`) |
+| Wallpaper | The theme's wallpaper (optional) |
+
+## Install
+
+**Requirements:** Arch Linux (or a close derivative) with `git`, a user with `sudo`, and an internet connection.
 
 ```bash
 git clone https://github.com/caioax/lyne-dots.git ~/.lyne-dots
@@ -89,226 +202,195 @@ cd ~/.lyne-dots
 ./install.sh
 ```
 
-The installer is interactive and lets you pick which package categories to install. After finishing, it will prompt you to reboot.
+The installer asks everything first:
 
-| Category     | Packages                           |
-| ------------ | ---------------------------------- |
-| `core`       | Hyprland, UWSM, portal             |
-| `terminal`   | Kitty, Zsh, Tmux, Fastfetch        |
-| `editor`     | Neovim + development tools         |
-| `apps`       | Dolphin, Zen Browser, Spotify, mpv |
-| `utils`      | Clipboard, playerctl, audio, etc   |
-| `fonts`      | Nerd Fonts, cursors, icons         |
-| `quickshell` | QuickShell bar/shell               |
-| `theming`    | Qt/GTK theming                     |
-| `nvidia`     | NVIDIA drivers (only if needed)    |
+1. **Packages:** pick categories (core, terminal, editor, apps, utils, fonts, quickshell, theming).
+2. **Graphics:** the GPUs it found; for NVIDIA, the driver (open or 580xx, optionally 32-bit) and its environment; on hybrid laptops, which GPU renders.
+3. **Reboot** when done, then a review screen.
 
-### Advanced Options
+After the sudo password (asked once, kept alive), it installs without further questions, with a progress bar and the latest output. Files already in place go to `~/.lyne-dots-backup/<date>/`; the full log is in `~/.cache/lyne/install-<date>.log`.
 
-```bash
-./install.sh --stow-only       # Only create symlinks
-./install.sh --setup-only      # Only run Hyprland setup
-./install.sh --packages core   # Install a single category
-```
+<details>
+<summary><b>Installer options</b></summary>
 
-See [.install/README.md](.install/README.md) for more details.
+| Option | What it does |
+| --- | --- |
+| `--dry-run` | Change nothing: a throwaway HOME and stand-ins for sudo, pacman, yay... |
+| `--answers FILE` | Unattended: answers as `id=value` lines (`categories=`, `nvidia=`, `gpu_order=`, `reboot=`) |
+| `--packages NAME` | Install one category (`--packages nvidia` installs or fixes the driver) |
+| `--stow-only` | Only link the dotfiles with GNU Stow |
+| `--setup-only` | Only create the local Hyprland files |
 
----
+More in [.install/README.md](.install/README.md).
 
-## 🔧 Lyne CLI
+</details>
 
-Lyne Dots includes a built-in CLI tool called `lyne` for managing the dotfiles. It is loaded automatically via `.zshrc`.
-
-### Usage
-
-```
-lyne <command> [args...]
-```
-
-### Commands
-
-| Command   | Description                                         |
-| --------- | --------------------------------------------------- |
-| `theme`   | Manage themes (set, list, auto, scheme)             |
-| `state`   | Manage `state.json` (edit, sync, rebuild)           |
-| `migrate` | Manage migrations (run, list, done)                 |
-| `update`  | Pull latest changes, sync state, and run migrations |
-| `git`     | Run git commands in the dotfiles repo               |
-| `reload`  | Reload QuickShell                                   |
-| `help`    | Show available commands                             |
-
-Run `lyne <command> --help` for details and subcommands.
-
-### Examples
+## Update
 
 ```bash
-# Show current theme info
-lyne theme
-
-# List all available themes (dark and light)
-lyne theme list
-
-# Switch to a specific theme preset
-lyne theme set catppuccin-mocha
-
-# Switch to Material You auto mode (colors from wallpaper)
-lyne theme auto
-
-# Toggle between dark and light scheme
-lyne theme scheme light
-
-# Pull the latest changes and apply migrations
 lyne update
-
-# Check the git status of the dotfiles
-lyne git status
-
-# Edit the QuickShell state configuration
-lyne state
-
-# Sync state.json after a manual defaults.json update
-lyne state sync
-
-# Check which migrations are pending
-lyne migrate list
-
-# Show help for a specific command
-lyne state --help
 ```
 
----
+Pulls the repository, adds new settings to your `state.json` without touching the ones you changed, runs pending migrations (new packages, moved files) and reloads Quickshell. Settings › System › About shows when an update is available and runs it for you.
 
-## ⌨️ Keybindings
+> [!NOTE]
+> `lyne update` runs `git reset --hard` in `~/.lyne-dots`. Keep personal changes in `~/.config/hypr/local/` or in Settings, which are not tracked.
 
-### Apps
+## Reference
 
-| Keybind          | Action                 |
-| ---------------- | ---------------------- |
-| `Super + Return` | Terminal (Kitty)       |
-| `Super + D`      | File Manager (Dolphin) |
-| `Super + Z`      | Browser (Zen Browser)  |
-| `Super + Space`  | App Launcher           |
+<details>
+<summary><b>lyne CLI</b></summary>
 
-### Windows
+`lyne` is installed to `~/.local/bin`. Run `lyne <command> --help` for subcommands.
 
-| Keybind                   | Action                          |
-| ------------------------- | ------------------------------- |
-| `Super + Q`               | Kill window                     |
-| `Super + F`               | Fullscreen                      |
-| `Super + Shift + F`       | Fullscreen (pinned)             |
-| `Super + Shift + Space`   | Toggle floating                 |
-| `Super + Tab`             | Toggle split                    |
-| `Super + P`               | Pseudo tile                     |
-| `Super + H J K L`         | Move focus (left/down/up/right) |
-| `Super + Shift + H J K L` | Move window                     |
-| `Super + Alt + H J K L`   | Resize window                   |
+| Command | Description |
+| --- | --- |
+| `lyne theme` | Show the theme; `list`, `set <name>`, `auto` (Material You), `scheme dark\|light` |
+| `lyne update` | Pull, sync `state.json`, run migrations, reload Quickshell |
+| `lyne reload` | Restart Quickshell |
+| `lyne state` | Edit `state.json`; `sync`, `rebuild` |
+| `lyne migrate` | `list`, `run`, `done` for migrations |
+| `lyne monitors` | Monitor rules from Settings; revert a trial or reset them |
+| `lyne workspaces` | Each monitor's workspace blocks |
+| `lyne keyboard` | Layouts, options and per-keyboard layouts |
+| `lyne autostart` | What starts at login |
+| `lyne gpu` | GPUs found; `order`, `links` |
+| `lyne nvidia` | NVIDIA driver status; `install` installs or fixes it |
+| `lyne zen` | Zen Browser profiles that follow the theme |
+| `lyne git` | Run git in the dotfiles repository |
 
-### Workspaces
+</details>
 
-| Keybind                        | Action                               |
-| ------------------------------ | ------------------------------------ |
-| `Super + 1-0`                  | Switch to workspace 1-10             |
-| `Super + Shift + 1-0`          | Move window to workspace 1-10        |
-| `Super + Ctrl + H / L`         | Previous / Next workspace            |
-| `Super + Ctrl + Shift + H / L` | Move window to prev / next workspace |
-| `Super + W`                    | Toggle WhatsApp workspace            |
-| `Super + M`                    | Toggle Spotify workspace             |
-| `Super + S`                    | Toggle Magic workspace               |
+<details>
+<summary><b>Keybindings</b></summary>
 
-### System
+Every bind below can be changed or turned off in Settings › Hyprland › Keybinds (<kbd>Super</kbd> + <kbd>/</kbd>), where you can also add your own. <kbd>Super</kbd> + left / right drag moves / resizes windows.
 
-| Keybind             | Action            |
-| ------------------- | ----------------- |
-| `Super + B`         | Wallpaper Picker  |
-| `Super + /`         | Keybinds Help     |
-| `Super + V`         | Clipboard History |
-| `Super + End`       | Power Menu        |
-| `Print`             | Screenshot        |
-| `Super + = / -`     | Zoom in / out     |
-| `Super + Shift + R` | Reload QuickShell |
+<!-- keybinds:start -->
 
-### Media
+**Apps**
 
-| Keybind           | Action                         |
-| ----------------- | ------------------------------ |
-| `Volume Keys`     | Volume up / down / mute        |
-| `Brightness Keys` | Brightness up / down           |
-| `Media Keys`      | Play / Pause / Next / Previous |
+| Keys | Action |
+| --- | --- |
+| <kbd>Super</kbd> + <kbd>Enter</kbd> | Terminal |
+| <kbd>Super</kbd> + <kbd>D</kbd> | File manager |
+| <kbd>Super</kbd> + <kbd>Z</kbd> | Browser |
 
----
+**Windows**
 
-## 📁 Structure
+| Keys | Action |
+| --- | --- |
+| <kbd>Super</kbd> + <kbd>Q</kbd> | Close window |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>Space</kbd> | Toggle floating |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> | Maximize |
+| <kbd>Super</kbd> + <kbd>F</kbd> | Fullscreen |
+| <kbd>Super</kbd> + <kbd>Tab</kbd> | Toggle split |
+| <kbd>Super</kbd> + <kbd>H / L / K / J</kbd> | Focus left / right / up / down |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>H / L / K / J</kbd> | Move window left / right / up / down |
+| <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>H</kbd> | Shrink width |
+| <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>L</kbd> | Grow width |
+| <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd> | Shrink height |
+| <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>J</kbd> | Grow height |
 
-Each top-level directory is a [GNU Stow](https://www.gnu.org/software/stow/) package that gets symlinked into `$HOME`.
+**Workspaces**
 
-| Directory     | Description                                                                          |
-| ------------- | ------------------------------------------------------------------------------------ |
-| `hyprland/`   | Hyprland compositor config (appearance, keybinds, rules)                             |
-| `quickshell/` | QML shell: bar, launcher, notifications, quick settings                              |
-| `nvim/`       | Neovim config with lazy.nvim plugin manager                                          |
-| `tmux/`       | Tmux config with TPM and Smart Splits integration                                    |
-| `kitty/`      | Kitty terminal config with dynamic themes                                            |
-| `zsh/`        | Zsh config with Oh-My-Zsh and Powerlevel10k                                          |
-| `local/`      | Custom scripts, wallpapers (`~/.local/wallpapers/`), and themes (`~/.local/themes/`) |
-| `fastfetch/`  | System info display config                                                           |
-| `theming/`    | GTK3/4 and Qt5/6 theme settings                                                      |
-| `kde/`        | KDE Plasma global settings (colors, icons, fonts)                                    |
+| Keys | Action |
+| --- | --- |
+| <kbd>Super</kbd> + <kbd>1–0</kbd> | Go to workspace 1–10 |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>1–0</kbd> | Move window to workspace 1–10 |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>L</kbd> or <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Right</kbd> | Next workspace |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>H</kbd> or <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Left</kbd> | Previous workspace |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd> or <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Right</kbd> | Move window to next workspace |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd> or <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Left</kbd> | Move window to previous workspace |
 
-### Other Directories
+**Media**
 
-| Directory         | Description                                       |
-| ----------------- | ------------------------------------------------- |
-| `.install/`       | Installation scripts and package lists            |
-| `.data/`          | Templates, default themes, and default wallpapers |
-| `.data/lyne-cli/` | CLI commands, libraries, and migrations           |
+| Keys | Action |
+| --- | --- |
+| <kbd>Volume Up</kbd> | Volume up |
+| <kbd>Volume Down</kbd> | Volume down |
+| <kbd>Mute</kbd> | Mute |
+| <kbd>Mic Mute</kbd> | Mute microphone |
+| <kbd>Brightness Up</kbd> | Brightness up |
+| <kbd>Brightness Down</kbd> | Brightness down |
+| <kbd>Next</kbd> | Next track |
+| <kbd>Pause</kbd> or <kbd>Play</kbd> | Play / pause |
+| <kbd>Previous</kbd> | Previous track |
 
----
+**Shell**
 
-## 🛠️ Tech Stack
+| Keys | Action |
+| --- | --- |
+| <kbd>Super</kbd> + <kbd>=</kbd> | Zoom in |
+| <kbd>Super</kbd> + <kbd>-</kbd> | Zoom out |
+| <kbd>Super (tap)</kbd> | App launcher |
+| <kbd>Super</kbd> + <kbd>V</kbd> | Clipboard history |
+| <kbd>Print</kbd> | Screenshot |
+| <kbd>Super</kbd> + <kbd>End</kbd> | Power menu |
+| <kbd>Super</kbd> + <kbd>Esc</kbd> | Lock screen |
+| <kbd>Super</kbd> + <kbd>B</kbd> | Wallpapers |
+| <kbd>Super</kbd> + <kbd>I</kbd> | Settings |
+| <kbd>Super</kbd> + <kbd>/</kbd> | Keybinds |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>R</kbd> | Reload Quickshell |
 
-| Component       | Tool            |
-| --------------- | --------------- |
-| Compositor      | Hyprland        |
-| Session Manager | UWSM            |
-| Desktop Shell   | QuickShell      |
-| Terminal        | Kitty           |
-| Shell           | Zsh + Oh-My-Zsh |
-| Multiplexer     | Tmux            |
-| Editor          | Neovim          |
-| Wallpaper       | awww            |
-| Auto Theming    | matugen         |
-| File Manager    | Dolphin         |
-| Browser         | Zen Browser     |
-| AUR Helper      | yay             |
-| Dotfile Manager | GNU Stow        |
+**Keyboard**
 
----
+| Keys | Action |
+| --- | --- |
+| <kbd>Super</kbd> + <kbd>Space</kbd> | Next keyboard layout |
 
-## ⚙️ Customization
+**Special workspaces**
 
-Machine-specific configs are kept in `~/.config/hypr/local/` and are not tracked by git. The install script generates these from templates in `.data/hyprland/templates/` on first run:
+| Keys | Action |
+| --- | --- |
+| <kbd>Super</kbd> + <kbd>W</kbd> | Toggle WhatsApp |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> | Move window to WhatsApp |
+| <kbd>Super</kbd> + <kbd>M</kbd> | Toggle Music |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>M</kbd> | Move window to Music |
+| <kbd>Super</kbd> + <kbd>S</kbd> | Toggle Scratchpad |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd> | Move window to Scratchpad |
 
-- `monitors.lua` - Monitor layout
-- `workspaces.lua` - Workspace mapping
-- `extra_environment.lua` - Local environment variables
-- `autostart.lua` - Local autostart programs
-- `extra_keybinds.lua` - Local keybinds
+<!-- keybinds:end -->
 
-### Wallpapers
+</details>
 
-Wallpapers live in `~/.local/wallpapers/` (git-ignored, defaults copied on install) and are managed through the QuickShell wallpaper picker (`Super + B`). Features include:
+<details>
+<summary><b>Repository layout</b></summary>
 
-- **Search** by filename
-- **Favorites** with persistent state
-- **Theme wallpapers** organized in `~/.local/wallpapers/themes/{theme-name}/`
-- Each theme can have multiple wallpapers; the active one is set from the picker and applied automatically on theme switch
+Each top-level folder is a [GNU Stow](https://www.gnu.org/software/stow/) package linked into `$HOME`.
 
-### Adding Themes
+| Folder | Contents |
+| --- | --- |
+| `quickshell/` | The shell: bar, launcher, dashboard, notifications, OSD, lock, power, screenshots, Settings |
+| `hyprland/` | Hyprland config in Lua (`conf/`), plus `local/` for per-machine files |
+| `kitty/`, `zsh/`, `tmux/`, `nvim/` | Terminal, shell (Oh My Zsh + Powerlevel10k), multiplexer, editor |
+| `theming/`, `kde/` | GTK 3/4, Qt 5/6 and KDE color settings |
+| `fastfetch/` | System info |
+| `local/` | Scripts, the `lyne` command, themes and wallpapers (`~/.local/`) |
+| `.install/` | Installer libraries, package lists and setup |
+| `.data/` | Default themes, wallpapers and their generator, state defaults, CLI commands and migrations |
 
-Themes are JSON files in `~/.local/themes/` (git-ignored, defaults copied from `.data/themes/` on install). Each theme defines colors for the palette, terminal, Hyprland, Neovim, GTK/Qt, and a wallpaper path. Light themes include a `"variant": "light"` field and a `"darkPair"` field linking them to their dark counterpart. To create a new theme, copy an existing one and modify the values.
+</details>
 
----
+<details>
+<summary><b>Customization</b></summary>
 
-## 🙏 Credits
+- **Settings first.** Almost everything is in Settings (<kbd>Super</kbd> + <kbd>I</kbd>). Its values live in `~/.config/quickshell/state.json`; `lyne state` opens it.
+- **Machine-specific Hyprland files** live in `~/.config/hypr/local/` (not tracked). Settings writes `settings.lua`, `monitors.lua` and `gpus.lua` there; any other `.lua` file you add is loaded too.
+- **Themes** are JSON files in `~/.local/themes/`. Create one in Settings › Theme › New theme, or copy a file from `.data/themes/`.
+- **Wallpapers** live in `~/.local/wallpapers/`, with each theme's in `themes/<theme>/`. `.data/wallpapers/generator/generate.py --theme-file <json>` renders the lake, waves and contour wallpapers for any palette.
 
-- Screenshot implementation inspired by [HyprQuickFrame](https://github.com/Ronin-CK/HyprQuickFrame)
+</details>
+
+## Credits
+
+- [Caelestia shell](https://github.com/caelestia-dots/shell): inspiration for many of the shell's panels and its Settings
+- [HyprQuickFrame](https://github.com/Ronin-CK/HyprQuickFrame): the screenshot tool's starting point
+- [Quickshell](https://quickshell.org), [Hyprland](https://hypr.land), [matugen](https://github.com/InioX/matugen), [awww](https://codeberg.org/LGFae/awww), [cliphist](https://github.com/sentriz/cliphist), [cava](https://github.com/karlstav/cava), [tesseract](https://github.com/tesseract-ocr/tesseract)
+- Weather from [Open-Meteo](https://open-meteo.com); lyrics from [LRCLIB](https://lrclib.net) and NetEase
+
+<!-- Support: a donation section goes here later. -->
+
+## License
+
+[GPL-3.0](LICENSE)
