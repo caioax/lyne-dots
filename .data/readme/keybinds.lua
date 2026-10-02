@@ -53,7 +53,8 @@ lyne_specials_fallback()
 -- Key names as printed in the README
 local key_names = {
     ["return"] = "Enter", ["SUPER_L"] = "(tap)", ["slash"] = "/", ["equal"] = "=",
-    ["minus"] = "-", ["TAB"] = "Tab", ["Space"] = "Space", ["left"] = "Left",
+    ["minus"] = "-", ["comma"] = ",", ["period"] = ".", ["bracketleft"] = "[", ["bracketright"] = "]",
+    ["TAB"] = "Tab", ["Space"] = "Space", ["left"] = "Left",
     ["right"] = "Right", ["Escape"] = "Esc", ["Print"] = "Print",
     ["XF86AudioRaiseVolume"] = "Volume Up", ["XF86AudioLowerVolume"] = "Volume Down",
     ["XF86AudioMute"] = "Mute", ["XF86AudioMicMute"] = "Mic Mute",
@@ -65,8 +66,8 @@ local mod_names = { SUPER = "Super", SHIFT = "Shift", CTRL = "Ctrl", CONTROL = "
 
 local function pretty(keys)
     local parts = {}
-    for part in keys:gmatch("[^+]+") do
-        part = part:match("^%s*(.-)%s*$")
+    for raw in keys:gmatch("[^+]+") do
+        local part = raw:match("^%s*(.-)%s*$")
         table.insert(parts, mod_names[part:upper()] or key_names[part] or part)
     end
     -- "Super + (tap)" reads better as "Super (tap)"
@@ -80,7 +81,11 @@ for _, b in ipairs(binds) do
     if b.keys ~= "" then
         local keys = pretty(b.keys)
         local base = b.description:match("^(.-) %d+$")
+        -- Only an alternative when its main row exists: "(scrolling)" stays
         local alt = b.description:match("^(.-) %(.-%)$")
+        if alt and not by_desc[b.group .. "\0" .. alt] then
+            alt = nil
+        end
         local dir_base, dir = b.description:match("^(.-) (%a+)$")
         -- Only for modifier + key binds ("Volume up" is a key of its own)
         if not ({ left = true, right = true, up = true, down = true })[dir] or not keys:find(" + ", 1, true) then

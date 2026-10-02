@@ -261,7 +261,7 @@ Pulls the repository, adds new settings to your `state.json` without touching th
 <details>
 <summary><b>Keybindings</b></summary>
 
-Every bind below can be changed or turned off in Settings › Hyprland › Keybinds (<kbd>Super</kbd> + <kbd>/</kbd>), where you can also add your own. <kbd>Super</kbd> + left / right drag moves / resizes windows.
+Every bind below can be changed or turned off in Settings › Hyprland › Keybinds, where you can also add your own. <kbd>Super</kbd> + left / right drag moves / resizes windows.
 
 <!-- keybinds:start -->
 
@@ -279,9 +279,15 @@ Every bind below can be changed or turned off in Settings › Hyprland › Keybi
 | --- | --- |
 | <kbd>Super</kbd> + <kbd>Q</kbd> | Close window |
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>Space</kbd> | Toggle floating |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> | Maximize |
 | <kbd>Super</kbd> + <kbd>F</kbd> | Fullscreen |
-| <kbd>Super</kbd> + <kbd>Tab</kbd> | Toggle split |
+| <kbd>Super</kbd> + <kbd>Tab</kbd> | Split / swap with main / column width |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>Tab</kbd> | Previous column width (scrolling) |
+| <kbd>Super</kbd> + <kbd>,</kbd> | Swap column left (scrolling) |
+| <kbd>Super</kbd> + <kbd>.</kbd> | Swap column right (scrolling) |
+| <kbd>Super</kbd> + <kbd>[</kbd> | Join / leave previous column (scrolling) |
+| <kbd>Super</kbd> + <kbd>]</kbd> | Join / leave next column (scrolling) |
+| <kbd>Super</kbd> + <kbd>C</kbd> | Center column (scrolling) |
+| <kbd>Super</kbd> + <kbd>R</kbd> | Fit visible columns (scrolling) |
 | <kbd>Super</kbd> + <kbd>H / L / K / J</kbd> | Focus left / right / up / down |
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>H / L / K / J</kbd> | Move window left / right / up / down |
 | <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>H</kbd> | Shrink width |
@@ -295,10 +301,10 @@ Every bind below can be changed or turned off in Settings › Hyprland › Keybi
 | --- | --- |
 | <kbd>Super</kbd> + <kbd>1–0</kbd> | Go to workspace 1–10 |
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>1–0</kbd> | Move window to workspace 1–10 |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>L</kbd> or <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Right</kbd> | Next workspace |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>H</kbd> or <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Left</kbd> | Previous workspace |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd> or <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Right</kbd> | Move window to next workspace |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd> or <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Left</kbd> | Move window to previous workspace |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>L</kbd> | Next workspace |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>H</kbd> | Previous workspace |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd> | Move window to next workspace |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd> | Move window to previous workspace |
 
 **Media**
 
@@ -325,9 +331,7 @@ Every bind below can be changed or turned off in Settings › Hyprland › Keybi
 | <kbd>Print</kbd> | Screenshot |
 | <kbd>Super</kbd> + <kbd>End</kbd> | Power menu |
 | <kbd>Super</kbd> + <kbd>Esc</kbd> | Lock screen |
-| <kbd>Super</kbd> + <kbd>B</kbd> | Wallpapers |
 | <kbd>Super</kbd> + <kbd>I</kbd> | Settings |
-| <kbd>Super</kbd> + <kbd>/</kbd> | Keybinds |
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>R</kbd> | Reload Quickshell |
 
 **Keyboard**
@@ -344,8 +348,6 @@ Every bind below can be changed or turned off in Settings › Hyprland › Keybi
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> | Move window to WhatsApp |
 | <kbd>Super</kbd> + <kbd>M</kbd> | Toggle Music |
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>M</kbd> | Move window to Music |
-| <kbd>Super</kbd> + <kbd>S</kbd> | Toggle Scratchpad |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd> | Move window to Scratchpad |
 
 <!-- keybinds:end -->
 

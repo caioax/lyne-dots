@@ -9,6 +9,7 @@ ColumnLayout {
     id: root
 
     readonly property bool blurEnabled: StateService.get("hyprland.decoration.blur.enabled", true)
+    readonly property bool scrolling: StateService.get("hyprland.general.layout", "dwindle") === "scrolling"
 
     spacing: Config.spacing * 3
 
@@ -59,7 +60,7 @@ ColumnLayout {
 
         SelectRow {
             label: "Layout"
-            description: "Dwindle splits the focused window; Master keeps one main window and stacks the rest"
+            description: "Dwindle splits the focused window; Master keeps one main window and stacks the rest; Scrolling lays windows out in columns on a strip you scroll through"
             path: "hyprland.general.layout"
             options: [
                 {
@@ -69,6 +70,70 @@ ColumnLayout {
                 {
                     label: "Master",
                     value: "master"
+                },
+                {
+                    label: "Scrolling",
+                    value: "scrolling"
+                }
+            ]
+        }
+
+        SliderRow {
+            enabled: root.scrolling
+            label: "Column width"
+            description: "Width of new columns in the Scrolling layout; Super + Tab cycles the focused one"
+            path: "hyprland.scrolling.column_width"
+            from: 0.3
+            to: 1
+            stepSize: 0.05
+            format: v => Math.round(v * 100) + "%"
+        }
+
+        SelectRow {
+            enabled: root.scrolling
+            label: "Focused column"
+            description: "Fit just scrolls it into view; Center puts it in the middle of the screen"
+            path: "hyprland.scrolling.focus_fit_method"
+            options: [
+                {
+                    label: "Fit",
+                    value: 1
+                },
+                {
+                    label: "Center",
+                    value: 0
+                }
+            ]
+        }
+
+        ToggleRow {
+            enabled: root.scrolling
+            label: "Lone column fills the screen"
+            description: "A single column takes the whole width of the workspace"
+            path: "hyprland.scrolling.fullscreen_on_one_column"
+        }
+
+        SelectRow {
+            enabled: root.scrolling
+            label: "Direction"
+            description: "Where new columns appear and the strip scrolls"
+            path: "hyprland.scrolling.direction"
+            options: [
+                {
+                    label: "Right",
+                    value: "right"
+                },
+                {
+                    label: "Left",
+                    value: "left"
+                },
+                {
+                    label: "Down",
+                    value: "down"
+                },
+                {
+                    label: "Up",
+                    value: "up"
                 }
             ]
         }

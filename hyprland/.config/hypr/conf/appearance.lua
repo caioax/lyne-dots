@@ -164,6 +164,16 @@ hl.config({
     },
 })
 
+-- See https://wiki.hypr.land/Configuring/Layouts/Scrolling-Layout/ for more
+hl.config({
+    scrolling = {
+        column_width             = 0.5,
+        focus_fit_method         = 1, -- 0 = center the focused column, 1 = just fit it into view
+        fullscreen_on_one_column = true,
+        direction                = "right",
+    },
+})
+
 hl.config({
     misc = {
         force_default_wallpaper = 0, -- Set to 0 or 1 to disable the anime mascot wallpapers

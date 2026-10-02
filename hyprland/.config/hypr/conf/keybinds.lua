@@ -60,9 +60,33 @@ bind("browser",      "Apps", "Browser",      mainMod .. " + Z",      open("brows
 
 bind("close-window",      "Windows", "Close window",       mainMod .. " + Q",             hl.dsp.window.close())
 bind("toggle-float",      "Windows", "Toggle floating",    mainMod .. " + SHIFT + Space", hl.dsp.window.float())
-bind("maximize",          "Windows", "Maximize",           mainMod .. " + SHIFT + F",     hl.dsp.window.fullscreen({ mode = "maximized" }))
+bind("maximize",          "Windows", "Maximize",           "",                            hl.dsp.window.fullscreen({ mode = "maximized" }))
 bind("fullscreen",        "Windows", "Fullscreen",         mainMod .. " + F",             hl.dsp.window.fullscreen({ mode = "fullscreen" }))
-bind("toggle-split",      "Windows", "Toggle split",       mainMod .. " + TAB",           hl.dsp.layout("togglesplit"))
+
+-- Super + Tab does what fits the workspace's layout (Settings > Windows >
+-- Tiling): dwindle flips the split, master swaps with the main window,
+-- scrolling cycles the column through scrolling:explicit_column_widths
+local function layout_action(messages)
+    return function()
+        local workspace = hl.get_active_workspace()
+        local layout = workspace and workspace.tiled_layout or hl.get_config("general.layout")
+        local message = messages[layout]
+        if message then
+            hl.dispatch(hl.dsp.layout(message))
+        end
+    end
+end
+
+bind("toggle-split",       "Windows", "Split / swap with main / column width", mainMod .. " + TAB",         layout_action({ dwindle = "togglesplit", master = "swapwithmaster", scrolling = "colresize +conf" }))
+bind("layout-action-back", "Windows", "Previous column width (scrolling)",      mainMod .. " + SHIFT + TAB", layout_action({ scrolling = "colresize -conf" }))
+
+-- Scrolling layout only: columns on a strip (see conf/appearance.lua)
+bind("swap-column-left",  "Windows", "Swap column left (scrolling)",             mainMod .. " + comma",        hl.dsp.layout("swapcol l"))
+bind("swap-column-right", "Windows", "Swap column right (scrolling)",            mainMod .. " + period",       hl.dsp.layout("swapcol r"))
+bind("join-column-prev",  "Windows", "Join / leave previous column (scrolling)", mainMod .. " + bracketleft",  hl.dsp.layout("consume_or_expel prev"))
+bind("join-column-next",  "Windows", "Join / leave next column (scrolling)",     mainMod .. " + bracketright", hl.dsp.layout("consume_or_expel next"))
+bind("center-column",     "Windows", "Center column (scrolling)",                mainMod .. " + C",            hl.dsp.layout("center"))
+bind("fit-columns",       "Windows", "Fit visible columns (scrolling)",          mainMod .. " + R",            hl.dsp.layout("fit visible"))
 
 -- Move focus
 bind("focus-left",  "Windows", "Focus left",  mainMod .. " + H", hl.dsp.focus({ direction = "l" }))
@@ -123,15 +147,15 @@ local function go_step(direction) return function() workspaces.step(direction) e
 local function move_step(direction) return function() workspaces.move_step(direction) end end
 
 bind("workspace-next",     "Workspaces", "Next workspace",             mainMod .. " + CTRL + L",     go_step(1),  navOpts)
-bind("workspace-next-alt", "Workspaces", "Next workspace (arrow)",     mainMod .. " + CTRL + right", go_step(1),  navOpts)
+bind("workspace-next-alt", "Workspaces", "Next workspace (arrow)",     "",                           go_step(1),  navOpts)
 bind("workspace-prev",     "Workspaces", "Previous workspace",         mainMod .. " + CTRL + H",     go_step(-1), navOpts)
-bind("workspace-prev-alt", "Workspaces", "Previous workspace (arrow)", mainMod .. " + CTRL + left",  go_step(-1), navOpts)
+bind("workspace-prev-alt", "Workspaces", "Previous workspace (arrow)", "",                           go_step(-1), navOpts)
 
 -- --- Move Window + Navigation ---
 bind("move-to-next",     "Workspaces", "Move window to next workspace",             mainMod .. " + CTRL + SHIFT + L",     move_step(1),  navOpts)
-bind("move-to-next-alt", "Workspaces", "Move window to next workspace (arrow)",     mainMod .. " + CTRL + SHIFT + right", move_step(1),  navOpts)
+bind("move-to-next-alt", "Workspaces", "Move window to next workspace (arrow)",     "",                                   move_step(1),  navOpts)
 bind("move-to-prev",     "Workspaces", "Move window to previous workspace",         mainMod .. " + CTRL + SHIFT + H",     move_step(-1), navOpts)
-bind("move-to-prev-alt", "Workspaces", "Move window to previous workspace (arrow)", mainMod .. " + CTRL + SHIFT + left",  move_step(-1), navOpts)
+bind("move-to-prev-alt", "Workspaces", "Move window to previous workspace (arrow)", "",                                   move_step(-1), navOpts)
 
 -- ==============================================================================
 -- AUDIO, BRIGHTNESS & MEDIA
@@ -167,9 +191,9 @@ bind("clipboard-history", "Shell", "Clipboard history", mainMod .. " + V",      
 bind("screenshot",        "Shell", "Screenshot",        "Print",                   hl.dsp.global("quickshell:take_screenshot"))
 bind("power-menu",        "Shell", "Power menu",        mainMod .. " + End",       hl.dsp.global("quickshell:power_menu"))
 bind("lock-screen",       "Shell", "Lock screen",       mainMod .. " + Escape",    hl.dsp.global("quickshell:lock_screen"))
-bind("wallpapers",        "Shell", "Wallpapers",        mainMod .. " + B",         hl.dsp.global("quickshell:wallpaper_picker"))
+bind("wallpapers",        "Shell", "Wallpapers",        "",                        hl.dsp.global("quickshell:wallpaper_picker"))
 bind("settings",          "Shell", "Settings",          mainMod .. " + I",         hl.dsp.global("quickshell:settings"))
-bind("keybinds",          "Shell", "Keybinds",          mainMod .. " + slash",     hl.dsp.global("quickshell:keybinds_help"))
+bind("keybinds",          "Shell", "Keybinds",          "",                        hl.dsp.global("quickshell:keybinds_help"))
 bind("reload",            "Shell", "Reload Quickshell", mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("lyne reload"))
 
 -- ==============================================================================

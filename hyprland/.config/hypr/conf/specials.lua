@@ -27,7 +27,6 @@ end
 local defaults = {
     { id = "whatsapp", name = "WhatsApp",   command = "zapzap",  class = "^(com\\.rtosta\\.zapzap)$", keys = "SUPER + W", move_keys = "SUPER + SHIFT + W", autostart = false },
     { id = "music",    name = "Music",      command = "spotify", class = "^([Ss]potify)$",            keys = "SUPER + M", move_keys = "SUPER + SHIFT + M", autostart = false },
-    { id = "magic",    name = "Scratchpad", command = "",        class = "",                          keys = "SUPER + S", move_keys = "SUPER + SHIFT + S", autostart = false },
 }
 
 -- Set once lyne_specials() ran in this config load

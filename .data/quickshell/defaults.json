@@ -177,6 +177,12 @@
             "border_size": 2,
             "layout": "dwindle"
         },
+        "scrolling": {
+            "column_width": 0.5,
+            "focus_fit_method": 1,
+            "fullscreen_on_one_column": true,
+            "direction": "right"
+        },
         "decoration": {
             "rounding": 7,
             "inactive_opacity": 1.0,
@@ -235,17 +241,6 @@
                 "class": "^([Ss]potify)$",
                 "keys": "SUPER + M",
                 "moveKeys": "SUPER + SHIFT + M",
-                "autostart": false
-            },
-            {
-                "id": "magic",
-                "name": "Scratchpad",
-                "icon": "󰀘",
-                "color": "warning",
-                "command": "",
-                "class": "",
-                "keys": "SUPER + S",
-                "moveKeys": "SUPER + SHIFT + S",
                 "autostart": false
             }
         ]
