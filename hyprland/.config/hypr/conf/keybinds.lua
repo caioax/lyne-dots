@@ -90,17 +90,27 @@ bind("join-column-next",  "Windows", "Join / leave next column (scrolling)",    
 bind("center-column",     "Windows", "Center column (scrolling)",                mainMod .. " + C",            hl.dsp.layout("center"))
 bind("fit-columns",       "Windows", "Fit visible columns (scrolling)",          mainMod .. " + R",            hl.dsp.layout("fit visible"))
 
--- Move focus
+-- Move focus. The "(arrow)" binds have no keys by default: the navigation
+-- keys preset (Settings › Hyprland › Keybinds, conf/bind_presets.lua) gives
+-- them the arrow keys when "Both" is chosen
 bind("focus-left",  "Windows", "Focus left",  mainMod .. " + H", hl.dsp.focus({ direction = "l" }))
 bind("focus-right", "Windows", "Focus right", mainMod .. " + L", hl.dsp.focus({ direction = "r" }))
 bind("focus-up",    "Windows", "Focus up",    mainMod .. " + K", hl.dsp.focus({ direction = "u" }))
 bind("focus-down",  "Windows", "Focus down",  mainMod .. " + J", hl.dsp.focus({ direction = "d" }))
+bind("focus-left-alt",  "Windows", "Focus left (arrow)",  "", hl.dsp.focus({ direction = "l" }))
+bind("focus-right-alt", "Windows", "Focus right (arrow)", "", hl.dsp.focus({ direction = "r" }))
+bind("focus-up-alt",    "Windows", "Focus up (arrow)",    "", hl.dsp.focus({ direction = "u" }))
+bind("focus-down-alt",  "Windows", "Focus down (arrow)",  "", hl.dsp.focus({ direction = "d" }))
 
 -- Move position
 bind("move-left",  "Windows", "Move window left",  mainMod .. " + SHIFT + H", hl.dsp.window.move({ direction = "l" }))
 bind("move-right", "Windows", "Move window right", mainMod .. " + SHIFT + L", hl.dsp.window.move({ direction = "r" }))
 bind("move-up",    "Windows", "Move window up",    mainMod .. " + SHIFT + K", hl.dsp.window.move({ direction = "u" }))
 bind("move-down",  "Windows", "Move window down",  mainMod .. " + SHIFT + J", hl.dsp.window.move({ direction = "d" }))
+bind("move-left-alt",  "Windows", "Move window left (arrow)",  "", hl.dsp.window.move({ direction = "l" }))
+bind("move-right-alt", "Windows", "Move window right (arrow)", "", hl.dsp.window.move({ direction = "r" }))
+bind("move-up-alt",    "Windows", "Move window up (arrow)",    "", hl.dsp.window.move({ direction = "u" }))
+bind("move-down-alt",  "Windows", "Move window down (arrow)",  "", hl.dsp.window.move({ direction = "d" }))
 
 -- Resize window
 local resizeOpts = { repeating = true, locked = true }
@@ -108,6 +118,10 @@ bind("resize-left",  "Windows", "Shrink width",   mainMod .. " + ALT + H", hl.ds
 bind("resize-right", "Windows", "Grow width",     mainMod .. " + ALT + L", hl.dsp.window.resize({ x = 20,  y = 0, relative = true }), { repeating = true, locked = true })
 bind("resize-up",    "Windows", "Shrink height",  mainMod .. " + ALT + K", hl.dsp.window.resize({ x = 0, y = -20, relative = true }), { repeating = true, locked = true })
 bind("resize-down",  "Windows", "Grow height",    mainMod .. " + ALT + J", hl.dsp.window.resize({ x = 0, y = 20,  relative = true }), { repeating = true, locked = true })
+bind("resize-left-alt",  "Windows", "Shrink width (arrow)",  "", hl.dsp.window.resize({ x = -20, y = 0, relative = true }), resizeOpts)
+bind("resize-right-alt", "Windows", "Grow width (arrow)",    "", hl.dsp.window.resize({ x = 20,  y = 0, relative = true }), resizeOpts)
+bind("resize-up-alt",    "Windows", "Shrink height (arrow)", "", hl.dsp.window.resize({ x = 0, y = -20, relative = true }), resizeOpts)
+bind("resize-down-alt",  "Windows", "Grow height (arrow)",   "", hl.dsp.window.resize({ x = 0, y = 20,  relative = true }), resizeOpts)
 
 -- Drag windows with mouse (mouse buttons can't be recorded in Settings)
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })

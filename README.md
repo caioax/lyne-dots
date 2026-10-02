@@ -261,7 +261,7 @@ Pulls the repository, adds new settings to your `state.json` without touching th
 <details>
 <summary><b>Keybindings</b></summary>
 
-Every bind below can be changed or turned off in Settings › Hyprland › Keybinds, where you can also add your own. <kbd>Super</kbd> + left / right drag moves / resizes windows.
+Every bind below can be changed or turned off in Settings › Hyprland › Keybinds, where you can also add your own. Prefer the arrow keys over H / J / K / L? Pick Arrows (or Both) under Navigation keys there. <kbd>Super</kbd> + left / right drag moves / resizes windows.
 
 <!-- keybinds:start -->
 

@@ -251,6 +251,14 @@ ColumnLayout {
         }
     }
 
+    // ================= NAVIGATION =================
+    SettingsGroup {
+        title: "Navigation"
+        visible: KeybindsService.catalog.length > 0 && root.matches("Navigation keys vim arrows", "")
+
+        NavKeysPicker {}
+    }
+
     // ================= CUSTOM =================
     SettingsGroup {
         title: "Custom"

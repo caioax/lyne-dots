@@ -61,9 +61,15 @@ Singleton {
     // the file: binds added by `hyprctl eval` would stack up until a reload
     readonly property var bindOverrides: StateService.get("keybinds.overrides", [])
     readonly property var customBinds: StateService.get("keybinds.custom", [])
+    // Navigation keys preset (conf/bind_presets.lua); "vim" is the keys of
+    // conf/keybinds.lua, nothing to call
+    readonly property string bindPreset: StateService.get("keybinds.preset", "vim")
     readonly property string bindsLua: {
         // Before the overrides: they may move these binds
         let out = appsLua + specialsLua + workspacesLua + autostartLua + keyboardsLua;
+        // The preset changes the default keys, the overrides go on top
+        if (bindPreset !== "vim")
+            out += "\n-- Navigation keys (lyne_bind_preset is defined in conf/binds.lua)\nif lyne_bind_preset then\n    lyne_bind_preset(" + _luaString(bindPreset) + ")\nend\n";
         if (bindOverrides.length > 0) {
             out += "\n-- Keybinds changed in Settings (lyne_rebind is defined in conf/binds.lua)\n";
             out += "if lyne_rebind then\n";

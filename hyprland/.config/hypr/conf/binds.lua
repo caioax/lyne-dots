@@ -125,18 +125,59 @@ function lyne_rebind(id, keys)
     end
 end
 
+-- Navigation keys preset (conf/bind_presets.lua): new default keys for the
+-- binds it lists. Called by local/settings.lua before its lyne_rebind()
+-- calls, so the keys changed in Settings stay on top of it
+local function load_presets()
+    local ok, presets = pcall(require, "conf/bind_presets")
+    if not ok then
+        print("[keybinds] conf/bind_presets.lua failed: " .. tostring(presets))
+        return {}
+    end
+    return presets
+end
+
+function lyne_bind_preset(name)
+    local preset = load_presets()[name]
+    if not preset then
+        return
+    end
+    -- Sorted: the same order on every load
+    local ids = {}
+    for id in pairs(preset) do
+        table.insert(ids, id)
+    end
+    table.sort(ids)
+    for _, id in ipairs(ids) do
+        local entry = LYNE_BINDS.by_id[id]
+        if entry then
+            entry.default = preset[id]
+            lyne_rebind(id, preset[id])
+        end
+    end
+    M.export()
+end
+
 local function json_string(s)
     s = s:gsub("\\", "\\\\"):gsub('"', '\\"'):gsub("\n", "\\n")
     return '"' .. s .. '"'
 end
 
--- Writes the default keys of every bind() for Quickshell
+-- Writes the default keys of every bind() for Quickshell; "preset" marks
+-- the binds a navigation preset can move
 function M.export()
+    local in_preset = {}
+    for _, preset in pairs(load_presets()) do
+        for id in pairs(preset) do
+            in_preset[id] = true
+        end
+    end
     local items = {}
     for _, b in ipairs(LYNE_BINDS.list) do
         table.insert(items, string.format(
-            '{"id":%s,"group":%s,"description":%s,"keys":%s}',
-            json_string(b.id), json_string(b.group), json_string(b.description), json_string(b.default)))
+            '{"id":%s,"group":%s,"description":%s,"keys":%s,"preset":%s}',
+            json_string(b.id), json_string(b.group), json_string(b.description), json_string(b.default),
+            tostring(in_preset[b.id] == true)))
     end
 
     local dir = os.getenv("XDG_RUNTIME_DIR") or "/tmp"

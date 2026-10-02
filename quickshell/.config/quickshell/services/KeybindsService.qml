@@ -15,13 +15,14 @@ Singleton {
 
     readonly property string catalogPath: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/lyne-keybinds.json"
 
-    // [{ id, group, description, keys }] with default keys
+    // [{ id, group, description, keys, preset }] with default keys (the
+    // navigation preset's where it moves them); preset: a preset can move it
     property var catalog: []
 
     readonly property var overrides: StateService.get("keybinds.overrides", [])
     readonly property var custom: StateService.get("keybinds.custom", [])
 
-    // Catalog with the user's keys: [{ id, group, description, keys, defaultKeys, changed }]
+    // Catalog with the user's keys: [{ id, group, description, keys, defaultKeys, changed, preset }]
     readonly property var binds: catalog.map(b => {
         const o = overrides.find(x => x.id === b.id);
         return {
@@ -30,10 +31,36 @@ Singleton {
             description: b.description,
             keys: o ? o.keys : b.keys,
             defaultKeys: b.keys,
-            changed: o !== undefined
+            changed: o !== undefined,
+            preset: b.preset === true
         };
     })
     readonly property var groups: [...new Set(catalog.map(b => b.group))]
+
+    // Navigation keys preset (hypr/conf/bind_presets.lua): the starting keys
+    // for focus, moving, resizing and workspace steps. It sets their default
+    // keys, so the overrides stay on top
+    readonly property string preset: StateService.get("keybinds.preset", "vim")
+    readonly property var presets: [
+        {
+            label: "Vim",
+            value: "vim"
+        },
+        {
+            label: "Arrows",
+            value: "arrows"
+        },
+        {
+            label: "Both",
+            value: "both"
+        }
+    ]
+    // Preset binds whose keys another shortcut also uses: [{ description, keys, others }]
+    readonly property var presetConflicts: binds.filter(b => b.preset).map(b => ({
+                description: b.description,
+                keys: b.keys,
+                others: conflicts(b.keys, b.id, -1)
+            })).filter(c => c.others.length > 0)
 
     // Binds Hyprland has that Settings doesn't manage (local/extra_keybinds.lua,
     // mouse binds...): [{ combo, label }], refreshed by refreshExternal()

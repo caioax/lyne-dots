@@ -216,6 +216,7 @@
         }
     },
     "keybinds": {
+        "preset": "vim",
         "overrides": [],
         "custom": []
     },
