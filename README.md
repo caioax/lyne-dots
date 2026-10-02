@@ -254,6 +254,7 @@ Pulls the repository, adds new settings to your `state.json` without touching th
 | `lyne gpu` | GPUs found; `order`, `links` |
 | `lyne nvidia` | NVIDIA driver status; `install` installs or fixes it |
 | `lyne zen` | Zen Browser profiles that follow the theme |
+| `lyne welcome` | Open the welcome screen again |
 | `lyne git` | Run git in the dotfiles repository |
 
 </details>

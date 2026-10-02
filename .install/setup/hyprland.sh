@@ -97,6 +97,10 @@ setup_quickshell() {
         if [[ -f "$DEFAULTS_FILE" ]]; then
             cp "$DEFAULTS_FILE" "$STATE_FILE"
             log_info "  Created: state.json (based on defaults.json)"
+            # A new state.json is a first install: the shell opens its
+            # welcome screen on the first login (WelcomeService). sed, not
+            # jq: jq comes with the optional utils packages
+            sed -i 's/"pending": false/"pending": true/' "$STATE_FILE"
         else
             # Create minimal state.json if defaults.json doesn't exist
             cat >"$STATE_FILE" <<'EOF'

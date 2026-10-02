@@ -24,6 +24,7 @@ singleton HolidayService HolidayService.qml
 singleton WeatherService WeatherService.qml
 singleton ProfileService ProfileService.qml
 singleton SettingsService SettingsService.qml
+singleton WelcomeService WelcomeService.qml
 singleton HyprlandSettingsService HyprlandSettingsService.qml
 singleton KeybindsService KeybindsService.qml
 singleton SpecialsService SpecialsService.qml

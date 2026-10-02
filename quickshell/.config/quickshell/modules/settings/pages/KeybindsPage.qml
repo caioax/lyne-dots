@@ -256,7 +256,10 @@ ColumnLayout {
         title: "Navigation"
         visible: KeybindsService.catalog.length > 0 && root.matches("Navigation keys vim arrows", "")
 
-        NavKeysPicker {}
+        // Label repeated here for the Settings search (it reads the page source)
+        NavKeysPicker {
+            label: "Navigation keys"
+        }
     }
 
     // ================= CUSTOM =================

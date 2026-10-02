@@ -14,6 +14,7 @@ import "./modules/notifications/"
 import "./modules/settings/"
 import "./modules/launcher/"
 import "./modules/osd/"
+import "./modules/welcome/"
 import qs.config
 
 ShellRoot {
@@ -190,6 +191,12 @@ ShellRoot {
     Loader {
         active: SettingsService.visible
         sourceComponent: SettingsWindow {}
+    }
+
+    // Welcome screen: on the first login after the install, or `lyne welcome`
+    Loader {
+        active: WelcomeService.visible
+        sourceComponent: WelcomeWindow {}
     }
 
     // Actions requested from the UI (Quick Settings shortcuts)

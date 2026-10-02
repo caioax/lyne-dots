@@ -251,6 +251,26 @@ ColumnLayout {
         }
     }
 
+    // ================= WELCOME =================
+    SettingsGroup {
+        title: "Welcome"
+
+        SettingRow {
+            id: welcomeRow
+
+            label: "Welcome screen"
+            description: "The first choices and the main shortcuts, as on the first login (also lyne welcome)"
+
+            // md-hand_wave_outline
+            ActionButton {
+                icon: "\u{f1822}"
+                text: "Open"
+                baseColor: welcomeRow.controlColor
+                onClicked: WelcomeService.open()
+            }
+        }
+    }
+
     // ================= UPDATES =================
     SettingsGroup {
         title: "Updates"

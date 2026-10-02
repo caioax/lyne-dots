@@ -239,7 +239,7 @@ Singleton {
 
     signal revealRequested
 
-    readonly property var rowTypes: ["SettingRow", "ToggleRow", "SliderRow", "StepperRow", "SelectRow", "TextFieldRow", "InfoRow", "TemplatePicker", "ColorEditRow"]
+    readonly property var rowTypes: ["SettingRow", "ToggleRow", "SliderRow", "StepperRow", "SelectRow", "TextFieldRow", "InfoRow", "TemplatePicker", "ColorEditRow", "NavKeysPicker"]
     readonly property string pagesDir: Qt.resolvedUrl("../modules/settings/pages/").toString().replace("file://", "")
 
     function pageFile(id: string): string {
