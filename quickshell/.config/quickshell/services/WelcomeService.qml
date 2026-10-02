@@ -26,6 +26,14 @@ Singleton {
             label: "Keyboard"
         },
         {
+            id: "windows",
+            label: "Windows"
+        },
+        {
+            id: "appearance",
+            label: "Look"
+        },
+        {
             id: "done",
             label: "All set"
         }

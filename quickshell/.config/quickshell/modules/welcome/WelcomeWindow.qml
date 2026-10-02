@@ -22,6 +22,8 @@ FloatingWindow {
     readonly property var stepComponents: ({
             intro: introStep,
             keyboard: keyboardStep,
+            windows: windowsStep,
+            appearance: appearanceStep,
             done: doneStep
         })
 
@@ -80,6 +82,16 @@ FloatingWindow {
     Component {
         id: keyboardStep
         WelcomeKeyboard {}
+    }
+
+    Component {
+        id: windowsStep
+        WelcomeWindows {}
+    }
+
+    Component {
+        id: appearanceStep
+        WelcomeAppearance {}
     }
 
     Component {
