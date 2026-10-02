@@ -79,6 +79,8 @@ end
 
 bind("toggle-split",       "Windows", "Split / swap with main / column width", mainMod .. " + TAB",         layout_action({ dwindle = "togglesplit", master = "swapwithmaster", scrolling = "colresize +conf" }))
 bind("layout-action-back", "Windows", "Previous column width (scrolling)",      mainMod .. " + SHIFT + TAB", layout_action({ scrolling = "colresize -conf" }))
+-- Dwindle → master → scrolling, saved like the Settings choice and shown in the OSD
+bind("cycle-layout",       "Windows", "Next window layout",                     mainMod .. " + CTRL + TAB",  hl.dsp.global("quickshell:cycle_tiling"))
 
 -- Scrolling layout only: columns on a strip (see conf/appearance.lua)
 bind("swap-column-left",  "Windows", "Swap column left (scrolling)",             mainMod .. " + comma",        hl.dsp.layout("swapcol l"))

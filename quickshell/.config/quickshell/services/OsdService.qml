@@ -21,7 +21,7 @@ Singleton {
     // Shown, or still playing the exit animation: keeps the window alive
     readonly property bool mapped: shown || exitTimer.running
     // "volume" | "brightness" | "mic" | "device" (the output changed: its
-    // name and volume)
+    // name and volume) | "layout" (keyboard) | "tiling" (window layout)
     property string kind: "volume"
     // Monitor focused when the OSD opened (osd.monitor "focused")
     property string screenName: ""
@@ -50,10 +50,19 @@ Singleton {
     // Keyboard layout switched (kind "layout"): its name and short tag
     property string layoutName: ""
     property string layoutBadge: ""
+    // Window layout switched (kind "tiling"): its name, icon and "2/3"
+    property string tilingName: ""
+    property string tilingIcon: ""
+    property string tilingBadge: ""
+
+    // Name shown instead of the level bar, and the tag in place of the
+    // percentage (keyboard and window layouts)
+    readonly property string text: kind === "layout" ? layoutName : kind === "tiling" ? tilingName : ""
+    readonly property string badge: kind === "layout" ? layoutBadge : kind === "tiling" ? tilingBadge : ""
 
     readonly property string label: {
-        if (kind === "layout")
-            return layoutName;
+        if (kind === "layout" || kind === "tiling")
+            return text;
         if (kind === "brightness")
             return monitorName || "Brightness";
         if (kind === "mic")
@@ -63,11 +72,13 @@ Singleton {
         return muted ? "Muted" : "Volume";
     }
     // Line of text above the level bar (pill and attached styles)
-    readonly property string caption: kind === "device" ? deviceName : kind === "brightness" ? monitorName : kind === "layout" ? "Keyboard layout" : ""
+    readonly property string caption: kind === "device" ? deviceName : kind === "brightness" ? monitorName : kind === "layout" ? "Keyboard layout" : kind === "tiling" ? "Window layout" : ""
 
     readonly property string icon: {
         if (kind === "layout")
             return "\u{f030c}"; // md-keyboard
+        if (kind === "tiling")
+            return tilingIcon;
         if (kind === "mic")
             return AudioService.sourceIcon;
         if (kind === "device")
@@ -117,7 +128,7 @@ Singleton {
     // ========================================================================
 
     function show(kind: string) {
-        if ((kind === "mic" && !Config.osdMic) || (kind === "device" && !Config.osdDevice) || (kind === "layout" && !Config.osdLayout))
+        if ((kind === "mic" && !Config.osdMic) || (kind === "device" && !Config.osdDevice) || (kind === "layout" && !Config.osdLayout) || (kind === "tiling" && !Config.osdTiling))
             return;
         root.kind = kind;
         if (!root.shown)
@@ -144,10 +155,22 @@ Singleton {
         show("layout");
     }
 
-    // Wheel on the OSD: steps the level it shows (the layout for "layout")
+    function showTiling(name: string, icon: string, badge: string) {
+        tilingName = name;
+        tilingIcon = icon;
+        tilingBadge = badge;
+        show("tiling");
+    }
+
+    // Wheel on the OSD: steps the level it shows (the layout for "layout"
+    // and "tiling")
     function adjust(steps: int) {
         if (root.kind === "layout") {
             KeyboardService.switchLayout(steps > 0 ? "next" : "prev");
+            return;
+        }
+        if (root.kind === "tiling") {
+            HyprlandSettingsService.cycleTiling(steps);
             return;
         }
         if (root.kind === "brightness")

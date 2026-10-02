@@ -142,6 +142,12 @@ ColumnLayout {
             path: "osd.layout"
         }
 
+        ToggleRow {
+            label: "Window layout"
+            description: "Cycling the tiling layout (Super + Ctrl + Tab) shows the new one"
+            path: "osd.tiling"
+        }
+
         SelectRow {
             label: "Monitor"
             description: "Where the OSD shows up"

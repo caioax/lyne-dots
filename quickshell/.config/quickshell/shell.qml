@@ -341,6 +341,14 @@ ShellRoot {
         onPressed: SettingsService.toggle()
     }
 
+    // Shortcut: next window layout (dwindle → master → scrolling)
+    GlobalShortcut {
+        name: "cycle_tiling"
+        description: "Next window layout"
+
+        onPressed: HyprlandSettingsService.cycleTiling(1)
+    }
+
     // Shortcut: Keybinds (settings page)
     GlobalShortcut {
         name: "keybinds_help"

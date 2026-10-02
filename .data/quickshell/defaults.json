@@ -269,7 +269,8 @@
         "interactive": true,
         "mic": true,
         "device": true,
-        "layout": true
+        "layout": true,
+        "tiling": true
     },
     "audio": {
         "maxVolume": 100

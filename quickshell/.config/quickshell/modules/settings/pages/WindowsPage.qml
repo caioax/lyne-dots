@@ -60,7 +60,7 @@ ColumnLayout {
 
         SelectRow {
             label: "Layout"
-            description: "Dwindle splits the focused window; Master keeps one main window and stacks the rest; Scrolling lays windows out in columns on a strip you scroll through"
+            description: "Dwindle splits the focused window; Master keeps one main window and stacks the rest; Scrolling lays windows out in columns on a strip you scroll through. Super + Ctrl + Tab cycles them"
             path: "hyprland.general.layout"
             options: [
                 {

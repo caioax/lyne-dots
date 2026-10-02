@@ -287,6 +287,7 @@ Singleton {
     readonly property bool osdMic: getState("osd.mic", true)
     readonly property bool osdDevice: getState("osd.device", true)
     readonly property bool osdLayout: getState("osd.layout", true)
+    readonly property bool osdTiling: getState("osd.tiling", true)
 
     // ========================================================================
     // BRIGHTNESS

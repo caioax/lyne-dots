@@ -282,6 +282,7 @@ Every bind below can be changed or turned off in Settings › Hyprland › Keybi
 | <kbd>Super</kbd> + <kbd>F</kbd> | Fullscreen |
 | <kbd>Super</kbd> + <kbd>Tab</kbd> | Split / swap with main / column width |
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>Tab</kbd> | Previous column width (scrolling) |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Tab</kbd> | Next window layout |
 | <kbd>Super</kbd> + <kbd>,</kbd> | Swap column left (scrolling) |
 | <kbd>Super</kbd> + <kbd>.</kbd> | Swap column right (scrolling) |
 | <kbd>Super</kbd> + <kbd>[</kbd> | Join / leave previous column (scrolling) |

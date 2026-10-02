@@ -23,6 +23,39 @@ Singleton {
     readonly property var settings: _merge(StateService.getDefault("hyprland", {}), StateService.get("hyprland", {}))
     readonly property string lua: "hl.config(" + _toLua(settings, 0) + ")\n"
 
+    // Window layouts in the order Super + Ctrl + Tab cycles them (also
+    // Settings › Windows › Tiling)
+    readonly property var tilingLayouts: [
+        {
+            value: "dwindle",
+            label: "Dwindle",
+            icon: "\u{f0574}" // md-view_quilt
+        },
+        {
+            value: "master",
+            label: "Master",
+            icon: "\u{f0bcc}" // md-view_split_vertical
+        },
+        {
+            value: "scrolling",
+            label: "Scrolling",
+            icon: "\u{f056c}" // md-view_carousel
+        }
+    ]
+
+    // Next (steps > 0) or previous layout, saved like the Settings choice and
+    // shown in the OSD
+    function cycleTiling(steps: int) {
+        const path = "hyprland.general.layout";
+        const current = StateService.get(path, StateService.getDefault(path, "dwindle"));
+        const count = tilingLayouts.length;
+        const index = Math.max(0, tilingLayouts.findIndex(l => l.value === current));
+        const next = (index + steps % count + count) % count;
+        const layout = tilingLayouts[next];
+        StateService.set(path, layout.value);
+        OsdService.showTiling(layout.label, layout.icon, (next + 1) + "/" + count);
+    }
+
     // Keybinds changed in Settings ([{ id, keys }], keys "" = disabled) and
     // custom shortcuts ([{ description, command, keys }]). Only written to
     // the file: binds added by `hyprctl eval` would stack up until a reload
