@@ -240,6 +240,14 @@ ColumnLayout {
                 text: "GitHub"
                 onClicked: Qt.openUrlExternally(root.repoUrl)
             }
+
+            // md-heart_outline
+            ActionButton {
+                icon: "\u{f02d5}"
+                text: "Support"
+                textColor: Config.errorColor
+                onClicked: Qt.openUrlExternally(root.repoUrl + "#support")
+            }
         }
     }
 

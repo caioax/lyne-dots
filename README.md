@@ -14,7 +14,7 @@
 **A Hyprland desktop for Arch Linux, with a Quickshell shell you set up from its own Settings app.**<br>
 One theme follows the bar, terminal, editor, GTK/Qt apps, Hyprland and Zen Browser.
 
-[![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?style=flat-square&logo=archlinux&logoColor=white)](https://archlinux.org) [![Hyprland](https://img.shields.io/badge/Hyprland-0.56-58E1FF?style=flat-square&logo=hyprland&logoColor=white)](https://hypr.land) [![Quickshell](https://img.shields.io/badge/Quickshell-QML-7aa2f7?style=flat-square)](https://quickshell.org) [![License](https://img.shields.io/github/license/caioax/lyne-dots?style=flat-square&color=bb9af7)](LICENSE) [![Last commit](https://img.shields.io/github/last-commit/caioax/lyne-dots?style=flat-square&color=9ece6a)](https://github.com/caioax/lyne-dots/commits)
+[![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?style=flat-square&logo=archlinux&logoColor=white)](https://archlinux.org) [![Hyprland](https://img.shields.io/badge/Hyprland-0.56-58E1FF?style=flat-square&logo=hyprland&logoColor=white)](https://hypr.land) [![Quickshell](https://img.shields.io/badge/Quickshell-QML-7aa2f7?style=flat-square)](https://quickshell.org) [![License](https://img.shields.io/github/license/caioax/lyne-dots?style=flat-square&color=bb9af7)](LICENSE) [![Last commit](https://img.shields.io/github/last-commit/caioax/lyne-dots?style=flat-square&color=9ece6a)](https://github.com/caioax/lyne-dots/commits) [![Ko-fi](https://img.shields.io/badge/Ko--fi-support-f7768e?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/caioax)
 
 </div>
 
@@ -386,7 +386,9 @@ Each top-level folder is a [GNU Stow](https://www.gnu.org/software/stow/) packag
 - [Quickshell](https://quickshell.org), [Hyprland](https://hypr.land), [matugen](https://github.com/InioX/matugen), [awww](https://codeberg.org/LGFae/awww), [cliphist](https://github.com/sentriz/cliphist), [cava](https://github.com/karlstav/cava), [tesseract](https://github.com/tesseract-ocr/tesseract)
 - Weather from [Open-Meteo](https://open-meteo.com); lyrics from [LRCLIB](https://lrclib.net) and NetEase
 
-<!-- Support: a donation section goes here later. -->
+## Support
+
+If lyne-dots is useful to you, you can support it on [GitHub Sponsors](https://github.com/sponsors/caioax) or [Ko-fi](https://ko-fi.com/caioax).
 
 ## License
 
