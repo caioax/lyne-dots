@@ -34,6 +34,14 @@ Singleton {
             label: "Look"
         },
         {
+            id: "bar",
+            label: "Bar"
+        },
+        {
+            id: "apps",
+            label: "Apps"
+        },
+        {
             id: "done",
             label: "All set"
         }

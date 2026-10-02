@@ -239,7 +239,9 @@ Singleton {
 
     signal revealRequested
 
-    readonly property var rowTypes: ["SettingRow", "ToggleRow", "SliderRow", "StepperRow", "SelectRow", "TextFieldRow", "InfoRow", "TemplatePicker", "ColorEditRow", "NavKeysPicker"]
+    readonly property var rowTypes: ["SettingRow", "ToggleRow", "SliderRow", "StepperRow", "SelectRow", "TextFieldRow", "InfoRow", "TemplatePicker", "ColorEditRow", "NavKeysPicker", "BarTemplatePicker"]
+    // Groups: SettingsGroup and the shared ones built on it
+    readonly property var groupTypes: ["SettingsGroup", "AppDefaultsGroup"]
     readonly property string pagesDir: Qt.resolvedUrl("../modules/settings/pages/").toString().replace("file://", "")
 
     function pageFile(id: string): string {
@@ -263,7 +265,7 @@ Singleton {
         const unescape = t => t.replace(/\\(.)/g, "$1");
         const groupOf = () => {
             for (let i = stack.length - 1; i >= 0; i--) {
-                if (stack[i].type === "SettingsGroup")
+                if (root.groupTypes.includes(stack[i].type))
                     return stack[i].props.title?.text ?? "";
             }
             return "";
@@ -273,7 +275,7 @@ Singleton {
             if (label === "")
                 return;
             const isRow = rowTypes.includes(e.type);
-            if (!isRow && e.type !== "SettingsGroup")
+            if (!isRow && !root.groupTypes.includes(e.type))
                 return;
             out.push({
                 kind: isRow ? "row" : "group",

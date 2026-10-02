@@ -24,6 +24,8 @@ FloatingWindow {
             keyboard: keyboardStep,
             windows: windowsStep,
             appearance: appearanceStep,
+            bar: barStep,
+            apps: appsStep,
             done: doneStep
         })
 
@@ -92,6 +94,16 @@ FloatingWindow {
     Component {
         id: appearanceStep
         WelcomeAppearance {}
+    }
+
+    Component {
+        id: barStep
+        WelcomeBar {}
+    }
+
+    Component {
+        id: appsStep
+        WelcomeApps {}
     }
 
     Component {
