@@ -180,6 +180,26 @@ Singleton {
         setOptions(Lib.setGroupOption(options, group, option));
     }
 
+    // Layouts the system is set to (localectl: X11 layouts, else the
+    // console keymap), for the welcome screen; [] until detected or when
+    // none is listed
+    readonly property var systemLayouts: ready && _localeText !== "" ? Lib.systemLayouts(db, _localeText) : []
+    property string _localeText: ""
+
+    function detectSystemLayouts() {
+        if (!localeProc.running)
+            localeProc.running = true;
+    }
+
+    Process {
+        id: localeProc
+
+        command: ["localectl", "status", "--no-pager"]
+        stdout: StdioCollector {
+            onStreamFinished: root._localeText = text
+        }
+    }
+
     function setModel(name: string) {
         _hush();
         if (name !== "" && !db.models.some(m => m.name === name))

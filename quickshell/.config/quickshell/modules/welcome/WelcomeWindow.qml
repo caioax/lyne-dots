@@ -21,6 +21,7 @@ FloatingWindow {
     // Step id (WelcomeService.steps) -> component
     readonly property var stepComponents: ({
             intro: introStep,
+            keyboard: keyboardStep,
             done: doneStep
         })
 
@@ -74,6 +75,11 @@ FloatingWindow {
     Component {
         id: introStep
         WelcomeIntro {}
+    }
+
+    Component {
+        id: keyboardStep
+        WelcomeKeyboard {}
     }
 
     Component {

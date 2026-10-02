@@ -137,6 +137,42 @@ function acceptable(db, list, previous) {
     return list.every(e => isValid(db, e) || (previous ?? []).some(p => p.layout === e.layout && (p.variant ?? "") === (e.variant ?? "")));
 }
 
+// Console keymaps named unlike their xkb layout
+const KEYMAP_LAYOUTS = {
+    uk: "gb"
+};
+
+// Layouts the system is set to, from `localectl status`: its X11 layouts, or
+// the console keymap when there are none ("br-abnt2" -> br, abnt2). Only
+// listed layouts; an unlisted variant falls back to the plain layout
+function systemLayouts(db, text) {
+    const field = name => {
+        const m = text.match(new RegExp("^\\s*" + name + ":\\s*(.*)$", "m"));
+        const value = m ? m[1].trim() : "";
+        return value === "n/a" ? "" : value;
+    };
+    let list = [];
+    const x11 = field("X11 Layout");
+    if (x11 !== "") {
+        list = parseLayouts(x11, field("X11 Variant"));
+    } else {
+        const keymap = field("VC Keymap");
+        if (keymap !== "") {
+            const parts = keymap.split("-");
+            list = [
+                {
+                    layout: KEYMAP_LAYOUTS[parts[0]] ?? parts[0],
+                    variant: parts.slice(1).join("-")
+                }
+            ];
+        }
+    }
+    return list.filter(e => findLayout(db, e.layout) !== null).map(e => isValid(db, e) ? e : {
+            layout: e.layout,
+            variant: ""
+        }).slice(0, MAX_LAYOUTS);
+}
+
 // "English (US, alt. intl.)"; the raw names when unknown
 function describe(db, entry) {
     if (entry.variant) {

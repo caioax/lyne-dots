@@ -22,6 +22,10 @@ Singleton {
             label: "Welcome"
         },
         {
+            id: "keyboard",
+            label: "Keyboard"
+        },
+        {
             id: "done",
             label: "All set"
         }
@@ -52,6 +56,38 @@ Singleton {
     function back() {
         if (!isFirst)
             currentStep--;
+    }
+
+    // Keyboard step: the system's layout (localectl) replaces the default
+    // one, once, while the user hasn't picked any
+    property bool keyboardFromSystem: false
+    property bool _keyboardChecked: false
+
+    function suggestKeyboard() {
+        if (_keyboardChecked)
+            return;
+        _keyboardChecked = true;
+        KeyboardService.detectSystemLayouts();
+    }
+
+    function _applySystemKeyboard() {
+        const list = KeyboardService.systemLayouts;
+        if (!_keyboardChecked || keyboardFromSystem || list.length === 0)
+            return;
+        if (!StateService.isDefault("hyprland.input.kb_layout") || !StateService.isDefault("hyprland.input.kb_variant"))
+            return;
+        // Same base layout (us on the system, us alt-intl here): keep ours
+        if (list[0].layout === KeyboardService.layouts[0]?.layout)
+            return;
+        keyboardFromSystem = KeyboardService.setLayouts(list);
+    }
+
+    Connections {
+        target: KeyboardService
+
+        function onSystemLayoutsChanged() {
+            root._applySystemKeyboard();
+        }
     }
 
     // First login after the install: wait for the shell to settle (bar,
