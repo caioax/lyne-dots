@@ -25,18 +25,7 @@ ColumnLayout {
     SettingsGroup {
         title: "Tiling"
 
-        TemplatePicker {
-            label: "Layout"
-            description: ({
-                    dwindle: "Each new window splits the focused one in two, so they spiral inwards",
-                    master: "One main window on the left, the others stacked beside it",
-                    scrolling: "Windows in columns on a strip you scroll through, as wide as you like"
-                })[value] ?? ""
-            path: "hyprland.general.layout"
-            options: HyprlandSettingsService.tilingLayouts
-            thumbHeight: Config.fontSizeIconLarge * 4
-            preview: TilingPreview {}
-        }
+        TilingPicker {}
 
         SettingRow {
             visible: root.cycleKeys !== ""

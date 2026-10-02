@@ -58,24 +58,10 @@ ColumnLayout {
     SettingsGroup {
         title: "Tiling"
 
-        SelectRow {
+        // Label repeated here for the Settings search (it reads the page source)
+        TilingPicker {
             label: "Layout"
-            description: "Dwindle splits the focused window; Master keeps one main window and stacks the rest; Scrolling lays windows out in columns on a strip you scroll through. Super + Ctrl + Tab cycles them"
-            path: "hyprland.general.layout"
-            options: [
-                {
-                    label: "Dwindle",
-                    value: "dwindle"
-                },
-                {
-                    label: "Master",
-                    value: "master"
-                },
-                {
-                    label: "Scrolling",
-                    value: "scrolling"
-                }
-            ]
+            showCycleKeys: true
         }
 
         SliderRow {

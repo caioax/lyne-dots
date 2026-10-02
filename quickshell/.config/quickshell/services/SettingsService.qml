@@ -239,7 +239,7 @@ Singleton {
 
     signal revealRequested
 
-    readonly property var rowTypes: ["SettingRow", "ToggleRow", "SliderRow", "StepperRow", "SelectRow", "TextFieldRow", "InfoRow", "TemplatePicker", "ColorEditRow", "NavKeysPicker", "BarTemplatePicker"]
+    readonly property var rowTypes: ["SettingRow", "ToggleRow", "SliderRow", "StepperRow", "SelectRow", "TextFieldRow", "InfoRow", "TemplatePicker", "ColorEditRow", "NavKeysPicker", "BarTemplatePicker", "TilingPicker"]
     // Groups: SettingsGroup and the shared ones built on it
     readonly property var groupTypes: ["SettingsGroup", "AppDefaultsGroup"]
     readonly property string pagesDir: Qt.resolvedUrl("../modules/settings/pages/").toString().replace("file://", "")
