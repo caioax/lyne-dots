@@ -2,8 +2,34 @@
     "manifest_version": 3,
     "name": "lyne-dots: links in the default browser",
     "description": "Opens the links clicked in WhatsApp Web in the default browser (lyne whatsapp)",
-    "version": "1.0",
+    "version": "1.1",
     "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3pAsLs46XWtItJMyAzOuofT4nyyVUciWlgfRjnK1wYTM+Bubk7D/W7kakR+yklY7XPATj1SF1DlRSf8R9NzxEDacYfix1MvUBns1dm4TjTJMLxdXHZlS97jtUVqjPeNtvwpJp4rrI7Y6PwNH8GHogDM5Op3Zr403QsKiJ81F2oK+mohUayjdNBQrpR27PuVF86/eW7rdGIzJFV9r1a13y30Q7+8HM9L9hk1gDqrW1ml6nsJIf0RVY7xFAoRSx4WVmsSkfhssw6dzf7Atyl8sLN10vwhJgyFCiD0GHSaIsdAJfShA/zNJFeYv8jjGMgFmUBK5JoPWxcr59+NPM+7HTQIDAQAB",
-    "permissions": ["tabs", "nativeMessaging"],
-    "background": { "service_worker": "background.js" }
+    "permissions": [
+        "tabs",
+        "nativeMessaging"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://web.whatsapp.com/*"
+            ],
+            "js": [
+                "content.js"
+            ],
+            "run_at": "document_start"
+        },
+        {
+            "matches": [
+                "https://web.whatsapp.com/*"
+            ],
+            "js": [
+                "main.js"
+            ],
+            "run_at": "document_start",
+            "world": "MAIN"
+        }
+    ]
 }
