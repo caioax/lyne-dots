@@ -67,8 +67,8 @@ BarButton {
         visible: false
         anchorItem: root
         moduleName: "Tray"
-        // QsPopupWindow insets its content by 16 on every side
-        popupWidth: shownColumns * root.tileSize + (shownColumns - 1) * root.tileGap + 32
+        // QsPopupWindow insets its content by contentMargin on every side
+        popupWidth: shownColumns * root.tileSize + (shownColumns - 1) * root.tileGap + contentMargin * 2
         contentImplicitHeight: grid.implicitHeight
 
         // Nothing left to show

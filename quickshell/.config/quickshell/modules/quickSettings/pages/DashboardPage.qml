@@ -58,59 +58,20 @@ Item {
                 columnSpacing: Config.spacing
                 rowSpacing: Config.spacing
 
-                QuickSettingsTile {
-                    icon: NetworkService.systemIcon
-                    label: "Wi-Fi"
-                    subLabel: NetworkService.statusText
-                    active: NetworkService.wifiEnabled
-                    hasDetails: true
-                    onToggled: NetworkService.toggleWifi()
-                    onOpenDetails: pageStack.currentIndex = 1
-                }
+                Repeater {
+                    model: QuickSettingsService.tiles
 
-                QuickSettingsTile {
-                    visible: BluetoothService.adapter !== null
-                    icon: BluetoothService.systemIcon
-                    label: "Bluetooth"
-                    subLabel: BluetoothService.statusText
-                    active: BluetoothService.isPowered
-                    hasDetails: true
-                    onToggled: BluetoothService.togglePower()
-                    onOpenDetails: pageStack.currentIndex = 3
-                }
+                    QuickSettingsTile {
+                        required property var modelData
 
-                QuickSettingsTile {
-                    icon: BrightnessService.nightLightIcon
-                    label: "Night light"
-                    subLabel: BrightnessService.nightLightEnabled ? BrightnessService.nightLightTemperature + "K" : "Off"
-                    active: BrightnessService.nightLightEnabled
-                    hasDetails: true
-                    onToggled: BrightnessService.toggleNightLight()
-                    onOpenDetails: pageStack.currentIndex = 4
-                }
-
-                QuickSettingsTile {
-                    icon: NotificationService.dndEnabled ? "󰂛" : "󰂚"
-                    label: "Do not disturb"
-                    subLabel: NotificationService.dndEnabled ? "On" : "Off"
-                    active: NotificationService.dndEnabled
-                    onToggled: NotificationService.toggleDnd()
-                }
-
-                QuickSettingsTile {
-                    icon: IdleService.caffeineEnabled ? "󰛊" : "󰾪"
-                    label: "Caffeine"
-                    subLabel: IdleService.caffeineEnabled ? "Awake" : "Off"
-                    active: IdleService.caffeineEnabled
-                    onToggled: IdleService.toggleCaffeine()
-                }
-
-                QuickSettingsTile {
-                    icon: AudioService.sourceIcon
-                    label: "Microphone"
-                    subLabel: AudioService.sourceMuted ? "Muted" : "On"
-                    active: AudioService.sourceReady && !AudioService.sourceMuted
-                    onToggled: AudioService.toggleSourceMute()
+                        icon: modelData.icon
+                        label: modelData.label
+                        subLabel: modelData.status
+                        active: modelData.active
+                        hasDetails: modelData.page !== ""
+                        onToggled: modelData.toggle()
+                        onOpenDetails: QuickSettingsService.showPage(modelData.page)
+                    }
                 }
             }
         }
@@ -130,7 +91,7 @@ Item {
                     iconSize: Config.fontSizeNormal
                     textColor: Config.subtextColor
                     hoverTextColor: Config.accentColor
-                    onClicked: pageStack.currentIndex = 5
+                    onClicked: QuickSettingsService.showPage("sound")
                 }
             }
 
@@ -311,6 +272,6 @@ Item {
         preview: true
         maxHeight: root.availableHeight - main.implicitHeight - anchors.topMargin
         onActionTriggered: root.closeWindow()
-        onOpenPageRequested: pageStack.currentIndex = 6
+        onOpenPageRequested: QuickSettingsService.showPage("notifications")
     }
 }

@@ -33,6 +33,10 @@ PanelWindow {
     signal closing
 
     readonly property int screenMargin: 5
+    // Room between the panel's edge and its content
+    readonly property int contentMargin: Config.spacing * 2
+    // Tallest the content can be
+    readonly property real contentMaxHeight: popupMaxHeight - contentMargin * 2
 
     // Attached: blur like the bar (wallpaper only) so both share one tint
     WlrLayershell.namespace: attached ? "qs_attached" : "qs_modules"
@@ -199,7 +203,7 @@ PanelWindow {
         x: root.bodyX - root.windowLeft
         y: root.upward ? parent.height - height : 0
         width: root.popupWidth
-        height: Math.min(root.popupMaxHeight, root.contentImplicitHeight + 32)
+        height: Math.min(root.popupMaxHeight, root.contentImplicitHeight + root.contentMargin * 2)
 
         Behavior on height {
             NumberAnimation {
@@ -276,7 +280,7 @@ PanelWindow {
         Item {
             id: contentContainer
             anchors.fill: parent
-            anchors.margins: 16
+            anchors.margins: root.contentMargin
         }
     }
 }

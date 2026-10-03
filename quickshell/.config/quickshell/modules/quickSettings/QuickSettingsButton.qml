@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import qs.config
 import qs.services
 import "../../components/"
@@ -10,24 +9,12 @@ import "../../components/quickSettings"
 BarButton {
     id: root
 
-    active: quickSettingsWindow.visible
+    readonly property string screenName: QsWindow.window?.screen?.name ?? ""
+
+    active: QuickSettingsService.screen !== "" && QuickSettingsService.screen === screenName
     contentItem: style
-    onClicked: toggleWindow()
-
-    function toggleWindow() {
-        quickSettingsWindow.visible = !quickSettingsWindow.visible;
-    }
+    onClicked: QuickSettingsService.toggle("", screenName)
     onRightClicked: NotificationService.toggleDnd()
-
-    // `qs ipc call notifications toggleWindow` opens it on the focused monitor only
-    Connections {
-        target: NotificationService
-
-        function onWindowToggleRequested() {
-            if (root.QsWindow.window?.screen?.name === Hyprland.focusedMonitor?.name)
-                root.toggleWindow();
-        }
-    }
 
     QsIndicatorsModel {
         id: indicators
@@ -88,8 +75,7 @@ BarButton {
     }
 
     QuickSettingsWindow {
-        id: quickSettingsWindow
+        screen: root.QsWindow.window?.screen ?? null
         anchorItem: root
-        visible: false
     }
 }
