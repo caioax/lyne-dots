@@ -35,5 +35,23 @@ cat >"$profile/NativeMessagingHosts/lyne.open_link.json" <<EOF
 }
 EOF
 
+# Chromium keeps running the first service worker it saw for an extension
+# loaded from the command line, even after its files change: the copy in the
+# profile names it after its content, so a new version gets a new script
+local extension="$profile/lyne-extension"
+local sw="background-$(sha1sum "$web_dir/extension/background.js" | cut -c1-12).js"
+rm -rf "$extension.new"
+mkdir -p "$extension.new"
+cp "$web_dir/extension/"*.js "$extension.new/"
+mv "$extension.new/background.js" "$extension.new/$sw"
+sed "s/\"background\.js\"/\"$sw\"/" "$web_dir/extension/manifest.json" >"$extension.new/manifest.json"
+# Left alone when nothing changed (WhatsApp may be running from it)
+if diff -rq "$extension.new" "$extension" &>/dev/null; then
+    rm -rf "$extension.new"
+else
+    rm -rf "$extension"
+    mv "$extension.new" "$extension"
+fi
+
 exec chromium --app=https://web.whatsapp.com --user-data-dir="$profile" \
-    --load-extension="$web_dir/extension" --no-first-run --no-default-browser-check "$@"
+    --load-extension="$extension" --no-first-run --no-default-browser-check "$@"
