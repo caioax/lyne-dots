@@ -227,7 +227,7 @@
                 "name": "WhatsApp",
                 "icon": "󰖣",
                 "color": "success",
-                "command": "chromium --app=https://web.whatsapp.com --user-data-dir=$HOME/.local/share/lyne/whatsapp --no-first-run --no-default-browser-check",
+                "command": "lyne whatsapp",
                 "class": "^(chrome-web\\.whatsapp\\.com__-Default)$",
                 "keys": "SUPER + W",
                 "moveKeys": "SUPER + SHIFT + W",

@@ -310,7 +310,14 @@ Singleton {
             const site = notification.desktopEntry === "chromium" ? body.match(/^<a href="https?:\/\/([^/"]+)\/?">[^<]*<\/a>\s*/) : null;
             if (site) {
                 const host = site[1];
-                const special = SpecialsService.list.find(s => (s.command ?? "").includes("--app=https://" + host));
+                // Chromium names an app window chrome-<site>__-Default
+                const special = SpecialsService.list.find(s => {
+                    try {
+                        return (s.class ?? "") !== "" && new RegExp(s.class).test("chrome-" + host + "__-Default");
+                    } catch (e) {
+                        return false;
+                    }
+                });
                 appName = special?.name ?? host;
                 body = body.slice(site[0].length);
                 iconHint = iconHint || host.split(".").slice(-2, -1)[0];

@@ -25,9 +25,8 @@ local bind = ok and binds.bind or function(_, _, _, keys, dispatcher, opts)
 end
 
 local defaults = {
-    -- WhatsApp Web in its own Chromium profile
-    { id = "whatsapp", name = "WhatsApp",   command = "chromium --app=https://web.whatsapp.com --user-data-dir=$HOME/.local/share/lyne/whatsapp --no-first-run --no-default-browser-check",
-      class = "^(chrome-web\\.whatsapp\\.com__-Default)$", keys = "SUPER + W", move_keys = "SUPER + SHIFT + W", autostart = false },
+    -- WhatsApp Web as a Chromium app with its own profile
+    { id = "whatsapp", name = "WhatsApp",   command = "lyne whatsapp", class = "^(chrome-web\\.whatsapp\\.com__-Default)$", keys = "SUPER + W", move_keys = "SUPER + SHIFT + W", autostart = false },
     { id = "music",    name = "Music",      command = "spotify", class = "^([Ss]potify)$",            keys = "SUPER + M", move_keys = "SUPER + SHIFT + M", autostart = false },
 }
 

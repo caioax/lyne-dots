@@ -46,20 +46,18 @@ Singleton {
         return kind === "special" ? item.keys ?? "" : item.moveKeys ?? "";
     }
 
-    // Same command as the default in defaults.json and hypr/conf/specials.lua
-    readonly property string whatsappWebCommand: "chromium --app=https://web.whatsapp.com --user-data-dir=$HOME/.local/share/lyne/whatsapp --no-first-run --no-default-browser-check"
-
     // Apps the dialog offers; `pkg` is only a hint for the "not installed"
     // warning. Classes are left empty where the app's class isn't known
     readonly property var presets: [
         {
-            // WhatsApp Web in its own Chromium profile (the default)
+            // WhatsApp Web as a Chromium app with its own profile (the
+            // default; lyne whatsapp warns when chromium is missing)
             key: "whatsapp-web",
             label: "WhatsApp Web",
             category: "Chat",
             name: "WhatsApp",
             icon: "\u{f05a3}",
-            command: root.whatsappWebCommand,
+            command: "lyne whatsapp",
             cls: "^(chrome-web\\.whatsapp\\.com__-Default)$",
             pkg: "chromium"
         },
