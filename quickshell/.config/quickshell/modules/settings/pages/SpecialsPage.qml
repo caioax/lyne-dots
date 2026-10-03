@@ -262,7 +262,7 @@ ColumnLayout {
             ToggleRow {
                 visible: group.modelData.command !== ""
                 label: "Start at login"
-                description: "Opens the app hidden, so it's ready (and notifies) before the first toggle"
+                description: "Opens the app hidden once notifications are ready, so it notifies before the first toggle"
                 checked: group.modelData.autostart === true
                 onToggled: value => SpecialsService.setAutostart(group.index, value)
             }

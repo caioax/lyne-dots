@@ -29,6 +29,9 @@ local defaults = {
     { id = "music",    name = "Music",      command = "spotify", class = "^([Ss]potify)$",            keys = "SUPER + M", move_keys = "SUPER + SHIFT + M", autostart = false },
 }
 
+-- Seconds the autostarted apps wait for the notification server
+local NOTIFICATIONS_TIMEOUT = 30
+
 -- Set once lyne_specials() ran in this config load
 LYNE_SPECIALS_APPLIED = false
 
@@ -60,11 +63,16 @@ function lyne_specials(list)
         end
     end
 
-    -- Opened straight into the hidden workspace, nothing shows up
+    -- Opened straight into the hidden workspace, nothing shows up. Quickshell
+    -- starts at the same time, and apps that look for the notification
+    -- server only once (ZapZap, Chromium) would stay silent all session:
+    -- wait until it's on the bus (the app still opens after the timeout)
     if #autostart > 0 then
         hl.on("hyprland.start", function()
             for _, app in ipairs(autostart) do
-                hl.exec_cmd(app.command, { workspace = app.workspace .. " silent" })
+                local command = "gdbus wait --session --timeout " .. NOTIFICATIONS_TIMEOUT
+                    .. " org.freedesktop.Notifications; " .. app.command
+                hl.exec_cmd(command, { workspace = app.workspace .. " silent" })
             end
         end)
     end
