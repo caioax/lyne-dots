@@ -301,9 +301,25 @@ Singleton {
                 img = name.startsWith("/") ? "file://" + name : "";
                 iconHint = name.startsWith("/") ? "" : name;
             }
+
+            // Chromium web apps (the WhatsApp special) send as "Chromium" with a
+            // link to the site on top of the body and the page's picture as the
+            // app icon: name them after their special (or the site), drop the
+            // link and show the picture as the image
+            let appIconHint = notification.appIcon;
+            const site = notification.desktopEntry === "chromium" ? body.match(/^<a href="https?:\/\/([^/"]+)\/?">[^<]*<\/a>\s*/) : null;
+            if (site) {
+                const host = site[1];
+                const special = SpecialsService.list.find(s => (s.command ?? "").includes("--app=https://" + host));
+                appName = special?.name ?? host;
+                body = body.slice(site[0].length);
+                iconHint = iconHint || host.split(".").slice(-2, -1)[0];
+                img = img || appIconHint;
+                appIconHint = "";
+            }
             image = img;
 
-            const candidates = [iconHint, notification.appIcon, notification.desktopEntry, appName.toLowerCase()];
+            const candidates = [iconHint, appIconHint, notification.desktopEntry, appName.toLowerCase()];
             appIcon = candidates.find(c => c && root.iconSource(c) !== "") ?? "";
             urgency = notification.urgency;
             resident = notification.resident;
@@ -312,7 +328,8 @@ Singleton {
             hasInlineReply = notification.hasInlineReply;
             inlineReplyPlaceholder = notification.inlineReplyPlaceholder || "";
             expireTimeout = notification.expireTimeout;
-            actions = notification.actions.map(a => ({
+            // Chromium's Settings button opens its own notification settings
+            actions = notification.actions.filter(a => !(site && a.identifier === "settings")).map(a => ({
                         "identifier": a.identifier,
                         "text": a.text,
                         "invoke": () => a.invoke()
