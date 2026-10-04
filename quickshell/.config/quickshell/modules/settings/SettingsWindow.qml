@@ -34,7 +34,6 @@ FloatingWindow {
             launcher: launcherPage,
             clipboard: clipboardPage,
             dashboard: dashboardPage,
-            quickSettings: quickSettingsPage,
             power: powerPage,
             notifications: notificationsPage,
             osd: osdPage,
@@ -231,11 +230,6 @@ FloatingWindow {
     Component {
         id: dashboardPage
         DashboardPage {}
-    }
-
-    Component {
-        id: quickSettingsPage
-        QuickSettingsPage {}
     }
 
     Component {

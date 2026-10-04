@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import Quickshell
 import qs.config
 import qs.services
 import "../../../components/"
@@ -92,17 +93,21 @@ Item {
         }
 
         // ========== CONNECTED NETWORK ==========
-        Card {
+        // Outlined so the active network stands out from the list below;
+        // its actions are in the ⋮ menu
+        Rectangle {
             id: connectedCard
-
-            visible: NetworkService.wifiEnabled && root.current !== null
-            Layout.fillWidth: true
 
             readonly property bool portal: NetworkService.hasCaptivePortal
             readonly property color accent: portal ? Config.warningColor : Config.accentColor
+            readonly property string ip: NetworkService.details.ip ?? ""
 
-            // Outline so the active network stands out from the list below
-            border.width: 1
+            visible: NetworkService.wifiEnabled && root.current !== null
+            Layout.fillWidth: true
+            implicitHeight: connectedRow.implicitHeight + Config.padding * 2
+            radius: Config.radiusLarge
+            color: Config.cardColor
+            border.width: 2
             border.color: Qt.alpha(accent, 0.6)
 
             Behavior on border.color {
@@ -112,117 +117,69 @@ Item {
                 }
             }
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Config.spacing + Config.padding
+            DeviceRow {
+                id: connectedRow
 
-                // Signal strength ring
-                ProgressRing {
-                    Layout.preferredWidth: Config.fontSizeIconSmall * 2 + Config.padding * 2
-                    Layout.preferredHeight: Layout.preferredWidth
-                    value: root.current?.signal ?? 0
-                    strokeWidth: Math.round(Config.padding * 2 / 3)
-                    color: connectedCard.accent
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: NetworkService.systemIcon
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeIconSmall
-                        color: connectedCard.accent
-                    }
+                anchors.fill: parent
+                anchors.leftMargin: Config.padding * 2
+                anchors.rightMargin: Config.padding * 2
+                anchors.topMargin: Config.padding
+                anchors.bottomMargin: Config.padding
+                icon: NetworkService.systemIcon
+                ring: root.current?.signal ?? 0
+                ringColor: connectedCard.accent
+                title: root.current?.ssid || "Hidden network"
+                subtitle: {
+                    if (!root.current)
+                        return "";
+                    const parts = [];
+                    if (connectedCard.portal)
+                        parts.push("Login required");
+                    if (root.current.band)
+                        parts.push(root.current.band);
+                    parts.push(connectedCard.ip !== "" ? connectedCard.ip : "Connected");
+                    return parts.join(" · ");
                 }
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 0
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: root.current?.ssid || "Hidden network"
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeNormal
-                        font.bold: true
-                        color: Config.textColor
-                        elide: Text.ElideRight
-                    }
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: {
-                            if (!root.current)
-                                return "";
-                            const parts = [connectedCard.portal ? "Login required" : "Connected"];
-                            if (root.current.band)
-                                parts.push(root.current.band);
-                            parts.push(root.current.securityType);
-                            return parts.join(" · ");
-                        }
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeSmall
-                        color: connectedCard.portal ? Config.warningColor : Config.subtextColor
-                        elide: Text.ElideRight
-                    }
+                trailing: (root.current?.signal ?? 0) + "%"
+                // With a captive portal, a click opens its login page
+                clickable: connectedCard.portal
+                onClicked: NetworkService.openPortalBrowser()
+                menuModel: {
+                    const items = [];
+                    if (connectedCard.portal)
+                        items.push({
+                            text: "Log in",
+                            icon: "\u{f059f}", // md-web
+                            action: "login"
+                        });
+                    items.push({
+                        text: "Disconnect",
+                        icon: "\u{f05aa}", // md-wifi_off
+                        action: "disconnect"
+                    });
+                    if (connectedCard.ip !== "")
+                        items.push({
+                            text: "Copy IP",
+                            icon: "\u{f018f}", // md-content_copy
+                            action: "copyIp"
+                        });
+                    items.push({
+                        text: "Forget",
+                        icon: "\u{f01b4}", // md-delete
+                        action: "forget",
+                        color: Config.errorColor
+                    });
+                    return items;
                 }
-
-                Text {
-                    text: (root.current?.signal ?? 0) + "%"
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeSmall
-                    font.bold: true
-                    color: Config.subtextColor
-                }
-            }
-
-            // IP / gateway
-            Flow {
-                visible: (NetworkService.details.ip ?? "") !== ""
-                Layout.fillWidth: true
-                spacing: Config.padding
-
-                StatChip {
-                    icon: "󰩟"
-                    text: NetworkService.details.ip ?? ""
-                }
-
-                StatChip {
-                    visible: (NetworkService.details.gateway ?? "") !== ""
-                    icon: "󰑩"
-                    text: NetworkService.details.gateway ?? ""
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Config.spacing
-
-                ActionButton {
-                    visible: connectedCard.portal
-                    Layout.fillWidth: true
-                    size: header.boxSize
-                    icon: "󰖟"
-                    text: "Log in"
-                    baseColor: Config.warningColor
-                    hoverColor: Qt.lighter(Config.warningColor, 1.1)
-                    textColor: Config.textReverseColor
-                    onClicked: NetworkService.openPortalBrowser()
-                }
-
-                ActionButton {
-                    Layout.fillWidth: true
-                    size: header.boxSize
-                    icon: "󰖪"
-                    text: "Disconnect"
-                    onClicked: NetworkService.disconnect()
-                }
-
-                ActionButton {
-                    Layout.fillWidth: true
-                    size: header.boxSize
-                    icon: "󰆴"
-                    text: "Forget"
-                    textColor: Config.errorColor
-                    onClicked: NetworkService.forget(root.current.ssid)
+                onMenuAction: action => {
+                    if (action === "login")
+                        NetworkService.openPortalBrowser();
+                    else if (action === "disconnect")
+                        NetworkService.disconnect();
+                    else if (action === "copyIp")
+                        Quickshell.execDetached(["wl-copy", "--", connectedCard.ip]);
+                    else if (action === "forget")
+                        NetworkService.forget(root.current.ssid);
                 }
             }
         }

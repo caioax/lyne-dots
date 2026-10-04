@@ -84,13 +84,6 @@ Singleton {
             category: "Shell"
         },
         {
-            id: "quickSettings",
-            label: "Quick Settings",
-            icon: "\u{f1543}",
-            description: "The panel under the bar's status icons: toggles, sliders and pages",
-            category: "Shell"
-        },
-        {
             id: "power",
             label: "Power",
             icon: "\u{f0425}",

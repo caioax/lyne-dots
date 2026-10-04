@@ -114,90 +114,56 @@ Item {
             Repeater {
                 model: BluetoothService.isPowered ? root.connected : []
 
-                Card {
+                // Outlined so it stands out from the lists below; its
+                // actions are in the ⋮ menu
+                Rectangle {
                     id: connectedCard
 
                     required property var modelData
+                    readonly property bool hasBattery: modelData.batteryAvailable
 
                     Layout.fillWidth: true
-                    border.width: 1
+                    implicitHeight: connectedRow.implicitHeight + Config.padding * 2
+                    radius: Config.radiusLarge
+                    color: Config.cardColor
+                    border.width: 2
                     border.color: Qt.alpha(Config.accentColor, 0.6)
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: Config.spacing + Config.padding
+                    DeviceRow {
+                        id: connectedRow
 
-                        // Battery ring when the device reports it, plain icon otherwise
-                        ProgressRing {
-                            Layout.preferredWidth: Config.fontSizeIconSmall * 2 + Config.padding * 2
-                            Layout.preferredHeight: Layout.preferredWidth
-                            value: connectedCard.modelData.batteryAvailable ? connectedCard.modelData.battery * 100 : 0
-                            strokeWidth: Math.round(Config.padding * 2 / 3)
-                            color: connectedCard.modelData.battery < 0.2 ? Config.errorColor : Config.accentColor
-                            trackColor: connectedCard.modelData.batteryAvailable ? Config.surface2Color : Qt.alpha(Config.accentColor, 0.3)
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: BluetoothService.getDeviceIcon(connectedCard.modelData)
-                                font.family: Config.font
-                                font.pixelSize: Config.fontSizeIconSmall
-                                color: Config.accentColor
+                        anchors.fill: parent
+                        anchors.leftMargin: Config.padding * 2
+                        anchors.rightMargin: Config.padding * 2
+                        anchors.topMargin: Config.padding
+                        anchors.bottomMargin: Config.padding
+                        icon: BluetoothService.getDeviceIcon(connectedCard.modelData)
+                        // Battery ring when the device reports it, a faint full ring otherwise
+                        ring: connectedCard.hasBattery ? connectedCard.modelData.battery * 100 : 0
+                        ringColor: connectedCard.hasBattery && connectedCard.modelData.battery < 0.2 ? Config.errorColor : Config.accentColor
+                        ringTrackColor: connectedCard.hasBattery ? Config.surface2Color : Qt.alpha(Config.accentColor, 0.3)
+                        title: BluetoothService.deviceName(connectedCard.modelData)
+                        subtitle: root.status(connectedCard.modelData)
+                        trailing: connectedCard.hasBattery ? Math.round(connectedCard.modelData.battery * 100) + "%" : ""
+                        clickable: false
+                        menuModel: [
+                            {
+                                text: "Disconnect",
+                                icon: "\u{f00b2}", // md-bluetooth_off
+                                action: "disconnect"
+                            },
+                            {
+                                text: "Forget",
+                                icon: "\u{f01b4}", // md-delete
+                                action: "forget",
+                                color: Config.errorColor
                             }
-                        }
-
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: 0
-
-                            Text {
-                                Layout.fillWidth: true
-                                text: BluetoothService.deviceName(connectedCard.modelData)
-                                font.family: Config.font
-                                font.pixelSize: Config.fontSizeNormal
-                                font.bold: true
-                                color: Config.textColor
-                                elide: Text.ElideRight
-                            }
-
-                            Text {
-                                Layout.fillWidth: true
-                                text: root.status(connectedCard.modelData)
-                                font.family: Config.font
-                                font.pixelSize: Config.fontSizeSmall
-                                color: Config.subtextColor
-                                elide: Text.ElideRight
-                            }
-                        }
-
-                        Text {
-                            visible: connectedCard.modelData.batteryAvailable
-                            text: Math.round(connectedCard.modelData.battery * 100) + "%"
-                            font.family: Config.font
-                            font.pixelSize: Config.fontSizeSmall
-                            font.bold: true
-                            color: Config.subtextColor
-                        }
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: Config.spacing
-
-                        ActionButton {
-                            Layout.fillWidth: true
-                            size: header.boxSize
-                            icon: "󰂲"
-                            text: "Disconnect"
-                            onClicked: connectedCard.modelData.disconnect()
-                        }
-
-                        ActionButton {
-                            Layout.fillWidth: true
-                            size: header.boxSize
-                            icon: "󰆴"
-                            text: "Forget"
-                            textColor: Config.errorColor
-                            onClicked: BluetoothService.forgetDevice(connectedCard.modelData)
+                        ]
+                        onMenuAction: action => {
+                            if (action === "disconnect")
+                                connectedCard.modelData.disconnect();
+                            else if (action === "forget")
+                                BluetoothService.forgetDevice(connectedCard.modelData);
                         }
                     }
                 }

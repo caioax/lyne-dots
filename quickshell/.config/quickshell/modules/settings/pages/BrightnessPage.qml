@@ -87,6 +87,29 @@ ColumnLayout {
     }
 
     SettingsGroup {
+        title: "Quick Settings"
+
+        SelectRow {
+            label: "Sliders"
+            description: Config.brightnessQuickSettings === "all" ? "One slider per monitor, each with its name" : "One slider for the focused monitor, with a button that switches to the others"
+            path: "brightness.quickSettings"
+            segmentWidth: Config.fontSizeNormal * 7
+            options: [
+                {
+                    label: "Focused",
+                    icon: "\u{f0379}",
+                    value: "focused"
+                },
+                {
+                    label: "All",
+                    icon: "\u{f037a}",
+                    value: "all"
+                }
+            ]
+        }
+    }
+
+    SettingsGroup {
         title: "External monitors"
 
         ToggleRow {

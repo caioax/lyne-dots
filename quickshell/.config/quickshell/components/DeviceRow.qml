@@ -4,8 +4,9 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import qs.config
 
-// Compact device/network line for lists inside a Card: icon box, title,
-// subtitle, optional lock and a ⋮ menu ({ text, icon, action, color })
+// Compact device/network line for lists inside a Card: icon box (or a
+// ring, e.g. signal or battery, with ring >= 0), title, subtitle, optional
+// trailing text, lock and a ⋮ menu ({ text, icon, action, color })
 Item {
     id: root
 
@@ -16,6 +17,13 @@ Item {
     property bool connecting: false
     property bool secured: false
     property var menuModel: []
+    // 0–100 draws a ring around the icon instead of the box (-1)
+    property real ring: -1
+    property color ringColor: Config.accentColor
+    property color ringTrackColor: Config.surface2Color
+    property string trailing: ""
+    // Off: no click action, so no pointing hand (the ⋮ menu still works)
+    property bool clickable: true
 
     signal clicked
     signal menuAction(string action)
@@ -45,15 +53,37 @@ Item {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: root.clicked()
+        cursorShape: root.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
+        onClicked: {
+            if (root.clickable)
+                root.clicked();
+        }
     }
 
     RowLayout {
         anchors.fill: parent
         spacing: Config.spacing + Config.padding
 
+        ProgressRing {
+            visible: root.ring >= 0 && !root.connecting
+            Layout.preferredWidth: root.boxSize
+            Layout.preferredHeight: root.boxSize
+            value: Math.max(0, root.ring)
+            strokeWidth: Math.round(Config.padding / 2)
+            color: root.ringColor
+            trackColor: root.ringTrackColor
+
+            Text {
+                anchors.centerIn: parent
+                text: root.icon
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeLarge
+                color: root.ringColor
+            }
+        }
+
         Rectangle {
+            visible: root.ring < 0 || root.connecting
             implicitWidth: root.boxSize
             implicitHeight: root.boxSize
             radius: Config.radiusLarge
@@ -109,6 +139,15 @@ Item {
         }
 
         Text {
+            visible: root.trailing !== ""
+            text: root.trailing
+            font.family: Config.font
+            font.pixelSize: Config.fontSizeSmall
+            font.bold: true
+            color: Config.subtextColor
+        }
+
+        Text {
             visible: root.secured
             text: "󰌾"
             font.family: Config.font
@@ -122,7 +161,7 @@ Item {
             visible: root.menuModel.length > 0 && !root.connecting
             size: root.boxSize
             icon: ""
-            baseColor: "transparent"
+            baseColor: Qt.alpha(Config.surface2Color, 0)
             hoverColor: Config.surface2Color
             textColor: Config.subtextColor
             hoverTextColor: Config.textColor
