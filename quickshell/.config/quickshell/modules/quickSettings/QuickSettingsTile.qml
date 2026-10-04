@@ -23,9 +23,13 @@ Rectangle {
     Layout.fillWidth: true
     implicitHeight: iconBoxSize + Config.padding * 2
     radius: Config.radiusLarge
+    
+    border.width: active ? 2 : 0;
+    border.color: Qt.alpha(Config.accentColor, 0.6);
+
     color: {
-        if (active)
-            return Qt.alpha(Config.accentColor, hovered ? 0.24 : 0.16);
+        // if (active)
+        //     return Qt.alpha(Config.accentColor, hovered ? 0.24 : 0.16);
         return hovered ? Config.surface2Color : Config.surface1Color;
     }
 
