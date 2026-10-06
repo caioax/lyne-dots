@@ -207,7 +207,7 @@ bind("clipboard-history", "Shell", "Clipboard history", mainMod .. " + V",      
 bind("screenshot",        "Shell", "Screenshot",        "Print",                   hl.dsp.global("quickshell:take_screenshot"))
 bind("power-menu",        "Shell", "Power menu",        mainMod .. " + End",       hl.dsp.global("quickshell:power_menu"))
 bind("lock-screen",       "Shell", "Lock screen",       mainMod .. " + Escape",    hl.dsp.global("quickshell:lock_screen"))
-bind("wallpapers",        "Shell", "Wallpapers",        "",                        hl.dsp.global("quickshell:wallpaper_picker"))
+bind("wallpapers",        "Shell", "Wallpapers",        mainMod .. " + B",         hl.dsp.global("quickshell:wallpaper_picker"))
 bind("settings",          "Shell", "Settings",          mainMod .. " + I",         hl.dsp.global("quickshell:settings"))
 bind("keybinds",          "Shell", "Keybinds",          "",                        hl.dsp.global("quickshell:keybinds_help"))
 bind("reload",            "Shell", "Reload Quickshell", mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("lyne reload"))
