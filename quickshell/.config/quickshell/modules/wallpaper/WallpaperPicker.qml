@@ -13,8 +13,9 @@ import "../launcher/"
 
 // Wallpaper picker (SUPER+B): a carousel of the library against the bottom
 // (or top) edge, the selected wallpaper in the middle and bigger. Typing
-// filters, Enter applies and closes. Created on open and destroyed after the
-// exit animation by the keepAlive Loader in shell.qml
+// filters, Enter applies (it stays open to try others), Escape closes.
+// Created on open and destroyed after the exit animation by the keepAlive
+// Loader in shell.qml
 PanelWindow {
     id: root
 
@@ -79,7 +80,6 @@ PanelWindow {
     }
 
     function applySelected() {
-        panel.forceActiveFocus();
         WallpaperPickerService.applySelected();
     }
 
@@ -263,8 +263,6 @@ PanelWindow {
                 // Cells the width can show, for PageUp/PageDown
                 readonly property int visibleCount: Math.max(1, Math.floor(width / cellWidth))
                 readonly property real cellWidth: Math.round(root.tileWidth * (1 + root.sideScale) / 2 + Config.spacing)
-                // Wheel steps add up to a notch per move (touchpads send small ones)
-                property real wheelRest: 0
 
                 Layout.fillWidth: true
                 Layout.preferredHeight: root.tileHeight
@@ -304,18 +302,6 @@ PanelWindow {
                     }
                 }
 
-                WheelHandler {
-                    onWheel: event => {
-                        const delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
-                        carousel.wheelRest += delta;
-                        const steps = Math.trunc(carousel.wheelRest / 120);
-                        if (steps !== 0) {
-                            carousel.wheelRest -= steps * 120;
-                            WallpaperPickerService.move(-steps);
-                        }
-                    }
-                }
-
                 delegate: Item {
                     id: cell
 
@@ -331,6 +317,7 @@ PanelWindow {
                         width: root.tileWidth
                         path: cell.modelData
                         current: cell.modelData === WallpaperService.currentWallpaper
+                        highlighted: cell.selected
                         showName: false
                         scale: cell.selected ? 1 : root.sideScale
                         opacity: cell.selected ? 1 : 0.6
@@ -493,6 +480,31 @@ PanelWindow {
                 }
             }
         }
+
+        // The wheel moves through the wallpapers anywhere on the panel. On
+        // top of the content (it only takes the wheel, clicks go through),
+        // so the carousel's own flicking never gets it
+        Item {
+            id: wheelArea
+
+            anchors.fill: parent
+
+            // Steps add up to a notch per move (touchpads send small ones)
+            property real rest: 0
+
+            WheelHandler {
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                onWheel: event => {
+                    const delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
+                    wheelArea.rest += delta;
+                    const steps = Math.trunc(wheelArea.rest / 120);
+                    if (steps !== 0) {
+                        wheelArea.rest -= steps * 120;
+                        WallpaperPickerService.move(-steps);
+                    }
+                }
+            }
+        }
     }
 
     // Wallpaper menu: favorite, make it the current theme's, open Settings
@@ -527,7 +539,6 @@ PanelWindow {
                 WallpaperService.toggleFavorite(path);
                 break;
             case "useForTheme":
-                panel.forceActiveFocus();
                 WallpaperPickerService.useForTheme(path);
                 break;
             case "settings":

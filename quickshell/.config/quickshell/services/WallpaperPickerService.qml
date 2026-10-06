@@ -8,8 +8,8 @@ import qs.services
 import "fuzzy.js" as Fuzzy
 
 // State of the wallpaper picker (SUPER+B): which wallpapers it shows, in
-// what order, and the one selected. Picking applies it and closes; the
-// files and the applying itself are WallpaperService's
+// what order, and the one selected. Picking applies it and keeps the picker
+// open to try others; the files and the applying itself are WallpaperService's
 Singleton {
     id: root
 
@@ -25,8 +25,8 @@ Singleton {
     property int selectedIndex: 0
 
     // "all" (the library, favorites first), "favorites" or "theme" (the
-    // current theme's wallpapers). Back to "all" on each open
-    property string filter: "all"
+    // current theme's wallpapers). Saved, so it opens on the last one used
+    property string filter: StateService.get("wallpaper.pickerFilter", "all")
     readonly property var filters: [
         {
             id: "all",
@@ -138,7 +138,8 @@ Singleton {
 
     function show() {
         query = "";
-        filter = "all";
+        const saved = StateService.get("wallpaper.pickerFilter", "all");
+        filter = saved === "theme" && themeName === "" ? "all" : saved;
         WallpaperService.refreshWallpapers();
         _listThemeWallpapers();
         visible = true;
@@ -163,16 +164,16 @@ Singleton {
         if (id === "theme" && themeName === "")
             return;
         filter = id;
+        StateService.set("wallpaper.pickerFilter", id);
         selectCurrent();
     }
 
-    // Applies the wallpaper and closes
+    // Applies the wallpaper; the picker stays open to try others
     function apply(path: string) {
-        if (!path)
+        if (!path || path === WallpaperService.currentWallpaper)
             return;
         console.log("[WallpaperPicker] Applying:", path);
         WallpaperService.setWallpaper(path);
-        hide();
     }
 
     function applySelected() {
@@ -186,9 +187,7 @@ Singleton {
         if (!path || themeName === "")
             return;
         WallpaperService.setThemeWallpaper(path, themeName);
-        if (WallpaperService.dynamicWallpaper)
-            hide();
-        else
+        if (!WallpaperService.dynamicWallpaper)
             apply(path);
     }
 

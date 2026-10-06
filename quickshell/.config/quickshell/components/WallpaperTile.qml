@@ -14,6 +14,9 @@ Item {
     required property string path
 
     property bool current: false
+    // Outlined in a surface color when not the current one (the wallpaper
+    // picker's keyboard focus)
+    property bool highlighted: false
     property bool selected: false
     // Page is in multi-select mode: clicks toggle the selection
     property bool selecting: false
@@ -184,13 +187,14 @@ Item {
         }
     }
 
-    // Current wallpaper: outline + check, above the clipped content
+    // Current wallpaper: accent outline + check, above the clipped content;
+    // a highlighted one gets a surface outline
     Rectangle {
         anchors.fill: thumb
         radius: Config.radiusLarge
         color: "transparent"
-        border.width: root.current ? 2 : 0
-        border.color: Config.accentColor
+        border.width: root.current || root.highlighted ? 2 : 0
+        border.color: root.current ? Config.accentColor : Config.surface3Color
     }
 
     Rectangle {

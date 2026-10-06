@@ -333,7 +333,7 @@ ColumnLayout {
             resettable: false
             label: "Wallpaper picker"
             descriptionColor: conflicts.length > 0 ? Config.warningColor : Config.subtextColor
-            description: conflicts.length > 0 ? "Also used by " + conflicts.join(", ") : "A carousel of the library: type to filter, Enter applies and closes"
+            description: conflicts.length > 0 ? "Also used by " + conflicts.join(", ") : "A carousel of the library: type to filter, Enter applies, Escape closes"
 
             KeyCombo {
                 visible: pickerRow.bind !== null
