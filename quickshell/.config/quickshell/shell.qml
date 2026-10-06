@@ -13,6 +13,7 @@ import "./modules/screenshot/"
 import "./modules/notifications/"
 import "./modules/settings/"
 import "./modules/launcher/"
+import "./modules/wallpaper/"
 import "./modules/osd/"
 import "./modules/welcome/"
 import qs.config
@@ -162,6 +163,30 @@ ShellRoot {
             id: launcherExitTimer
             interval: Config.animDurationLong
             onTriggered: launcherLoader._keepAlive = false
+        }
+    }
+
+    // Wallpaper picker (SUPER+B), kept alive like the launcher for its exit animation
+    Loader {
+        id: wallpaperPickerLoader
+
+        property bool _shown: WallpaperPickerService.visible
+        property bool _keepAlive: false
+
+        active: _shown || _keepAlive
+        sourceComponent: WallpaperPicker {}
+
+        on_ShownChanged: {
+            if (!_shown) {
+                _keepAlive = true;
+                wallpaperPickerExitTimer.restart();
+            }
+        }
+
+        Timer {
+            id: wallpaperPickerExitTimer
+            interval: Config.animDurationLong
+            onTriggered: wallpaperPickerLoader._keepAlive = false
         }
     }
 
@@ -316,12 +341,13 @@ ShellRoot {
         }
     }
 
-    // Shortcut: Wallpaper Picker
+    // Shortcut: Wallpaper Picker (SUPER+B by default). Pressed again while
+    // open, it closes
     GlobalShortcut {
         name: "wallpaper_picker"
-        description: "Wallpaper settings"
+        description: "Wallpaper picker"
 
-        onPressed: SettingsService.open("wallpaper")
+        onPressed: WallpaperPickerService.toggle()
     }
 
     // Shortcut: Clipboard History

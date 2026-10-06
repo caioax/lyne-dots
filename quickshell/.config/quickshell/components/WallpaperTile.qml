@@ -20,6 +20,8 @@ Item {
     property string badge: ""
     // The ⋮ button on hover
     property bool showMenu: true
+    // The name under the thumbnail (the picker shows it once, below)
+    property bool showName: true
 
     readonly property bool favorite: WallpaperService.isFavorite(path)
     readonly property bool hovered: tileHover.hovered
@@ -34,7 +36,7 @@ Item {
     signal selectToggled
     signal menuRequested(Item anchor)
 
-    implicitHeight: thumb.height + nameText.implicitHeight + Config.padding
+    implicitHeight: thumb.height + (showName ? nameText.implicitHeight + Config.padding : 0)
 
     HoverHandler {
         id: tileHover
@@ -206,6 +208,7 @@ Item {
     Text {
         id: nameText
 
+        visible: root.showName
         anchors.top: thumb.bottom
         anchors.topMargin: Config.padding
         width: parent.width

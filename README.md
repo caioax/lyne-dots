@@ -334,6 +334,7 @@ Every bind below can be changed or turned off in Settings › Hyprland › Keybi
 | <kbd>Print</kbd> | Screenshot |
 | <kbd>Super</kbd> + <kbd>End</kbd> | Power menu |
 | <kbd>Super</kbd> + <kbd>Esc</kbd> | Lock screen |
+| <kbd>Super</kbd> + <kbd>B</kbd> | Wallpaper picker |
 | <kbd>Super</kbd> + <kbd>I</kbd> | Settings |
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>R</kbd> | Reload Quickshell |
 

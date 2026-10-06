@@ -22,6 +22,8 @@ ColumnLayout {
     property bool confirmingDelete: false
     // Wallpaper just picked that may become the current theme's (inline prompt)
     property string offerPath: ""
+    // The picker's shortcut is being recorded
+    property bool recording: false
 
     readonly property bool selecting: selection.length > 0
     readonly property string themeName: ThemeService.currentThemeName
@@ -69,6 +71,18 @@ ColumnLayout {
         offerPath = "";
     }
 
+    function startRecording() {
+        recording = true;
+        KeybindsService.startCapture();
+    }
+
+    function stopRecording() {
+        if (!recording)
+            return;
+        recording = false;
+        KeybindsService.stopCapture();
+    }
+
     function deleteSelection() {
         if (selection.length > 1 && !confirmingDelete) {
             confirmingDelete = true;
@@ -80,6 +94,10 @@ ColumnLayout {
 
     // Called by SettingsWindow before Escape closes the window
     function handleEscape(): bool {
+        if (recording) {
+            stopRecording();
+            return true;
+        }
         if (menu.opened) {
             menu.close();
             return true;
@@ -105,6 +123,18 @@ ColumnLayout {
     onThemeLinkedChanged: offerPath = ""
 
     Component.onCompleted: WallpaperService.refreshWallpapers()
+    // Never leave Hyprland in the capture submap
+    Component.onDestruction: stopRecording()
+
+    Connections {
+        target: KeybindsService
+
+        // The service's safety timeout ended the capture
+        function onCapturingChanged() {
+            if (!KeybindsService.capturing)
+                root.recording = false;
+        }
+    }
 
     spacing: Config.spacing * 3
 
@@ -287,6 +317,61 @@ ColumnLayout {
                 baseColor: linkRow.controlColor
                 onClicked: SettingsService.openThemeDetail(root.themeName)
             }
+        }
+    }
+
+    // ================= PICKER =================
+    SettingsGroup {
+        title: "Picker"
+
+        SettingRow {
+            id: pickerRow
+
+            readonly property var bind: KeybindsService.binds.find(b => b.id === "wallpapers") ?? null
+            readonly property var conflicts: KeybindsService.conflicts(bind?.keys ?? "", "wallpapers", -1)
+
+            resettable: false
+            label: "Wallpaper picker"
+            descriptionColor: conflicts.length > 0 ? Config.warningColor : Config.subtextColor
+            description: conflicts.length > 0 ? "Also used by " + conflicts.join(", ") : "A carousel of the library: type to filter, Enter applies and closes"
+
+            KeyCombo {
+                visible: pickerRow.bind !== null
+                keys: pickerRow.bind?.keys ?? ""
+                baseColor: pickerRow.controlColor
+                recording: root.recording
+                onRecordRequested: root.startRecording()
+                onRecorded: combo => {
+                    KeybindsService.setKeys("wallpapers", combo);
+                    root.stopRecording();
+                }
+            }
+
+            // md-play
+            ActionButton {
+                icon: "\u{f040a}"
+                text: "Open"
+                baseColor: pickerRow.controlColor
+                onClicked: WallpaperPickerService.show()
+            }
+        }
+
+        SelectRow {
+            label: "Position"
+            description: "Screen edge the picker opens against (past the bar, when it's there)"
+            path: "wallpaper.pickerPosition"
+            options: [
+                {
+                    label: "Bottom",
+                    icon: "\u{f10a9}",
+                    value: "bottom"
+                },
+                {
+                    label: "Top",
+                    icon: "\u{f1513}",
+                    value: "top"
+                }
+            ]
         }
     }
 

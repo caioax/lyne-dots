@@ -18,6 +18,8 @@ Singleton {
     // ========================================================================
 
     property bool visible: false
+    // Screen edge it opens against: "bottom" or "top" (Settings › Wallpaper)
+    readonly property string position: StateService.get("wallpaper.pickerPosition", "bottom")
     property string query: ""
     // Index into `items`
     property int selectedIndex: 0
@@ -63,10 +65,6 @@ Singleton {
             }
         }
     }
-
-    // Leading favorites of `items` in "all" without a search (a divider
-    // follows them in the carousel)
-    readonly property int favoriteCount: filter === "all" && query.trim() === "" ? source.filter(w => WallpaperService.isFavorite(w)).length : 0
 
     // Prepared names for the search (see fuzzy.js)
     readonly property var index: source.map(path => ({
@@ -184,12 +182,12 @@ Singleton {
     // --- Navigation ---
 
     function move(delta: int) {
-        _centerOnLoad = false;
         select(selectedIndex + delta);
     }
 
     function select(index: int) {
-        selectedIndex = Math.max(0, Math.min(items.length - 1, index));
+        _centerOnLoad = false;
+        _clamp(index);
     }
 
     function selectFirst() {
@@ -198,7 +196,6 @@ Singleton {
     }
 
     function selectLast() {
-        _centerOnLoad = false;
         select(items.length - 1);
     }
 
@@ -210,6 +207,10 @@ Singleton {
     // ========================================================================
     // INTERNALS
     // ========================================================================
+
+    function _clamp(index: int) {
+        selectedIndex = Math.max(0, Math.min(items.length - 1, index));
+    }
 
     function _listThemeWallpapers() {
         if (themeName === "") {
@@ -250,7 +251,7 @@ Singleton {
     }
 
     // Deleted or added files: keep the selection in the list
-    onItemsChanged: select(selectedIndex)
+    onItemsChanged: _clamp(selectedIndex)
 
     Connections {
         target: WallpaperService

@@ -31,7 +31,8 @@
     "wallpaper": {
         "current": "~/.local/wallpapers/themes/tokyonight/lyne-tokyonight-contour.jpg",
         "dynamic": true,
-        "favorites": []
+        "favorites": [],
+        "pickerPosition": "bottom"
     },
     "nightLight": {
         "enabled": false,

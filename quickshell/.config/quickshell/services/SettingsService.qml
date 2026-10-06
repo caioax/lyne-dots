@@ -38,7 +38,7 @@ Singleton {
             id: "wallpaper",
             label: "Wallpaper",
             icon: "\u{f0e09}",
-            description: "Your wallpaper library: apply, favorite, add and delete",
+            description: "Your wallpaper library: apply, favorite, add and delete, and the picker that opens with a shortcut",
             category: "Appearance"
         },
         {
