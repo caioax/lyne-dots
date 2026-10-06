@@ -145,7 +145,7 @@ Item {
                         title: BluetoothService.deviceName(connectedCard.modelData)
                         subtitle: root.status(connectedCard.modelData)
                         trailing: connectedCard.hasBattery ? Math.round(connectedCard.modelData.battery * 100) + "%" : ""
-                        clickable: false
+                        onClicked: connectedCard.modelData.disconnect()
                         menuModel: [
                             {
                                 text: "Disconnect",

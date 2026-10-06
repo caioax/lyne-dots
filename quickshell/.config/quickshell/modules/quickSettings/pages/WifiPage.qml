@@ -141,9 +141,7 @@ Item {
                     return parts.join(" · ");
                 }
                 trailing: (root.current?.signal ?? 0) + "%"
-                // With a captive portal, a click opens its login page
-                clickable: connectedCard.portal
-                onClicked: NetworkService.openPortalBrowser()
+                onClicked: NetworkService.disconnect()
                 menuModel: {
                     const items = [];
                     if (connectedCard.portal)

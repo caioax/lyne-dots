@@ -22,8 +22,6 @@ Item {
     property color ringColor: Config.accentColor
     property color ringTrackColor: Config.surface2Color
     property string trailing: ""
-    // Off: no click action, so no pointing hand (the ⋮ menu still works)
-    property bool clickable: true
 
     signal clicked
     signal menuAction(string action)
@@ -53,11 +51,8 @@ Item {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
-        cursorShape: root.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
-        onClicked: {
-            if (root.clickable)
-                root.clicked();
-        }
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.clicked()
     }
 
     RowLayout {
