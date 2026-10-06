@@ -89,8 +89,10 @@ PanelWindow {
 
         switch (event.key) {
         case Qt.Key_Escape:
-            // Clears what was typed, then closes
-            if (search.text !== "")
+            // Closes the menu, then clears what was typed, then the picker
+            if (menu.opened)
+                menu.close();
+            else if (search.text !== "")
                 search.text = "";
             else
                 hide();
@@ -330,7 +332,6 @@ PanelWindow {
                         path: cell.modelData
                         current: cell.modelData === WallpaperService.currentWallpaper
                         showName: false
-                        showMenu: false
                         scale: cell.selected ? 1 : root.sideScale
                         opacity: cell.selected ? 1 : 0.6
 
@@ -354,33 +355,68 @@ PanelWindow {
                             else
                                 WallpaperPickerService.select(cell.index);
                         }
+                        onMenuRequested: anchor => menu.openAt(anchor, cell.modelData)
                     }
                 }
             }
 
-            // Nothing to show
-            Text {
+            // Nothing to show, with a way out when there's one
+            ColumnLayout {
+                id: empty
+
+                readonly property bool searching: WallpaperPickerService.query.trim() !== ""
+                readonly property string filter: WallpaperPickerService.filter
+                readonly property bool generating: WallpaperService.generatingFor === WallpaperPickerService.themeName
+
                 Layout.fillWidth: true
                 Layout.preferredHeight: root.tileHeight
                 visible: carousel.count === 0
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                wrapMode: Text.Wrap
-                text: {
-                    if (WallpaperPickerService.query.trim() !== "")
-                        return "No wallpaper matches “" + WallpaperPickerService.query.trim() + "”";
-                    switch (WallpaperPickerService.filter) {
-                    case "favorites":
-                        return "No favorites yet: add them in Settings › Wallpaper";
-                    case "theme":
-                        return "This theme has no wallpapers";
-                    default:
+                spacing: Config.spacing
+
+                Item {
+                    Layout.fillHeight: true
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    text: {
+                        if (empty.searching)
+                            return "No wallpaper matches “" + WallpaperPickerService.query.trim() + "”";
+                        if (empty.filter === "favorites")
+                            return "No favorites yet: right click a wallpaper to add it";
+                        if (empty.filter === "theme")
+                            return WallpaperService.generateErrors[WallpaperPickerService.themeName] ?? "This theme has no wallpapers yet";
                         return "No wallpapers in ~/.local/wallpapers";
                     }
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeNormal
+                    color: Config.subtextColor
                 }
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeNormal
-                color: Config.subtextColor
+
+                // md-image_plus
+                ActionButton {
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: !empty.searching && empty.filter === "all"
+                    icon: "\u{f087c}"
+                    text: "Add wallpapers"
+                    onClicked: WallpaperPickerService.addWallpapers()
+                }
+
+                // md-creation
+                ActionButton {
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: !empty.searching && empty.filter === "theme"
+                    enabled: WallpaperService.generatingFor === ""
+                    icon: "\u{f0674}"
+                    text: empty.generating ? "Generating… " + WallpaperService.generatedCount + " / " + WallpaperService.generatorScenes.length : "Generate lyne-dots wallpapers"
+                    onClicked: WallpaperService.generateThemeWallpapers(WallpaperPickerService.themeName)
+                }
+
+                Item {
+                    Layout.fillHeight: true
+                }
             }
 
             // The selected wallpaper's name, then the keys
@@ -455,6 +491,49 @@ PanelWindow {
                     keys: "esc"
                     label: WallpaperPickerService.query !== "" ? "clear" : "close"
                 }
+            }
+        }
+    }
+
+    // Wallpaper menu: favorite, make it the current theme's, open Settings
+    ContextMenu {
+        id: menu
+
+        readonly property bool isFavorite: typeof target === "string" && WallpaperService.isFavorite(target)
+        readonly property string themeLabel: ThemeService.themePreviews[WallpaperPickerService.themeName]?.name ?? WallpaperPickerService.themeName
+
+        items: [
+            {
+                label: isFavorite ? "Remove from favorites" : "Add to favorites",
+                icon: isFavorite ? "\u{f02d5}" : "\u{f02d1}",
+                action: "favorite"
+            },
+            {
+                label: "Use for " + themeLabel,
+                icon: "\u{f03d8}",
+                action: "useForTheme",
+                hidden: WallpaperPickerService.themeName === ""
+            },
+            {
+                label: "Open in Settings",
+                icon: "\u{f0493}",
+                action: "settings"
+            }
+        ].filter(item => !item.hidden)
+
+        onTriggered: (action, path) => {
+            switch (action) {
+            case "favorite":
+                WallpaperService.toggleFavorite(path);
+                break;
+            case "useForTheme":
+                panel.forceActiveFocus();
+                WallpaperPickerService.useForTheme(path);
+                break;
+            case "settings":
+                panel.forceActiveFocus();
+                WallpaperPickerService.openSettings();
+                break;
             }
         }
     }

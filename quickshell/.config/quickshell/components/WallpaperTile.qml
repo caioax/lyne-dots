@@ -6,7 +6,8 @@ import qs.config
 import qs.services
 
 // Wallpaper thumbnail with its name. Click applies it (the page decides what
-// that means), Ctrl+click selects; the ⋮ button shows up on hover
+// that means), Ctrl+click selects; the ⋮ button shows up on hover, and a
+// right click asks for the same menu
 Item {
     id: root
 
@@ -84,8 +85,12 @@ Item {
             id: tileMouse
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
             onClicked: mouse => {
-                if (root.selecting || (mouse.modifiers & Qt.ControlModifier))
+                if (mouse.button === Qt.RightButton) {
+                    if (root.showMenu && !root.selecting)
+                        root.menuRequested(menuButton);
+                } else if (root.selecting || (mouse.modifiers & Qt.ControlModifier))
                     root.selectToggled();
                 else
                     root.activated();
@@ -134,8 +139,10 @@ Item {
             }
         }
 
-        // Details (md-dots_vertical), on hover
+        // Details (md-dots_vertical), on hover; a right click opens it too
         Rectangle {
+            id: menuButton
+
             visible: root.showMenu && (root.hovered || menuMouse.containsMouse) && !root.selecting
             anchors.right: parent.right
             anchors.top: parent.top

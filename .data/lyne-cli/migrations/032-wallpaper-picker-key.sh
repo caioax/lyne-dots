@@ -25,7 +25,7 @@ _032_run() {
         tmp="$(mktemp)"
         if jq '.keybinds = ((.keybinds // {}) + { overrides: ((.keybinds.overrides // []) + [{ id: "wallpapers", keys: "" }]) })' "$state" >"$tmp"; then
             cat "$tmp" >"$state"
-            echo "   SUPER + B stays with $taken; \"Wallpapers\" has no keys (Settings › Hyprland › Keybinds)"
+            echo "   SUPER + B stays with $taken; \"Wallpaper picker\" has no keys (Settings › Hyprland › Keybinds)"
         fi
         rm -f "$tmp"
         return 0

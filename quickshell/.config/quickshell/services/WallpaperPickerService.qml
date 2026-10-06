@@ -179,6 +179,30 @@ Singleton {
         apply(selectedPath);
     }
 
+    // Makes it the current theme's wallpaper (copied into its folder) and
+    // applies it. WallpaperService shows the theme's copy itself when the
+    // theme brings its wallpaper
+    function useForTheme(path: string) {
+        if (!path || themeName === "")
+            return;
+        WallpaperService.setThemeWallpaper(path, themeName);
+        if (WallpaperService.dynamicWallpaper)
+            hide();
+        else
+            apply(path);
+    }
+
+    // The file dialog would open under the picker: close it first
+    function addWallpapers() {
+        hide();
+        WallpaperService.addWallpapers();
+    }
+
+    function openSettings() {
+        hide();
+        SettingsService.open("wallpaper");
+    }
+
     // --- Navigation ---
 
     function move(delta: int) {
@@ -250,8 +274,19 @@ Singleton {
         selectedIndex = 0;
     }
 
-    // Deleted or added files: keep the selection in the list
-    onItemsChanged: _clamp(selectedIndex)
+    // The path selected last, so the selection follows it when the list
+    // changes under it (a favorite moving to the front, files added)
+    property string _heldPath: ""
+
+    onSelectedIndexChanged: _heldPath = items[selectedIndex] ?? ""
+
+    onItemsChanged: {
+        const index = items.indexOf(_heldPath);
+        if (index >= 0)
+            selectedIndex = index;
+        else
+            _clamp(selectedIndex);
+    }
 
     Connections {
         target: WallpaperService
@@ -259,6 +294,16 @@ Singleton {
         function onWallpapersChanged() {
             if (root._centerOnLoad && root.filter !== "theme")
                 root.selectCurrent();
+        }
+    }
+
+    // Wallpapers generated for the theme (from the empty Theme filter)
+    Connections {
+        target: WallpaperService
+
+        function onThemeWallpapersGenerated(themeName: string, ok: bool) {
+            if (themeName === root.themeName)
+                root._listThemeWallpapers();
         }
     }
 
