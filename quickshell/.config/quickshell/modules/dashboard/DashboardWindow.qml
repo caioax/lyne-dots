@@ -89,7 +89,8 @@ QsPopupWindow {
             Layout.fillHeight: true
             clip: true
 
-            Row {
+            // Each tab places itself: a Row would skip the hidden ones
+            Item {
                 x: -DashboardService.tabIndex * pages.width
 
                 // Jumps instead while opening straight on another tab
@@ -97,6 +98,7 @@ QsPopupWindow {
                     enabled: root.visible && !root.isClosing
 
                     NumberAnimation {
+                        id: slide
                         duration: Config.animDurationLong
                         easing.type: Easing.OutExpo
                     }
@@ -114,9 +116,13 @@ QsPopupWindow {
                         required property var modelData
                         required property int index
 
+                        x: index * pages.width
                         width: pages.width
                         active: root.visible
                         asynchronous: index !== DashboardService.tabIndex
+                        // Off-screen tabs are hidden, so their animations
+                        // (Behaviors enabled by visibility) stay still
+                        visible: index === DashboardService.tabIndex || slide.running
                         sourceComponent: root.tabComponents[modelData.id] ?? null
                     }
                 }

@@ -40,6 +40,7 @@ HeroCard {
                     color: SystemMonitorService.usageColor(core.modelData)
 
                     Behavior on height {
+                        enabled: visible
                         NumberAnimation {
                             duration: Config.animDurationLong
                             easing.type: Easing.OutCubic

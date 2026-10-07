@@ -32,6 +32,7 @@ Item {
     // Smooth auto-scale changes instead of jumping
     property real _scale: _max
     Behavior on _scale {
+        enabled: root.visible
         NumberAnimation {
             duration: Config.animDurationLong
             easing.type: Easing.OutCubic
