@@ -33,7 +33,7 @@ CATEGORY_OPTIONS=(
     "core|core|Hyprland, UWSM, portals (essential)|1"
     "terminal|terminal|Kitty, Zsh, Tmux, Fastfetch|1"
     "editor|editor|Neovim + development tools|1"
-    "apps|apps|Dolphin, Zen Browser, Spotify, ZapZap, mpv|1"
+    "apps|apps|Dolphin, Zen Browser, Spotify, Chromium, mpv|1"
     "utils|utils|Clipboard, audio, bluetooth, brightness|1"
     "fonts|fonts|Nerd Fonts, cursors, Tela icons|1"
     "quickshell|quickshell|QuickShell bar/shell|1"

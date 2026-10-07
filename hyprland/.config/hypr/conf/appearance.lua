@@ -30,8 +30,6 @@ hl.config({
     },
 
     decoration = {
-        -- Original file set rounding = 6 then rounding = 7 further down in the same
-        -- block; hyprlang applies the last value, so 7 is the effective one here.
         rounding       = 7,
         rounding_power = 6,
 

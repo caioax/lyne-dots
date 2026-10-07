@@ -256,7 +256,7 @@ ShellRoot {
         onPressed: LockService.lock()
     }
 
-        // Shortcut: Power Menu
+    // Shortcut: Power Menu
     GlobalShortcut {
         name: "power_menu"
         description: "Power menu"
@@ -356,14 +356,6 @@ ShellRoot {
         description: "Clipboard history"
 
         onPressed: LauncherService.toggleMode("clipboard")
-    }
-
-    // Shortcut: Lock Screen
-    GlobalShortcut {
-        name: "lock_screen"
-        description: "Lock screen"
-
-        onPressed: IdleService.lock()
     }
 
     // Shortcut: Settings
