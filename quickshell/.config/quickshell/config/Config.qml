@@ -299,7 +299,7 @@ Singleton {
     // Quick Settings: "focused" (one slider with a monitor switcher) | "all"
     readonly property string brightnessQuickSettings: getState("brightness.quickSettings", "focused")
     // Seconds between re-reads of external monitors, 0 = never
-    readonly property int brightnessPollInterval: getState("brightness.pollInterval", 60)
+    readonly property int brightnessPollInterval: getState("brightness.pollInterval", 0)
 
     // ========================================================================
     // AUDIO

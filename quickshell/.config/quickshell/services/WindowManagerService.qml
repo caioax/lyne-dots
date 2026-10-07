@@ -16,7 +16,8 @@ Singleton {
 
     function registerOpen(moduleName) {
         if (!activeModules[moduleName]) {
-            let copy = activeModules;
+            // A new object: reassigning the same one doesn't notify bindings
+            let copy = Object.assign({}, activeModules);
             copy[moduleName] = true;
             activeModules = copy;
             openWindowsCount++;
@@ -25,7 +26,8 @@ Singleton {
 
     function registerClose(moduleName) {
         if (activeModules[moduleName]) {
-            let copy = activeModules;
+            // A new object: reassigning the same one doesn't notify bindings
+            let copy = Object.assign({}, activeModules);
             delete copy[moduleName];
             activeModules = copy;
             openWindowsCount--;

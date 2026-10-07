@@ -121,7 +121,7 @@ ColumnLayout {
 
         StepperRow {
             label: "Refresh"
-            description: "Re-reads their brightness to catch changes made on the monitor's own buttons. It's also read when Quick Settings opens"
+            description: "Re-reads their brightness to catch changes made on the monitor's own buttons (each read runs ddcutil). It's always read when Quick Settings or the dashboard opens"
             enabled: Config.brightnessDdc
             path: "brightness.pollInterval"
             values: [0, 30, 60, 120, 300]
