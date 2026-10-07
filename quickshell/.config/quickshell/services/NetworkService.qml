@@ -119,32 +119,39 @@ Singleton {
         console.log("Attempting to connect to:", ssid);
         root.connectingSsid = ssid; // Mark which one we are trying
 
-        if (password && password.length > 0) {
-            connectProc.command = ["nmcli", "dev", "wifi", "connect", ssid, "password", password];
-        } else {
-            // Try connecting using saved profile
-            connectProc.command = ["nmcli", "dev", "wifi", "connect", ssid];
-        }
-        connectProc.running = true;
+        const withPassword = !!password && password.length > 0;
+        // Only a profile this attempt creates may be removed if it fails: a
+        // saved network out of range must keep its profile
+        connectProc.run(withPassword ? ["nmcli", "dev", "wifi", "connect", ssid, "password", password] : ["nmcli", "dev", "wifi", "connect", ssid], {
+            ssid,
+            created: withPassword && !root.savedSsids.includes(ssid)
+        });
     }
 
+    // Removes every saved profile of the network, found by its SSID: a
+    // profile's name can differ from it ("Home 1", renamed ones)
     function forget(ssid) {
         console.log("Forgetting network: " + ssid);
-        forgetProc.command = ["nmcli", "connection", "delete", "id", ssid];
-        forgetProc.running = true;
+        forgetProc.run(["sh", "-c", `
+            nmcli -g UUID,TYPE connection show | while IFS=: read -r uuid type; do
+                [ "$type" = 802-11-wireless ] || continue
+                # -g escapes the colons inside values
+                s=$(nmcli -g 802-11-wireless.ssid connection show "$uuid" | sed 's/\\\\:/:/g')
+                [ "$s" = "$1" ] && nmcli connection delete uuid "$uuid"
+            done
+            true`, "sh", ssid]);
     }
 
-    // Internal function to clean up failed connections
+    // A profile created by a failed attempt (wrong password)
     function cleanUpBadConnection(ssid) {
-        console.warn("Connection failed. Removing invalid profile for: " + ssid);
-        // Uses forgetProc to delete, since it is the same logic
+        console.warn("Connection failed. Removing the profile just created for: " + ssid);
         forget(ssid);
     }
 
     // --- PROCESSES ---
 
     // Connection Process
-    Process {
+    QueuedProcess {
         id: connectProc
 
         stdout: SplitParser {
@@ -159,7 +166,7 @@ Singleton {
                 console.error("Connect command exited with code: " + code);
                 // A non-zero exit can mean captive portal: WiFi associated but no internet.
                 // Check real connectivity before deciding to delete the profile.
-                portalCheckProc._failedSsid = root.connectingSsid;
+                portalCheckProc._failedSsid = request.created ? request.ssid : "";
                 portalCheckProc.running = true;
             } else {
                 console.log("Connected successfully!");
@@ -224,9 +231,8 @@ Singleton {
     }
 
     // Forget Network
-    Process {
+    QueuedProcess {
         id: forgetProc
-        // The command is defined dynamically before running
         onExited: {
             getSavedProc.running = true;
             getNetworksProc.running = true;
