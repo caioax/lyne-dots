@@ -24,11 +24,14 @@ Item {
     implicitHeight: main.implicitHeight
 
     // Fresh scan and connection details only while the page is open
+    // The window creates the page when it's shown, so also on creation
+    function refresh(): void {
+        NetworkService.scan();
+        NetworkService.fetchDetails();
+    }
     onVisibleChanged: {
-        if (visible) {
-            NetworkService.scan();
-            NetworkService.fetchDetails();
-        }
+        if (visible)
+            refresh();
     }
 
     // Faster signal updates while the page is shown (watch/unwatch on real
@@ -42,7 +45,10 @@ Item {
         shown ? NetworkService.watch() : NetworkService.unwatch();
     }
     onShownChanged: sync()
-    Component.onCompleted: sync()
+    Component.onCompleted: {
+        refresh();
+        sync();
+    }
     Component.onDestruction: {
         if (held)
             NetworkService.unwatch();

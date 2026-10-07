@@ -30,6 +30,8 @@ Item {
         if (visible)
             input.forceActiveFocus();
     }
+    // The window creates the page when it's shown
+    Component.onCompleted: input.forceActiveFocus()
 
     ColumnLayout {
         id: main

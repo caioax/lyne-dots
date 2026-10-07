@@ -18,6 +18,8 @@ QsPopupWindow {
     property string shownPage: ""
     // Page fading out while `slide` runs
     property string leavingPage: ""
+    // Network the password page asks for
+    property string passwordSsid: ""
 
     readonly property var slots: ({
             "": mainSlot,
@@ -49,7 +51,6 @@ QsPopupWindow {
             QuickSettingsService.close();
         slide.stop();
         shownPage = "";
-        mainPage.pickedMonitor = null;
         // Still open on another screen: that one keeps its page
         if (QuickSettingsService.screen === "")
             QuickSettingsService.page = "";
@@ -156,20 +157,25 @@ QsPopupWindow {
         }
     }
 
-    // A page; shown while current or sliding out
+    // A page; shown while current or sliding out. It only exists then (and
+    // while the window is open): one window per bar kept all seven pages
+    // of both alive, with their bindings and timers
     component PageSlot: Item {
         id: slot
 
         required property string pageId
-        default property alias page: holder.data
+        property Component page
+        readonly property bool shown: root.shownPage === pageId || (slide.running && root.leavingPage === pageId)
 
         width: parent?.width ?? 0
-        implicitHeight: holder.childrenRect.height
-        visible: root.shownPage === pageId || (slide.running && root.leavingPage === pageId)
+        implicitHeight: loader.height
+        visible: shown
 
-        Item {
-            id: holder
+        Loader {
+            id: loader
             width: parent.width
+            active: slot.shown && root.visible
+            sourceComponent: slot.page
         }
     }
 
@@ -180,11 +186,11 @@ QsPopupWindow {
             id: mainSlot
             pageId: ""
 
-            DashboardPage {
-                id: mainPage
-                width: parent.width
-                availableHeight: root.contentMaxHeight
-                onCloseWindow: root.closeWindow()
+            page: Component {
+                DashboardPage {
+                    availableHeight: root.contentMaxHeight
+                    onCloseWindow: root.closeWindow()
+                }
             }
         }
 
@@ -192,13 +198,14 @@ QsPopupWindow {
             id: wifiSlot
             pageId: "wifi"
 
-            WifiPage {
-                width: parent.width
-                availableHeight: root.contentMaxHeight
-                onBackRequested: QuickSettingsService.back()
-                onPasswordRequested: ssid => {
-                    wifiPasswordPage.targetSsid = ssid;
-                    QuickSettingsService.showPage("wifiPassword");
+            page: Component {
+                WifiPage {
+                    availableHeight: root.contentMaxHeight
+                    onBackRequested: QuickSettingsService.back()
+                    onPasswordRequested: ssid => {
+                        root.passwordSsid = ssid;
+                        QuickSettingsService.showPage("wifiPassword");
+                    }
                 }
             }
         }
@@ -207,13 +214,14 @@ QsPopupWindow {
             id: wifiPasswordSlot
             pageId: "wifiPassword"
 
-            WifiPasswordPage {
-                id: wifiPasswordPage
-                width: parent.width
-                onCancelled: QuickSettingsService.back()
-                onConnectClicked: password => {
-                    NetworkService.connect(targetSsid, password);
-                    QuickSettingsService.back();
+            page: Component {
+                WifiPasswordPage {
+                    targetSsid: root.passwordSsid
+                    onCancelled: QuickSettingsService.back()
+                    onConnectClicked: password => {
+                        NetworkService.connect(targetSsid, password);
+                        QuickSettingsService.back();
+                    }
                 }
             }
         }
@@ -222,10 +230,11 @@ QsPopupWindow {
             id: bluetoothSlot
             pageId: "bluetooth"
 
-            BluetoothPage {
-                width: parent.width
-                availableHeight: root.contentMaxHeight
-                onBackRequested: QuickSettingsService.back()
+            page: Component {
+                BluetoothPage {
+                    availableHeight: root.contentMaxHeight
+                    onBackRequested: QuickSettingsService.back()
+                }
             }
         }
 
@@ -233,9 +242,10 @@ QsPopupWindow {
             id: nightLightSlot
             pageId: "nightLight"
 
-            NightLightPage {
-                width: parent.width
-                onBackRequested: QuickSettingsService.back()
+            page: Component {
+                NightLightPage {
+                    onBackRequested: QuickSettingsService.back()
+                }
             }
         }
 
@@ -243,9 +253,10 @@ QsPopupWindow {
             id: soundSlot
             pageId: "sound"
 
-            SoundPage {
-                width: parent.width
-                onBackRequested: QuickSettingsService.back()
+            page: Component {
+                SoundPage {
+                    onBackRequested: QuickSettingsService.back()
+                }
             }
         }
 
@@ -253,11 +264,12 @@ QsPopupWindow {
             id: notificationsSlot
             pageId: "notifications"
 
-            NotificationsPage {
-                width: parent.width
-                availableHeight: root.contentMaxHeight
-                onBackRequested: QuickSettingsService.back()
-                onCloseWindow: root.closeWindow()
+            page: Component {
+                NotificationsPage {
+                    availableHeight: root.contentMaxHeight
+                    onBackRequested: QuickSettingsService.back()
+                    onCloseWindow: root.closeWindow()
+                }
             }
         }
     }

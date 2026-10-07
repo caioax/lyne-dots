@@ -24,10 +24,13 @@ Item {
     implicitHeight: main.implicitHeight
 
     // Look for devices while the page is open
-    onVisibleChanged: {
+    function startScan(): void {
         if (visible && BluetoothService.isPowered && !BluetoothService.isDiscovering)
             BluetoothService.toggleScan();
     }
+    onVisibleChanged: startScan()
+    // The window creates the page when it's shown
+    Component.onCompleted: startScan()
 
     function status(device): string {
         if (device.pairing)
