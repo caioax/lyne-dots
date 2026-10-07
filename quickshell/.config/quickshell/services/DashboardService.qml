@@ -86,43 +86,6 @@ Singleton {
     // Asks the window on `screen` to show itself, even while it is closing
     signal shown
 
-    // Hidden dashboards (one per monitor) drop their tabs while the theme
-    // colors fade, or every frame would reevaluate all their bindings.
-    // Afterwards the tabs come back one per tick, alternating monitors, so no
-    // single frame stalls. -1: every tab loaded
-    property int reloadStep: -1
-
-    // Whether the hidden window on the `screenIndex`th monitor keeps tab `index`
-    function tabLoaded(index: int, screenIndex: int): bool {
-        return reloadStep < 0 || reloadStep > index * Quickshell.screens.length + screenIndex;
-    }
-
-    Connections {
-        target: Config
-
-        function onThemeTransitioningChanged() {
-            if (Config.themeTransitioning) {
-                reloadTimer.stop();
-                root.reloadStep = 0;
-            } else {
-                reloadTimer.start();
-            }
-        }
-    }
-
-    Timer {
-        id: reloadTimer
-        interval: Config.animDurationShort
-        repeat: true
-        onTriggered: {
-            root.reloadStep++;
-            if (root.reloadStep > root.tabs.length * Quickshell.screens.length) {
-                root.reloadStep = -1;
-                stop();
-            }
-        }
-    }
-
     function hasTab(id: string): bool {
         return tabs.some(t => t.id === id);
     }

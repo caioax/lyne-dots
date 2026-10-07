@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell
 import QtQuick.Layouts
 import qs.config
 import qs.services
@@ -107,12 +106,17 @@ QsPopupWindow {
                     id: repeater
                     model: DashboardService.tabs
 
+                    // Tabs only exist while the dashboard is shown (loaded in
+                    // the hidden one on every monitor they took half the
+                    // shell's idle CPU). The open one is built at once, the
+                    // others over the next frames
                     Loader {
                         required property var modelData
                         required property int index
 
                         width: pages.width
-                        active: root.visible || DashboardService.tabLoaded(index, Quickshell.screens.indexOf(root.screen))
+                        active: root.visible
+                        asynchronous: index !== DashboardService.tabIndex
                         sourceComponent: root.tabComponents[modelData.id] ?? null
                     }
                 }
