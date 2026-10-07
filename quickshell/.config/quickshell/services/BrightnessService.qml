@@ -104,7 +104,9 @@ Singleton {
     Connections {
         target: StateService
 
-        function onStateLoaded() {
+        function onStateLoaded(keys) {
+            if (!keys.includes("nightLight"))
+                return;
             // Load night light state
             root.nightLightEnabled = root.getState("nightLight.enabled", false);
             root.nightLightIntensity = root.getState("nightLight.intensity", 0.5);
@@ -123,7 +125,7 @@ Singleton {
 
     // The single path from the loaded state to hyprsunset: once both are
     // ready, and only when the wanted value differs from the applied one
-    // (stateLoaded fires on every state.json write)
+    // (a reload of the same values, or a state.json write that left them)
     function _applyLoaded(): void {
         if (!_sunsetReady || StateService.isLoading)
             return;

@@ -118,7 +118,11 @@ Singleton {
     // Load theme when state is ready
     Connections {
         target: StateService
-        function onStateLoaded() {
+        function onStateLoaded(keys) {
+            // Writes to other keys (brightness, bar...) leave the theme be; in
+            // auto mode the wallpaper drives it
+            if (!keys.includes("theme") && !(root.isAutoMode && keys.includes("wallpaper")))
+                return;
             root.themeMode = root.getState("theme.mode", "preset");
             root.colorScheme = root.getState("theme.scheme", "dark");
             // currentThemeName changes when the theme is applied, so a new

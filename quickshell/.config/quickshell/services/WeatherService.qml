@@ -70,8 +70,9 @@ Singleton {
 
     Connections {
         target: StateService
-        function onStateLoaded() {
-            root.refresh(false);
+        function onStateLoaded(keys) {
+            if (keys.includes("weather"))
+                root.refresh(false);
         }
     }
 

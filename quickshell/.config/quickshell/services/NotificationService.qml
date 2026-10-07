@@ -37,8 +37,9 @@ Singleton {
     Connections {
         target: StateService
 
-        function onStateLoaded() {
-            root.dndEnabled = StateService.get("notifications.dnd", false);
+        function onStateLoaded(keys) {
+            if (keys.includes("notifications"))
+                root.dndEnabled = StateService.get("notifications.dnd", false);
         }
     }
 

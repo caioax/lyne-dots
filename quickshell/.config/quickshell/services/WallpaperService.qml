@@ -60,7 +60,9 @@ Singleton {
     Connections {
         target: StateService
 
-        function onStateLoaded() {
+        function onStateLoaded(keys) {
+            if (!keys.includes("wallpaper"))
+                return;
             root.currentWallpaper = getState("wallpaper.current", "");
             root.favorites = getState("wallpaper.favorites", []);
             // What awww shows wins over the saved path

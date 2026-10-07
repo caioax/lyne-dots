@@ -15,15 +15,43 @@ Singleton {
     property var defaults: ({})
     property bool isLoading: true
 
-    // Bumped on every change so bindings that call get() re-evaluate
-    // (state is mutated in place, which QML can't observe by itself)
+    // state is mutated in place, which QML can't observe by itself: get()
+    // reads a counter of the path's top-level key (bumped when anything
+    // under it changes) and `revision` (bumped when defaults.json loads), so
+    // a set() only reevaluates the bindings of its own key
     property int revision: 0
+    // Top-level key -> notifier; filled in place, never reassigned (that
+    // would notify every binding)
+    property var _notifiers: ({})
 
-    // Last text written by us, to ignore the watcher echo of our own saves
-    property string _lastWritten: ""
+    Component {
+        id: notifierComponent
 
-    // Emitted on the first load and when state.json changes outside the shell (e.g. lyne CLI)
-    signal stateLoaded
+        QtObject {
+            property int rev: 0
+        }
+    }
+
+    function _depend(path: string): void {
+        const top = path.split(".")[0];
+        let notifier = _notifiers[top];
+        if (!notifier) {
+            notifier = notifierComponent.createObject(root);
+            _notifiers[top] = notifier;
+        }
+        notifier.rev;
+    }
+
+    function _bump(top: string): void {
+        const notifier = _notifiers[top];
+        if (notifier)
+            notifier.rev++;
+    }
+
+    // Emitted on the first load and when state.json changes outside the shell
+    // (e.g. lyne CLI); `keys` are the top-level keys that changed (all of
+    // them on the first load)
+    signal stateLoaded(var keys)
 
     // --- Dot Notation Functions ---
     function _lookup(obj, path: string) {
@@ -43,6 +71,7 @@ Singleton {
     // only for keys defaults.json doesn't have (or before it's read)
     function get(path: string, defaultValue) {
         root.revision; // dependency for bindings
+        _depend(path);
         const value = _lookup(state, path);
         if (value !== undefined)
             return value;
@@ -59,6 +88,7 @@ Singleton {
     // Missing keys count as default: get() falls back to defaults.json
     function isDefault(path: string): bool {
         root.revision;
+        _depend(path);
         const def = _lookup(defaults, path);
         const value = _lookup(state, path);
         return def === undefined || value === undefined || JSON.stringify(value) === JSON.stringify(def);
@@ -77,7 +107,7 @@ Singleton {
             current = current[key];
         }
         current[keys[keys.length - 1]] = value;
-        revision++;
+        _bump(keys[0]);
         if (!isLoading)
             saveDebounce.restart();
     }
@@ -92,12 +122,17 @@ Singleton {
     function _apply(text: string) {
         try {
             const newState = JSON.parse(text);
-            const changed = JSON.stringify(state) !== JSON.stringify(newState);
+            const changed = [];
+            for (const key of new Set([...Object.keys(state), ...Object.keys(newState)])) {
+                if (JSON.stringify(state[key]) !== JSON.stringify(newState[key]))
+                    changed.push(key);
+            }
             state = newState;
             isLoading = false;
-            if (changed) {
-                revision++;
-                stateLoaded();
+            if (changed.length > 0) {
+                for (const key of changed)
+                    _bump(key);
+                stateLoaded(changed);
             }
         } catch (e) {
             console.error("[StateService] JSON Parse Error:", e);
@@ -107,8 +142,7 @@ Singleton {
 
     function saveState() {
         saveDebounce.stop();
-        _lastWritten = JSON.stringify(state, null, 2) + "\n";
-        stateFile.setText(_lastWritten);
+        stateFile.setText(JSON.stringify(state, null, 2) + "\n");
     }
 
     // Coalesces bursts of set() calls (e.g. dragging a slider) into one write
@@ -150,13 +184,14 @@ Singleton {
         onFileChanged: reload()
         onLoaded: {
             missing = false;
-            const content = text();
-            if (content === root._lastWritten)
-                return;
             // Local changes not yet written win over an external edit
             if (saveDebounce.running)
                 return;
-            root._apply(content);
+            // The echo of our own save changes no key: _apply does nothing.
+            // (Comparing with the last text we wrote ignored an external
+            // edit that brought the file back to it, e.g. lyne theme set A,
+            // then B, then A again)
+            root._apply(text());
         }
         onLoadFailed: error => {
             missing = true;
