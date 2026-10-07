@@ -69,7 +69,9 @@ BarButton {
     //   hover  — the dot bounces: squashes, leaps stretched, lands flat, rebounds
     //   open   — the dot rides the whole line as a comet and comes home bigger;
     //            closing rides it back
-    //   open   — then it breathes slowly until the launcher closes
+    //   open   — then it breathes slowly twice and rests, grown, until the
+    //            launcher closes (a looping animation would keep every
+    //            window rendering at the refresh rate)
     //   press  — the logo squeezes and pops back on release
     //   start  — the line draws itself once and the dot pops in
     property real lift: 0
@@ -156,7 +158,7 @@ BarButton {
 
     SequentialAnimation {
         running: root.motionOn && root.active && root.grow === 1
-        loops: Animation.Infinite
+        loops: 2
         onRunningChanged: {
             if (!running)
                 root.breath = 0;
