@@ -112,21 +112,33 @@ Singleton {
 
             console.log("[Brightness] Loaded state - enabled:", root.nightLightEnabled, "intensity:", root.nightLightIntensity);
 
-            // Always apply the loaded state (enable or disable)
-            applyStateTimer.restart();
+            root._applyLoaded();
         }
     }
 
-    Timer {
-        id: applyStateTimer
-        interval: 1000
-        onTriggered: {
-            if (root.nightLightEnabled) {
-                root.applyNightLight();
-                return;
-            }
-            root.disableNightLight();
-        }
+    // hyprsunset answers (found running or just started)
+    property bool _sunsetReady: false
+    // What hyprsunset was last told: a temperature or "off"
+    property string _applied: ""
+
+    // The single path from the loaded state to hyprsunset: once both are
+    // ready, and only when the wanted value differs from the applied one
+    // (stateLoaded fires on every state.json write)
+    function _applyLoaded(): void {
+        if (!_sunsetReady || StateService.isLoading)
+            return;
+        const wanted = nightLightEnabled ? String(nightLightTemperature) : "off";
+        if (wanted === _applied)
+            return;
+        if (nightLightEnabled)
+            applyNightLight();
+        else
+            _turnOff();
+    }
+
+    function _turnOff(): void {
+        _applied = "off";
+        disableNightLightProc.running = true;
     }
 
     // ========================================================================
@@ -538,7 +550,7 @@ Singleton {
     function disableNightLight() {
         nightLightEnabled = false;
         setState("nightLight.enabled", false);
-        disableNightLightProc.running = true;
+        _turnOff();
     }
 
     // Set the intensity and apply if active
@@ -564,6 +576,7 @@ Singleton {
 
     // Apply the current temperature
     function applyNightLight() {
+        _applied = String(nightLightTemperature);
         enableNightLightProc.command = ["hyprctl", "hyprsunset", "temperature", nightLightTemperature.toString()];
         enableNightLightProc.running = true;
     }
@@ -582,10 +595,8 @@ Singleton {
             fi
         `]
         onExited: {
-            // hyprsunset is ready — apply state if already loaded
-            if (!StateService.isLoading && root.nightLightEnabled) {
-                root.applyNightLight();
-            }
+            root._sunsetReady = true;
+            root._applyLoaded();
         }
     }
 
