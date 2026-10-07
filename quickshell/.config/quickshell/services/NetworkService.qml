@@ -233,16 +233,25 @@ Singleton {
         }
     }
 
-    // Automatic Update Timer
+    // The Wi-Fi page calls watch()/unwatch() while it's open
+    property int _viewers: 0
+
+    function watch() {
+        _viewers++;
+    }
+
+    function unwatch() {
+        _viewers = Math.max(0, _viewers - 1);
+    }
+
+    // Signal strengths from NetworkManager's last scan: every 10 s on the
+    // Wi-Fi page, every minute otherwise (the bar icon). Everything else
+    // follows `nmcli monitor`
     Timer {
-        interval: 10000
+        interval: root._viewers > 0 ? 10000 : 60000
         running: root.wifiEnabled
         repeat: true
-        onTriggered: {
-            getSavedProc.running = true;
-            getNetworksProc.running = true;
-            connectivityProc.running = true;
-        }
+        onTriggered: getNetworksProc.running = true
     }
 
     // Wired state, refreshed on every NetworkManager event
@@ -275,12 +284,16 @@ Singleton {
         }
     }
 
+    // Any NetworkManager event (connections, devices, the radio switched
+    // elsewhere, connectivity): read it all again. statusProc rereads the
+    // saved and visible networks
     Timer {
         id: monitorDebounce
         interval: 500
         onTriggered: {
             wiredProc.running = true;
             connectivityProc.running = true;
+            statusProc.running = true;
         }
     }
 

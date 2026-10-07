@@ -31,6 +31,23 @@ Item {
         }
     }
 
+    // Faster signal updates while the page is shown (watch/unwatch on real
+    // changes; a handler doesn't run for the initial value)
+    readonly property bool shown: visible && (QsWindow.window?.visible ?? false)
+    property bool held: false
+    function sync(): void {
+        if (shown === held)
+            return;
+        held = shown;
+        shown ? NetworkService.watch() : NetworkService.unwatch();
+    }
+    onShownChanged: sync()
+    Component.onCompleted: sync()
+    Component.onDestruction: {
+        if (held)
+            NetworkService.unwatch();
+    }
+
     Connections {
         target: NetworkService
 
