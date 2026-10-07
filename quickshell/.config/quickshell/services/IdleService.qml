@@ -48,29 +48,49 @@ Singleton {
     // PROCESSES
     // ========================================================================
 
-    // Poll logind for active idle block inhibitors (covers systemd-inhibit, D-Bus bridges)
-    Process {
-        id: inhibitCheckProc
-        command: ["bash", "-c", "busctl get-property org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager BlockInhibited 2>/dev/null | grep -q idle && echo true || echo false"]
+    // Active "idle" block inhibitors in logind (systemd-inhibit, D-Bus
+    // bridges): read once, then followed through BlockInhibited's
+    // PropertiesChanged
+    function _setInhibited(value: string): void {
+        const val = value.split(":").includes("idle");
+        if (root.systemInhibited === val)
+            return;
+        root.systemInhibited = val;
+        console.log(val ? "[Idle] System idle inhibitor active" : "[Idle] System idle inhibitor released");
+    }
 
-        stdout: SplitParser {
-            onRead: data => {
-                const val = data.trim() === "true";
-                if (root.systemInhibited !== val) {
-                    root.systemInhibited = val;
-                    if (val) console.log("[Idle] System idle inhibitor active");
-                    else console.log("[Idle] System idle inhibitor released");
-                }
-            }
+    Process {
+        id: inhibitReadProc
+        running: true
+        command: ["busctl", "get-property", "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "BlockInhibited"]
+        // s "sleep:idle"
+        stdout: StdioCollector {
+            onStreamFinished: root._setInhibited(text.trim().replace(/^s "(.*)"$/, "$1"))
         }
     }
 
-    Timer {
-        interval: 10000
+    Process {
+        id: inhibitMonitorProc
         running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: inhibitCheckProc.running = true
+        command: ["setpriv", "--pdeathsig", "TERM", "--", "gdbus", "monitor", "--system", "--dest", "org.freedesktop.login1", "--object-path", "/org/freedesktop/login1"]
+        stdout: SplitParser {
+            onRead: line => {
+                const match = line.match(/'BlockInhibited': <'([^']*)'>/);
+                if (match)
+                    root._setInhibited(match[1]);
+            }
+        }
+        // logind restarted: read again and listen again
+        onExited: inhibitRestart.start()
+    }
+
+    Timer {
+        id: inhibitRestart
+        interval: 5000
+        onTriggered: {
+            inhibitMonitorProc.running = true;
+            inhibitReadProc.running = true;
+        }
     }
 
     Process {
