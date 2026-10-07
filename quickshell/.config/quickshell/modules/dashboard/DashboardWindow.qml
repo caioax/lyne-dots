@@ -83,7 +83,10 @@ QsPopupWindow {
         Item {
             id: pages
 
-            readonly property real currentHeight: repeater.count, repeater.itemAt(DashboardService.tabIndex)?.implicitHeight ?? 0
+            readonly property real currentHeight: {
+                void repeater.count; // reevaluated once the tabs exist
+                return repeater.itemAt(DashboardService.tabIndex)?.implicitHeight ?? 0;
+            }
 
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -138,7 +141,10 @@ QsPopupWindow {
             system: systemComponent
         })
 
-    readonly property OverviewTab overview: repeater.count, repeater.itemAt(DashboardService.tabs.findIndex(t => t.id === "overview"))?.item ?? null
+    readonly property OverviewTab overview: {
+        void repeater.count; // reevaluated once the tabs exist
+        return repeater.itemAt(DashboardService.tabs.findIndex(t => t.id === "overview"))?.item ?? null;
+    }
 
     Component {
         id: overviewComponent

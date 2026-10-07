@@ -3,7 +3,6 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import "../rows/"
-import "../../../components/"
 import "../../../services/ThemeGenerator.js" as ThemeGenerator
 
 // One color of a theme being created: swatch + hex field; clicking the

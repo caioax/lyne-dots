@@ -3,7 +3,6 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services
-import "../../components/"
 
 // Template "farewell": no panel, a big avatar and greeting in the middle of
 // the dimmed screen with round buttons below. Rises into place when shown

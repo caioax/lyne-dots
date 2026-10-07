@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import Quickshell.Bluetooth
 import qs.config
 import qs.services
 import "../../../components/"

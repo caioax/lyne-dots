@@ -409,7 +409,7 @@ PanelWindow {
             id: column
 
             // Row of each part, top to bottom
-            readonly property var rows: root.reversed ? ({
+            readonly property var rowOf: root.reversed ? ({
                     footer: 0,
                     separator: 1,
                     resultsLabel: 2,
@@ -441,7 +441,7 @@ PanelWindow {
             SearchField {
                 id: search
 
-                Layout.row: column.rows.search
+                Layout.row: column.rowOf.search
                 Layout.maximumWidth: root.grid ? Config.fontSizeNormal * 40 : -1
                 Layout.alignment: Qt.AlignHCenter
                 count: LauncherService.mode.id === "calc" ? 0 : LauncherService.entries.length
@@ -462,7 +462,7 @@ PanelWindow {
 
             // Clipboard: kind of entries shown (Alt+1…4)
             SegmentedControl {
-                Layout.row: column.rows.filters
+                Layout.row: column.rowOf.filters
                 Layout.maximumWidth: root.grid ? Config.fontSizeNormal * 40 : -1
                 Layout.alignment: Qt.AlignHCenter
                 visible: root.clipboard && ClipboardService.entries.length > 0
@@ -472,7 +472,7 @@ PanelWindow {
             }
 
             SectionLabel {
-                Layout.row: column.rows.favoritesLabel
+                Layout.row: column.rowOf.favoritesLabel
                 visible: favoritesGrid.count > 0
                 text: "Favorites"
             }
@@ -480,7 +480,7 @@ PanelWindow {
             FavoritesGrid {
                 id: favoritesGrid
 
-                Layout.row: column.rows.favorites
+                Layout.row: column.rowOf.favorites
                 Layout.fillWidth: true
                 visible: count > 0
                 columns: root.grid ? root.gridColumns : root.style === "spotlight" ? 6 : 5
@@ -489,7 +489,7 @@ PanelWindow {
             }
 
             SectionLabel {
-                Layout.row: column.rows.resultsLabel
+                Layout.row: column.rowOf.resultsLabel
                 visible: favoritesGrid.count > 0 && LauncherService.results.length > 0
                 text: LauncherService.mode.id === "apps" ? "Apps" : LauncherService.mode.label
             }
@@ -497,7 +497,7 @@ PanelWindow {
             ResultsGrid {
                 id: resultsGrid
 
-                Layout.row: column.rows.results
+                Layout.row: column.rowOf.results
                 visible: root.tileResults
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -509,7 +509,7 @@ PanelWindow {
             ResultsList {
                 id: results
 
-                Layout.row: column.rows.results
+                Layout.row: column.rowOf.results
                 verticalLayoutDirection: root.reversed ? ListView.BottomToTop : ListView.TopToBottom
                 // Sidebar and grid fill the height they have
                 fills: root.sidebar || root.grid
@@ -539,7 +539,7 @@ PanelWindow {
             }
 
             Rectangle {
-                Layout.row: column.rows.separator
+                Layout.row: column.rowOf.separator
                 Layout.fillWidth: true
                 implicitHeight: 1
                 color: Config.surface1Color
@@ -548,7 +548,7 @@ PanelWindow {
             RowLayout {
                 id: footer
 
-                Layout.row: column.rows.footer
+                Layout.row: column.rowOf.footer
                 Layout.leftMargin: Config.padding
                 Layout.rightMargin: Config.padding
                 Layout.alignment: root.grid ? Qt.AlignHCenter : Qt.AlignLeft

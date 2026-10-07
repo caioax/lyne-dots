@@ -5,7 +5,6 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
-import qs.config
 
 // Dashboard state: which screen it is open on and the current tab. Each bar
 // has its own DashboardWindow that shows itself while `screen` names it

@@ -138,7 +138,7 @@ Item {
                 Canvas {
                     id: sampler
 
-                    readonly property real scale: root.screenshot.monitorScale
+                    readonly property real pixelScale: root.screenshot.monitorScale
 
                     width: 1
                     height: 1
@@ -155,7 +155,7 @@ Item {
                         const y = root.py;
                         const ctx = getContext("2d");
                         ctx.clearRect(0, 0, 1, 1);
-                        ctx.drawImage(root.source, Math.floor(x * scale), Math.floor(y * scale), 1, 1, 0, 0, 1, 1);
+                        ctx.drawImage(root.source, Math.floor(x * pixelScale), Math.floor(y * pixelScale), 1, 1, 0, 0, 1, 1);
                         const data = ctx.getImageData(0, 0, 1, 1).data;
                         root.screenshot.setSample(x, y, Qt.rgba(data[0] / 255, data[1] / 255, data[2] / 255, 1));
                     }

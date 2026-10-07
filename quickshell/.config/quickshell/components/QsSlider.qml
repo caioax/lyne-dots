@@ -14,7 +14,7 @@ Item {
     property real stepSize: (to - from) * 0.05
     property string icon: ""
     property bool showPercentage: true
-    property string fillColor: Config.accentColor
+    property color fillColor: Config.accentColor
     // Off where the slider sits in a scrolling page (Settings): the wheel
     // scrolls the page instead of changing the value
     property bool wheelEnabled: true

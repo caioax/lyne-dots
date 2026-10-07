@@ -18,7 +18,7 @@ ColumnLayout {
     readonly property int columns: 3
     readonly property int thumbHeight: Config.fontSizeIconLarge * 2
     readonly property var preview: ThemeService.themePreviews[theme] ?? {}
-    readonly property var palette: preview.palette ?? {}
+    readonly property var themePalette: preview.palette ?? {}
     readonly property var terminal: preview.terminal ?? {}
     readonly property string displayName: preview.name ?? theme
     readonly property bool inUse: !ThemeService.isAutoMode && theme === ThemeService.currentThemeName
@@ -273,7 +273,7 @@ ColumnLayout {
                             id: chip
 
                             required property var modelData
-                            readonly property color swatch: root.palette[modelData.key] ?? "transparent"
+                            readonly property color swatch: root.themePalette[modelData.key] ?? "transparent"
 
                             width: chipRow.implicitWidth + Config.padding * 2
                             height: chipRow.implicitHeight + Config.padding
@@ -369,7 +369,7 @@ ColumnLayout {
 
             leading: LyneLogo {
                 height: Config.fontSizeIconSmall
-                dotColor: root.palette.accent ?? Config.accentColor
+                dotColor: root.themePalette.accent ?? Config.accentColor
             }
 
             Spinner {

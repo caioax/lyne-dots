@@ -78,7 +78,7 @@ Popup {
             spacing: Math.round(Config.padding / 3)
 
             // Back from a submenu (md-chevron_left)
-            MenuItem {
+            MenuRow {
                 visible: root._submenu !== null
                 label: root._submenu?.label ?? ""
                 icon: "\u{f0141}"
@@ -89,7 +89,7 @@ Popup {
             Repeater {
                 model: root._submenu ? root._submenu.children : root.items
 
-                MenuItem {
+                MenuRow {
                     required property var modelData
 
                     label: modelData.label
@@ -110,7 +110,7 @@ Popup {
         }
     }
 
-    component MenuItem: Rectangle {
+    component MenuRow: Rectangle {
         id: item
 
         property string label

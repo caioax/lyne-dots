@@ -4,7 +4,6 @@ import QtQuick.Layouts
 import qs.config
 import qs.services
 import "../rows/"
-import "../../../components/"
 
 ColumnLayout {
     id: root

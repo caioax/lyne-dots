@@ -21,7 +21,7 @@ Item {
 
     readonly property bool auto: ThemeService.isAutoMode
     readonly property var preview: ThemeService.themePreviews[modelData] ?? {}
-    readonly property var palette: preview.palette ?? {}
+    readonly property var themePalette: preview.palette ?? {}
     readonly property bool isCurrent: !auto && modelData === ThemeService.currentThemeName
 
     Layout.fillWidth: true
@@ -76,7 +76,7 @@ Item {
             }
 
             PaletteDots {
-                colors: [tile.palette.accent, tile.palette.success, tile.palette.warning, tile.palette.error]
+                colors: [tile.themePalette.accent, tile.themePalette.success, tile.themePalette.warning, tile.themePalette.error]
             }
         }
     }

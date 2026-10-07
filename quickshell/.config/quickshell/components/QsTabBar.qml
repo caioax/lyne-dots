@@ -119,7 +119,10 @@ Item {
     // Indicator: as wide as the current tab's icon and label. Quicker than
     // the pages it points at, so the selection never trails behind them
     Rectangle {
-        readonly property Item tab: repeater.count, repeater.itemAt(root.currentIndex)
+        readonly property Item tab: {
+            void repeater.count; // reevaluated once the tabs exist
+            return repeater.itemAt(root.currentIndex);
+        }
         readonly property real tabContentWidth: tab?.contentWidth ?? root.tabWidth / 2
 
         anchors.bottom: parent.bottom
