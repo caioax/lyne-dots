@@ -28,7 +28,7 @@ ColumnLayout {
 
         SelectRow {
             label: "Mode"
-            description: "The themes below follow it"
+            description: ThemeService.schemeHint || "The themes below follow it"
             options: [
                 {
                     label: "Dark",

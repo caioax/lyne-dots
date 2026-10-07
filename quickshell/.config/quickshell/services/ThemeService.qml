@@ -40,9 +40,22 @@ Singleton {
 
     property string currentThemeName: getState("theme.name", "tokyonight")
     property string themeMode: getState("theme.mode", "preset") // "preset" | "auto"
+    // The mode picked in Settings: the theme list shows its themes
     property string colorScheme: getState("theme.scheme", "dark") // "dark" | "light"
     readonly property bool isAutoMode: themeMode === "auto"
-    readonly property bool isDarkMode: colorScheme === "dark"
+    // Variant of the preset on screen. GTK and Qt follow it, not
+    // colorScheme: picking Light on a theme without a light version keeps
+    // it until a light theme is chosen
+    property string appliedVariant: "dark"
+    readonly property string appliedScheme: isAutoMode ? colorScheme : appliedVariant
+    readonly property bool isDarkMode: appliedScheme === "dark"
+    // The current preset has no version for the picked mode
+    readonly property string schemeHint: {
+        if (isAutoMode || appliedVariant === colorScheme)
+            return "";
+        const name = themePreviews[currentThemeName]?.name ?? currentThemeName;
+        return name + " has no " + colorScheme + " version: pick a " + colorScheme + " theme";
+    }
     readonly property string gtkThemeName: isDarkMode ? "adw-gtk3-dark" : "adw-gtk3"
     property var availableThemes: []
 
@@ -108,19 +121,21 @@ Singleton {
         function onStateLoaded() {
             root.themeMode = root.getState("theme.mode", "preset");
             root.colorScheme = root.getState("theme.scheme", "dark");
-            root.currentThemeName = root.getState("theme.name", "tokyonight");
+            // currentThemeName changes when the theme is applied, so a new
+            // name from outside (lyne theme set) counts as another theme
+            const name = root.getState("theme.name", "tokyonight");
             if (root.isAutoMode) {
                 const wallpaper = root.getState("wallpaper.current", "");
                 if (wallpaper) {
                     root.runMatugen(wallpaper);
                 } else {
                     // Fallback to preset if no wallpaper
-                    root.applyTheme(root.currentThemeName, true);
+                    root.applyTheme(name, true);
                 }
             } else {
                 // Reloading the current preset keeps the user's opacity
                 // and wallpaper
-                root.applyTheme(root.currentThemeName, true);
+                root.applyTheme(name, true);
             }
         }
     }
@@ -162,20 +177,35 @@ Singleton {
         colorScheme = scheme;
         setState("theme.scheme", scheme);
 
-        // Update GTK theme name and gsettings
-        _applyGtkThemeSwitch();
-
-        // Re-apply current colors with new scheme
         if (isAutoMode) {
+            _applyGtkThemeSwitch();
             const wallpaper = getState("wallpaper.current", "");
             if (wallpaper)
                 runMatugen(wallpaper);
-        } else {
-            // Load current theme JSON to find the pair for the new scheme
-            _schemeSwitchProc.run(["cat", themesDir + "/" + currentThemeName + ".json"], {
-                scheme
-            });
+            return;
         }
+        // The current preset's version for that mode, if it has one;
+        // otherwise it stays (schemeHint) until a theme of that mode is picked
+        const pair = pairFor(currentThemeName, scheme);
+        if (pair && pair !== currentThemeName)
+            applyTheme(pair);
+    }
+
+    // The theme for `scheme` that goes with `name`: itself, the pair it
+    // names, or the theme that names it (dark themes don't name their light
+    // version; the light ones name their dark one). "" when there's none
+    function pairFor(name: string, scheme: string): string {
+        const previews = themePreviews;
+        const variant = t => previews[t]?.variant ?? "dark";
+        const preview = previews[name];
+        if (!preview)
+            return "";
+        if (variant(name) === scheme)
+            return name;
+        const named = scheme === "light" ? preview.lightPair : preview.darkPair;
+        if (named && previews[named])
+            return named;
+        return availableThemes.find(t => variant(t) === scheme && (scheme === "light" ? previews[t].darkPair : previews[t].lightPair) === name) ?? "";
     }
 
     function runMatugen(wallpaperPath: string) {
@@ -232,7 +262,14 @@ Singleton {
             setState("opacity.background", data.opacity.background);
         }
 
-        // 3. Save theme name
+        // 3. Save theme name. Another theme chosen (not the saved one
+        // reloaded) brings the list's mode along with its variant
+        const variant = data.variant || "dark";
+        if (themeName !== currentThemeName && variant !== colorScheme) {
+            colorScheme = variant;
+            setState("theme.scheme", variant);
+        }
+        appliedVariant = variant;
         currentThemeName = themeName;
         setState("theme.name", themeName);
 
@@ -604,48 +641,6 @@ Singleton {
                 }
             } else {
                 console.error("[Theme] Theme file not found:", request.themeName);
-            }
-        }
-    }
-
-    // Reads the current theme JSON to find its light/dark pair
-    QueuedProcess {
-        id: _schemeSwitchProc
-        onStarted: _buffer = ""
-        property string _buffer: ""
-
-        stdout: SplitParser {
-            onRead: data => _schemeSwitchProc._buffer += data + "\n"
-        }
-
-        stderr: SplitParser {
-            onRead: data => console.error("[Theme:SchemeSwitch] " + data)
-        }
-
-        onExited: exitCode => {
-            if (exitCode === 0) {
-                try {
-                    const data = JSON.parse(_buffer.trim());
-                    var pairName = "";
-                    if (request.scheme === "light" && data.lightPair)
-                        pairName = data.lightPair;
-                    else if (request.scheme === "dark" && data.darkPair)
-                        pairName = data.darkPair;
-
-                    if (pairName) {
-                        console.log("[Theme] Switching to pair theme:", pairName);
-                        root.applyTheme(pairName);
-                    } else {
-                        // No pair found — re-apply current theme (fallback)
-                        console.log("[Theme] No pair for scheme, re-applying current theme");
-                        root.applyTheme(root.currentThemeName, true);
-                    }
-                } catch (e) {
-                    console.error("[Theme] Failed to read pair:", e);
-                    root.applyTheme(root.currentThemeName, true);
-                }
-            } else {
-                root.applyTheme(root.currentThemeName, true);
             }
         }
     }

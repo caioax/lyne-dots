@@ -13,7 +13,8 @@ hl.env("XDG_SESSION_DESKTOP", "Hyprland")
 hl.env("XDG_MENU_PREFIX", "arch-")
 
 -- --- Toolkits (Qt, GTK) ---
-hl.env("GTK_THEME", "adw-gtk3-dark")
+-- No GTK_THEME: it would override the light/dark gtk-theme the shell sets
+-- through gsettings for each theme
 hl.env("GDK_BACKEND", "wayland,x11,*")
 hl.env("QT_QPA_PLATFORM", "wayland;xcb")
 hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")

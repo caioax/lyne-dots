@@ -134,7 +134,7 @@ ColumnLayout {
 
         SelectRow {
             label: "Mode"
-            description: "Also applied to GTK and Qt apps, Kitty and Neovim"
+            description: ThemeService.schemeHint || "Also applied to GTK and Qt apps, Kitty and Neovim"
             options: [
                 {
                     label: "Dark",
