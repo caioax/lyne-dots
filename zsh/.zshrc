@@ -60,6 +60,12 @@ function zvm_after_init() {
   zvm_bindkey viins '^V' edit-command-line
 }
 
+# tmux redraws its status every 15 s: show the new path right away on cd
+if [[ -n $TMUX ]]; then
+    _tmux_status_refresh() { tmux refresh-client -S 2>/dev/null }
+    chpwd_functions+=(_tmux_status_refresh)
+fi
+
 # === ALIASES ===
 alias tk='tmux kill-server'
 all-update() {
