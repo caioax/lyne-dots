@@ -16,6 +16,22 @@ Card {
     readonly property int avatarSize: Config.fontSizeLarge * 3
     readonly property int controlSize: Config.fontSizeIconSmall * 2
 
+    // The uptime is only sampled while the Quick Settings are open
+    readonly property bool shown: QsWindow.window?.visible ?? false
+    property bool held: false
+    function sync(): void {
+        if (shown === held)
+            return;
+        held = shown;
+        shown ? SystemMonitorService.watch() : SystemMonitorService.unwatch();
+    }
+    onShownChanged: sync()
+    Component.onCompleted: sync()
+    Component.onDestruction: {
+        if (held)
+            SystemMonitorService.unwatch();
+    }
+
     function runShortcut(action: string) {
         root.closeWindow();
         switch (action) {

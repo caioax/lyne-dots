@@ -29,6 +29,33 @@ Singleton {
         _watchers = Math.max(0, _watchers - 1);
     }
 
+    // The basic samples (CPU, memory, network, uptime) only run while
+    // something shows them: the bar button and the Quick Settings call
+    // watch()/unwatch(), an acquire() counts too
+    property int _viewers: 0
+    readonly property bool sampling: _viewers > 0 || detailed
+
+    function watch() {
+        _viewers++;
+    }
+
+    function unwatch() {
+        _viewers = Math.max(0, _viewers - 1);
+    }
+
+    onSamplingChanged: {
+        if (sampling)
+            return;
+        // Same as the GPU history below: start fresh on the next look
+        cpuHistory = [];
+        memHistory = [];
+        netDownHistory = [];
+        netUpHistory = [];
+        internal.prevCpu = [];
+        internal.prevRx = -1;
+        internal.prevTx = -1;
+    }
+
     onDetailedChanged: {
         if (!detailed) {
             // Samples taken minutes apart would render as a continuous line / a
@@ -190,7 +217,7 @@ Singleton {
 
     Timer {
         interval: root.interval
-        running: true
+        running: root.sampling
         repeat: true
         triggeredOnStart: true
         onTriggered: {
