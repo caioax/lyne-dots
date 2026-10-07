@@ -25,6 +25,8 @@ Item {
         anchors.fill: parent
         source: MprisService.artUrl
         fillMode: Image.PreserveAspectCrop
+        // Blurred anyway: no need to decode a 1280×720 cover at full size
+        sourceSize: Qt.size(128, 128)
         visible: false
     }
 

@@ -138,12 +138,28 @@ Singleton {
             });
 
             root.list = [data, ...root.list];
+            root._trimHistory();
 
             // Notifications restored after a reload go straight to history
             if (!notif.lastGeneration && (critical || !root.dndEnabled))
                 data.showPopup();
             else if (data.isTransient)
                 data.close();
+        }
+    }
+
+    // History kept: older notifications go, except resident ones and those
+    // still on screen (each holds its D-Bus object and image)
+    readonly property int historyMax: 100
+
+    function _trimHistory(): void {
+        let extra = list.length - historyMax;
+        for (let i = list.length - 1; i >= 0 && extra > 0; i--) {
+            const n = list[i];
+            if (n.resident || n.popup)
+                continue;
+            n.close();
+            extra--;
         }
     }
 

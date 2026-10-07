@@ -138,9 +138,9 @@ Singleton {
         pam.start();
     }
 
+    // A check asked for while one runs reruns after it (Process does)
     function checkCapsLock() {
-        if (!capsProc.running)
-            capsProc.running = true;
+        capsProc.running = true;
     }
 
     Process {

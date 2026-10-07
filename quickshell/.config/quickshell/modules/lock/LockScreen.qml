@@ -164,7 +164,11 @@ WlSessionLock {
                     break;
                 }
             }
-            Keys.onReleased: LockService.checkCapsLock()
+            // Only the Caps Lock key changes it (each check runs hyprctl and jq)
+            Keys.onReleased: event => {
+                if (event.key === Qt.Key_CapsLock)
+                    LockService.checkCapsLock();
+            }
 
             // Typed on another monitor (or cleared after a try)
             Connections {
