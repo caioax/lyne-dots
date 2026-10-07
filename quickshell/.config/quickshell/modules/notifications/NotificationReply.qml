@@ -27,7 +27,7 @@ Rectangle {
     radius: Config.radius
     color: Config.surface1Color
     border.width: 1
-    border.color: input.activeFocus ? Config.accentColor : "transparent"
+    border.color: input.activeFocus ? Config.accentColor : Qt.alpha(Config.accentColor, 0)
 
     Behavior on border.color {
         enabled: !Config.themeTransitioning

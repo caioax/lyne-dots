@@ -27,6 +27,7 @@ APPS_PACKAGES=(
     "breeze"             # KDE theme (for Dolphin icons)
     "kio-admin"          # KIO for root access in Dolphin
     "archlinux-xdg-menu" # XDG for recognizing default apps
+    "kservice"           # kbuildsycoca6 (autostart): Dolphin's "Open with" menu
 )
 
 # AUR packages

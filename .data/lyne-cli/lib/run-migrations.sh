@@ -28,7 +28,9 @@ for migration in "$MIGRATIONS_DIR"/*.sh; do
     has_pending=true
     echo "   -> Running migration: $name"
 
-    if source "$migration"; then
+    # In a subshell: an `exit`, a `cd` or the variables and functions of one
+    # migration stay in it (sourced, so `local` and `return` still work)
+    if (source "$migration"); then
         echo "$name" >> "$DONE_FILE"
     else
         echo "lyne migrate: migration '$name' failed, stopping"

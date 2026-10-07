@@ -64,7 +64,7 @@ Item {
         Card {
             Layout.fillWidth: true
             border.width: 1
-            border.color: root.isOn ? Qt.alpha(Config.warningColor, 0.6) : "transparent"
+            border.color: Qt.alpha(Config.warningColor, root.isOn ? 0.6 : 0)
 
             Behavior on border.color {
                 enabled: !Config.themeTransitioning

@@ -28,7 +28,7 @@ Singleton {
 
     readonly property bool themeBackground: StateService.get("zen.themeBackground", true)
     readonly property bool transparent: StateService.get("zen.transparent", false)
-    readonly property real opacity: StateService.get("opacity.background", 1)
+    readonly property real opacity: StateService.get("opacity.background", 0.9)
 
     property var _palette: null
     property bool _pending: false

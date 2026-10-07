@@ -38,10 +38,16 @@ Singleton {
         return current;
     }
 
+    // A key missing in state.json takes its defaults.json value, as
+    // isDefault() and "Restore default" in Settings see it; the literal is
+    // only for keys defaults.json doesn't have (or before it's read)
     function get(path: string, defaultValue) {
         root.revision; // dependency for bindings
         const value = _lookup(state, path);
-        return value === undefined ? defaultValue : value;
+        if (value !== undefined)
+            return value;
+        const def = _lookup(defaults, path);
+        return def === undefined ? defaultValue : def;
     }
 
     function getDefault(path: string, fallback) {
@@ -50,7 +56,7 @@ Singleton {
         return value === undefined ? fallback : value;
     }
 
-    // Missing keys count as default: get() falls back to it
+    // Missing keys count as default: get() falls back to defaults.json
     function isDefault(path: string): bool {
         root.revision;
         const def = _lookup(defaults, path);

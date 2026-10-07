@@ -127,8 +127,8 @@ Singleton {
     // ========================================================================
     // GEOMETRY & LAYOUT
     // ========================================================================
-    readonly property int barHeight: getState("bar.height", 32)
-    readonly property bool barAutoHide: getState("bar.autoHide", true)
+    readonly property int barHeight: getState("bar.height", 33)
+    readonly property bool barAutoHide: getState("bar.autoHide", false)
     // Screen edge the bar sits on: "top" or "bottom"
     readonly property bool barOnBottom: getState("bar.position", "top") === "bottom"
     // Layout template: "islands", "docked", "floating" or "docked-corners"

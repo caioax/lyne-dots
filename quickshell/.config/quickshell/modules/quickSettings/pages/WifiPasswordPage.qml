@@ -67,7 +67,7 @@ Item {
                 radius: Config.radius
                 color: Config.surface1Color
                 border.width: 1
-                border.color: input.activeFocus ? Config.accentColor : "transparent"
+                border.color: input.activeFocus ? Config.accentColor : Qt.alpha(Config.accentColor, 0)
 
                 Behavior on border.color {
                     enabled: !Config.themeTransitioning
@@ -112,7 +112,7 @@ Item {
                         size: root.controlSize - Config.padding * 2
                         icon: input.showPassword ? "󰈉" : "󰈈"
                         iconSize: Config.fontSizeNormal
-                        baseColor: "transparent"
+                        baseColor: Qt.alpha(hoverColor, 0)
                         textColor: Config.subtextColor
                         hoverTextColor: Config.textColor
                         onClicked: input.showPassword = !input.showPassword

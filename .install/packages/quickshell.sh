@@ -20,6 +20,13 @@ QUICKSHELL_PACKAGES=(
     # Dialogs
     "zenity" # File picker for adding wallpapers
 
+    # Bluetooth pairing agent (scripts/bluetooth-agent.py)
+    "python-dbus"
+    "python-gobject"
+
+    # Settings › About: the GPU line
+    "pciutils" # lspci
+
     # System monitor
     "mission-center" # Detailed view opened from the system monitor popup
 

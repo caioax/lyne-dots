@@ -64,16 +64,18 @@ Singleton {
     readonly property bool sinkReady: sink !== null && sink.audio !== null
     readonly property bool sourceReady: source !== null && source.audio !== null
 
-    readonly property bool muted: sinkReady ? (sink.audio.muted ?? false) : false
+    // Optional chaining, not sinkReady: when the sink goes away these can be
+    // reevaluated before sinkReady is
+    readonly property bool muted: sink?.audio?.muted ?? false
     // Highest volume the shell sets (audio.maxVolume, above 1 amplifies)
     readonly property real maxVolume: Config.audioMaxVolume
     readonly property real volumeStep: 0.05
     // Not capped at maxVolume: other apps can set more
-    readonly property real volume: sinkReady ? Math.max(0, sink.audio.volume) : 0
+    readonly property real volume: Math.max(0, sink?.audio?.volume ?? 0)
     readonly property int percentage: Math.round(volume * 100)
 
-    readonly property bool sourceMuted: sourceReady ? (source.audio.muted ?? false) : false
-    readonly property real sourceVolume: sourceReady ? (source.audio.volume ?? 0) : 0
+    readonly property bool sourceMuted: source?.audio?.muted ?? false
+    readonly property real sourceVolume: source?.audio?.volume ?? 0
 
     readonly property string systemIcon: {
         if (!sinkReady || muted || volume <= 0)
