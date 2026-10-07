@@ -6,34 +6,39 @@ import dbus.mainloop.glib
 from gi.repository import GLib
 import subprocess
 import time
-import os
 
 # Configuration
 BUS_NAME = 'org.bluez'
 AGENT_INTERFACE = 'org.bluez.Agent1'
 AGENT_PATH = '/org/bluez/agent'
-LOCK_FILE = "/tmp/QsAnyModuleIsOpen"
+DEVICE_INTERFACE = 'org.bluez.Device1'
+
+
+class Rejected(dbus.DBusException):
+    _dbus_error_name = 'org.bluez.Error.Rejected'
+
 
 def close_quick_settings():
     """
-    Checks if the menu is open (by the existence of the file)
-    and only then simulates the ESC key.
+    Pairing starts from the Quick Settings: close them so the dialog isn't
+    opened under the panel (a no-op when they're closed)
     """
-    if os.path.exists(LOCK_FILE):
-        try:
-            # The menu is open, so we send ESC
-            subprocess.run(["wtype", "-k", "Escape"], stderr=subprocess.DEVNULL)
-            time.sleep(0.1)
-        except Exception as e:
-            print(f"wtype error: {e}")
-    else:
-        # The menu is NOT open. Do nothing.
-        # The script proceeds directly to open the zenity dialog.
-        pass
+    try:
+        subprocess.run(["qs", "ipc", "call", "quicksettings", "close"],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=2)
+        time.sleep(0.2)
+    except Exception as e:
+        print(f"Couldn't close the Quick Settings: {e}")
+
 
 class Agent(dbus.service.Object):
     def __init__(self, bus, path):
         dbus.service.Object.__init__(self, bus, path)
+        self.bus = bus
+
+    def is_paired(self, device):
+        props = dbus.Interface(self.bus.get_object(BUS_NAME, device), 'org.freedesktop.DBus.Properties')
+        return bool(props.Get(DEVICE_INTERFACE, 'Paired'))
 
     @dbus.service.method(AGENT_INTERFACE, in_signature="", out_signature="")
     def Release(self):
@@ -41,8 +46,12 @@ class Agent(dbus.service.Object):
 
     @dbus.service.method(AGENT_INTERFACE, in_signature="os", out_signature="")
     def AuthorizeService(self, device, uuid):
-        # Automatically accept service connections
-        return
+        # BlueZ asks for services of devices that aren't trusted: accept the
+        # paired ones, never one that never paired
+        if self.is_paired(device):
+            return
+        print(f"Rejected a service from an unpaired device: {device}")
+        raise Rejected("Device not paired")
 
     @dbus.service.method(AGENT_INTERFACE, in_signature="o", out_signature="s")
     def RequestPinCode(self, device):
@@ -54,7 +63,7 @@ class Agent(dbus.service.Object):
             )
             return output.decode().strip()
         except subprocess.CalledProcessError:
-            raise Exception("Rejected")
+            raise Rejected("Rejected by the user")
 
     @dbus.service.method(AGENT_INTERFACE, in_signature="ou", out_signature="")
     def RequestConfirmation(self, device, passkey):
@@ -69,7 +78,7 @@ class Agent(dbus.service.Object):
             )
             return
         except subprocess.CalledProcessError:
-            raise Exception("Rejected") # User clicked No
+            raise Rejected("Rejected by the user")
 
     @dbus.service.method(AGENT_INTERFACE, in_signature="o", out_signature="")
     def RequestAuthorization(self, device):
@@ -80,8 +89,8 @@ class Agent(dbus.service.Object):
                 ["zenity", "--question", "--title=Bluetooth", "--text=Authorize pairing with this device?"]
             )
             return
-        except:
-            raise Exception("Rejected")
+        except subprocess.CalledProcessError:
+            raise Rejected("Rejected by the user")
 
     @dbus.service.method(AGENT_INTERFACE, in_signature="", out_signature="")
     def Cancel(self):

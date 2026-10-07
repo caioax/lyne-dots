@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
 
 Singleton {
     id: root
@@ -31,29 +30,5 @@ Singleton {
             activeModules = copy;
             openWindowsCount--;
         }
-    }
-
-    onAnyModuleOpenChanged: {
-        if (anyModuleOpen) {
-            createFile.running = true;
-        } else {
-            removeFile.running = true;
-        }
-    }
-
-    // Initial cleanup to avoid remnants in case of errors
-    Component.onCompleted: {
-        removeFile.running = true;
-    }
-
-    // Control file
-    Process {
-        id: createFile
-        command: ["touch", "/tmp/QsAnyModuleIsOpen"]
-    }
-
-    Process {
-        id: removeFile
-        command: ["rm", "-f", "/tmp/QsAnyModuleIsOpen"]
     }
 }
