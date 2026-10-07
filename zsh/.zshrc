@@ -1,12 +1,16 @@
 # === VISUAL FETCH ===
-# Running before P10k instant prompt to prevent warnings
-# if [[ $(pgrep -cx kitty) -le 1 ]] && command -v fastfetch >/dev/null 2>&1; then
+# Running before P10k instant prompt to prevent warnings. Only in a new
+# terminal: not in tmux panes and popups, Neovim's :terminal or nested shells
+if [[ -z $TMUX && -z $NVIM && $SHLVL -le 1 ]] && command -v fastfetch >/dev/null 2>&1; then
   echo -e "\e[1;34m"
   echo "  █   █▄█ █▄ █ █▀▀"
   echo "  █▄▄  █  █ ▀█ ██▄"
   echo -e "\e[0m"
   fastfetch
-# fi
+fi
+
+# Nested shells and reloads would add the same PATH entries again
+typeset -U path
 
 # === POWERLEVEL10K INSTANT PROMPT ===
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
@@ -41,8 +45,8 @@ else
     export EDITOR="$(jq -r '.system.editor // empty' ~/.config/quickshell/state.json 2>/dev/null)"
     [[ -z $EDITOR ]] && export EDITOR='nvim'
 fi
-export PATH="$HOME/.local/bin:$PATH"
-export PATH="$PATH:$HOME/.spicetify"
+# Through the array: typeset -U path dedupes it (an export PATH=... doesn't)
+path=("$HOME/.local/bin" $path "$HOME/.spicetify")
 
 # === CUSTOM FUNCTIONS & VI-MODE FIXES ===
 function zvm_vi_yank() {
@@ -91,8 +95,6 @@ all-update() {
 
     echo -e "\e[1;32m:: All updates complete!\e[0m"
 }
-
-export PATH=$PATH:/home/caio/.spicetify
 
 export NVM_DIR="$HOME/.config/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm

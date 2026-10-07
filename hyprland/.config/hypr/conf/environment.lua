@@ -27,7 +27,12 @@ hl.env("HYPRCURSOR_THEME", "Bibata-Modern-Classic")
 hl.env("HYPRCURSOR_SIZE", "24")
 
 -- --- PATH ---
-hl.env("PATH", os.getenv("HOME") .. "/.local/bin:" .. (os.getenv("PATH") or ""))
+-- Once: every config reload runs this again with the PATH it set
+local localBin = os.getenv("HOME") .. "/.local/bin"
+local path = os.getenv("PATH") or ""
+if not (":" .. path .. ":"):find(":" .. localBin .. ":", 1, true) then
+    hl.env("PATH", localBin .. ":" .. path)
+end
 
 -- --- Scripts & Apps ---
 -- Defines where hyprshot will save (if your script reads this variable)
