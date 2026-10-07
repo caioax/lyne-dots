@@ -9,6 +9,7 @@
 # Usage: source this file
 # =============================================================================
 
+# shellcheck disable=SC2034 # glyphs, colors and KEY are read by the files that source this one
 UI_LINES=()
 UI_ACTIVE=0
 
@@ -19,6 +20,7 @@ ui_setup() {
         G_CURSOR=">" G_ON="[x]" G_OFF="[ ]" G_RADIO_ON="(*)" G_RADIO_OFF="( )"
         G_OK="+" G_FAIL="x" G_WARN="!" G_SKIP="-" G_TODO=" " G_DOT="-"
         G_FULL="#" G_EMPTY="-" G_PIPE="|" G_RULE="-" G_ELLIPSIS="..." G_UPDOWN="up/down"
+        # shellcheck disable=SC1003 # a literal backslash frame
         G_SPIN=('|' '/' '-' '\')
     else
         G_CURSOR="▶" G_ON="[x]" G_OFF="[ ]" G_RADIO_ON="(•)" G_RADIO_OFF="( )"

@@ -1,5 +1,6 @@
 # lyne update - Pull latest changes, sync state and run migrations
 
+# shellcheck disable=SC2317 # run-migrations.sh ends in a return, so the rest looks unreachable
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
     echo "Usage: lyne update"
     echo ""
@@ -19,9 +20,7 @@ echo -e "\e[1;34m:: Aligning core files with repository...\e[0m"
 git -C "$DOTS_DIR" reset --hard
 
 echo -e "\e[1;34m:: Pulling latest changes...\e[0m"
-git -C "$DOTS_DIR" pull
-
-if [[ $? -ne 0 ]]; then
+if ! git -C "$DOTS_DIR" pull; then
     echo "lyne update: git pull failed"
     _lyne_notify -u critical "Lyne update failed" "git pull failed, see the terminal for details"
     return 1

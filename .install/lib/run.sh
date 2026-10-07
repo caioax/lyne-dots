@@ -173,6 +173,7 @@ run_steps() {
             # shellcheck disable=SC1090
             source "$RUN_STATE"
             set -o pipefail
+            # shellcheck disable=SC2030 # only the step's own subshell runs with the sudo wrapper
             [[ -n "$RUN_SUDO_DIR" ]] && PATH="$RUN_SUDO_DIR:$PATH"
             # "function arg..." (install_packages core)
             read -ra cmd <<<"${STEP_FNS[i]}"
@@ -214,6 +215,7 @@ run_steps() {
         done_w=$((done_w + STEP_WEIGHTS[i]))
     done
 
+    # shellcheck disable=SC2034 # read by install.sh's summary
     RUN_SECONDS=$((SECONDS - start))
     ((RUN_PLAIN)) || _run_draw -1 0 0 "$start" "$total_w" "$total_w"
 }
@@ -538,6 +540,7 @@ EOF
     done
 
     export LYNE_DRY_RUN=1 LYNE_DRY_HOME
+    # shellcheck disable=SC2031 # the PATH change at the step subshell is meant to stay there
     export HOME="$LYNE_DRY_HOME" PATH="$bin:$PATH"
     hash -r
     [[ "$(command -v sudo)" == "$bin/sudo" ]] || _run_dry_fail "sudo doesn't resolve to its stand-in"

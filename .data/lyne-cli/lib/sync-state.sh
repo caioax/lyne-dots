@@ -35,7 +35,7 @@ fi
 # to read it.
 #   launcher.terminal -> apps.terminal (Settings > System > Apps)
 local MERGED
-MERGED=$(jq -s '
+if ! MERGED=$(jq -s '
     def renames:
         if (.launcher.terminal? | type) == "string" and .launcher.terminal != "" and .apps.terminal? == null
         then .apps.terminal = {
@@ -54,9 +54,7 @@ MERGED=$(jq -s '
              else .
              end
     )
-' "$DEFAULTS_FILE" "$STATE_FILE")
-
-if [[ $? -ne 0 ]]; then
+' "$DEFAULTS_FILE" "$STATE_FILE"); then
     echo "lyne sync: failed to merge state.json (jq error)"
     return 1
 fi

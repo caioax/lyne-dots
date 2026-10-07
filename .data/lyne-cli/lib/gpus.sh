@@ -116,7 +116,7 @@ gpu_detect() {
     GPU_CARD=() GPU_OUTPUTS=()
     GPU_COUNT=0 GPU_HYBRID=0 GPU_INTERNAL=-1 GPU_NVIDIA=-1
 
-    local dev rows=() row
+    local dev rows=()
     for dev in "$GPU_SYSFS"/bus/pci/devices/*; do
         [[ -r "$dev/class" ]] || continue
         # 0x03xxxx: display controllers (VGA, 3D, other)
@@ -191,8 +191,8 @@ gpu_detect() {
     done
 
     local i=0 integrated=0 dedicated=0 _pci
-    while IFS='|' read -r _ GPU_PCI[i] GPU_IDS[i] GPU_VENDOR[i] GPU_BRAND[i] GPU_NAME[i] GPU_CHIP[i] \
-        GPU_KIND[i] GPU_ARCH[i] GPU_FAMILY[i] GPU_DRIVER[i] GPU_BOOT_VGA[i] GPU_CARD[i] GPU_OUTPUTS[i]; do
+    while IFS='|' read -r _ "GPU_PCI[i]" "GPU_IDS[i]" "GPU_VENDOR[i]" "GPU_BRAND[i]" "GPU_NAME[i]" "GPU_CHIP[i]" \
+        "GPU_KIND[i]" "GPU_ARCH[i]" "GPU_FAMILY[i]" "GPU_DRIVER[i]" "GPU_BOOT_VGA[i]" "GPU_CARD[i]" "GPU_OUTPUTS[i]"; do
         [[ "${GPU_KIND[i]}" == integrated ]] && integrated=1
         [[ "${GPU_KIND[i]}" == dedicated ]] && dedicated=1
         ((GPU_NVIDIA < 0)) && [[ "${GPU_VENDOR[i]}" == nvidia ]] && GPU_NVIDIA=$i

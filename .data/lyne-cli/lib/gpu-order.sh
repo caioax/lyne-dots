@@ -40,6 +40,7 @@ GPU_HYPR_DIR="${LYNE_HYPR_DIR:-$HOME/.config/hypr}"
 GPU_LUA="$GPU_HYPR_DIR/local/gpus.lua"
 GPU_STATE="${LYNE_STATE_FILE:-$HOME/.config/quickshell/state.json}"
 
+# shellcheck disable=SC2153 # GPU_KIND and the other GPU_* arrays come from gpus.sh
 gpu_links() {
     GPU_LINK=()
     local i name n
@@ -273,6 +274,7 @@ gpu_lua_write() {
     # move: Hyprland reloads on the write and must not see half a file
     local tmp
     tmp="$(mktemp "$GPU_HYPR_DIR/.gpus.lua.XXXXXX")" || return 1
+    # shellcheck disable=SC2015 # the cleanup runs when any step fails
     gpu_lua_content "$@" >"$tmp" && chmod 644 "$tmp" && mv "$tmp" "$GPU_LUA" || {
         rm -f "$tmp"
         return 1
@@ -284,6 +286,7 @@ gpu_order_write() {
     if [[ -f "$GPU_STATE" ]] && command -v jq &>/dev/null; then
         local state
         state="$(mktemp)"
+        # shellcheck disable=SC2015 # the cleanup runs when any step fails
         jq --args '.gpus.order = $ARGS.positional' "$@" <"$GPU_STATE" >"$state" &&
             mv "$state" "$GPU_STATE" || rm -f "$state"
     fi

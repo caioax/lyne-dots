@@ -1,0 +1,7 @@
+# The lyne CLI's commands, libs and migrations are sourced inside a function
+# of local/.local/bin/lyne (no shebang, `local` at the top level)
+shell=bash
+external-sources=true
+# SC1090/SC1091: sources are built from $DOTS_DIR and similar at runtime
+# SC2155: no `local x=$(cmd)` here checks the status of cmd
+disable=SC2168,SC2148,SC1090,SC1091,SC2155

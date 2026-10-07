@@ -89,8 +89,7 @@ _027_import() {
     # Quickshell writes them to local/settings.lua a moment later
     local first
     first="$(jq -r '.[0].names[0] // empty' <<<"$devices")"
-    local i
-    for i in $(seq 1 20); do
+    for _ in {1..20}; do
         if [[ -z "$first" ]] || grep -qF "hl.device({ name = \"$first\"" "$settings" 2>/dev/null; then
             mv -f "$file" "$file.imported"
             echo "   Imported $(jq 'length' <<<"$devices") keyboard(s) from hypr/local/extra_input.lua to Settings › Hyprland › Keyboard (the file is now extra_input.lua.imported)"

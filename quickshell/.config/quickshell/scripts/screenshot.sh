@@ -29,6 +29,7 @@ if [ -z "$folder" ]; then
     { [ -n "$folder" ] && [ "$folder" != "$HOME" ]; } || folder="$HOME/Pictures"
     folder="$folder/Screenshots"
 fi
+# shellcheck disable=SC2088 # matches a literal ~ from state.json
 case "$folder" in
 "~" | "~/"*) folder="$HOME${folder#\~}" ;;
 esac

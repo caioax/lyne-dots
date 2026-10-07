@@ -14,6 +14,7 @@ case "$subcmd" in
         echo ""
         echo "Resolution, refresh rate, scale, position, rotation and mirroring of"
         echo "each monitor are set in Settings › Hyprland › Monitors, which writes"
+        # shellcheck disable=SC2088 # a path shown to the user
         echo "~/.config/hypr/local/monitors.lua. Applying there is a trial: it reverts on"
         echo "its own unless you keep it."
         echo ""

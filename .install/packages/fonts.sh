@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034 # the package arrays are read by install.sh
 # =============================================================================
 # Font Packages - Fonts & Icons
 # =============================================================================
@@ -29,7 +30,8 @@ FONTS_AUR_PACKAGES=(
 # Tela Icon Theme installation via Git
 # =============================================================================
 install_tela_icons() {
-    local TEMP_DIR=$(mktemp -d)
+    local TEMP_DIR
+    TEMP_DIR=$(mktemp -d) || return 1
     local ICON_COLOR="blue" # Color to install (generates Tela-blue and Tela-blue-dark)
 
     log_step "Installing Tela Icon Theme (${ICON_COLOR}) from Git..."
@@ -40,19 +42,16 @@ install_tela_icons() {
         return 1
     fi
 
-    cd "$TEMP_DIR/tela"
-
-    # Install only the blue color (generates Tela-blue and Tela-blue-dark)
-    if ./install.sh "$ICON_COLOR"; then
+    # Install only the blue color (generates Tela-blue and Tela-blue-dark).
+    # In a subshell: a failed cd must not run ./install.sh from here
+    if (cd "$TEMP_DIR/tela" && ./install.sh "$ICON_COLOR"); then
         log_info "Tela-${ICON_COLOR} and Tela-${ICON_COLOR}-dark installed successfully!"
     else
         log_error "Failed to install Tela icon theme"
-        cd - >/dev/null
         rm -rf "$TEMP_DIR"
         return 1
     fi
 
-    cd - >/dev/null
     rm -rf "$TEMP_DIR"
     return 0
 }

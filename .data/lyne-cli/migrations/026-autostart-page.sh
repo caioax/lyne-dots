@@ -80,8 +80,7 @@ _026_import() {
     # Quickshell writes them to local/settings.lua a moment later
     local first
     first="$(jq -r '.[0].command // empty' <<<"$apps")"
-    local i
-    for i in $(seq 1 20); do
+    for _ in {1..20}; do
         if [[ -z "$first" ]] || grep -qF "$first" "$settings" 2>/dev/null && grep -q "lyne_autostart({" "$settings"; then
             mv -f "$file" "$file.imported"
             echo "   Imported $(jq 'length' <<<"$apps") app(s) from hypr/local/autostart.lua to Settings › System › Autostart (the file is now autostart.lua.imported)"

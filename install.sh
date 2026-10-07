@@ -520,6 +520,7 @@ q_graphics() {
 # title and GPU list as the question before
 q_gpu_order() {
     ((GPU_HYBRID)) && gpu_multi || return 3
+    # shellcheck disable=SC2034 # ASK_EXTRA is read by the ask_* functions this calls
     local ASK_EXTRA=_graphics_rows _GRAPHICS_ASK="Which GPU renders the desktop?"
     local igpu dgpu i
     for ((i = 0; i < GPU_COUNT; i++)); do
@@ -582,9 +583,9 @@ q_review() {
     *) rows+=("NVIDIA|no") ;;
     esac
     if gpu_multi; then
-        local order=auto
-        ((GPU_HYBRID)) && order=${ANSWERS[gpu_order]:-auto}
-        rows+=("GPU order|$(_gpu_order_label "$order") (/dev/dri links by PCI)")
+        local gpu_order=auto
+        ((GPU_HYBRID)) && gpu_order=${ANSWERS[gpu_order]:-auto}
+        rows+=("GPU order|$(_gpu_order_label "$gpu_order") (/dev/dri links by PCI)")
     fi
     local backup
     backup="$(backup_summary)"
@@ -621,7 +622,7 @@ answer_defaults() {
     # answer) still means env or none; multilib=yes adds it to the driver
     if [[ ! -v "ANSWERS[nvidia]" ]]; then
         if [[ -v "ANSWERS[nvidia_env]" ]]; then
-            [[ "${ANSWERS[nvidia_env]}" == yes ]] && ANSWERS[nvidia]=env || ANSWERS[nvidia]=none
+            [[ "${ANSWERS[nvidia_env]}" == yes ]] && ANSWERS[nvidia]="env" || ANSWERS[nvidia]=none
         else
             case "$NV_ACTION" in
             install | replace | ok) ANSWERS[nvidia]=driver ;;
@@ -630,7 +631,7 @@ answer_defaults() {
         fi
     fi
     if [[ "${ANSWERS[nvidia]}" == driver && "${ANSWERS[multilib]:-}" == yes ]]; then
-        ANSWERS[nvidia]=driver+multilib
+        ANSWERS[nvidia]="driver+multilib"
     fi
     # GPU order (hybrid machines): integrated first unless answered
     if [[ ! -v "ANSWERS[gpu_order]" ]]; then
@@ -664,6 +665,7 @@ show_summary() {
     fi
 
     for i in "${!STEP_FNS[@]}"; do
+        # shellcheck disable=SC2153 # the G_* glyphs come from .install/lib/ui.sh
         case ${STEP_STATUS[i]} in
         ok) mark="$C_OK$G_OK" ;;
         warn) mark="$C_WARN$G_WARN" ;;

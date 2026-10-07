@@ -73,12 +73,12 @@ case "$subcmd" in
         echo "Switched to auto (Material You) mode."
         ;;
     mode)
-        echo "$(_theme_get_mode)"
+        _theme_get_mode
         ;;
     scheme)
         local scheme_arg="${2:-}"
         if [[ -z "$scheme_arg" ]]; then
-            echo "$(_theme_get_scheme)"
+            _theme_get_scheme
         elif [[ "$scheme_arg" == "dark" || "$scheme_arg" == "light" ]]; then
             _theme_set_state "theme.scheme" "$scheme_arg"
 

@@ -15,6 +15,7 @@ case "$subcmd" in
         echo "use and the outputs of each GPU. With more than one GPU, each gets a"
         echo "stable /dev/dri link (/dev/dri/intel-igpu, nvidia-dgpu...) and Hyprland"
         echo "uses them in the order saved here (AQ_DRM_DEVICES, from"
+        # shellcheck disable=SC2088 # a path shown to the user
         echo "~/.config/hypr/local/gpus.lua): the first renders, the ones left out"
         echo "aren't used. A new order applies at the next login."
         echo ""

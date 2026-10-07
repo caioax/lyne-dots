@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034 # the package arrays are read by install.sh
 # =============================================================================
 # Terminal Packages - Terminal Emulators & Shells
 # =============================================================================

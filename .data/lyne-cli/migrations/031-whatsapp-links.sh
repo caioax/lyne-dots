@@ -6,6 +6,7 @@
 # command move to it (same profile, no new QR code).
 
 local state="$HOME/.config/quickshell/state.json"
+# shellcheck disable=SC2016 # the command as written in state.json, $HOME unexpanded
 local old='chromium --app=https://web.whatsapp.com --user-data-dir=$HOME/.local/share/lyne/whatsapp --no-first-run --no-default-browser-check'
 
 if [[ -f "$state" ]] && command -v jq &>/dev/null \
