@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.config
 import qs.services
 import "../../components/"
@@ -8,7 +9,13 @@ import "../../components/"
 Card {
     id: root
 
-    readonly property date now: TimeService.date
+    readonly property date now: TimeService.today
+
+    // Seconds only here, while the card exists (the dashboard is open)
+    SystemClock {
+        id: clock
+        precision: SystemClock.Seconds
+    }
 
     // ISO 8601 week number
     readonly property int week: {
@@ -25,7 +32,7 @@ Card {
         spacing: Config.padding / 2
 
         Text {
-            text: TimeService.format("hh:mm")
+            text: Qt.formatDateTime(clock.date, "hh:mm")
             font.family: Config.font
             font.pixelSize: Config.fontSizeIconLarge * 2
             font.bold: true
@@ -35,7 +42,7 @@ Card {
         Text {
             Layout.alignment: Qt.AlignBottom
             Layout.bottomMargin: Config.padding + Config.padding / 2
-            text: TimeService.format("ss")
+            text: Qt.formatDateTime(clock.date, "ss")
             font.family: Config.font
             font.pixelSize: Config.fontSizeLarge
             font.bold: true

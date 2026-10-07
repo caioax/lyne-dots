@@ -17,9 +17,9 @@ GridLayout {
 
     // Back to the current month, without the slide animation
     function reset() {
-        monthCard.displayMonth = TimeService.date.getMonth();
-        monthCard.displayYear = TimeService.date.getFullYear();
-        monthCard.selectedDate = TimeService.date;
+        monthCard.displayMonth = TimeService.today.getMonth();
+        monthCard.displayYear = TimeService.today.getFullYear();
+        monthCard.selectedDate = TimeService.today;
     }
 
     // GPU and disk usage are only sampled while someone watches

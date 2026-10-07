@@ -9,7 +9,7 @@ import "../../components/"
 Card {
     id: root
 
-    readonly property date today: TimeService.date
+    readonly property date today: TimeService.today
     property int displayMonth: today.getMonth()
     property int displayYear: today.getFullYear()
     property date selectedDate: today
