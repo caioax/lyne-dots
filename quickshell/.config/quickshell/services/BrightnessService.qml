@@ -566,8 +566,7 @@ Singleton {
     // Apply the current temperature
     function applyNightLight() {
         _applied = String(nightLightTemperature);
-        enableNightLightProc.command = ["hyprctl", "hyprsunset", "temperature", nightLightTemperature.toString()];
-        enableNightLightProc.running = true;
+        enableNightLightProc.run(["hyprctl", "hyprsunset", "temperature", nightLightTemperature.toString()], nightLightTemperature);
     }
 
     // ========================================================================
@@ -589,7 +588,7 @@ Singleton {
         }
     }
 
-    Process {
+    QueuedProcess {
         id: enableNightLightProc
         stdout: SplitParser {
             onRead: data => {
@@ -606,7 +605,7 @@ Singleton {
         }
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
-                console.log("[Brightness] Night light enabled at", root.nightLightTemperature, "K");
+                console.log("[Brightness] Night light enabled at", request, "K");
             }
         }
     }

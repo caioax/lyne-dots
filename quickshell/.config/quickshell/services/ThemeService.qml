@@ -134,11 +134,10 @@ Singleton {
     // switching presets does
     function applyTheme(themeName, restoring = false) {
         console.log("[Theme] Loading theme:", themeName);
-        loadThemeProc._themeName = themeName;
-        loadThemeProc._restoring = restoring;
-        loadThemeProc._buffer = "";
-        loadThemeProc.command = ["cat", themesDir + "/" + themeName + ".json"];
-        loadThemeProc.running = true;
+        loadThemeProc.run(["cat", themesDir + "/" + themeName + ".json"], {
+            themeName,
+            restoring
+        });
     }
 
     function setPresetMode(themeName) {
@@ -173,28 +172,23 @@ Singleton {
                 runMatugen(wallpaper);
         } else {
             // Load current theme JSON to find the pair for the new scheme
-            _schemeSwitchProc._targetScheme = scheme;
-            _schemeSwitchProc._buffer = "";
-            _schemeSwitchProc.command = ["cat", themesDir + "/" + currentThemeName + ".json"];
-            _schemeSwitchProc.running = true;
+            _schemeSwitchProc.run(["cat", themesDir + "/" + currentThemeName + ".json"], {
+                scheme
+            });
         }
     }
 
     function runMatugen(wallpaperPath: string) {
         console.log("[Theme] Running matugen on:", wallpaperPath);
-        matugenProc._buffer = "";
-        matugenProc.command = ["matugen", "image", wallpaperPath, "-m", colorScheme, "-c", matugenConfigPath, "--prefer", "saturation"];
-        matugenProc.running = true;
+        matugenProc.run(["matugen", "image", wallpaperPath, "-m", colorScheme, "-c", matugenConfigPath, "--prefer", "saturation"]);
     }
 
     function listThemes() {
-        listThemesProc._collected = [];
-        listThemesProc.running = true;
+        listThemesProc.run(listThemesProc.command);
     }
 
     function loadPreviews() {
-        previewProc._buffer = "";
-        previewProc.running = true;
+        previewProc.run(previewProc.command);
     }
 
     // Writes ~/.local/themes/<slug>.json (atomically) and refreshes the list;
@@ -217,8 +211,7 @@ Singleton {
         const preview = themePreviews[slug];
         if (!preview || !preview.custom || slug === currentThemeName)
             return;
-        deleteThemeProc.command = ["sh", "-c", "rm -f -- \"$1\" && rm -rf -- \"$2\"", "sh", themesDir + "/" + slug + ".json", wallpaperDir + "/themes/" + slug];
-        deleteThemeProc.running = true;
+        deleteThemeProc.run(["sh", "-c", "rm -f -- \"$1\" && rm -rf -- \"$2\"", "sh", themesDir + "/" + slug + ".json", wallpaperDir + "/themes/" + slug]);
     }
 
     signal themeSaved(string slug)
@@ -384,29 +377,15 @@ Singleton {
 
         const content = lines.join("\n");
 
-        kittyProc.command = ["bash", "-c", "cat > " + shellEscape(kittyThemePath) + " << 'THEME_EOF'\n" + content + "THEME_EOF\n" + "pkill -USR1 -x kitty 2>/dev/null; true"];
-        kittyProc.running = true;
+        kittyProc.run(["bash", "-c", "cat > " + shellEscape(kittyThemePath) + " << 'THEME_EOF'\n" + content + "THEME_EOF\n" + "pkill -USR1 -x kitty 2>/dev/null; true"]);
     }
 
-    // Latest colors for Neovim; an update that arrives while the previous one
-    // is still being written waits for it (_nvimPending)
-    property var _nvimSource: null
-    property bool _nvimPending: false
 
     // Writes the theme for the "lyne" colorscheme and reloads it in every
     // running Neovim through its server socket
     function _applyNeovim(pal, terminal) {
         if (!pal || !terminal)
             return;
-        _nvimSource = {
-            palette: pal,
-            terminal: terminal
-        };
-        if (nvimProc.running) {
-            _nvimPending = true;
-            return;
-        }
-
         const content = JSON.stringify({
             palette: pal,
             terminal: terminal
@@ -414,8 +393,7 @@ Singleton {
         const path = shellEscape(nvimPalettePath);
         const tmp = shellEscape(nvimPalettePath + ".tmp");
 
-        nvimProc.command = ["bash", "-c", "mkdir -p \"$(dirname " + path + ")\" && cat > " + tmp + " << 'THEME_EOF'\n" + content + "\nTHEME_EOF\n" + "mv " + tmp + " " + path + " && " + "for sock in /run/user/$(id -u)/nvim.*.0; do " + "  [ -S \"$sock\" ] && nvim --server \"$sock\" --remote-send '<Cmd>colorscheme lyne<CR>' 2>/dev/null & " + "done; wait"];
-        nvimProc.running = true;
+        nvimProc.run(["bash", "-c", "mkdir -p \"$(dirname " + path + ")\" && cat > " + tmp + " << 'THEME_EOF'\n" + content + "\nTHEME_EOF\n" + "mv " + tmp + " " + path + " && " + "for sock in /run/user/$(id -u)/nvim.*.0; do " + "  [ -S \"$sock\" ] && nvim --server \"$sock\" --remote-send '<Cmd>colorscheme lyne<CR>' 2>/dev/null & " + "done; wait"]);
     }
 
     function _applyWallpaper(wallpaperFile) {
@@ -427,8 +405,7 @@ Singleton {
     function _applyGtkThemeSwitch() {
         const theme = gtkThemeName;
         const scheme = isDarkMode ? "prefer-dark" : "prefer-light";
-        gtkThemeSwitchProc.command = ["bash", "-c", "gsettings set org.gnome.desktop.interface gtk-theme " + shellEscape(theme) + " 2>/dev/null; " + "gsettings set org.gnome.desktop.interface color-scheme " + shellEscape(scheme) + " 2>/dev/null; true"];
-        gtkThemeSwitchProc.running = true;
+        gtkThemeSwitchProc.run(["bash", "-c", "gsettings set org.gnome.desktop.interface gtk-theme " + shellEscape(theme) + " 2>/dev/null; " + "gsettings set org.gnome.desktop.interface color-scheme " + shellEscape(scheme) + " 2>/dev/null; true"]);
     }
 
     function _applyGtkFromPalette(pal) {
@@ -482,8 +459,7 @@ Singleton {
 
         const content = lines.join("\n");
 
-        gtkProc.command = ["bash", "-c", "cat > " + shellEscape(gtkColorsPath3) + " << 'GTK_EOF'\n" + content + "GTK_EOF\n" + "cp " + shellEscape(gtkColorsPath3) + " " + shellEscape(gtkColorsPath4)];
-        gtkProc.running = true;
+        gtkProc.run(["bash", "-c", "cat > " + shellEscape(gtkColorsPath3) + " << 'GTK_EOF'\n" + content + "GTK_EOF\n" + "cp " + shellEscape(gtkColorsPath3) + " " + shellEscape(gtkColorsPath4)]);
 
         // Also update GTK base theme to match scheme
         _applyGtkThemeSwitch();
@@ -578,8 +554,7 @@ Singleton {
 
         const content = lines.join("\n");
 
-        qtProc.command = ["bash", "-c", "mkdir -p " + shellEscape(Quickshell.env("HOME") + "/.local/share/color-schemes") + " && " + "cat > " + shellEscape(qtColorSchemePath) + " << 'QT_EOF'\n" + content + "QT_EOF"];
-        qtProc.running = true;
+        qtProc.run(["bash", "-c", "mkdir -p " + shellEscape(Quickshell.env("HOME") + "/.local/share/color-schemes") + " && " + "cat > " + shellEscape(qtColorSchemePath) + " << 'QT_EOF'\n" + content + "QT_EOF"]);
     }
 
     function hexToRgb(hex: string): string {
@@ -592,9 +567,7 @@ Singleton {
     }
 
     function _loadAndApplyHyprlandColors() {
-        loadHyprColorsProc._buffer = "";
-        loadHyprColorsProc.command = ["cat", matugenCachePath + "/hyprland-colors.json"];
-        loadHyprColorsProc.running = true;
+        loadHyprColorsProc.run(["cat", matugenCachePath + "/hyprland-colors.json"]);
     }
 
     function shellEscape(str) {
@@ -605,11 +578,10 @@ Singleton {
     // PROCESSES
     // ========================================================================
 
-    Process {
+    QueuedProcess {
         id: loadThemeProc
-        property string _themeName: ""
-        property bool _restoring: false
         property string _buffer: ""
+        onStarted: _buffer = ""
 
         stdout: SplitParser {
             onRead: data => loadThemeProc._buffer += data + "\n"
@@ -620,24 +592,26 @@ Singleton {
         }
 
         onExited: exitCode => {
+            // Another theme was asked for meanwhile: only that one is applied
+            if (superseded)
+                return;
             if (exitCode === 0) {
                 try {
                     const data = JSON.parse(_buffer.trim());
-                    root._applyThemeData(_themeName, data, _restoring);
+                    root._applyThemeData(request.themeName, data, request.restoring);
                 } catch (e) {
                     console.error("[Theme] Failed to parse theme:", e);
                 }
             } else {
-                console.error("[Theme] Theme file not found:", _themeName);
+                console.error("[Theme] Theme file not found:", request.themeName);
             }
-            _buffer = "";
         }
     }
 
     // Reads the current theme JSON to find its light/dark pair
-    Process {
+    QueuedProcess {
         id: _schemeSwitchProc
-        property string _targetScheme: ""
+        onStarted: _buffer = ""
         property string _buffer: ""
 
         stdout: SplitParser {
@@ -653,9 +627,9 @@ Singleton {
                 try {
                     const data = JSON.parse(_buffer.trim());
                     var pairName = "";
-                    if (_targetScheme === "light" && data.lightPair)
+                    if (request.scheme === "light" && data.lightPair)
                         pairName = data.lightPair;
-                    else if (_targetScheme === "dark" && data.darkPair)
+                    else if (request.scheme === "dark" && data.darkPair)
                         pairName = data.darkPair;
 
                     if (pairName) {
@@ -673,12 +647,12 @@ Singleton {
             } else {
                 root.applyTheme(root.currentThemeName, true);
             }
-            _buffer = "";
         }
     }
 
-    Process {
+    QueuedProcess {
         id: listThemesProc
+        onStarted: _collected = []
         command: ["bash", "-c", "ls -1 '" + root.themesDir + "'/*.json 2>/dev/null | sed 's|.*/||;s|\\.json$||' | sort"]
         property var _collected: []
 
@@ -698,8 +672,9 @@ Singleton {
     }
 
     // Load all theme JSONs to extract preview palettes
-    Process {
+    QueuedProcess {
         id: previewProc
+        onStarted: _buffer = ""
         command: ["bash", "-c", "for f in '" + root.themesDir + "'/*.json; do echo \"---THEME_NAME:$(basename \"$f\" .json)---\"; cat \"$f\"; echo '---THEME_SEP---'; done"]
         property string _buffer: ""
 
@@ -749,7 +724,6 @@ Singleton {
 
             root.themePreviews = previews;
             console.log("[Theme] Loaded previews for", Object.keys(previews).length, "themes");
-            _buffer = "";
         }
     }
 
@@ -785,7 +759,7 @@ Singleton {
         }
     }
 
-    Process {
+    QueuedProcess {
         id: deleteThemeProc
         onExited: exitCode => {
             if (exitCode === 0)
@@ -794,7 +768,7 @@ Singleton {
         }
     }
 
-    Process {
+    QueuedProcess {
         id: nvimProc
         stderr: SplitParser {
             onRead: data => console.error("[Theme:Neovim] " + data)
@@ -802,14 +776,10 @@ Singleton {
         onExited: exitCode => {
             if (exitCode === 0)
                 console.log("[Theme] Neovim theme updated");
-            if (root._nvimPending) {
-                root._nvimPending = false;
-                root._applyNeovim(root._nvimSource.palette, root._nvimSource.terminal);
-            }
         }
     }
 
-    Process {
+    QueuedProcess {
         id: kittyProc
         stderr: SplitParser {
             onRead: data => console.error("[Theme:Kitty] " + data)
@@ -821,7 +791,7 @@ Singleton {
     }
 
     // GTK colors.css writer (preset mode)
-    Process {
+    QueuedProcess {
         id: gtkProc
         stderr: SplitParser {
             onRead: data => console.error("[Theme:GTK] " + data)
@@ -833,7 +803,7 @@ Singleton {
     }
 
     // GTK theme switcher (gsettings)
-    Process {
+    QueuedProcess {
         id: gtkThemeSwitchProc
         stderr: SplitParser {
             onRead: data => console.error("[Theme:GtkSwitch] " + data)
@@ -845,7 +815,7 @@ Singleton {
     }
 
     // Qt .colors writer (preset mode)
-    Process {
+    QueuedProcess {
         id: qtProc
         stderr: SplitParser {
             onRead: data => console.error("[Theme:Qt] " + data)
@@ -857,8 +827,9 @@ Singleton {
     }
 
     // Matugen process (auto mode)
-    Process {
+    QueuedProcess {
         id: matugenProc
+        onStarted: _buffer = ""
         property string _buffer: ""
 
         stdout: SplitParser {
@@ -870,23 +841,24 @@ Singleton {
         }
 
         onExited: exitCode => {
+            // A newer wallpaper is queued: its palette is the one to load
+            if (superseded)
+                return;
             if (exitCode === 0) {
                 console.log("[Theme] Matugen finished, loading palette...");
                 // Matugen has written all template outputs (gtk, kitty, qt, hyprland, palette)
                 // Now load the QuickShell palette JSON
-                loadMatugenPaletteProc._buffer = "";
-                loadMatugenPaletteProc.command = ["cat", root.matugenCachePath + "/quickshell-palette.json"];
-                loadMatugenPaletteProc.running = true;
+                loadMatugenPaletteProc.run(["cat", root.matugenCachePath + "/quickshell-palette.json"]);
             } else {
                 console.error("[Theme] Matugen failed with exit code:", exitCode);
             }
-            _buffer = "";
         }
     }
 
     // Load matugen-generated palette JSON
-    Process {
+    QueuedProcess {
         id: loadMatugenPaletteProc
+        onStarted: _buffer = ""
         property string _buffer: ""
 
         stdout: SplitParser {
@@ -908,27 +880,24 @@ Singleton {
                     root._loadAndApplyHyprlandColors();
 
                     // Reload kitty (matugen already wrote the theme file)
-                    kittyReloadProc.running = true;
+                    kittyReloadProc.run(["bash", "-c", "pkill -USR1 -x kitty 2>/dev/null; true"]);
 
                     // Neovim needs the terminal colors too
-                    loadMatugenTerminalProc._buffer = "";
-                    loadMatugenTerminalProc.running = true;
+                    loadMatugenTerminalProc.run(["cat", root.matugenCachePath + "/terminal-colors.json"]);
 
                     ZenService.applyPalette(pal);
                 } catch (e) {
                     console.error("[Theme] Failed to parse matugen palette:", e);
                 }
             }
-            _buffer = "";
         }
     }
 
     // Load the matugen terminal colors (same as the kitty theme) for Neovim
-    Process {
+    QueuedProcess {
         id: loadMatugenTerminalProc
+        onStarted: _buffer = ""
         property string _buffer: ""
-
-        command: ["cat", root.matugenCachePath + "/terminal-colors.json"]
 
         stdout: SplitParser {
             onRead: data => loadMatugenTerminalProc._buffer += data + "\n"
@@ -946,13 +915,13 @@ Singleton {
                     console.error("[Theme] Failed to parse matugen terminal colors:", e);
                 }
             }
-            _buffer = "";
         }
     }
 
     // Load hyprland colors from matugen output
-    Process {
+    QueuedProcess {
         id: loadHyprColorsProc
+        onStarted: _buffer = ""
         property string _buffer: ""
 
         stdout: SplitParser {
@@ -972,14 +941,12 @@ Singleton {
                     console.error("[Theme] Failed to parse hyprland colors:", e);
                 }
             }
-            _buffer = "";
         }
     }
 
     // Reload kitty after matugen writes the theme file
-    Process {
+    QueuedProcess {
         id: kittyReloadProc
-        command: ["bash", "-c", "pkill -USR1 -x kitty 2>/dev/null; true"]
         stderr: SplitParser {
             onRead: data => console.error("[Theme:KittyReload] " + data)
         }

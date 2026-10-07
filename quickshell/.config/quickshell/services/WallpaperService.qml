@@ -132,8 +132,7 @@ Singleton {
 
         // Update theme JSON using jq
         const jsonPath = themesConfigDir + "/" + themeName + ".json";
-        setActiveThemeProc.command = ["bash", "-c", "jq '.wallpaper = \"" + relativePath + "\"' '" + jsonPath + "' > '" + jsonPath + ".tmp' && mv '" + jsonPath + ".tmp' '" + jsonPath + "'"];
-        setActiveThemeProc._wallpaperPath = wallpaperPath;
+        setActiveThemeProc.command = ["sh", "-c", "jq --arg w \"$1\" '.wallpaper = $w' \"$2\" > \"$2.tmp\" && mv \"$2.tmp\" \"$2\"", "sh", relativePath, jsonPath];
         setActiveThemeProc.running = true;
     }
 
@@ -143,9 +142,7 @@ Singleton {
             themeWallpapers = [];
             return;
         }
-        listThemeWallpapersProc._themeName = themeName;
-        listThemeWallpapersProc.command = ["bash", "-c", "mkdir -p '" + themeWallpaperDir + "/" + themeName + "' && " + "ls -1 '" + themeWallpaperDir + "/" + themeName + "'/*.{png,jpg,jpeg,webp,gif} 2>/dev/null | sort"];
-        listThemeWallpapersProc.running = true;
+        listThemeWallpapersProc.run(["bash", "-c", "mkdir -p '" + themeWallpaperDir + "/" + themeName + "' && " + "ls -1 '" + themeWallpaperDir + "/" + themeName + "'/*.{png,jpg,jpeg,webp,gif} 2>/dev/null | sort"]);
     }
 
     // The active wallpaper of a theme, from its JSON
@@ -195,9 +192,7 @@ Singleton {
         const type = transition || transitions[Math.floor(Math.random() * transitions.length)];
         const duration = transition ? "1" : (Math.random() * 1.5 + 0.5).toFixed(1);
 
-        setWallpaperProc._path = path;
-        setWallpaperProc.command = ["sh", "-c", "[ -f \"$1\" ] || { echo \"not found: $1\" >&2; exit 3; }; " + "awww img \"$1\" --transition-type \"$2\" --transition-duration \"$3\" --transition-fps 60 --transition-step 90", "sh", path, type, duration];
-        setWallpaperProc.running = true;
+        setWallpaperProc.run(["sh", "-c", "[ -f \"$1\" ] || { echo \"not found: $1\" >&2; exit 3; }; " + "awww img \"$1\" --transition-type \"$2\" --transition-duration \"$3\" --transition-fps 60 --transition-step 90", "sh", path, type, duration], path);
     }
 
     function _wallpaperApplied(path: string) {
@@ -278,9 +273,8 @@ Singleton {
         onExited: root.wallpapers = listWallpapersProc._buffer
     }
 
-    Process {
+    QueuedProcess {
         id: listThemeWallpapersProc
-        property string _themeName: ""
         property var _buffer: []
 
         stdout: SplitParser {
@@ -291,21 +285,27 @@ Singleton {
             }
         }
         onStarted: listThemeWallpapersProc._buffer = []
-        onExited: root.themeWallpapers = listThemeWallpapersProc._buffer
+        // Another theme's list was asked for meanwhile
+        onExited: {
+            if (!superseded)
+                root.themeWallpapers = listThemeWallpapersProc._buffer;
+        }
     }
 
-    Process {
+    QueuedProcess {
         id: setWallpaperProc
-
-        property string _path: ""
 
         stderr: SplitParser {
             onRead: data => console.error("[Wallpaper] " + data)
         }
         onExited: (exitCode, exitStatus) => {
+            // Wallpapers applied one after another: only the newest is saved
+            // (state, .current, matugen)
+            if (superseded)
+                return;
             if (exitCode === 0) {
                 console.log("[Wallpaper] Wallpaper changed successfully");
-                root._wallpaperApplied(_path);
+                root._wallpaperApplied(request);
             } else {
                 console.error("[Wallpaper] Failed to change wallpaper");
             }
@@ -397,8 +397,6 @@ Singleton {
 
     Process {
         id: setActiveThemeProc
-        property string _wallpaperPath: ""
-
         onExited: exitCode => {
             if (exitCode === 0) {
                 console.log("[Wallpaper] Theme wallpaper config updated");
