@@ -183,7 +183,9 @@ BarButton {
         }
     }
 
-    // Progress along the bottom edge, on the straight part of the pill
+    // Progress along the bottom edge, on the straight part of the pill. No
+    // Behavior: each position step is under a pixel, and an animation
+    // between samples would keep the bar window rendering while anything plays
     Rectangle {
         anchors.left: parent.left
         anchors.bottom: parent.bottom
@@ -194,11 +196,5 @@ BarButton {
         radius: 1
         color: Qt.alpha(Config.accentColor, 0.8)
         visible: MprisService.positionSupported && MprisService.length > 0
-
-        Behavior on width {
-            NumberAnimation {
-                duration: MprisService.positionInterval
-            }
-        }
     }
 }

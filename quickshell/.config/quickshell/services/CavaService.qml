@@ -19,6 +19,8 @@ Singleton {
     property bool available: true
 
     property var values: _zeros()
+    // Last raw frame: silence repeats the same line every frame
+    property string _lastFrame: ""
 
     property int _watchers: 0
     readonly property bool running: _watchers > 0 && enabled && available
@@ -36,8 +38,10 @@ Singleton {
     }
 
     onRunningChanged: {
-        if (!running)
+        if (!running) {
             values = _zeros();
+            _lastFrame = "";
+        }
     }
 
     readonly property string _config: `[general]
@@ -65,6 +69,9 @@ noise_reduction = 60
 
         stdout: SplitParser {
             onRead: data => {
+                if (data === root._lastFrame)
+                    return;
+                root._lastFrame = data;
                 const parts = data.split(";");
                 const levels = new Array(root.bars);
                 for (let i = 0; i < root.bars; i++)

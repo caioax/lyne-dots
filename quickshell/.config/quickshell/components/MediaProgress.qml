@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.config
 import qs.services
 
@@ -109,8 +110,10 @@ RowLayout {
                 }
             }
 
+            // Only in a shown window: the dashboards keep hidden tabs loaded,
+            // and any running animation makes every bar window render too
             NumberAnimation on phase {
-                running: root.wavy && MprisService.isPlaying && wave.visible
+                running: root.wavy && MprisService.isPlaying && wave.visible && (QsWindow.window?.visible ?? false)
                 from: 0
                 to: Math.PI * 2
                 duration: 2000
