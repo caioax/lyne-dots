@@ -553,17 +553,6 @@ Singleton {
         _turnOff();
     }
 
-    // Set the intensity and apply if active
-    function setNightLightIntensity(intensity: real) {
-        nightLightIntensity = Math.max(0.0, Math.min(1.0, intensity));
-        updateTemperatureFromIntensity();
-        setState("nightLight.intensity", nightLightIntensity);
-
-        if (nightLightEnabled) {
-            applyNightLight();
-        }
-    }
-
     function setNightLightTemperature(temp: int) {
         nightLightTemperature = Math.max(nightLightMin, Math.min(nightLightMax, temp));
         updateIntensityFromTemperature();

@@ -424,18 +424,6 @@ Singleton {
         WallpaperService.setWallpaper(wallpaperDir + "/" + wallpaperFile, "grow");
     }
 
-    function _clearGtkColors() {
-        // Remove colors.css so adw-gtk3 uses its default light/dark colors
-        gtkProc.command = ["bash", "-c", "rm -f " + shellEscape(gtkColorsPath3) + " " + shellEscape(gtkColorsPath4)];
-        gtkProc.running = true;
-    }
-
-    function _clearQtColors() {
-        // Remove custom Lyne.colors so Qt falls back to the Breeze scheme
-        qtProc.command = ["bash", "-c", "rm -f " + shellEscape(qtColorSchemePath)];
-        qtProc.running = true;
-    }
-
     function _applyGtkThemeSwitch() {
         const theme = gtkThemeName;
         const scheme = isDarkMode ? "prefer-dark" : "prefer-light";

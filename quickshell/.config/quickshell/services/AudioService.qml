@@ -74,7 +74,6 @@ Singleton {
 
     readonly property bool sourceMuted: sourceReady ? (source.audio.muted ?? false) : false
     readonly property real sourceVolume: sourceReady ? (source.audio.volume ?? 0) : 0
-    readonly property int sourcePercentage: Math.round(sourceVolume * 100)
 
     readonly property string systemIcon: {
         if (!sinkReady || muted || volume <= 0)

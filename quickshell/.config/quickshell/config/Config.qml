@@ -35,7 +35,6 @@ Singleton {
     readonly property color textColor: _shown("text", "#c0caf5")
     readonly property color textReverseColor: _shown("textReverse", "#1a1b26")
     readonly property color subtextColor: _shown("subtext", "#a9b1d6")
-    readonly property color subtextReverseColor: _shown("subtextReverse", "#565f89")
 
     readonly property color accentColor: _shown("accent", "#7aa2f7")
     readonly property color successColor: _shown("success", "#9ece6a")
@@ -43,8 +42,6 @@ Singleton {
     readonly property color errorColor: _shown("error", "#f7768e")
 
     readonly property color mutedColor: _shown("muted", "#545c7e")
-    readonly property color greyBlueColor: _shown("greyBlue", "#283457")
-    readonly property color blueDarkColor: _shown("blueDark", "#16161e")
 
     // Theme switches: fade the colors over animDurationLong times 1, 2 or 3
     readonly property bool themeTransition: getState("animations.themeTransition", true)

@@ -124,10 +124,6 @@ Singleton {
             gifPicker.running = true;
     }
 
-    function resetGif(): void {
-        StateService.set("dashboard.gif", "");
-    }
-
     // The GIF is copied (with a unique name, so the image cache doesn't keep
     // the old one) and survives the original being moved or deleted
     Process {

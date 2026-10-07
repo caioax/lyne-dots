@@ -67,21 +67,6 @@ Singleton {
         return Lib.matches(entry, query);
     }
 
-    function variantsOf(layout: string): var {
-        const base = Lib.findLayout(db, layout);
-        return base ? [
-            {
-                layout,
-                variant: "",
-                description: base.description
-            }
-        ].concat((db.variants[layout] ?? []).map(v => ({
-                    layout,
-                    variant: v.name,
-                    description: v.description
-                }))) : [];
-    }
-
     function optionDescription(option: string): string {
         return Lib.findOption(db, option)?.description ?? option;
     }

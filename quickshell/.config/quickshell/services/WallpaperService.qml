@@ -98,17 +98,6 @@ Singleton {
         return favorites.includes(relativePath(path));
     }
 
-    // Theme wallpaper detection (old theme-{name}.jpg in root dir)
-    function isThemeWallpaper(path: string): bool {
-        return fileName(path).startsWith("theme-");
-    }
-
-    function themeNameFromPath(path: string): string {
-        const name = fileName(path);
-        const match = name.match(/^theme-(.+)\.\w+$/);
-        return match ? match[1] : "";
-    }
-
     // Theme wallpaper folder operations. Copies the file into the theme's
     // folder; makeActive makes it the theme's wallpaper, otherwise it only
     // becomes that when the theme has none (or its file is gone)
@@ -159,20 +148,7 @@ Singleton {
         listThemeWallpapersProc.running = true;
     }
 
-    // Get the active wallpaper filename for a theme from its JSON
-    // Get which theme a wallpaper is active for (from overview list)
-    function themeForActiveWallpaper(wallpaperPath: string): string {
-        const relativePath = wallpaperPath.replace(wallpaperDir + "/", "");
-        const themes = ThemeService.availableThemes;
-        const previews = ThemeService.themePreviews;
-        for (let i = 0; i < themes.length; i++) {
-            const preview = previews[themes[i]];
-            if (preview && preview.wallpaper === relativePath)
-                return themes[i];
-        }
-        return "";
-    }
-
+    // The active wallpaper of a theme, from its JSON
     function getThemeActiveWallpaper(themeName: string): string {
         // This is read from the theme previews loaded by ThemeService
         const preview = ThemeService.themePreviews[themeName];
@@ -184,12 +160,6 @@ Singleton {
     function themeWallpaperPath(themeName: string): string {
         const rel = getThemeActiveWallpaper(themeName);
         return rel ? wallpaperDir + "/" + rel : "";
-    }
-
-    function isActiveThemeWallpaper(wallpaperPath: string, themeName: string): bool {
-        const relativePath = wallpaperPath.replace(wallpaperDir + "/", "");
-        const activeWallpaper = getThemeActiveWallpaper(themeName);
-        return relativePath === activeWallpaper;
     }
 
     // Renders lake, waves and contour in the theme's colors into its folder,
@@ -217,10 +187,6 @@ Singleton {
         // ~3 GB of RAM per 4K render: one at a time above 1440p
         generateProc.command = ["python3", generatorPath, "--theme-file", themesConfigDir + "/" + themeName + ".json", "--out", themeWallpaperDir, "--size", w + "x" + h, "--jobs", w * h > 2560 * 1440 ? "1" : "3"];
         generateProc.running = true;
-    }
-
-    function toggleDynamicWallpaper() {
-        setState("wallpaper.dynamic", !dynamicWallpaper);
     }
 
     // Apply wallpaper. A missing file is skipped and leaves the current one.
