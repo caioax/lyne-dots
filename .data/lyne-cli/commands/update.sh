@@ -16,15 +16,60 @@ _lyne_notify() {
     notify-send -a "Lyne" -i lyne-dots "$@"
 }
 
-echo -e "\e[1;34m:: Aligning core files with repository...\e[0m"
-git -C "$DOTS_DIR" reset --hard
+# The plugin versions Lazy writes (:Lazy update, new plugins) aren't local
+# work: they don't count as changes and are put back after the pull
+local lazy_lock="nvim/.config/nvim/lazy-lock.json"
+local lazy_saved=""
+_lyne_restore_lazy_lock() {
+    [[ -n "$lazy_saved" ]] || return 0
+    cp "$lazy_saved" "$DOTS_DIR/$lazy_lock" && rm -f "$lazy_saved"
+    lazy_saved=""
+}
+
+# Uncommitted changes: stashed, discarded or the update cancelled
+local stash_name=""
+local changes
+changes="$(git -C "$DOTS_DIR" status --porcelain --untracked-files=no -- . ":(exclude)$lazy_lock")"
+if [[ -n "$changes" ]]; then
+    echo -e "\e[1;33m:: Uncommitted changes in $DOTS_DIR:\e[0m"
+    echo "$changes"
+    local choice=s
+    # Without a terminal to ask in, they're stashed
+    [[ -t 0 ]] && read -rp "[S]tash them (git stash pop brings them back), [d]iscard them or [c]ancel? " choice
+    case "${choice,,}" in
+    "" | s)
+        stash_name="lyne-update-$(date +%F-%H%M)"
+        if ! git -C "$DOTS_DIR" stash push -m "$stash_name" -- . ":(exclude)$lazy_lock"; then
+            echo "lyne update: git stash failed, nothing was changed"
+            return 1
+        fi
+        echo "   Stashed as $stash_name"
+        ;;
+    d)
+        git -C "$DOTS_DIR" reset --hard
+        ;;
+    *)
+        echo "lyne update: cancelled"
+        return 1
+        ;;
+    esac
+fi
+
+if ! git -C "$DOTS_DIR" diff --quiet -- "$lazy_lock"; then
+    lazy_saved="$(mktemp)" || return 1
+    cp "$DOTS_DIR/$lazy_lock" "$lazy_saved"
+    git -C "$DOTS_DIR" checkout -- "$lazy_lock"
+fi
 
 echo -e "\e[1;34m:: Pulling latest changes...\e[0m"
 if ! git -C "$DOTS_DIR" pull; then
+    _lyne_restore_lazy_lock
     echo "lyne update: git pull failed"
     _lyne_notify -u critical "Lyne update failed" "git pull failed, see the terminal for details"
     return 1
 fi
+
+_lyne_restore_lazy_lock
 
 echo -e "\e[1;34m:: Syncing state.json...\e[0m"
 source "$DOTS_DIR/.data/lyne-cli/lib/sync-state.sh"
@@ -54,4 +99,10 @@ fi
 # Final Success Message
 echo ""
 echo -e "\e[1;32m✔ Lyne is up to date!\e[0m"
-_lyne_notify "Lyne is up to date" "$(git -C "$DOTS_DIR" log -1 --format='%h · %s')"
+local summary
+summary="$(git -C "$DOTS_DIR" log -1 --format='%h · %s')"
+if [[ -n "$stash_name" ]]; then
+    echo "Your changes are in git stash \"$stash_name\": git -C $DOTS_DIR stash pop brings them back"
+    summary+=$'\n'"Your changes are stashed as $stash_name"
+fi
+_lyne_notify "Lyne is up to date" "$summary"

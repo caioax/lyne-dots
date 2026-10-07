@@ -21,7 +21,6 @@ ColumnLayout {
     property var info: ({})
     property var git: ({})
     property bool checking: false
-    property bool confirmingUpdate: false
 
     readonly property int behind: git.behind !== undefined && git.behind !== "" ? parseInt(git.behind) : -1
     readonly property int dirty: parseInt(git.dirty ?? "0")
@@ -98,12 +97,6 @@ ColumnLayout {
     }
 
     function runUpdate() {
-        if (dirty > 0 && !confirmingUpdate) {
-            confirmingUpdate = true;
-            confirmTimer.restart();
-            return;
-        }
-        confirmingUpdate = false;
         // In the default terminal, so the output (and any sudo prompt from
         // migrations) is visible; it stays open until a key is pressed
         Quickshell.execDetached(AppsService.terminalArgv(["bash", "-c", 'lyne update; echo; read -rsn1 -p "Press any key to close"']));
@@ -153,7 +146,8 @@ ColumnLayout {
             echo "branch=$(git rev-parse --abbrev-ref HEAD)"
             echo "commit=$(git log -1 --format=%h)"
             echo "date=$(git log -1 --format=%cd --date=short)"
-            echo "dirty=$(git status --porcelain | wc -l)"
+            # lazy-lock.json follows :Lazy update; lyne update keeps it
+            echo "dirty=$(git status --porcelain --untracked-files=no -- . ':(exclude)nvim/.config/nvim/lazy-lock.json' | wc -l)"
             timeout 15 git fetch --quiet 2>/dev/null && echo "fetched=1"
             echo "behind=$(git rev-list --count HEAD..@{u} 2>/dev/null)"
         `]
@@ -163,12 +157,6 @@ ColumnLayout {
                 root.checking = false;
             }
         }
-    }
-
-    Timer {
-        id: confirmTimer
-        interval: 4000
-        onTriggered: root.confirmingUpdate = false
     }
 
     Timer {
@@ -289,7 +277,7 @@ ColumnLayout {
             }
             description: {
                 if (root.dirty > 0)
-                    return root.dirty + " uncommitted " + (root.dirty === 1 ? "change" : "changes") + " in ~/.lyne-dots. Updating runs git reset --hard and discards them";
+                    return root.dirty + " uncommitted " + (root.dirty === 1 ? "change" : "changes") + " in ~/.lyne-dots. Updating asks whether to stash or discard them";
                 return "Pulls the latest dotfiles, syncs state.json and runs pending migrations";
             }
 
@@ -320,10 +308,10 @@ ColumnLayout {
 
             ActionButton {
                 icon: "\u{f01da}"
-                text: root.confirmingUpdate ? "Discard & update" : "Update"
-                baseColor: root.confirmingUpdate ? Config.errorColor : root.behind > 0 ? Config.accentColor : updateRow.controlColor
-                hoverColor: root.confirmingUpdate ? Qt.lighter(Config.errorColor, 1.1) : root.behind > 0 ? Qt.lighter(Config.accentColor, 1.1) : Config.surface3Color
-                textColor: root.confirmingUpdate || root.behind > 0 ? Config.textReverseColor : Config.textColor
+                text: "Update"
+                baseColor: root.behind > 0 ? Config.accentColor : updateRow.controlColor
+                hoverColor: root.behind > 0 ? Qt.lighter(Config.accentColor, 1.1) : Config.surface3Color
+                textColor: root.behind > 0 ? Config.textReverseColor : Config.textColor
                 onClicked: root.runUpdate()
             }
         }
