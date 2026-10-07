@@ -97,8 +97,29 @@ Singleton {
     // APPS
     // ========================================================================
 
+    // The indexes below only exist while the launcher is in use (open, and
+    // a moment after closing for its exit animation): built, they are the
+    // shell's largest service (~35 MB) and followed every app and state
+    // change with the launcher closed
+    property bool indexed: false
+    onVisibleChanged: {
+        if (visible) {
+            releaseTimer.stop();
+            indexed = true;
+        } else {
+            releaseTimer.restart();
+        }
+    }
+    Timer {
+        id: releaseTimer
+        interval: 2000
+        onTriggered: root.indexed = false
+    }
+
     // Every visible app, deduplicated
     readonly property var apps: {
+        if (!root.indexed)
+            return [];
         void root._refreshToken;
         const hiddenIds = new Set(root.hidden);
         const seen = new Set();
@@ -213,7 +234,7 @@ Singleton {
 
     // History entries as launcher items: the preview as the name, a line of
     // details as the comment; `clip` is the ClipboardService entry
-    readonly property var clipItems: ClipboardService.entries.map(entry => _clipItem(entry))
+    readonly property var clipItems: indexed ? ClipboardService.entries.map(entry => _clipItem(entry)) : []
 
     // Kinds of entry the clipboard mode shows: "all", "text" (text, paths,
     // colors), "image" or "link". Back to "all" on each open
