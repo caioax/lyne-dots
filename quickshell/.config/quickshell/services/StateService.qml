@@ -94,22 +94,32 @@ Singleton {
         return def === undefined || value === undefined || JSON.stringify(value) === JSON.stringify(def);
     }
 
-    function set(path: string, value) {
-        if (JSON.stringify(_lookup(state, path)) === JSON.stringify(value))
-            return;
+    // Paths set here since the last save, merged over an external edit that
+    // arrives before the save (not a reactive property: no bindings on it)
+    property var _unsaved: ({})
 
+    function _assign(obj, path: string, value): void {
         const keys = path.split('.');
-        let current = state;
+        let current = obj;
         for (let i = 0; i < keys.length - 1; i++) {
             const key = keys[i];
-            if (!(key in current) || typeof current[key] !== 'object')
+            if (!(key in current) || typeof current[key] !== 'object' || current[key] === null)
                 current[key] = {};
             current = current[key];
         }
         current[keys[keys.length - 1]] = value;
-        _bump(keys[0]);
-        if (!isLoading)
+    }
+
+    function set(path: string, value) {
+        if (JSON.stringify(_lookup(state, path)) === JSON.stringify(value))
+            return;
+
+        _assign(state, path, value);
+        _bump(path.split('.')[0]);
+        if (!isLoading) {
+            _unsaved[path] = value;
             saveDebounce.restart();
+        }
     }
 
     function reset(path: string) {
@@ -122,6 +132,9 @@ Singleton {
     function _apply(text: string) {
         try {
             const newState = JSON.parse(text);
+            // An external edit before our pending save: theirs, with ours on top
+            for (const path of Object.keys(_unsaved))
+                _assign(newState, path, JSON.parse(JSON.stringify(_unsaved[path])));
             const changed = [];
             for (const key of new Set([...Object.keys(state), ...Object.keys(newState)])) {
                 if (JSON.stringify(state[key]) !== JSON.stringify(newState[key]))
@@ -142,6 +155,7 @@ Singleton {
 
     function saveState() {
         saveDebounce.stop();
+        _unsaved = {};
         stateFile.setText(JSON.stringify(state, null, 2) + "\n");
     }
 
@@ -184,13 +198,11 @@ Singleton {
         onFileChanged: reload()
         onLoaded: {
             missing = false;
-            // Local changes not yet written win over an external edit
-            if (saveDebounce.running)
-                return;
-            // The echo of our own save changes no key: _apply does nothing.
-            // (Comparing with the last text we wrote ignored an external
-            // edit that brought the file back to it, e.g. lyne theme set A,
-            // then B, then A again)
+            // Local changes not saved yet go on top of it (_apply) and the
+            // pending save writes the result. The echo of our own save
+            // changes no key, so _apply does nothing with it (comparing with
+            // the last text we wrote also ignored an external edit that
+            // brought the file back to it: lyne theme set A, B, then A)
             root._apply(text());
         }
         onLoadFailed: error => {
