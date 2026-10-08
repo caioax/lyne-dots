@@ -12,7 +12,7 @@ for arg in "$@"; do
 
     hyprctl eval "hl.config({ cursor = { zoom_factor = $TARGET_ZOOM } })"
     ;;
-  out | out)
+  out | Out)
     TARGET_ZOOM=$(echo "scale=6; $CURRENT_ZOOM * (1 - $ZOOM_FORCE)" | bc)
     TARGET_ZOOM=$(echo "scale=6; if ($TARGET_ZOOM < 1) 1 else $TARGET_ZOOM" | bc)
 

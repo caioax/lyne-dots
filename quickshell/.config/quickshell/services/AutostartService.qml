@@ -143,7 +143,7 @@ Singleton {
         return (command ?? "").split(Quickshell.env("HOME") + "/").join("~/");
     }
 
-    // "~/.local/scripts/CpuPower/limitar_cpu.sh Base" -> "Limitar cpu"
+    // "~/.local/bin/sync_notes.sh --quiet" -> "Sync notes"
     function nameFor(command: string): string {
         const entry = DesktopEntries.heuristicLookup(binaryOf(command).split("/").pop());
         if (entry)
