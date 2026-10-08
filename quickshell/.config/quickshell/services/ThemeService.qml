@@ -500,7 +500,8 @@ Singleton {
 
         const content = lines.join("\n");
 
-        gtkProc.run(["bash", "-c", "cat > " + shellEscape(gtkColorsPath3) + " << 'GTK_EOF'\n" + content + "GTK_EOF\n" + "cp " + shellEscape(gtkColorsPath3) + " " + shellEscape(gtkColorsPath4)]);
+        // The folders don't exist without the theming package's stow
+        gtkProc.run(["bash", "-c", "mkdir -p \"$(dirname " + shellEscape(gtkColorsPath3) + ")\" \"$(dirname " + shellEscape(gtkColorsPath4) + ")\" && " + "cat > " + shellEscape(gtkColorsPath3) + " << 'GTK_EOF'\n" + content + "GTK_EOF\n" + "cp " + shellEscape(gtkColorsPath3) + " " + shellEscape(gtkColorsPath4)]);
 
         // Also update GTK base theme to match scheme
         _applyGtkThemeSwitch();

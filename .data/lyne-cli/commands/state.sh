@@ -41,7 +41,10 @@ case "$subcmd" in
         custom_editor=$(jq -r '.system.editor // empty' "$STATE_FILE" 2>/dev/null)
 
         if [[ -n "$custom_editor" && "$custom_editor" != "null" ]] && command -v "${custom_editor%% *}" >/dev/null 2>&1; then
-            eval "$custom_editor $STATE_FILE"
+            # Split into words, not evaluated: the state can't run arbitrary shell
+            local -a editor
+            read -ra editor <<<"$custom_editor"
+            "${editor[@]}" "$STATE_FILE"
         else
             [[ -n "$custom_editor" && "$custom_editor" != "null" ]] && \
                 echo "lyne state: editor '$custom_editor' not found, falling back to $default_editor"

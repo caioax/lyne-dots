@@ -2,9 +2,9 @@
 ColorScheme=Lyne
 TerminalApplication=kitty
 TerminalService=kitty.desktop
-font=Caskaydia Cove Nerd Font,10,-1,5,50,0,0,0,0,0
-menuFont=Caskaydia Cove Nerd Font,10,-1,5,50,0,0,0,0,0
-toolBarFont=Caskaydia Cove Nerd Font,10,-1,5,50,0,0,0,0,0
+font=CaskaydiaCove Nerd Font,10,-1,5,50,0,0,0,0,0
+menuFont=CaskaydiaCove Nerd Font,10,-1,5,50,0,0,0,0,0
+toolBarFont=CaskaydiaCove Nerd Font,10,-1,5,50,0,0,0,0,0
 
 [Icons]
 Theme=Tela-blue-light

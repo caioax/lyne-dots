@@ -24,7 +24,7 @@ local system = {
       about = "Night light" },
     { name = "Wallpaper daemon",  command = "awww-daemon",
       about = "Draws the wallpaper" },
-    { name = "Wallpaper",         command = "sleep 1 && " .. vars.scriptPath .. "/Wallpaper/wallpaper-boot.sh",
+    { name = "Wallpaper",         command = vars.scriptPath .. "/Wallpaper/wallpaper-boot.sh",
       about = "Restores the wallpaper of the last session" },
     -- Text and image watchers, with the options from Settings › Clipboard
     { name = "Clipboard history", command = HOME .. "/.config/quickshell/scripts/cliphist-watch.sh",

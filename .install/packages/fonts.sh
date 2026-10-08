@@ -8,7 +8,7 @@
 
 FONTS_PACKAGES=(
     # Nerd Fonts
-    "ttf-cascadia-code-nerd" # Caskaydia Cove Nerd Font (terminal/editor)
+    "ttf-cascadia-code-nerd" # CaskaydiaCove Nerd Font (terminal/editor)
     "ttf-nerd-fonts-symbols" # Nerd Fonts symbols
 
     # Base Fonts

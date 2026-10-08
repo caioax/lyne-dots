@@ -66,7 +66,7 @@ ColumnLayout {
 
         TextFieldRow {
             label: "City"
-            description: "Leave empty to detect it from your IP address"
+            description: "Leave empty to detect it from your IP address (ipwho.is); the forecast comes from Open-Meteo"
             path: "weather.city"
             placeholder: "Detect automatically"
         }
