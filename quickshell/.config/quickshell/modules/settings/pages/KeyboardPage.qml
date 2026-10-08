@@ -524,36 +524,9 @@ ColumnLayout {
             label: "Type here"
             description: KeyboardService.activeKeymap !== "" ? "Typing with " + KeyboardService.activeKeymap : ""
 
-            below: Rectangle {
+            below: QsTextField {
                 width: parent ? parent.width : 0
-                implicitHeight: Config.fontSizeIconSmall + Config.padding * 3
-                radius: Config.radius
-                color: Config.surface1Color
-                border.width: tryInput.activeFocus ? 1 : 0
-                border.color: Qt.alpha(Config.accentColor, 0.6)
-
-                TextInput {
-                    id: tryInput
-
-                    anchors.fill: parent
-                    anchors.leftMargin: Config.padding * 2
-                    anchors.rightMargin: Config.padding * 2
-                    verticalAlignment: TextInput.AlignVCenter
-                    clip: true
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeNormal
-                    color: Config.textColor
-                    selectionColor: Qt.alpha(Config.accentColor, 0.4)
-                    selectByMouse: true
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: tryInput.text === ""
-                        text: "Accents, symbols: ç ã é ~ ^ ` ´ \" @ # |"
-                        font: tryInput.font
-                        color: Config.subtextColor
-                    }
-                }
+                placeholder: "Accents, symbols: ç ã é ~ ^ ` ´ \" @ # |"
             }
         }
     }

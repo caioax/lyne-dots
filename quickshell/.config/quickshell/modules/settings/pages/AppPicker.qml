@@ -277,39 +277,12 @@ Popup {
                 Layout.fillWidth: true
                 spacing: Config.spacing
 
-                Rectangle {
+                QsTextField {
+                    id: customField
+
                     Layout.fillWidth: true
-                    implicitHeight: Config.fontSizeIconSmall + Config.padding * 3
-                    radius: Config.radius
-                    color: Config.surface1Color
-                    border.width: customField.activeFocus ? 1 : 0
-                    border.color: Qt.alpha(Config.accentColor, 0.6)
-
-                    TextInput {
-                        id: customField
-
-                        anchors.fill: parent
-                        anchors.leftMargin: Config.padding * 2
-                        anchors.rightMargin: Config.padding * 2
-                        verticalAlignment: TextInput.AlignVCenter
-                        clip: true
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeNormal
-                        color: Config.textColor
-                        selectionColor: Qt.alpha(Config.accentColor, 0.4)
-                        selectByMouse: true
-                        onAccepted: root.useCustom()
-
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width
-                            elide: Text.ElideRight
-                            visible: customField.text === ""
-                            text: root.customPlaceholder
-                            font: customField.font
-                            color: Config.subtextColor
-                        }
-                    }
+                    placeholder: root.customPlaceholder
+                    onAccepted: root.useCustom()
                 }
 
                 ActionButton {

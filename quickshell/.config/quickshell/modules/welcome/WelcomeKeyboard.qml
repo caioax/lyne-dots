@@ -80,36 +80,9 @@ ColumnLayout {
             label: "Try it"
             description: "Type a few keys to check the layout"
 
-            Rectangle {
-                implicitWidth: Config.fontSizeNormal * 16
-                implicitHeight: Config.fontSizeIconSmall + Config.padding * 3
-                radius: Config.radius
+            QsTextField {
                 color: tryRow.controlColor
-                border.width: tryField.activeFocus ? 1 : 0
-                border.color: Qt.alpha(Config.accentColor, 0.6)
-
-                TextInput {
-                    id: tryField
-
-                    anchors.fill: parent
-                    anchors.leftMargin: Config.padding * 1.5
-                    anchors.rightMargin: Config.padding * 1.5
-                    verticalAlignment: TextInput.AlignVCenter
-                    clip: true
-                    selectByMouse: true
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeNormal
-                    color: Config.textColor
-                    selectionColor: Qt.alpha(Config.accentColor, 0.4)
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: tryField.text === ""
-                        text: "ç ã é ñ ß ; / ?"
-                        font: tryField.font
-                        color: Config.mutedColor
-                    }
-                }
+                placeholder: "ç ã é ñ ß ; / ?"
             }
         }
     }

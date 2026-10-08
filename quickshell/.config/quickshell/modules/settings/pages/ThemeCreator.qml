@@ -380,39 +380,14 @@ ColumnLayout {
                     description: root.nameError !== "" ? root.nameError : root.editSlug !== "" ? "Saved as " + root.slug + ".json" : "Saved as ~/.local/themes/" + root.slug + ".json"
                     descriptionColor: root.nameError !== "" && root.name !== "" ? Config.errorColor : Config.subtextColor
 
-                    below: Rectangle {
+                    below: QsTextField {
                         width: parent.width
-                        implicitHeight: Config.fontSizeIconSmall + Config.padding * 3
-                        radius: Config.radius
                         color: nameRow.controlColor
-                        border.width: nameInput.activeFocus ? 1 : 0
-                        border.color: Qt.alpha(Config.accentColor, 0.6)
-
-                        TextInput {
-                            id: nameInput
-
-                            anchors.fill: parent
-                            anchors.leftMargin: Config.padding * 2
-                            anchors.rightMargin: Config.padding * 2
-                            verticalAlignment: TextInput.AlignVCenter
-                            clip: true
-                            text: root.name
-                            maximumLength: 40
-                            font.family: Config.font
-                            font.pixelSize: Config.fontSizeNormal
-                            color: Config.textColor
-                            selectionColor: Qt.alpha(Config.accentColor, 0.4)
-                            onTextEdited: root.name = text
-                            onAccepted: root.save()
-
-                            Text {
-                                visible: nameInput.text === ""
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: "My theme"
-                                font: nameInput.font
-                                color: Config.subtextColor
-                            }
-                        }
+                        text: root.name
+                        maximumLength: 40
+                        placeholder: "My theme"
+                        onTextEdited: root.name = text
+                        onAccepted: root.save()
                     }
                 }
             }

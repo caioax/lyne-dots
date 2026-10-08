@@ -192,12 +192,12 @@ Popup {
 
         property string label
         property string placeholder
-        property alias text: input.text
+        property alias text: box.text
 
         signal accepted
 
         function forceActiveFocus() {
-            input.forceActiveFocus();
+            box.focusInput();
         }
 
         Layout.fillWidth: true
@@ -211,37 +211,12 @@ Popup {
             color: Config.subtextColor
         }
 
-        Rectangle {
+        QsTextField {
+            id: box
+
             Layout.fillWidth: true
-            implicitHeight: Config.fontSizeIconSmall + Config.padding * 3
-            radius: Config.radius
-            color: Config.surface1Color
-            border.width: input.activeFocus ? 1 : 0
-            border.color: Qt.alpha(Config.accentColor, 0.6)
-
-            TextInput {
-                id: input
-
-                anchors.fill: parent
-                anchors.leftMargin: Config.padding * 2
-                anchors.rightMargin: Config.padding * 2
-                verticalAlignment: TextInput.AlignVCenter
-                clip: true
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeNormal
-                color: Config.textColor
-                selectionColor: Qt.alpha(Config.accentColor, 0.4)
-                selectByMouse: true
-                onAccepted: field.accepted()
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: input.text === ""
-                    text: field.placeholder
-                    font: input.font
-                    color: Config.subtextColor
-                }
-            }
+            placeholder: field.placeholder
+            onAccepted: field.accepted()
         }
     }
 }
