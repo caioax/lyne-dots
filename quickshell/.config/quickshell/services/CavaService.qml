@@ -44,10 +44,14 @@ Singleton {
         }
     }
 
+    // sleep_timer: after a second of silence cava stops writing frames until
+    // sound comes back (a player can be "playing" silence, and every frame
+    // woke the shell 60 times a second)
     readonly property string _config: `[general]
 framerate = ${framerate}
 bars = ${bars}
 autosens = 1
+sleep_timer = 1
 [input]
 method = pipewire
 [output]
