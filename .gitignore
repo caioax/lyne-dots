@@ -28,3 +28,6 @@ hyprland/.config/hypr/workspaces.lua
 theming/.config/gtk-3.0/colors.css
 theming/.config/gtk-4.0/colors.css
 
+
+# Python bytecode (written when the scripts are imported)
+__pycache__/
