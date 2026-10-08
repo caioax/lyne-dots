@@ -2,9 +2,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import Quickshell.Hyprland
 import qs.config
 import qs.services
+import "../../components/"
 
 // Power menu: dims and blurs every monitor and shows the menu (in the
 // power.style template) on the one that was focused. Clicking the backdrop
@@ -169,31 +169,10 @@ Scope {
         }
     }
 
-    // Clicking another window (or the grab being lost) closes the menu. Set
-    // a moment after opening: a grab activated in the same tick the windows
-    // map can be cleared by the compositor right away
-    HyprlandFocusGrab {
-        id: grab
-
+    // Clicking another window (or the grab being lost) closes the menu
+    DelayedFocusGrab {
         windows: windows.instances
+        wanted: PowerService.open
         onCleared: PowerService.hide()
-    }
-
-    Timer {
-        id: grabDelay
-
-        running: true
-        interval: 50
-        onTriggered: grab.active = true
-    }
-
-    // Reopened while closing: the grab may have been cleared
-    Connections {
-        target: PowerService
-
-        function onOpenChanged() {
-            if (PowerService.open)
-                grabDelay.restart();
-        }
     }
 }

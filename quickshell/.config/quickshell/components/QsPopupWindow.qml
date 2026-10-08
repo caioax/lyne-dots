@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import Quickshell.Hyprland
 import qs.config
 import qs.services
 
@@ -135,13 +134,13 @@ PanelWindow {
         }
         closeTimer.stop();
         isClosing = false;
-        grabTimer.restart();
+        focusGrab.rearm();
     }
 
     // Takes the focus grab back (see holdOpen)
     function regrab() {
         if (visible && !isClosing)
-            grabTimer.restart();
+            focusGrab.rearm();
     }
 
     Timer {
@@ -154,22 +153,14 @@ PanelWindow {
         }
     }
 
-    HyprlandFocusGrab {
+    DelayedFocusGrab {
         id: focusGrab
         windows: [root]
-        active: false
+        wanted: root.visible && !root.isClosing
+        onTaken: frame.forceActiveFocus()
         onCleared: {
             if (!root.holdOpen)
                 root.closeWindow();
-        }
-    }
-
-    Timer {
-        id: grabTimer
-        interval: 10
-        onTriggered: {
-            focusGrab.active = true;
-            frame.forceActiveFocus();
         }
     }
 
@@ -180,9 +171,7 @@ PanelWindow {
             isOpening = true;
             if (moduleName !== "")
                 WindowManagerService.registerOpen(moduleName);
-            grabTimer.restart();
         } else {
-            focusGrab.active = false;
             isOpening = false;
             if (moduleName !== "")
                 WindowManagerService.registerClose(moduleName);

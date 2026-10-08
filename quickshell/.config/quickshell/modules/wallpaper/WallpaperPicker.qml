@@ -4,7 +4,6 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
-import Quickshell.Hyprland
 import qs.services
 import qs.config
 import "../../components/"
@@ -555,30 +554,16 @@ PanelWindow {
         // Reopened before the exit animation ended: same window, so delay
         // the grab again and give the search its focus back
         function onVisibleChanged() {
-            root.grabReady = false;
             if (!WallpaperPickerService.visible)
                 return;
             search.text = "";
-            grabTimer.restart();
             search.focusInput();
         }
     }
 
-    // Set a moment after each open (see Launcher): a grab taken in the same
-    // tick the surface is mapped is cleared right away
-    property bool grabReady: false
-
-    Timer {
-        id: grabTimer
-
-        running: true
-        interval: 50
-        onTriggered: root.grabReady = true
-    }
-
-    HyprlandFocusGrab {
+    DelayedFocusGrab {
         windows: [root]
-        active: WallpaperPickerService.visible && root.grabReady
+        wanted: WallpaperPickerService.visible
         onCleared: {
             if (WallpaperPickerService.visible)
                 root.hide();

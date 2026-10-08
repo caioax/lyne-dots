@@ -4,7 +4,6 @@ import QtQml
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
-import Quickshell.Hyprland
 import qs.config
 import qs.services
 
@@ -71,14 +70,14 @@ PanelWindow {
             stack = [];
         visible = true;
         shown = true;
-        focusTimer.restart();
+        // Also when already shown: a click on the tray may have cleared it
+        focusGrab.rearm();
     }
 
     function close(reason) {
         if (!shown)
             return;
         shown = false;
-        focusGrab.active = false;
         hideTimer.restart();
         dismissed(reason ?? "outside");
     }
@@ -114,22 +113,12 @@ PanelWindow {
         return (text ?? "").replace(/__/g, "\u0000").replace(/_/g, "").replace(/\u0000/g, "_");
     }
 
-    HyprlandFocusGrab {
+    DelayedFocusGrab {
         id: focusGrab
         windows: root.companion ? [root, root.companion] : [root]
-        active: false
+        wanted: root.shown
+        onTaken: card.forceActiveFocus()
         onCleared: root.close("outside")
-    }
-
-    // The grab is cleared at once when activated in the same tick the
-    // window maps
-    Timer {
-        id: focusTimer
-        interval: 50
-        onTriggered: {
-            focusGrab.active = true;
-            card.forceActiveFocus();
-        }
     }
 
     QsMenuOpener {

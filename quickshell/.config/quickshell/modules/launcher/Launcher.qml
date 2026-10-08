@@ -4,7 +4,6 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
-import Quickshell.Hyprland
 import qs.services
 import qs.config
 import "../../components/"
@@ -626,11 +625,8 @@ PanelWindow {
         // Reopened before the exit animation ended: same window, so delay
         // the grab again and give the search its focus back
         function onVisibleChanged() {
-            root.grabReady = false;
-            if (!LauncherService.visible)
-                return;
-            grabTimer.restart();
-            search.focusInput();
+            if (LauncherService.visible)
+                search.focusInput();
         }
 
         // Ctrl+Tab switches modes by rewriting the query's prefix: mirror it back
@@ -720,25 +716,11 @@ PanelWindow {
         color: Config.accentColor
     }
 
-    // Set a moment after each open, like the other popups: a grab taken in
-    // the same tick the surface is mapped (or shown again while the exit
-    // animation keeps this window alive) is cleared right away, which closed
-    // the launcher as soon as it opened
-    property bool grabReady: false
-
-    Timer {
-        id: grabTimer
-
-        running: true
-        interval: 50
-        onTriggered: root.grabReady = true
-    }
-
-    // Deactivated as soon as the service hides (not tied to window
-    // visibility) so the exit animation doesn't keep stealing focus
-    HyprlandFocusGrab {
+    // Dropped as soon as the service hides (not tied to window visibility)
+    // so the exit animation doesn't keep stealing focus
+    DelayedFocusGrab {
         windows: [root]
-        active: LauncherService.visible && root.grabReady
+        wanted: LauncherService.visible
         onCleared: {
             if (LauncherService.visible)
                 root.hide();
