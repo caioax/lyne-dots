@@ -257,6 +257,19 @@ Singleton {
     readonly property color scrimColor: Qt.rgba(0, 0, 0, 1)
 
     // ========================================================================
+    // IMAGE DECODING
+    // ========================================================================
+    // Fixed decode sizes for images whose box follows the layout: a sourceSize
+    // bound to width/height decodes the file again on every resize step, and
+    // equal sizes let previews of the same file share one cached pixmap.
+    // Wallpaper tiles, thumbnails and the Settings style previews
+    readonly property size wallpaperThumbSize: Qt.size(640, 360)
+    // Theme mockups, which can span the whole Settings page
+    readonly property size wallpaperPreviewSize: Qt.size(1280, 720)
+    // Album covers in the dashboard cards
+    readonly property size coverArtSize: Qt.size(512, 512)
+
+    // ========================================================================
     // NOTIFICATIONS
     // ========================================================================
     readonly property int notifWidth: getState("notifications.width", 350)

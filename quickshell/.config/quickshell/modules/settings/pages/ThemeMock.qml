@@ -59,7 +59,7 @@ ClippingRectangle {
         visible: root.wallpaper !== ""
         source: root.wallpaper !== "" ? "file://" + root.wallpaper : ""
         fillMode: Image.PreserveAspectCrop
-        sourceSize: Qt.size(width * 2, height * 2)
+        sourceSize: Config.wallpaperPreviewSize
         asynchronous: true
     }
 

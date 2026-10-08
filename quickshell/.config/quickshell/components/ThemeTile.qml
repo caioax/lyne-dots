@@ -52,7 +52,7 @@ Item {
             // Only loaded while the page is open
             source: tile.loadImage && tile.preview.wallpaper ? "file://" + ThemeService.wallpaperDir + "/" + tile.preview.wallpaper : ""
             fillMode: Image.PreserveAspectCrop
-            sourceSize: Qt.size(width * 2, height * 2)
+            sourceSize: Config.wallpaperThumbSize
             asynchronous: true
         }
 

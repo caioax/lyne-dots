@@ -25,7 +25,7 @@ Card {
             anchors.fill: parent
             source: MprisService.artUrl
             fillMode: Image.PreserveAspectCrop
-            sourceSize: Qt.size(width * 2, height * 2)
+            sourceSize: Config.coverArtSize
             asynchronous: true
         }
 

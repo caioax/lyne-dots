@@ -65,7 +65,7 @@ Item {
             anchors.fill: parent
             source: "file://" + root.path
             fillMode: Image.PreserveAspectCrop
-            sourceSize: Qt.size(width * 2, height * 2)
+            sourceSize: Config.wallpaperThumbSize
             asynchronous: true
             opacity: status === Image.Ready ? 1 : 0
 

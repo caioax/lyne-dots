@@ -488,7 +488,7 @@ ColumnLayout {
                             anchors.fill: parent
                             source: root.wallpaperPath !== "" ? "file://" + root.wallpaperPath : ""
                             fillMode: Image.PreserveAspectCrop
-                            sourceSize: Qt.size(width * 2, height * 2)
+                            sourceSize: Config.wallpaperThumbSize
                             asynchronous: true
                         }
                     }
@@ -548,7 +548,7 @@ ColumnLayout {
                                         anchors.fill: parent
                                         source: "file://" + thumb.modelData
                                         fillMode: Image.PreserveAspectCrop
-                                        sourceSize: Qt.size(width * 2, height * 2)
+                                        sourceSize: Config.wallpaperThumbSize
                                         asynchronous: true
                                     }
 

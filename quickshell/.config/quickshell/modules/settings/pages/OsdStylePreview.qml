@@ -49,7 +49,7 @@ ClippingRectangle {
         anchors.fill: parent
         source: WallpaperService.currentWallpaper !== "" ? "file://" + WallpaperService.currentWallpaper : ""
         fillMode: Image.PreserveAspectCrop
-        sourceSize: Qt.size(width * 2, height * 2)
+        sourceSize: Config.wallpaperThumbSize
         asynchronous: true
     }
 

@@ -335,7 +335,7 @@ ColumnLayout {
                     anchors.fill: parent
                     source: root.activePath !== "" ? "file://" + root.activePath : ""
                     fillMode: Image.PreserveAspectCrop
-                    sourceSize: Qt.size(width * 2, height * 2)
+                    sourceSize: Config.wallpaperThumbSize
                     asynchronous: true
                 }
             }
