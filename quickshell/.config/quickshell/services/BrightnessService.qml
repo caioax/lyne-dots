@@ -509,7 +509,7 @@ Singleton {
         }
     }
 
-    // sysfs sends no change events: polled
+    // Read again on each kernel change event (udevadm monitor below)
     FileView {
         id: backlight
         path: root.backlightDevice !== "" ? "/sys/class/backlight/" + root.backlightDevice + "/brightness" : ""
@@ -524,11 +524,17 @@ Singleton {
         }
     }
 
-    Timer {
-        interval: 2000
+    // The kernel announces every backlight change (keys, sysfs writes, other
+    // tools) as a uevent, so nothing polls the file
+    Process {
         running: root.backlightDevice !== ""
-        repeat: true
-        onTriggered: backlight.reload()
+        command: ["udevadm", "monitor", "--kernel", "--subsystem-match=backlight"]
+        stdout: SplitParser {
+            onRead: data => {
+                if (data.includes(" change "))
+                    backlight.reload();
+            }
+        }
     }
 
     // ========================================================================

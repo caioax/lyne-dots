@@ -268,7 +268,12 @@ Singleton {
                 if (before !== undefined && before !== keymap && !root._quiet && !armTimer.running)
                     root._osdKeyboard = name;
             }
-            if (event.name === "activelayout" || event.name === "configreloaded")
+            // Keyboards with several interfaces (the keys, the media keys)
+            // send one activelayout per interface as typing moves between
+            // them: one read per burst
+            if (event.name === "activelayout")
+                layoutDebounce.restart();
+            if (event.name === "configreloaded")
                 root.refreshDevices();
         }
     }
@@ -280,6 +285,12 @@ Singleton {
     Timer {
         id: devicesDebounce
         interval: 400
+        onTriggered: root.refreshDevices()
+    }
+
+    Timer {
+        id: layoutDebounce
+        interval: 100
         onTriggered: root.refreshDevices()
     }
 
