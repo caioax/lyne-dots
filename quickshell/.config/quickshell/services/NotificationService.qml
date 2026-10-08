@@ -366,7 +366,7 @@ Singleton {
         readonly property Connections conn: Connections {
             target: notif.notification
 
-            // The app replaced the notification (same id): refresh and show it again
+            // The app replaced the notification (same id)
             function onSummaryChanged() {
                 notif.replaced();
             }
@@ -385,14 +385,23 @@ Singleton {
         }
 
         function replaced() {
-            // Several properties change in one update; handle it once
-            Qt.callLater(() => {
-                if (closed)
-                    return;
-                refresh();
-                if (popup || (!root.dndEnabled || isCritical))
-                    showPopup();
-            });
+            // Summary, body and hints change in one update: callLater with
+            // the same function runs it once
+            Qt.callLater(notif._applyReplace);
+        }
+
+        function _applyReplace() {
+            if (closed)
+                return;
+            const summaryBefore = summary;
+            const bodyBefore = body;
+            refresh();
+            // On screen: the new content gets a full timeout. Dismissed or
+            // expired: only news brings it back (a new title, or new text
+            // without a progress bar), not each step of a download
+            const news = summary !== summaryBefore || (body !== bodyBefore && progressValue < 0);
+            if (popup || (news && (!root.dndEnabled || isCritical)))
+                showPopup();
         }
 
         Component.onCompleted: refresh()
