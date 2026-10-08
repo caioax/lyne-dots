@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import Quickshell.Hyprland
 import qs.config
 
@@ -255,58 +254,23 @@ Singleton {
     // INSTALLED APPS
     // ========================================================================
 
-    // First word of each command -> installed (missing commands aren't keys
-    // until checked)
-    property var installed: ({})
+    // Which commands' first words are installed
+    BinaryCheck {
+        id: binaries
+    }
 
     function binaryOf(command: string): string {
-        return (command ?? "").trim().split(/\s+/)[0] ?? "";
+        return binaries.binaryOf(command);
     }
 
     function isMissing(command: string): bool {
-        const bin = binaryOf(command);
-        return bin !== "" && installed[bin] === false;
+        return binaries.isMissing(command);
     }
 
     // Checks the commands of the list plus `extra` (the dialog's field)
     function checkInstalled(extra: string) {
-        const bins = [...new Set([...list.map(s => binaryOf(s.command)), binaryOf(extra)].filter(b => b !== ""))];
-        if (bins.length === 0)
-            return;
-        // Never change a running Process's command: check again when done
-        if (checkProc.running) {
-            checkProc.again = true;
-            checkProc.againExtra = extra;
-            return;
-        }
-        checkProc.command = ["sh", "-c", 'for b in "$@"; do if command -v "$b" >/dev/null 2>&1; then echo "1 $b"; else echo "0 $b"; fi; done', "sh", ...bins];
-        checkProc.running = true;
+        binaries.check([...list.map(s => s.command), extra]);
     }
 
     onListChanged: checkInstalled("")
-
-    Process {
-        id: checkProc
-
-        property bool again: false
-        property string againExtra: ""
-
-        onExited: {
-            if (again) {
-                again = false;
-                root.checkInstalled(againExtra);
-            }
-        }
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const next = Object.assign({}, root.installed);
-                for (const line of text.split("\n")) {
-                    if (line.length > 2)
-                        next[line.slice(2)] = line[0] === "1";
-                }
-                root.installed = next;
-            }
-        }
-    }
 }

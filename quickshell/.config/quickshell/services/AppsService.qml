@@ -106,7 +106,7 @@ Singleton {
     readonly property var _entries: DesktopEntries.applications.values
 
     function binaryOf(command: string): string {
-        return (command ?? "").trim().split(/\s+/)[0] ?? "";
+        return binaries.binaryOf(command);
     }
 
     function _basename(path: string): string {
@@ -228,8 +228,10 @@ Singleton {
 
     // mime type -> .desktop file xdg-open uses now
     property var mimeDefaults: ({})
-    // binary -> installed (missing binaries aren't keys until checked)
-    property var installed: ({})
+    // Which slots' binaries are installed
+    BinaryCheck {
+        id: binaries
+    }
 
     // .desktop file a slot's mime types should open with
     function expectedDesktop(key: string): string {
@@ -252,23 +254,13 @@ Singleton {
     }
 
     function isMissing(key: string): bool {
-        const bin = binaryOf(root[key].command);
-        return bin !== "" && installed[bin] === false;
+        return binaries.isMissing(root[key].command);
     }
 
     // Reads mimeapps and checks the slots' binaries (the Apps page calls it)
     function refresh() {
         _readStatus();
-        const bins = [...new Set(slots.map(s => binaryOf(root[s.key].command)).filter(b => b !== ""))];
-        if (bins.length === 0)
-            return;
-        // Never change a running Process's command: check again when done
-        if (checkProc.running) {
-            checkProc.again = true;
-            return;
-        }
-        checkProc.command = ["sh", "-c", 'for b in "$@"; do if command -v "$b" >/dev/null 2>&1; then echo "1 $b"; else echo "0 $b"; fi; done', "sh", ...bins];
-        checkProc.running = true;
+        binaries.check(slots.map(s => root[s.key].command));
     }
 
     function _readStatus() {
@@ -335,30 +327,6 @@ Singleton {
                         next[line.slice(0, space)] = line.slice(space + 1).trim();
                 }
                 root.mimeDefaults = next;
-            }
-        }
-    }
-
-    Process {
-        id: checkProc
-
-        property bool again: false
-
-        onExited: {
-            if (again) {
-                again = false;
-                Qt.callLater(root.refresh);
-            }
-        }
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const next = Object.assign({}, root.installed);
-                for (const line of text.split("\n")) {
-                    if (line.length > 2)
-                        next[line.slice(2)] = line[0] === "1";
-                }
-                root.installed = next;
             }
         }
     }

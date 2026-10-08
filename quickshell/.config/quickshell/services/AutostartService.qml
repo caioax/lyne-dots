@@ -119,7 +119,7 @@ Singleton {
     // ========================================================================
 
     function binaryOf(command: string): string {
-        return (command ?? "").trim().split(/\s+/)[0] ?? "";
+        return binaries.binaryOf(command);
     }
 
     // Field codes (%U...) of the entry's Exec dropped
@@ -156,61 +156,21 @@ Singleton {
     // INSTALLED APPS
     // ========================================================================
 
-    // First word of each command -> installed (unknown until checked)
-    property var installed: ({})
-
-    function isMissing(command: string): bool {
-        const bin = binaryOf(command);
-        return bin !== "" && installed[bin] === false;
+    // Which apps' first words are installed
+    BinaryCheck {
+        id: binaries
     }
 
+    function isMissing(command: string): bool {
+        return binaries.isMissing(command);
+    }
+
+    // The apps' commands plus `extra` (the dialog's field)
     function checkInstalled(extra: string) {
-        const bins = [...new Set([...apps.map(a => binaryOf(a.command)), binaryOf(extra)].filter(b => b !== ""))];
-        if (bins.length === 0)
-            return;
-        // Never change a running Process's command: check again when done
-        if (checkProc.running) {
-            checkProc.again = true;
-            checkProc.againExtra = extra;
-            return;
-        }
-        checkProc.command = ["sh", "-c", 'for b in "$@"; do case "$b" in "~/"*) b="$HOME/${b#\\~/}";; esac; if command -v "$b" >/dev/null 2>&1; then echo "1 $b"; else echo "0 $b"; fi; done', "sh", ...bins];
-        checkProc.running = true;
+        binaries.check([...apps.map(a => a.command), extra]);
     }
 
     onAppsChanged: checkInstalled("")
-
-    Process {
-        id: checkProc
-
-        property bool again: false
-        property string againExtra: ""
-
-        onExited: {
-            if (again) {
-                again = false;
-                const extra = againExtra;
-                Qt.callLater(() => root.checkInstalled(extra));
-            }
-        }
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const next = Object.assign({}, root.installed);
-                const home = Quickshell.env("HOME");
-                for (const line of text.split("\n")) {
-                    if (line.length < 3)
-                        continue;
-                    const bin = line.slice(2);
-                    next[bin] = line[0] === "1";
-                    // Also under the "~/" spelling the command uses
-                    if (bin.startsWith(home + "/"))
-                        next["~" + bin.slice(home.length)] = line[0] === "1";
-                }
-                root.installed = next;
-            }
-        }
-    }
 
     // ========================================================================
     // SYSTEM LIST
