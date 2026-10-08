@@ -3,11 +3,19 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 
 // Brazilian national holidays, computed locally (no network).
 // Movable dates are derived from Easter (Carnaval, Good Friday, Corpus Christi).
+// dashboard.holidays: "br" | "none" | "auto" (Brazil when the time zone or
+// the language is Brazilian)
 Singleton {
     id: root
+
+    readonly property string setting: StateService.get("dashboard.holidays", "auto")
+    readonly property bool enabled: setting === "br" || (setting === "auto" && (_brazilianZone || Qt.locale().name === "pt_BR"))
+
+    property bool _brazilianZone: false
 
     // year -> { "M-D": { name, optional } }
     property var _cache: ({})
@@ -51,11 +59,15 @@ Singleton {
 
     // Holiday on a given date, or null. month is 1-based.
     function holiday(year, month, day) {
+        if (!enabled)
+            return null;
         return holidays(year)[month + "-" + day] ?? null;
     }
 
     // First mandatory holiday strictly after `from`: { date, name, days }
     function nextHoliday(from) {
+        if (!enabled)
+            return null;
         const start = new Date(from.getFullYear(), from.getMonth(), from.getDate());
         for (let i = 1; i <= 366; i++) {
             const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
@@ -87,5 +99,13 @@ Singleton {
         const month = Math.floor((h + l - 7 * m + 114) / 31);
         const day = ((h + l - 7 * m + 114) % 31) + 1;
         return new Date(year, month - 1, day);
+    }
+
+    Process {
+        running: true
+        command: ["timedatectl", "show", "-p", "Timezone", "--value"]
+        stdout: StdioCollector {
+            onStreamFinished: root._brazilianZone = /^(America\/(Noronha|Belem|Fortaleza|Recife|Araguaina|Maceio|Bahia|Sao_Paulo|Campo_Grande|Cuiaba|Santarem|Porto_Velho|Boa_Vista|Manaus|Eirunepe|Rio_Branco)|Brazil\/.+)$/.test(text.trim())
+        }
     }
 }

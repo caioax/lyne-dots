@@ -109,7 +109,8 @@
         "showGif": true,
         "gif": "",
         "hiddenTabs": [],
-        "defaultTab": "overview"
+        "defaultTab": "overview",
+        "holidays": "auto"
     },
     "opacity": {
         "background": 0.9

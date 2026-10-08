@@ -61,6 +61,33 @@ ColumnLayout {
     }
 
     SettingsGroup {
+        title: "Calendar"
+
+        SelectRow {
+            label: "Holidays"
+            description: {
+                const shown = HolidayService.enabled ? "Brazil's national holidays" : "no holidays";
+                return HolidayService.setting === "auto" ? "Marked on the Overview calendar; Automatic follows your time zone and language (now: " + shown + ")" : "Marked on the Overview calendar";
+            }
+            path: "dashboard.holidays"
+            options: [
+                {
+                    label: "Automatic",
+                    value: "auto"
+                },
+                {
+                    label: "Brazil",
+                    value: "br"
+                },
+                {
+                    label: "None",
+                    value: "none"
+                }
+            ]
+        }
+    }
+
+    SettingsGroup {
         title: "Media"
 
         ToggleRow {

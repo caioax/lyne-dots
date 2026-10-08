@@ -338,6 +338,7 @@ Card {
 
             // That holiday's name
             Text {
+                visible: HolidayService.enabled
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
                 text: root.selectedHoliday?.name ?? root.nextHoliday?.name ?? "No holidays"
