@@ -19,22 +19,6 @@ magenta = { color = "#c162de", blend = true }
 cyan = { color = "#42b3c2", blend = true }
 orange = { color = "#f08d49", blend = true }
 
-[templates.gtk-colors]
-input_path = "~/.lyne-dots/.data/matugen/templates/gtk-colors.css"
-output_path = "~/.config/gtk-4.0/colors.css"
-
-[templates.gtk3-colors]
-input_path = "~/.lyne-dots/.data/matugen/templates/gtk-colors.css"
-output_path = "~/.config/gtk-3.0/colors.css"
-
-[templates.kitty-theme]
-input_path = "~/.lyne-dots/.data/matugen/templates/kitty-theme.conf"
-output_path = "~/.config/kitty/current-theme.conf"
-
-[templates.qt-colors]
-input_path = "~/.lyne-dots/.data/matugen/templates/qt-colors.colors"
-output_path = "~/.local/share/color-schemes/Lyne.colors"
-
 [templates.quickshell-palette]
 input_path = "~/.lyne-dots/.data/matugen/templates/quickshell-palette.json"
 output_path = "~/.cache/matugen/quickshell-palette.json"

@@ -564,19 +564,23 @@ Singleton {
                 fgColor = fgR;
             }
 
+            // On the accent background of a selection the accent itself
+            // (links, active items) wouldn't show: text color there
+            const selection = group === "Selection";
+
             lines.push("[Colors:" + group + "]");
-            lines.push("BackgroundAlternate=" + (group === "Selection" ? ac : s1));
+            lines.push("BackgroundAlternate=" + (selection ? ac : s1));
             lines.push("BackgroundNormal=" + bgColor);
             lines.push("DecorationFocus=" + ac);
             lines.push("DecorationHover=" + ac);
-            lines.push("ForegroundActive=" + ac);
-            lines.push("ForegroundInactive=" + muted);
-            lines.push("ForegroundLink=" + ac);
+            lines.push("ForegroundActive=" + (selection ? fgR : ac));
+            lines.push("ForegroundInactive=" + (selection ? fgR : muted));
+            lines.push("ForegroundLink=" + (selection ? fgR : ac));
             lines.push("ForegroundNegative=" + err);
             lines.push("ForegroundNeutral=" + warn);
             lines.push("ForegroundNormal=" + fgColor);
             lines.push("ForegroundPositive=" + succ);
-            lines.push("ForegroundVisited=" + sub);
+            lines.push("ForegroundVisited=" + (selection ? fgR : sub));
             lines.push("");
         }
 
@@ -845,7 +849,7 @@ Singleton {
                 return;
             if (exitCode === 0) {
                 console.log("[Theme] Matugen finished, loading palette...");
-                // Matugen has written all template outputs (gtk, kitty, qt, hyprland, palette)
+                // Matugen has written its outputs (palette, terminal and hyprland colors)
                 // Now load the QuickShell palette JSON
                 loadMatugenPaletteProc.run(["cat", root.matugenCachePath + "/quickshell-palette.json"]);
             } else {
@@ -878,10 +882,10 @@ Singleton {
                     // Load and apply hyprland colors
                     root._loadAndApplyHyprlandColors();
 
-                    // Reload kitty (matugen already wrote the theme file)
-                    kittyReloadProc.run(["bash", "-c", "pkill -USR1 -x kitty 2>/dev/null; true"]);
-
-                    // Neovim needs the terminal colors too
+                    // GTK and Qt from the palette, like a preset; kitty and
+                    // Neovim from the terminal colors loaded next
+                    root._applyGtkFromPalette(pal);
+                    root._applyQtFromPalette(pal);
                     loadMatugenTerminalProc.run(["cat", root.matugenCachePath + "/terminal-colors.json"]);
 
                     ZenService.applyPalette(pal);
@@ -892,7 +896,7 @@ Singleton {
         }
     }
 
-    // Load the matugen terminal colors (same as the kitty theme) for Neovim
+    // Load the matugen terminal colors for kitty and Neovim
     QueuedProcess {
         id: loadMatugenTerminalProc
         onStarted: _buffer = ""
@@ -909,7 +913,9 @@ Singleton {
         onExited: exitCode => {
             if (exitCode === 0) {
                 try {
-                    root._applyNeovim(root.palette, JSON.parse(_buffer.trim()));
+                    const terminal = JSON.parse(_buffer.trim());
+                    root._applyKitty(terminal);
+                    root._applyNeovim(root.palette, terminal);
                 } catch (e) {
                     console.error("[Theme] Failed to parse matugen terminal colors:", e);
                 }
@@ -940,18 +946,6 @@ Singleton {
                     console.error("[Theme] Failed to parse hyprland colors:", e);
                 }
             }
-        }
-    }
-
-    // Reload kitty after matugen writes the theme file
-    QueuedProcess {
-        id: kittyReloadProc
-        stderr: SplitParser {
-            onRead: data => console.error("[Theme:KittyReload] " + data)
-        }
-        onExited: exitCode => {
-            if (exitCode === 0)
-                console.log("[Theme] Kitty reloaded (auto mode)");
         }
     }
 }
