@@ -120,10 +120,12 @@ Singleton {
         root.connectingSsid = ssid; // Mark which one we are trying
 
         const withPassword = !!password && password.length > 0;
-        // Only a profile this attempt creates may be removed if it fails: a
-        // saved network out of range must keep its profile
-        connectProc.run(withPassword ? ["nmcli", "dev", "wifi", "connect", ssid, "password", password] : ["nmcli", "dev", "wifi", "connect", ssid], {
+        // The password goes in through stdin (--ask), not the command line
+        // that ps shows. Only a profile this attempt creates may be removed
+        // if it fails: a saved network out of range must keep its profile
+        connectProc.run(["nmcli", "--ask", "dev", "wifi", "connect", ssid], {
             ssid,
+            password: withPassword ? password : "",
             created: withPassword && !root.savedSsids.includes(ssid)
         });
     }
@@ -154,6 +156,15 @@ Singleton {
     QueuedProcess {
         id: connectProc
 
+        // Open for the password, closed right after it: a second prompt
+        // (wrong password) reads end of file and fails instead of waiting
+        stdinEnabled: true
+        onStarted: {
+            if (request.password !== "")
+                write(request.password + "\n");
+            stdinEnabled = false;
+        }
+
         stdout: SplitParser {
             onRead: data => console.log("[Wifi] " + data)
         }
@@ -162,6 +173,7 @@ Singleton {
         }
 
         onExited: code => {
+            stdinEnabled = true;
             if (code !== 0) {
                 console.error("Connect command exited with code: " + code);
                 // A non-zero exit can mean captive portal: WiFi associated but no internet.
