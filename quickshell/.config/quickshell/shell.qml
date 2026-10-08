@@ -16,6 +16,7 @@ import "./modules/launcher/"
 import "./modules/wallpaper/"
 import "./modules/osd/"
 import "./modules/welcome/"
+import "./components/"
 import qs.config
 
 ShellRoot {
@@ -142,52 +143,15 @@ ShellRoot {
         }
     }
 
-    // Launcher — keepAlive lets the exit animation finish before destroying the component
-    Loader {
-        id: launcherLoader
-
-        property bool _shown: LauncherService.visible
-        property bool _keepAlive: false
-
-        active: _shown || _keepAlive
+    // Launcher and wallpaper picker (SUPER+B): kept for their exit animation
+    KeepAliveLoader {
+        shown: LauncherService.visible
         sourceComponent: Launcher {}
-
-        on_ShownChanged: {
-            if (!_shown) {
-                _keepAlive = true;
-                launcherExitTimer.restart();
-            }
-        }
-
-        Timer {
-            id: launcherExitTimer
-            interval: Config.animDurationLong
-            onTriggered: launcherLoader._keepAlive = false
-        }
     }
 
-    // Wallpaper picker (SUPER+B), kept alive like the launcher for its exit animation
-    Loader {
-        id: wallpaperPickerLoader
-
-        property bool _shown: WallpaperPickerService.visible
-        property bool _keepAlive: false
-
-        active: _shown || _keepAlive
+    KeepAliveLoader {
+        shown: WallpaperPickerService.visible
         sourceComponent: WallpaperPicker {}
-
-        on_ShownChanged: {
-            if (!_shown) {
-                _keepAlive = true;
-                wallpaperPickerExitTimer.restart();
-            }
-        }
-
-        Timer {
-            id: wallpaperPickerExitTimer
-            interval: Config.animDurationLong
-            onTriggered: wallpaperPickerLoader._keepAlive = false
-        }
     }
 
     // OSD (kept while mapped so the exit animation plays)

@@ -9,7 +9,7 @@ import qs.config
 import "../../components/"
 
 // App launcher window. Created on open and destroyed after the exit
-// animation by the keepAlive Loader in shell.qml, so every open starts fresh.
+// animation by a KeepAliveLoader in shell.qml, so every open starts fresh.
 // The window covers the screen; the panel's place and shape come from the
 // template (LauncherService.style / position):
 //   spotlight  centered panel, in the upper third or against the top or

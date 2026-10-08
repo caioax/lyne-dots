@@ -17,8 +17,8 @@ import qs.config
 //   }
 //
 // The caller controls sizing. Children are placed inside the animated Item.
-// Pair with a keepAlive Loader in shell.qml so exit animations complete before
-// the component is destroyed (see shell.qml comments).
+// Pair with a KeepAliveLoader so exit animations complete before the
+// component is destroyed.
 Item {
     id: root
 

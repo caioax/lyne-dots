@@ -13,8 +13,8 @@ import "../launcher/"
 // Wallpaper picker (SUPER+B): a carousel of the library against the bottom
 // (or top) edge, the selected wallpaper in the middle and bigger. Typing
 // filters, Enter applies (it stays open to try others), Escape closes.
-// Created on open and destroyed after the exit animation by the keepAlive
-// Loader in shell.qml
+// Created on open and destroyed after the exit animation by a
+// KeepAliveLoader in shell.qml
 PanelWindow {
     id: root
 
