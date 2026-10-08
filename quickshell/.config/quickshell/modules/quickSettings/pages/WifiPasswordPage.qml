@@ -28,10 +28,10 @@ Item {
         input.text = "";
         input.showPassword = false;
         if (visible)
-            input.forceActiveFocus();
+            input.focusInput();
     }
     // The window creates the page when it's shown
-    Component.onCompleted: input.forceActiveFocus()
+    Component.onCompleted: input.focusInput()
 
     ColumnLayout {
         id: main
@@ -63,62 +63,34 @@ Item {
             }
 
             // Password field
-            Rectangle {
+            QsTextField {
+                id: input
+
+                property bool showPassword: false
+
                 Layout.fillWidth: true
                 implicitHeight: root.controlSize
-                radius: Config.radius
-                color: Config.surface1Color
-                border.width: 1
-                border.color: input.activeFocus ? Config.accentColor : Qt.alpha(Config.accentColor, 0)
+                echoMode: showPassword ? TextInput.Normal : TextInput.Password
+                input.passwordCharacter: "•"
+                placeholder: "Password"
+                rightInset: eyeButton.width
+                catchEscape: true
+                onEscapePressed: root.cancelled()
+                onAccepted: root.submit()
 
-                Behavior on border.color {
-                    enabled: !Config.themeTransitioning
-                    ColorAnimation {
-                        duration: Config.animDurationShort
-                    }
-                }
+                ActionButton {
+                    id: eyeButton
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: Config.spacing + Config.padding
+                    anchors.right: parent.right
                     anchors.rightMargin: Config.padding
-                    spacing: Config.padding
-
-                    TextInput {
-                        id: input
-
-                        property bool showPassword: false
-
-                        Layout.fillWidth: true
-                        echoMode: showPassword ? TextInput.Normal : TextInput.Password
-                        passwordCharacter: "•"
-                        font.family: Config.font
-                        font.pixelSize: Config.fontSizeNormal
-                        color: Config.textColor
-                        selectionColor: Config.accentColor
-                        selectedTextColor: Config.textReverseColor
-                        clip: true
-                        onAccepted: root.submit()
-                        Keys.onEscapePressed: root.cancelled()
-
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            visible: input.text === ""
-                            text: "Password"
-                            font: input.font
-                            color: Qt.alpha(Config.subtextColor, 0.6)
-                        }
-                    }
-
-                    ActionButton {
-                        size: root.controlSize - Config.padding * 2
-                        icon: input.showPassword ? "󰈉" : "󰈈"
-                        iconSize: Config.fontSizeNormal
-                        baseColor: Qt.alpha(hoverColor, 0)
-                        textColor: Config.subtextColor
-                        hoverTextColor: Config.textColor
-                        onClicked: input.showPassword = !input.showPassword
-                    }
+                    anchors.verticalCenter: parent.verticalCenter
+                    size: root.controlSize - Config.padding * 2
+                    icon: input.showPassword ? "󰈉" : "󰈈"
+                    iconSize: Config.fontSizeNormal
+                    baseColor: Qt.alpha(hoverColor, 0)
+                    textColor: Config.subtextColor
+                    hoverTextColor: Config.textColor
+                    onClicked: input.showPassword = !input.showPassword
                 }
             }
 

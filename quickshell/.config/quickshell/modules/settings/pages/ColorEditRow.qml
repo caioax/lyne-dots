@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import "../../../components/"
 import "../rows/"
 import "../../../services/ThemeGenerator.js" as ThemeGenerator
 
@@ -73,39 +74,25 @@ SettingRow {
         }
     }
 
-    Rectangle {
+    QsTextField {
+        id: hexInput
+
+        readonly property bool valid: /^#?[0-9a-fA-F]{6}$/.test(text.trim())
+
         Layout.preferredWidth: Config.fontSizeNormal * 6
-        implicitHeight: Config.fontSizeIconSmall + Config.padding * 2
-        radius: Config.radius
+        compact: true
         color: root.controlColor
-        border.width: hexInput.activeFocus ? 1 : 0
-        border.color: Qt.alpha(Config.accentColor, 0.6)
-
-        TextInput {
-            id: hexInput
-
-            readonly property bool valid: /^#?[0-9a-fA-F]{6}$/.test(text.trim())
-
-            anchors.fill: parent
-            anchors.leftMargin: Config.padding * 1.5
-            anchors.rightMargin: Config.padding * 1.5
-            verticalAlignment: TextInput.AlignVCenter
-            clip: true
-            text: root.value
-            font.family: Config.font
-            font.pixelSize: Config.fontSizeSmall
-            color: valid ? Config.textColor : Config.errorColor
-            selectionColor: Qt.alpha(Config.accentColor, 0.4)
-            onTextEdited: {
-                if (valid) {
-                    const t = text.trim().toLowerCase();
-                    root.edited(t.startsWith("#") ? t : "#" + t);
-                }
+        text: root.value
+        textColor: valid ? Config.textColor : Config.errorColor
+        onTextEdited: {
+            if (valid) {
+                const t = text.trim().toLowerCase();
+                root.edited(t.startsWith("#") ? t : "#" + t);
             }
-            onActiveFocusChanged: {
-                if (!activeFocus)
-                    text = Qt.binding(() => root.value);
-            }
+        }
+        onFocusedChanged: {
+            if (!focused)
+                text = Qt.binding(() => root.value);
         }
     }
 

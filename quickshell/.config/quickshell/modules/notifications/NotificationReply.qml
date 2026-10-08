@@ -1,14 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 import qs.config
+import "../../components/"
 
 // Inline reply field (chat apps that support org.freedesktop.Notifications inline-reply)
-Rectangle {
+QsTextField {
     id: root
 
-    property string placeholder: "Reply"
-    readonly property bool inputFocused: input.activeFocus
+    readonly property bool inputFocused: focused
     // Clicking the field gives it focus even while its window has no
     // keyboard; the popup overlay uses this to ask for keyboard focus
     readonly property bool wantsKeyboard: input.focus
@@ -16,63 +15,33 @@ Rectangle {
     signal submitted(string text)
 
     function submit() {
-        const text = input.text.trim();
-        if (text === "")
+        const value = text.trim();
+        if (value === "")
             return;
-        root.submitted(text);
-        input.text = "";
+        root.submitted(value);
+        text = "";
     }
 
-    implicitHeight: Config.fontSizeSmall + Config.padding * 3
-    radius: Config.radius
-    color: Config.surface1Color
-    border.width: 1
-    border.color: input.activeFocus ? Config.accentColor : Qt.alpha(Config.accentColor, 0)
-
-    Behavior on border.color {
-        enabled: !Config.themeTransitioning
-        ColorAnimation {
-            duration: Config.animDurationShort
-        }
+    compact: true
+    placeholder: "Reply"
+    rightInset: sendButton.width
+    catchEscape: true
+    onEscapePressed: input.focus = false
+    onAccepted: submit()
+    // Clicking another window takes the keyboard away: drop the request
+    onFocusedChanged: {
+        if (!focused)
+            input.focus = false;
     }
 
-    RowLayout {
-        anchors.fill: parent
-        anchors.leftMargin: Config.padding * 2
+    NotificationIconButton {
+        id: sendButton
+
+        anchors.right: parent.right
         anchors.rightMargin: Config.padding
-        spacing: Config.padding
-
-        TextInput {
-            id: input
-            Layout.fillWidth: true
-            font.family: Config.font
-            font.pixelSize: Config.fontSizeSmall
-            color: Config.textColor
-            selectionColor: Config.accentColor
-            selectedTextColor: Config.textReverseColor
-            clip: true
-            onAccepted: root.submit()
-            Keys.onEscapePressed: focus = false
-            // Clicking another window takes the keyboard away: drop the request
-            onActiveFocusChanged: {
-                if (!activeFocus)
-                    focus = false;
-            }
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                visible: input.text === ""
-                text: root.placeholder
-                font: input.font
-                color: Config.subtextColor
-                opacity: 0.6
-            }
-        }
-
-        NotificationIconButton {
-            icon: "󰒊"
-            iconColor: input.text.trim() !== "" ? Config.accentColor : Config.subtextColor
-            onClicked: root.submit()
-        }
+        anchors.verticalCenter: parent.verticalCenter
+        icon: "󰒊"
+        iconColor: root.text.trim() !== "" ? Config.accentColor : Config.subtextColor
+        onClicked: root.submit()
     }
 }
