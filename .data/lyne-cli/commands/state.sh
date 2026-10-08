@@ -32,7 +32,7 @@ case "$subcmd" in
             return 0
         fi
 
-        cp "$DEFAULTS_FILE" "$STATE_FILE"
+        lyne_state_replace <"$DEFAULTS_FILE"
         echo "lyne state: rebuilt state.json from defaults"
         ;;
     "")

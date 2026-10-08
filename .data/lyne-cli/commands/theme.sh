@@ -16,11 +16,23 @@ _theme_get_scheme() {
     jq -r '.theme.scheme // "dark"' "$STATE_FILE" 2>/dev/null
 }
 
-_theme_set_state() {
-    local key="$1" value="$2"
-    local tmp
-    tmp=$(mktemp)
-    jq --arg v "$value" ".$key = \$v" "$STATE_FILE" > "$tmp" && mv "$tmp" "$STATE_FILE"
+# The theme for scheme $2 that goes with theme $1, like the shell's pairFor:
+# itself, the pair it names, or the theme that names it (dark themes don't
+# name their light version; the light ones name their dark one). Empty when
+# there's none
+_theme_pair_for() {
+    local name="$1" scheme="$2"
+    local file="$THEMES_DIR/$name.json"
+    [[ -f "$file" ]] || return 0
+    [[ "$(jq -r '.variant // "dark"' "$file")" == "$scheme" ]] && { echo "$name"; return 0; }
+    local key back named
+    [[ "$scheme" == "light" ]] && key="lightPair" back="darkPair" || key="darkPair" back="lightPair"
+    named=$(jq -r --arg k "$key" '.[$k] // empty' "$file")
+    [[ -n "$named" && -f "$THEMES_DIR/$named.json" ]] && { echo "$named"; return 0; }
+    named=$(jq -r --arg s "$scheme" --arg b "$back" --arg n "$name" \
+        'select((.variant // "dark") == $s and .[$b] == $n) | input_filename' "$THEMES_DIR"/*.json | head -n 1)
+    [[ -n "$named" ]] && basename "$named" .json
+    return 0
 }
 
 case "$subcmd" in
@@ -64,12 +76,11 @@ case "$subcmd" in
             echo "Run 'lyne theme list' to see available themes."
             return 1
         fi
-        _theme_set_state "theme.mode" "preset"
-        _theme_set_state "theme.name" "$theme_name"
+        lyne_state_set '.theme.mode = "preset" | .theme.name = $name' --arg name "$theme_name"
         echo "Theme set: $theme_name"
         ;;
     auto)
-        _theme_set_state "theme.mode" "auto"
+        lyne_state_set '.theme.mode = "auto"'
         echo "Switched to auto (Material You) mode."
         ;;
     mode)
@@ -80,23 +91,12 @@ case "$subcmd" in
         if [[ -z "$scheme_arg" ]]; then
             _theme_get_scheme
         elif [[ "$scheme_arg" == "dark" || "$scheme_arg" == "light" ]]; then
-            _theme_set_state "theme.scheme" "$scheme_arg"
-
-            # Switch to pair theme in preset mode
+            # Switch to pair theme in preset mode, in the same write
+            local pair_name=""
             local mode=$(_theme_get_mode)
-            if [[ "$mode" == "preset" ]]; then
-                local current_name=$(_theme_get_name)
-                local theme_file="$THEMES_DIR/$current_name.json"
-                if [[ -f "$theme_file" ]]; then
-                    local pair_key
-                    [[ "$scheme_arg" == "light" ]] && pair_key="lightPair" || pair_key="darkPair"
-                    local pair_name
-                    pair_name=$(jq -r ".$pair_key // empty" "$theme_file" 2>/dev/null)
-                    if [[ -n "$pair_name" && -f "$THEMES_DIR/$pair_name.json" ]]; then
-                        _theme_set_state "theme.name" "$pair_name"
-                    fi
-                fi
-            fi
+            [[ "$mode" == "preset" ]] && pair_name=$(_theme_pair_for "$(_theme_get_name)" "$scheme_arg")
+            lyne_state_set '.theme.scheme = $scheme | if $pair != "" then .theme.name = $pair else . end' \
+                --arg scheme "$scheme_arg" --arg pair "$pair_name"
 
             echo "Color scheme set to: $scheme_arg"
         else

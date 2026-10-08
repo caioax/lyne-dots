@@ -4,6 +4,9 @@
 DOTS_DIR="$HOME/.lyne-dots"
 CMD_DIR="$DOTS_DIR/.data/lyne-cli/commands"
 
+# lyne_state_set and lyne_state_replace, for the commands and migrations
+source "$DOTS_DIR/.data/lyne-cli/lib/state.sh"
+
 cmd="${1:-help}"
 [[ "$cmd" == "--help" || "$cmd" == "-h" ]] && cmd="help"
 shift 2>/dev/null || true

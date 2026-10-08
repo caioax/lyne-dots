@@ -4,4 +4,5 @@ shell=bash
 external-sources=true
 # SC1090/SC1091: sources are built from $DOTS_DIR and similar at runtime
 # SC2155: no `local x=$(cmd)` here checks the status of cmd
-disable=SC2168,SC2148,SC1090,SC1091,SC2155
+# SC2016: jq filters ($var) in single quotes, also through lyne_state_set
+disable=SC2168,SC2148,SC1090,SC1091,SC2155,SC2016

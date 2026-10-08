@@ -82,7 +82,7 @@ _027_import() {
     local tmp
     tmp="$(mktemp)"
     if jq --argjson devices "$devices" '.keyboard = ((.keyboard // {}) + { devices: ((.keyboard.devices // []) + $devices) })' "$state" >"$tmp"; then
-        cat "$tmp" >"$state"
+        lyne_state_replace <"$tmp"
     fi
     rm -f "$tmp"
 
@@ -100,7 +100,7 @@ _027_import() {
     done
 
     # Quickshell didn't write them: back as it was, the file keeps working
-    cat "$backup" >"$state"
+    lyne_state_replace <"$backup"
     rm -f "$backup"
     echo "   hypr/local/extra_input.lua keeps working; import it from Settings › Hyprland › Keyboard"
 }

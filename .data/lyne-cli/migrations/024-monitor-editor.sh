@@ -75,7 +75,7 @@ if [[ -f "$monitors_file" && -f "$state" ]] && command -v jq &>/dev/null &&
         local tmp
         tmp="$(mktemp)"
         if jq --argjson rules "$rules" '.monitors = ((.monitors // {}) + { rules: $rules })' "$state" >"$tmp"; then
-            cat "$tmp" >"$state"
+            lyne_state_replace <"$tmp"
             echo "   Monitors are now set up in Settings › Hyprland › Monitors; imported $(jq 'length' <<<"$rules") rule(s) from monitors.lua"
         fi
         rm -f "$tmp"

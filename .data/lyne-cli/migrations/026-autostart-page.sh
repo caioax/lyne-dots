@@ -73,7 +73,7 @@ _026_import() {
     local tmp
     tmp="$(mktemp)"
     if jq --argjson apps "$apps" '.autostart = ((.autostart // {}) + { apps: ((.autostart.apps // []) + $apps) })' "$state" >"$tmp"; then
-        cat "$tmp" >"$state"
+        lyne_state_replace <"$tmp"
     fi
     rm -f "$tmp"
 
@@ -91,7 +91,7 @@ _026_import() {
     done
 
     # Quickshell didn't write them: back as it was, the file keeps working
-    cat "$backup" >"$state"
+    lyne_state_replace <"$backup"
     rm -f "$backup"
     echo "   hypr/local/autostart.lua keeps working; import it from Settings › System › Autostart"
 }

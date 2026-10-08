@@ -15,7 +15,7 @@ if [[ -f "$state" ]] && command -v jq &>/dev/null; then
                 elif .id == "move-to-spotify" then .id = "move-to-music"
                 else . end)
         else . end' "$state" >"$tmp"; then
-        cat "$tmp" >"$state"
+        lyne_state_replace <"$tmp"
         echo "   Moved Spotify keybind changes to the music special workspace"
     fi
     rm -f "$tmp"

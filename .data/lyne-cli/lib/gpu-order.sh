@@ -40,6 +40,9 @@ GPU_HYPR_DIR="${LYNE_HYPR_DIR:-$HOME/.config/hypr}"
 GPU_LUA="$GPU_HYPR_DIR/local/gpus.lua"
 GPU_STATE="${LYNE_STATE_FILE:-$HOME/.config/quickshell/state.json}"
 
+# lyne_state_set
+source "${BASH_SOURCE[0]%/*}/state.sh"
+
 # shellcheck disable=SC2153 # GPU_KIND and the other GPU_* arrays come from gpus.sh
 gpu_links() {
     GPU_LINK=()
@@ -284,11 +287,7 @@ gpu_lua_write() {
 gpu_order_write() {
     gpu_lua_write "$@" || return 1
     if [[ -f "$GPU_STATE" ]] && command -v jq &>/dev/null; then
-        local state
-        state="$(mktemp)"
-        # shellcheck disable=SC2015 # the cleanup runs when any step fails
-        jq --args '.gpus.order = $ARGS.positional' "$@" <"$GPU_STATE" >"$state" &&
-            mv "$state" "$GPU_STATE" || rm -f "$state"
+        LYNE_STATE_FILE="$GPU_STATE" lyne_state_set '.gpus.order = $ARGS.positional' --args "$@"
     fi
     return 0
 }

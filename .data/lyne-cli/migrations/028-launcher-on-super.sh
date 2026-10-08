@@ -24,7 +24,7 @@ _028_run() {
         local tmp
         tmp="$(mktemp)"
         if jq '.keybinds = ((.keybinds // {}) + { overrides: ((.keybinds.overrides // []) + [{ id: "switch-layout", keys: "" }]) })' "$state" >"$tmp"; then
-            cat "$tmp" >"$state"
+            lyne_state_replace <"$tmp"
             echo "   SUPER + Space stays with $taken; \"Next keyboard layout\" has no keys (Settings › Hyprland › Keybinds)"
         fi
         rm -f "$tmp"

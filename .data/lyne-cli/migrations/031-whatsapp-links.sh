@@ -6,7 +6,7 @@
 # command move to it (same profile, no new QR code).
 
 local state="$HOME/.config/quickshell/state.json"
-# shellcheck disable=SC2016 # the command as written in state.json, $HOME unexpanded
+# The command as written in state.json, $HOME unexpanded
 local old='chromium --app=https://web.whatsapp.com --user-data-dir=$HOME/.local/share/lyne/whatsapp --no-first-run --no-default-browser-check'
 
 if [[ -f "$state" ]] && command -v jq &>/dev/null \
@@ -14,7 +14,7 @@ if [[ -f "$state" ]] && command -v jq &>/dev/null \
     local tmp
     tmp="$(mktemp)"
     if jq --arg old "$old" '.specials.list |= map(if .command == $old then .command = "lyne whatsapp" else . end)' "$state" >"$tmp"; then
-        cat "$tmp" >"$state"
+        lyne_state_replace <"$tmp"
         echo "   WhatsApp Web now opens links in your default browser"
         if pgrep -f -- "--user-data-dir=$HOME/.local/share/lyne/whatsapp" &>/dev/null; then
             echo "   Close WhatsApp and open it again (SUPER+W) to use it"

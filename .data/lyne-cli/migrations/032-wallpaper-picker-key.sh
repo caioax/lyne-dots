@@ -24,7 +24,7 @@ _032_run() {
         local tmp
         tmp="$(mktemp)"
         if jq '.keybinds = ((.keybinds // {}) + { overrides: ((.keybinds.overrides // []) + [{ id: "wallpapers", keys: "" }]) })' "$state" >"$tmp"; then
-            cat "$tmp" >"$state"
+            lyne_state_replace <"$tmp"
             echo "   SUPER + B stays with $taken; \"Wallpaper picker\" has no keys (Settings › Hyprland › Keybinds)"
         fi
         rm -f "$tmp"

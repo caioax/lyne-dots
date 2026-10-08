@@ -59,5 +59,5 @@ if ! MERGED=$(jq -s '
     return 1
 fi
 
-echo "$MERGED" > "$STATE_FILE"
+printf '%s\n' "$MERGED" | lyne_state_replace
 echo "lyne sync: state.json synced with defaults"

@@ -28,7 +28,7 @@ if [[ -f "$state" && -f "$defaults" ]] && command -v jq &>/dev/null \
         ($d[0].specials.list[] | select(.id == "whatsapp")) as $web
         | .specials.list |= map(
             if .command == "zapzap" then .command = $web.command | .class = $web.class else . end)' "$state" >"$tmp"; then
-        cat "$tmp" >"$state"
+        lyne_state_replace <"$tmp"
         echo "   WhatsApp special workspace now opens WhatsApp Web (scan the QR code once)"
         if pgrep -x zapzap &>/dev/null || pgrep -f '^/usr/bin/python /usr/bin/zapzap' &>/dev/null; then
             echo "   ZapZap is still running: close it, then press SUPER+W"

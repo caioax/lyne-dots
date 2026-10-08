@@ -11,7 +11,7 @@ if [[ -f "$state" ]] && command -v jq &>/dev/null && jq -e '.brightness.pollInte
     local tmp
     tmp="$(mktemp)"
     if jq '.brightness.pollInterval = 0' "$state" >"$tmp"; then
-        cat "$tmp" >"$state"
+        lyne_state_replace <"$tmp"
         echo "   External monitor brightness is no longer polled (Settings › Brightness › Refresh)"
     fi
     rm -f "$tmp"

@@ -25,6 +25,8 @@ source "$LIB_DIR/log.sh"
 source "$LIB_DIR/ui.sh"
 source "$LIB_DIR/ask.sh"
 source "$LIB_DIR/run.sh"
+# lyne_state_set, also used by gpu-order.sh
+source "$DOTFILES_DIR/.data/lyne-cli/lib/state.sh"
 
 # Categories offered in the questionnaire (value|label|description|default).
 # nvidia.sh has no packages yet: its environment files are a question of
@@ -229,9 +231,7 @@ step_state_aur_helper() {
     fi
 
     log_step "Setting AUR helper in state.json..."
-    local TEMP_FILE
-    TEMP_FILE=$(mktemp)
-    jq --arg helper "$AUR_HELPER" '.system.aurHelper = $helper' "$STATE_FILE" >"$TEMP_FILE" && mv "$TEMP_FILE" "$STATE_FILE"
+    LYNE_STATE_FILE="$STATE_FILE" lyne_state_set '.system.aurHelper = $helper' --arg helper "$AUR_HELPER"
     log_info "AUR helper set to: $AUR_HELPER"
 }
 
