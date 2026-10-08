@@ -28,9 +28,16 @@ Rectangle {
     signal editingFinished
     signal textEdited
     signal escapePressed
+    // Every key the field doesn't take itself (arrows for a list, ...): set
+    // event.accepted to keep it from the TextInput
+    signal keyPressed(var event)
 
     function focusInput(): void {
         input.forceActiveFocus();
+    }
+
+    function selectAll(): void {
+        input.selectAll();
     }
 
     implicitWidth: Config.fontSizeNormal * 16
@@ -63,6 +70,7 @@ Rectangle {
             if (root.catchEscape)
                 root.escapePressed();
         }
+        Keys.onPressed: event => root.keyPressed(event)
 
         Text {
             anchors.verticalCenter: parent.verticalCenter

@@ -43,7 +43,7 @@ Popup {
     onOpened: {
         query = "";
         search.text = "";
-        search.forceActiveFocus();
+        search.focusInput();
         list.positionViewAtIndex(Math.max(0, filtered.findIndex(f => _isCurrent(f))), ListView.Center);
     }
 
@@ -62,53 +62,24 @@ Popup {
         spacing: Config.spacing
 
         // Search
-        Rectangle {
+        QsSearchField {
+            id: search
+
             Layout.fillWidth: true
-            implicitHeight: Config.fontSizeIconSmall * 2
-            radius: Config.radius
-            color: Config.surface1Color
-            border.width: search.activeFocus ? 1 : 0
-            border.color: Qt.alpha(Config.accentColor, 0.6)
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Config.padding * 2
-                anchors.rightMargin: Config.padding * 2
-                spacing: Config.spacing
-
-                // md-magnify
-                Text {
-                    text: "\u{f0349}"
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeLarge
-                    color: Config.subtextColor
-                }
-
-                TextInput {
-                    id: search
-
-                    Layout.fillWidth: true
-                    clip: true
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeNormal
-                    color: Config.textColor
-                    selectionColor: Qt.alpha(Config.accentColor, 0.4)
-                    onTextChanged: root.query = text
-
-                    Keys.onReturnPressed: {
-                        if (root.filtered.length > 0)
-                            root.picked(root.filtered[Math.max(0, list.currentIndex)]);
-                    }
-                    Keys.onDownPressed: list.incrementCurrentIndex()
-                    Keys.onUpPressed: list.decrementCurrentIndex()
-
-                    Text {
-                        visible: search.text === ""
-                        text: "Search " + root.families.length + " fonts"
-                        font: search.font
-                        color: Config.subtextColor
-                    }
-                }
+            placeholder: "Search " + root.families.length + " fonts"
+            onTextChanged: root.query = text
+            onAccepted: {
+                if (root.filtered.length > 0)
+                    root.picked(root.filtered[Math.max(0, list.currentIndex)]);
+            }
+            onKeyPressed: event => {
+                if (event.key === Qt.Key_Down)
+                    list.incrementCurrentIndex();
+                else if (event.key === Qt.Key_Up)
+                    list.decrementCurrentIndex();
+                else
+                    return;
+                event.accepted = true;
             }
         }
 

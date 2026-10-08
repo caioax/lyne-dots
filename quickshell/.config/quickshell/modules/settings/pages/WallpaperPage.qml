@@ -140,7 +140,7 @@ ColumnLayout {
 
     Shortcut {
         sequence: "Ctrl+F"
-        onActivated: search.forceActiveFocus()
+        onActivated: search.focusInput()
     }
 
     Shortcut {
@@ -416,47 +416,12 @@ ColumnLayout {
                         onSelected: index => root.category = ["all", "favorites"][index]
                     }
 
-                    Rectangle {
+                    QsSearchField {
+                        id: search
+
                         Layout.fillWidth: true
-                        implicitHeight: Config.fontSizeIconSmall * 2
-                        radius: Config.radiusLarge
-                        color: Config.surface1Color
-                        border.width: search.activeFocus ? 1 : 0
-                        border.color: Qt.alpha(Config.accentColor, 0.6)
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: Config.padding * 2
-                            anchors.rightMargin: Config.padding * 2
-                            spacing: Config.spacing
-
-                            // md-magnify
-                            Text {
-                                text: "\u{f0349}"
-                                font.family: Config.font
-                                font.pixelSize: Config.fontSizeLarge
-                                color: Config.subtextColor
-                            }
-
-                            TextInput {
-                                id: search
-
-                                Layout.fillWidth: true
-                                clip: true
-                                font.family: Config.font
-                                font.pixelSize: Config.fontSizeNormal
-                                color: Config.textColor
-                                selectionColor: Qt.alpha(Config.accentColor, 0.4)
-                                onTextChanged: root.query = text
-
-                                Text {
-                                    visible: search.text === ""
-                                    text: "Search"
-                                    font: search.font
-                                    color: Config.subtextColor
-                                }
-                            }
-                        }
+                        placeholder: "Search"
+                        onTextChanged: root.query = text
                     }
                 }
 

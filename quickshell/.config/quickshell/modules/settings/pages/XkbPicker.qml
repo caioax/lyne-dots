@@ -55,7 +55,7 @@ Popup {
         search.text = initialQuery ?? "";
         query = search.text;
         open();
-        search.forceActiveFocus();
+        search.focusInput();
         // Show the current choice
         const i = shown.findIndex(it => !it.header && selected.includes(it.key));
         list.positionViewAtIndex(Math.max(0, i), ListView.Center);
@@ -103,52 +103,17 @@ Popup {
         }
 
         // ================= SEARCH =================
-        Rectangle {
+        QsSearchField {
+            id: search
+
             Layout.fillWidth: true
-            implicitHeight: Config.fontSizeIconSmall + Config.padding * 3
-            radius: Config.radius
-            color: Config.surface1Color
-            border.width: search.activeFocus ? 1 : 0
-            border.color: Qt.alpha(Config.accentColor, 0.6)
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Config.padding * 2
-                anchors.rightMargin: Config.padding * 2
-                spacing: Config.spacing
-
-                // md-magnify
-                Text {
-                    text: "\u{f0349}"
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeNormal
-                    color: Config.subtextColor
-                }
-
-                TextInput {
-                    id: search
-
-                    Layout.fillWidth: true
-                    clip: true
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeNormal
-                    color: Config.textColor
-                    selectionColor: Qt.alpha(Config.accentColor, 0.4)
-                    onTextChanged: root.query = text
-                    // Enter takes the first result
-                    onAccepted: {
-                        const first = root.shown.find(it => !it.header);
-                        if (first)
-                            root.choose(first);
-                    }
-
-                    Text {
-                        visible: search.text === ""
-                        text: root.placeholder
-                        font: search.font
-                        color: Config.subtextColor
-                    }
-                }
+            placeholder: root.placeholder
+            onTextChanged: root.query = text
+            // Enter takes the first result
+            onAccepted: {
+                const first = root.shown.find(it => !it.header);
+                if (first)
+                    root.choose(first);
             }
         }
 

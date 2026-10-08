@@ -360,8 +360,8 @@ FloatingWindow {
                 search.text = "";
                 return;
             }
-            if (search.activeFocus) {
-                search.focus = false;
+            if (search.focused) {
+                search.input.focus = false;
                 return;
             }
             SettingsService.close();
@@ -383,7 +383,7 @@ FloatingWindow {
     Shortcut {
         sequences: ["Ctrl+F", "/"]
         onActivated: {
-            search.forceActiveFocus();
+            search.focusInput();
             search.selectAll();
         }
     }
@@ -441,88 +441,24 @@ FloatingWindow {
                 }
 
                 // Search: pages and the options inside them
-                Rectangle {
+                QsSearchField {
+                    id: search
+
                     Layout.fillWidth: true
                     Layout.rightMargin: Config.padding * 2
                     Layout.bottomMargin: Config.spacing
                     implicitHeight: root.boxSize + Config.padding
-                    radius: Config.radiusLarge
-                    color: Config.surface1Color
-                    border.width: search.activeFocus ? 1 : 0
-                    border.color: Qt.alpha(Config.accentColor, 0.6)
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.IBeamCursor
-                        onClicked: search.forceActiveFocus()
+                    placeholder: "Search"
+                    hint: "Ctrl F"
+                    onFocusedChanged: {
+                        if (focused)
+                            SettingsService.buildIndex();
                     }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: Config.padding * 2
-                        anchors.rightMargin: Config.padding * 2
-                        spacing: Config.spacing
-
-                        // md-magnify
-                        Text {
-                            text: "\u{f0349}"
-                            font.family: Config.font
-                            font.pixelSize: Config.fontSizeLarge
-                            color: search.activeFocus ? Config.accentColor : Config.subtextColor
-                        }
-
-                        TextInput {
-                            id: search
-
-                            Layout.fillWidth: true
-                            clip: true
-                            font.family: Config.font
-                            font.pixelSize: Config.fontSizeNormal
-                            color: Config.textColor
-                            selectionColor: Qt.alpha(Config.accentColor, 0.4)
-                            selectByMouse: true
-                            onActiveFocusChanged: {
-                                if (activeFocus)
-                                    SettingsService.buildIndex();
-                            }
-                            Keys.onUpPressed: results.move(-1)
-                            Keys.onDownPressed: results.move(1)
-                            Keys.onReturnPressed: results.activateCurrent()
-                            Keys.onEnterPressed: results.activateCurrent()
-
-                            Text {
-                                visible: search.text === ""
-                                text: "Search"
-                                font: search.font
-                                color: Config.subtextColor
-                            }
-                        }
-
-                        Text {
-                            visible: search.text === "" && !search.activeFocus
-                            text: "Ctrl F"
-                            font.family: Config.font
-                            font.pixelSize: Config.fontSizeSmall
-                            color: Config.mutedColor
-                        }
-
-                        // md-close
-                        Text {
-                            visible: search.text !== ""
-                            text: "\u{f0156}"
-                            font.family: Config.font
-                            font.pixelSize: Config.fontSizeLarge
-                            color: clearMouse.containsMouse ? Config.textColor : Config.subtextColor
-
-                            MouseArea {
-                                id: clearMouse
-
-                                anchors.fill: parent
-                                anchors.margins: -Config.padding
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: search.text = ""
-                            }
+                    onAccepted: results.activateCurrent()
+                    onKeyPressed: event => {
+                        if (event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
+                            results.move(event.key === Qt.Key_Up ? -1 : 1);
+                            event.accepted = true;
                         }
                     }
                 }
