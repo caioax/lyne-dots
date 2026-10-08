@@ -28,10 +28,9 @@ Item {
     // Lyrics in place of the title, artist and album
     readonly property bool showLyrics: DashboardService.lyrics
 
-    onVisualizingChanged: visualizing ? CavaService.acquire() : CavaService.release()
-    Component.onDestruction: {
-        if (visualizing)
-            CavaService.release();
+    Watcher {
+        service: CavaService
+        active: root.visualizing
     }
 
     implicitHeight: MprisService.hasPlayer ? columns.implicitHeight + Config.padding * 4 : empty.implicitHeight + Config.padding * 12

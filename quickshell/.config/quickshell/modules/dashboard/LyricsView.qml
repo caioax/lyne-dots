@@ -15,10 +15,9 @@ Item {
     // Shown to the user: LyricsService only looks lyrics up while true
     property bool active: false
 
-    onActiveChanged: active ? LyricsService.acquire() : LyricsService.release()
-    Component.onDestruction: {
-        if (active)
-            LyricsService.release();
+    Watcher {
+        service: LyricsService
+        active: root.active
     }
 
     readonly property bool hasLines: LyricsService.status === "synced" || LyricsService.status === "plain"

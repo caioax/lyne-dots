@@ -30,20 +30,9 @@ ClippingRectangle {
         return out;
     }
 
-    // acquire/release only on real changes (a handler doesn't run for the
-    // initial value)
-    property bool held: false
-    function sync(): void {
-        if (running === held)
-            return;
-        held = running;
-        running ? CavaService.acquire() : CavaService.release();
-    }
-    onRunningChanged: sync()
-    Component.onCompleted: sync()
-    Component.onDestruction: {
-        if (held)
-            CavaService.release();
+    Watcher {
+        service: CavaService
+        active: root.running
     }
 
     color: Qt.alpha(barColor, 0)

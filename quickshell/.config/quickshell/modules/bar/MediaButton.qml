@@ -27,20 +27,9 @@ BarButton {
     readonly property var bandRanges: [[0, 3], [3, 8], [8, 16], [16, 30]]
 
     readonly property bool visualizing: visible && cava && MprisService.isPlaying
-    // acquire/release only on real changes (a handler doesn't run for the
-    // initial value)
-    property bool held: false
-    function sync(): void {
-        if (visualizing === held)
-            return;
-        held = visualizing;
-        visualizing ? CavaService.acquire() : CavaService.release();
-    }
-    onVisualizingChanged: sync()
-    Component.onCompleted: sync()
-    Component.onDestruction: {
-        if (held)
-            CavaService.release();
+    Watcher {
+        service: CavaService
+        active: root.visualizing
     }
 
     // Levels 0-1, center first: the peak of each range (an average flattens

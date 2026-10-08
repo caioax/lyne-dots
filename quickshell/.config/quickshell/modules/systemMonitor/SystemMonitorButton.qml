@@ -22,20 +22,11 @@ BarButton {
     // Opens the dashboard on its System tab; optional (bar.showSystem)
     visible: Config.barShowSystem && DashboardService.hasTab("system")
 
-    // Samples only while shown (watch/unwatch on real changes; a handler
-    // doesn't run for the initial value)
-    property bool held: false
-    function sync(): void {
-        if (visible === held)
-            return;
-        held = visible;
-        visible ? SystemMonitorService.watch() : SystemMonitorService.unwatch();
-    }
-    onVisibleChanged: sync()
-    Component.onCompleted: sync()
-    Component.onDestruction: {
-        if (held)
-            SystemMonitorService.unwatch();
+    // Samples only while shown
+    Watcher {
+        service: SystemMonitorService
+        hold: "watch"
+        active: root.visible
     }
     active: DashboardService.screen === screenName && DashboardService.tab === "system"
     contentItem: buttonContent

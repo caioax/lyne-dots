@@ -44,27 +44,11 @@ Rectangle {
         }
     }
 
-    // acquire/release pair through a guard: change handlers don't run for
-    // the initial value
-    property bool held: false
-    function syncCava() {
-        if (visualizing && !held) {
-            held = true;
-            CavaService.acquire();
-        } else if (!visualizing && held) {
-            held = false;
-            CavaService.release();
-        }
+    Watcher {
+        service: CavaService
+        active: root.visualizing
     }
-    onVisualizingChanged: syncCava()
-    Component.onCompleted: {
-        seen = MprisService.isPlaying;
-        syncCava();
-    }
-    Component.onDestruction: {
-        if (held)
-            CavaService.release();
-    }
+    Component.onCompleted: seen = MprisService.isPlaying
 
     CoverBackdrop {
         anchors.fill: parent

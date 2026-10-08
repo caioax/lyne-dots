@@ -20,10 +20,9 @@ ColumnLayout {
     readonly property bool hasGpu: SystemMonitorService.gpuType !== "unknown"
 
     // Heavy collectors (GPU, disk) only run while this is shown
-    onActiveChanged: active ? SystemMonitorService.acquire() : SystemMonitorService.release()
-    Component.onDestruction: {
-        if (active)
-            SystemMonitorService.release();
+    Watcher {
+        service: SystemMonitorService
+        active: root.active
     }
 
     spacing: Config.spacing

@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services
 import "../calendar/"
+import "../../components/"
 
 // Clock, weather, the month, the player and resource usage in three columns:
 // clock + weather | month | player, with the resources below the first two.
@@ -23,17 +24,13 @@ GridLayout {
     }
 
     // GPU and disk usage are only sampled while someone watches
-    onActiveChanged: {
-        if (active) {
-            WeatherService.refresh(false);
-            SystemMonitorService.acquire();
-        } else {
-            SystemMonitorService.release();
-        }
+    Watcher {
+        service: SystemMonitorService
+        active: root.active
     }
-    Component.onDestruction: {
+    onActiveChanged: {
         if (active)
-            SystemMonitorService.release();
+            WeatherService.refresh(false);
     }
 
     rowSpacing: Config.spacing
