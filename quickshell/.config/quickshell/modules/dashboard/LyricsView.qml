@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
+import QtQuick.Effects
 import qs.config
 import qs.services
 import "../../components/"
@@ -92,6 +92,33 @@ Item {
     }
 
     // ==================== LINES ====================
+    // Mask of the lines below: opaque in the middle, fading at the edges
+    Rectangle {
+        id: lyricsFade
+
+        anchors.fill: flick
+        visible: false
+        layer.enabled: true
+        gradient: Gradient {
+            GradientStop {
+                position: 0
+                color: Qt.alpha("black", 0)
+            }
+            GradientStop {
+                position: flick.fade
+                color: "black"
+            }
+            GradientStop {
+                position: 1 - flick.fade
+                color: "black"
+            }
+            GradientStop {
+                position: 1
+                color: Qt.alpha("black", 0)
+            }
+        }
+    }
+
     Flickable {
         id: flick
 
@@ -103,29 +130,12 @@ Item {
         visible: root.hasLines
         clip: true
         layer.enabled: true
-        layer.effect: OpacityMask {
-            maskSource: Rectangle {
-                width: flick.width
-                height: flick.height
-                gradient: Gradient {
-                    GradientStop {
-                        position: 0
-                        color: Qt.alpha("black", 0)
-                    }
-                    GradientStop {
-                        position: flick.fade
-                        color: "black"
-                    }
-                    GradientStop {
-                        position: 1 - flick.fade
-                        color: "black"
-                    }
-                    GradientStop {
-                        position: 1
-                        color: Qt.alpha("black", 0)
-                    }
-                }
-            }
+        layer.effect: MultiEffect {
+            maskEnabled: true
+            maskSource: lyricsFade
+            // The mask's alpha as is, eased (smoothstep) instead of linear
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 1
         }
         contentWidth: width
         contentHeight: column.implicitHeight

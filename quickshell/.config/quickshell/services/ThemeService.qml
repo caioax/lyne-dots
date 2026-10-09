@@ -28,7 +28,7 @@ Singleton {
     readonly property string themesDir: Quickshell.env("HOME") + "/.local/themes"
     readonly property string kittyThemePath: Quickshell.env("HOME") + "/.config/kitty/current-theme.conf"
     // Read by the Neovim "lyne" colorscheme (nvim/.config/nvim/lua/lyne/)
-    readonly property string nvimPalettePath: Quickshell.env("HOME") + "/.cache/lyne/nvim.json"
+    readonly property string nvimPalettePath: (Quickshell.env("XDG_CACHE_HOME") || Quickshell.env("HOME") + "/.cache") + "/lyne/nvim.json"
     readonly property string wallpaperDir: Quickshell.env("HOME") + "/.local/wallpapers"
 
     // GTK/Qt paths

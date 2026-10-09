@@ -34,7 +34,7 @@ Singleton {
     // Player position, advanced between the player's own updates
     property real position: 0
 
-    readonly property string cacheDir: Quickshell.env("HOME") + "/.cache/quickshell/lyrics"
+    readonly property string cacheDir: (Quickshell.env("XDG_CACHE_HOME") || Quickshell.env("HOME") + "/.cache") + "/quickshell/lyrics"
 
     // Found versions may differ this much in length (s) from the playing one
     readonly property real durationTolerance: 5

@@ -33,36 +33,25 @@ Singleton {
         return duration + (isCharging ? " to full" : " left");
     }
 
-    // Holds the reference to the battery object
-    property var mainBattery: null
-
-    // The Instantiator scans the device list without creating visuals
-    Instantiator {
-        model: UPower.devices
-
-        delegate: QtObject {
-            required property var modelData
-            
-            // When a device is created or changes, we check if it is the main battery
-            Component.onCompleted: checkDevice()
-            
-            function checkDevice() {
-                if (modelData && modelData.isLaptopBattery) {
-                    root.mainBattery = modelData
-                }
-            }
-        }
+    // UPower's display device: every laptop battery combined. Gone (null)
+    // without one, also when it's removed
+    readonly property var mainBattery: {
+        const device = UPower.displayDevice;
+        return device?.isLaptopBattery && device.isPresent ? device : null;
     }
 
-    // Icon logic here.
     function getBatteryIcon() {
-        if (state === UPowerDeviceState.Charging) return "󰂄"
-
-        const p = percentage
-        if (p >= 90) return "󰁹"
-        if (p >= 60) return "󰂀"
-        if (p >= 40) return "󰁾"
-        if (p >= 10) return "󰁼"
-        return "󰁺"
+        if (state === UPowerDeviceState.Charging)
+            return "󰂄";
+        const p = percentage;
+        if (p >= 90)
+            return "󰁹";
+        if (p >= 60)
+            return "󰂀";
+        if (p >= 40)
+            return "󰁾";
+        if (p >= 10)
+            return "󰁼";
+        return "󰁺";
     }
 }

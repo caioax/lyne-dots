@@ -91,7 +91,10 @@ Item {
                 anchors.fill: parent
                 visible: root.thumbnail !== ""
                 source: root.thumbnail
-                sourceSize: Qt.size(width * 2, height * 2)
+                // Decoded off the GUI thread, once: a size bound to the
+                // layout decoded each screenshot whole first (~0.7 s frozen)
+                asynchronous: true
+                sourceSize: Qt.size(root.iconSize * 4, root.iconSize * 2)
                 fillMode: Image.PreserveAspectCrop
             }
 

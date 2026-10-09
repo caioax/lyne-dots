@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
+import QtQuick.Effects
 import Quickshell
 import qs.config
 import qs.services
@@ -472,6 +472,34 @@ FloatingWindow {
                     query: search.text
                 }
 
+                // Mask of the sidebar below (hidden: the layout skips it)
+                Rectangle {
+                    id: navFade
+
+                    width: navFlick.width
+                    height: navFlick.height
+                    visible: false
+                    layer.enabled: true
+                    gradient: Gradient {
+                        GradientStop {
+                            position: 0
+                            color: Qt.alpha("black", 1 - navFlick.topFade)
+                        }
+                        GradientStop {
+                            position: navFlick.fadeLength
+                            color: "black"
+                        }
+                        GradientStop {
+                            position: 1 - navFlick.fadeLength
+                            color: "black"
+                        }
+                        GradientStop {
+                            position: 1
+                            color: Qt.alpha("black", 1 - navFlick.bottomFade)
+                        }
+                    }
+                }
+
                 // Scrolls when the pages don't fit the window height; the
                 // items cut by an edge with more to scroll fade out
                 Flickable {
@@ -501,29 +529,13 @@ FloatingWindow {
                     boundsBehavior: Flickable.StopAtBounds
 
                     layer.enabled: topFade > 0 || bottomFade > 0
-                    layer.effect: OpacityMask {
-                        maskSource: Rectangle {
-                            width: navFlick.width
-                            height: navFlick.height
-                            gradient: Gradient {
-                                GradientStop {
-                                    position: 0
-                                    color: Qt.alpha("black", 1 - navFlick.topFade)
-                                }
-                                GradientStop {
-                                    position: navFlick.fadeLength
-                                    color: "black"
-                                }
-                                GradientStop {
-                                    position: 1 - navFlick.fadeLength
-                                    color: "black"
-                                }
-                                GradientStop {
-                                    position: 1
-                                    color: Qt.alpha("black", 1 - navFlick.bottomFade)
-                                }
-                            }
-                        }
+                    layer.effect: MultiEffect {
+                        maskEnabled: true
+                        maskSource: navFade
+                        // The mask's alpha as is, eased (smoothstep) instead
+                        // of linear
+                        maskThresholdMin: 0.5
+                        maskSpreadAtMin: 1
                     }
 
                     ScrollBar.vertical: QsScrollBar {

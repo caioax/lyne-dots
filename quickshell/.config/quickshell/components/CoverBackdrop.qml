@@ -1,24 +1,17 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Qt5Compat.GraphicalEffects
+import QtQuick.Effects
+import Quickshell.Widgets
 import qs.config
 import qs.services
 
 // The active track's cover, blurred and darkened, as a card background.
 // Rounded to `radius`
-Item {
+ClippingRectangle {
     id: root
 
-    property real radius: Config.radiusLarge
-
-    layer.enabled: true
-    layer.effect: OpacityMask {
-        maskSource: Rectangle {
-            width: root.width
-            height: root.height
-            radius: root.radius
-        }
-    }
+    radius: Config.radiusLarge
+    color: "transparent"
 
     Image {
         id: bgSource
@@ -30,10 +23,13 @@ Item {
         visible: false
     }
 
-    FastBlur {
+    MultiEffect {
         anchors.fill: parent
         source: bgSource
-        radius: 48
+        autoPaddingEnabled: false
+        blurEnabled: true
+        blurMax: 64
+        blur: 0.75
         opacity: 0.35
     }
 
