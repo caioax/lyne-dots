@@ -76,10 +76,6 @@ ColumnLayout {
                     value: "auto"
                 },
                 {
-                    label: "Brazil",
-                    value: "br"
-                },
-                {
                     label: "None",
                     value: "none"
                 }

@@ -7,13 +7,13 @@ import Quickshell.Io
 
 // Brazilian national holidays, computed locally (no network).
 // Movable dates are derived from Easter (Carnaval, Good Friday, Corpus Christi).
-// dashboard.holidays: "br" | "none" | "auto" (Brazil when the time zone or
-// the language is Brazilian)
+// dashboard.holidays: "auto" (Brazil's when the time zone or the language is
+// Brazilian) | "none"
 Singleton {
     id: root
 
     readonly property string setting: StateService.get("dashboard.holidays", "auto")
-    readonly property bool enabled: setting === "br" || (setting === "auto" && (_brazilianZone || Qt.locale().name === "pt_BR"))
+    readonly property bool enabled: setting === "auto" && (_brazilianZone || Qt.locale().name === "pt_BR")
 
     property bool _brazilianZone: false
 
