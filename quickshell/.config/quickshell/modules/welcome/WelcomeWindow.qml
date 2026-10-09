@@ -15,7 +15,8 @@ FloatingWindow {
 
     readonly property int maxContentWidth: Config.fontSizeNormal * 48
     readonly property int buttonSize: Config.fontSizeIconSmall * 2
-    // Same as the size of the window rule in hypr/conf/rules.lua (which wins)
+    // The size it opens at: the window rule in hypr/conf/rules.lua only
+    // floats and centers it
     readonly property size defaultSize: Qt.size(760, 600)
 
     // Step id (WelcomeService.steps) -> component

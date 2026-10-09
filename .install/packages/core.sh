@@ -14,7 +14,6 @@ CORE_PACKAGES=(
     "uwsm" # Universal Wayland Session Manager
 
     # Hyprland Utilities
-    "hyprshot"        # Screenshot tool for Hyprland
     "hyprsunset"      # Blue light filter for Hyprland
     "hyprpolkitagent" # Polkit agent for Hyprland
 

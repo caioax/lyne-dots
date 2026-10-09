@@ -1,6 +1,9 @@
 -- -----------------------------------------------------
 -- ENVIRONMENT VARIABLES
 -- -----------------------------------------------------
+-- The same as ~/.config/uwsm/env and env-hyprland (keep them in sync): uwsm
+-- sessions get them from there, also for apps systemd starts; these cover a
+-- session started without uwsm
 
 -- --- Hardware ---
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
@@ -34,7 +37,3 @@ local path = os.getenv("PATH") or ""
 if not (":" .. path .. ":"):find(":" .. localBin .. ":", 1, true) then
     hl.env("PATH", localBin .. ":" .. path)
 end
-
--- --- Scripts & Apps ---
--- Defines where hyprshot will save (if your script reads this variable)
-hl.env("HYPRSHOT_DIR", os.getenv("HOME") .. "/Pictures/Screenshots")

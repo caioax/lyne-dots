@@ -1,6 +1,8 @@
 # ==============================================================================
 # UWSM HYPRLAND SPECIFIC ENVIRONMENT
 # ==============================================================================
+# hypr/conf/environment.lua sets the same variables for a session started
+# without uwsm: keep both in sync
 
 # ------------------------------------------------------------------------------
 # CURSORS / THEMES
@@ -18,13 +20,6 @@ export HYPRCURSOR_SIZE=24
 # ------------------------------------------------------------------------------
 # Fix for some visual artifacts (0 = disabled)
 export AQ_FORCE_LINEAR_BLIT=0
-
-# ------------------------------------------------------------------------------
-# APPS & TOOLS CONFIGURATION
-# Custom variables for user scripts and tools
-# ------------------------------------------------------------------------------
-# Default directory to save Hyprshot screenshots
-export HYPRSHOT_DIR="$HOME/Pictures/Screenshots"
 
 # Load local hyprland hardware exports (Aquamarine, etc)
 if [ -f "$HOME/.config/uwsm/env.d/hyprland_hardware.sh" ]; then

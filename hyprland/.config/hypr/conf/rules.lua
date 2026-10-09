@@ -61,23 +61,21 @@ hl.window_rule({
     pin    = true,
 })
 
--- Quickshell settings window (size = SettingsWindow.defaultSize; its size
--- buttons extend or fill from there)
+-- Quickshell settings window: opens at the size it asks for
+-- (SettingsWindow.defaultSize); its size buttons extend or fill from there
 hl.window_rule({
     name  = "quickshell-settings-float",
     match = { class = "^(org\\.quickshell)$", title = "^(Settings)$" },
 
     float  = true,
-    size   = {960, 680},
     center = true,
 })
 
--- Welcome screen (size = WelcomeWindow.defaultSize)
+-- Welcome screen: opens at the size it asks for (WelcomeWindow.defaultSize)
 hl.window_rule({
     name  = "quickshell-welcome-float",
     match = { class = "^(org\\.quickshell)$", title = "^(Welcome)$" },
 
     float  = true,
-    size   = {760, 600},
     center = true,
 })

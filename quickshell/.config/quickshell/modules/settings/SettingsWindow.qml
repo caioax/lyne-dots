@@ -20,7 +20,8 @@ FloatingWindow {
     readonly property int boxSize: Config.fontSizeIconSmall * 2
     // Room on both sides of the page column, so the scrollbar never covers it
     readonly property int pageGutter: Config.padding * 2
-    // Same as the size of the window rule in hypr/conf/rules.lua (which wins)
+    // The size it opens at: the window rule in hypr/conf/rules.lua only
+    // floats and centers it
     readonly property size defaultSize: Qt.size(960, 680)
 
     // Page id (SettingsService.pages) -> component. Pages are imported

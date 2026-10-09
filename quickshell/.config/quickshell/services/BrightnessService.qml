@@ -581,14 +581,20 @@ Singleton {
     // PROCESSES - NIGHT LIGHT (HYPRSUNSET)
     // ========================================================================
 
+    // Hyprland's autostart starts hyprsunset with the session: wait for its
+    // socket (the shell starts at the same time) and only start it here when
+    // it doesn't show up, so two never run
     Process {
         id: ensureHyprsunsetRunning
         command: ["bash", "-c", `
-            if ! pgrep -x hyprsunset >/dev/null 2>&1; then
-                hyprsunset &
-                disown
-                sleep 0.5
-            fi
+            sock="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.hyprsunset.sock"
+            for _ in $(seq 50); do
+                [ -S "$sock" ] && pgrep -x hyprsunset >/dev/null && exit 0
+                sleep 0.1
+            done
+            hyprsunset &
+            disown
+            sleep 0.5
         `]
         onExited: {
             root._sunsetReady = true;

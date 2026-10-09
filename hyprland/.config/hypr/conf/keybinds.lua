@@ -216,8 +216,10 @@ bind("reload",            "Shell", "Reload Quickshell", mainMod .. " + SHIFT + R
 -- KEYBOARD
 -- ==============================================================================
 
--- Layouts of Settings › Hyprland › Keyboard, on every keyboard
-bind("switch-layout",   "Keyboard", "Next keyboard layout",     mainMod .. " + Space", hl.dsp.exec_cmd("hyprctl switchxkblayout all next"))
-bind("previous-layout", "Keyboard", "Previous keyboard layout", "",                    hl.dsp.exec_cmd("hyprctl switchxkblayout all prev"))
+-- Layouts of Settings › Hyprland › Keyboard: the keyboard typed on last and
+-- the others with the same layouts (not those with layouts of their own)
+local switchLayout = vars.scriptPath .. "/Keyboard/switch-layout.sh"
+bind("switch-layout",   "Keyboard", "Next keyboard layout",     mainMod .. " + Space", hl.dsp.exec_cmd(switchLayout .. " next"))
+bind("previous-layout", "Keyboard", "Previous keyboard layout", "",                    hl.dsp.exec_cmd(switchLayout .. " prev"))
 
 binds.export()

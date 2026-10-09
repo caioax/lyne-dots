@@ -1,6 +1,8 @@
 # ==============================================================================
 # UWSM GLOBAL ENVIRONMENT VARIABLES
 # ==============================================================================
+# hypr/conf/environment.lua sets the same variables for a session started
+# without uwsm: keep both in sync
 
 # Forces Electron apps (VSCode, Discord, Obsidian) to use native Wayland
 export ELECTRON_OZONE_PLATFORM_HINT=auto
