@@ -89,15 +89,6 @@ Row {
     }
 
     Text {
-        visible: root._lone
-        anchors.verticalCenter: parent.verticalCenter
-        text: "tap"
-        font.family: Config.font
-        font.pixelSize: Config.fontSizeSmall
-        color: Config.subtextColor
-    }
-
-    Text {
         visible: root._list.length === 0
         anchors.verticalCenter: parent.verticalCenter
         text: "No keys"
