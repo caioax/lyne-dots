@@ -82,7 +82,8 @@ Singleton {
     property var themePreviews: ({})
 
     // The palette is the single source of truth for all colors
-    // Config.qml reads from here
+    // Config.qml reads from here. It starts with the last applied one (see
+    // lastPalette); these are the colors of a first start
     property var palette: ({
             "background": "#1a1b26",
             "surface0": "#24283b",
@@ -111,7 +112,23 @@ Singleton {
     // INITIALIZATION
     // ========================================================================
 
+    // The Neovim file holds the last applied palette: read before the first
+    // frame, so a shell starting with another theme doesn't show the colors
+    // above until the theme's file is read
+    FileView {
+        id: lastPalette
+        path: root.nvimPalettePath
+        blockLoading: true
+        printErrors: false
+    }
+
     Component.onCompleted: {
+        try {
+            const last = JSON.parse(lastPalette.text()).palette;
+            if (last?.background)
+                palette = last;
+        } catch (e) {}
+        lastPalette.path = "";
         listThemes();
     }
 
@@ -446,7 +463,10 @@ Singleton {
     function _applyGtkThemeSwitch() {
         const theme = gtkThemeName;
         const scheme = isDarkMode ? "prefer-dark" : "prefer-light";
-        gtkThemeSwitchProc.run(["bash", "-c", "gsettings set org.gnome.desktop.interface gtk-theme " + shellEscape(theme) + " 2>/dev/null; " + "gsettings set org.gnome.desktop.interface color-scheme " + shellEscape(scheme) + " 2>/dev/null; true"]);
+        // Tela's -dark icons are light grey, for dark themes; -light the
+        // opposite. Qt keeps -dark (qt6ct.conf is a stowed file)
+        const icons = isDarkMode ? "Tela-blue-dark" : "Tela-blue-light";
+        gtkThemeSwitchProc.run(["bash", "-c", "gsettings set org.gnome.desktop.interface gtk-theme " + shellEscape(theme) + " 2>/dev/null; " + "gsettings set org.gnome.desktop.interface color-scheme " + shellEscape(scheme) + " 2>/dev/null; " + "for dir in \"${XDG_DATA_HOME:-$HOME/.local/share}/icons\" /usr/share/icons; do " + "[ -d \"$dir/$1\" ] && { gsettings set org.gnome.desktop.interface icon-theme \"$1\" 2>/dev/null; break; }; done; true", "bash", icons]);
     }
 
     function _applyGtkFromPalette(pal) {

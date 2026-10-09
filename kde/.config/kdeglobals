@@ -7,7 +7,7 @@ menuFont=CaskaydiaCove Nerd Font,10,-1,5,50,0,0,0,0,0
 toolBarFont=CaskaydiaCove Nerd Font,10,-1,5,50,0,0,0,0,0
 
 [Icons]
-Theme=Tela-blue-light
+Theme=Tela-blue-dark
 
 [KDE]
 widgetStyle=qt6ct-style
