@@ -88,10 +88,35 @@ Singleton {
 
     // --- ACTIONS ---
 
-    // Toggle Power (On/Off)
+    // Toggle Power (On/Off). Off is an rfkill block: systemd-rfkill restores
+    // it at boot, while BlueZ powers every adapter on when it starts
+    // (AutoEnable), so a plain power off didn't survive a reboot
     function togglePower() {
-        if (adapter) {
-            adapter.enabled = !adapter.enabled;
+        if (!adapter)
+            return;
+        if (adapter.enabled) {
+            Quickshell.execDetached(["rfkill", "block", "bluetooth"]);
+        } else if (adapter.state === BluetoothAdapterState.Blocked) {
+            _powerOnPending = true;
+            Quickshell.execDetached(["rfkill", "unblock", "bluetooth"]);
+        } else {
+            adapter.enabled = true;
+        }
+    }
+
+    // Unblocked: power the adapter on (BlueZ may leave it off)
+    property bool _powerOnPending: false
+
+    Connections {
+        target: root.adapter
+        enabled: root._powerOnPending
+
+        function onStateChanged() {
+            if (root.adapter.state === BluetoothAdapterState.Blocked)
+                return;
+            root._powerOnPending = false;
+            if (!root.adapter.enabled)
+                root.adapter.enabled = true;
         }
     }
 
@@ -232,4 +257,5 @@ Singleton {
     function isKnown(device): bool {
         return device.paired || device.trusted;
     }
+
 }
