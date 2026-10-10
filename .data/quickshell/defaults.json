@@ -264,6 +264,9 @@
         "themeBackground": true,
         "transparent": false
     },
+    "sddm": {
+        "sync": true
+    },
     "osd": {
         "style": "attached",
         "position": "bottom",

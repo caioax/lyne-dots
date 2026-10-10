@@ -31,7 +31,7 @@ Singleton {
             id: "theme",
             label: "Theme",
             icon: "\u{f03d8}",
-            description: "Themes, colors, light or dark mode, the wallpaper each theme brings and Zen Browser",
+            description: "Themes, colors, light or dark mode, the wallpaper each theme brings, Zen Browser and the login screen",
             category: "Appearance"
         },
         {

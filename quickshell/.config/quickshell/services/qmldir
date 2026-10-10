@@ -39,6 +39,7 @@ singleton MonitorsService MonitorsService.qml
 singleton AutostartService AutostartService.qml
 singleton KeyboardService KeyboardService.qml
 singleton GpuService GpuService.qml
+singleton SddmService SddmService.qml
 singleton ZenService ZenService.qml
 singleton QuickSettingsService QuickSettingsService.qml
 QueuedProcess 1.0 QueuedProcess.qml

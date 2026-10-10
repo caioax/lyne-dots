@@ -287,4 +287,16 @@ ColumnLayout {
             descriptionColor: Config.warningColor
         }
     }
+
+    // With the lyne-sddm theme installed (its user/ dir is writable)
+    SettingsGroup {
+        visible: root.onGrid && SddmService.installed
+        title: "Login screen"
+
+        ToggleRow {
+            label: "Follow the theme"
+            description: checked ? "Colors, background opacity, wallpaper and profile picture, from the next login" : "The login screen keeps its own look (Tokyo Night)"
+            path: "sddm.sync"
+        }
+    }
 }

@@ -798,8 +798,11 @@ Singleton {
             onRead: data => console.error("[Theme:Neovim] " + data)
         }
         onExited: exitCode => {
-            if (exitCode === 0)
-                console.log("[Theme] Neovim theme updated");
+            if (exitCode !== 0)
+                return;
+            console.log("[Theme] Neovim theme updated");
+            // The login screen copies the palette from the same file
+            SddmService.paletteWritten();
         }
     }
 
