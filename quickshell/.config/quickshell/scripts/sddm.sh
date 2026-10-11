@@ -2,7 +2,7 @@
 # Login screen sync for SddmService (Settings › Theme › Login screen), from
 # lyne's sddm.sh lib (.data/lyne-cli/lib/sddm.sh).
 #
-#   sddm.sh installed   exit 0 when lyne-sddm's user/ dir is writable
+#   sddm.sh state       ok, absent, missing or foreign <owner> (see the lib)
 #   sddm.sh apply       copy the palette, wallpaper and avatar (or reset
 #                       to the theme's defaults with the sync off)
 #
@@ -16,10 +16,10 @@ DOTS_DIR="$(cd "$(dirname "$SELF")/../../../.." && pwd)"
 source "$DOTS_DIR/.data/lyne-cli/lib/sddm.sh"
 
 case "${1:-}" in
-    installed) sddm_installed ;;
+    state) sddm_state ;;
     apply) sddm_apply ;;
     *)
-        echo "Usage: sddm.sh installed|apply" >&2
+        echo "Usage: sddm.sh state|apply" >&2
         exit 1
         ;;
 esac

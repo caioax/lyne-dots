@@ -58,6 +58,8 @@ ColumnLayout {
     }
 
     Component.onCompleted: {
+        // lyne-sddm may have run since the shell started
+        SddmService.check();
         if (SettingsService.pendingThemeDetail !== "") {
             detail = SettingsService.pendingThemeDetail;
             SettingsService.pendingThemeDetail = "";
@@ -288,15 +290,24 @@ ColumnLayout {
         }
     }
 
-    // With the lyne-sddm theme installed (its user/ dir is writable)
+    // With the lyne-sddm theme installed; until lyne-sddm sets up (or hands
+    // over) /var/lib/lyne-sddm, what to run
     SettingsGroup {
-        visible: root.onGrid && SddmService.installed
+        visible: root.onGrid && SddmService.state !== "" && SddmService.state !== "absent"
         title: "Login screen"
 
         ToggleRow {
+            visible: SddmService.installed
             label: "Follow the theme"
             description: checked ? "Colors, background opacity, wallpaper and profile picture, from the next login" : "The login screen keeps its own look (Tokyo Night)"
             path: "sddm.sync"
+        }
+
+        SettingRow {
+            visible: !SddmService.installed
+            label: "Not set up"
+            description: SddmService.state === "foreign" ? `${SddmService.owner} controls the login screen: run lyne-sddm to take it over` : "Run lyne-sddm to let the login screen follow the theme"
+            descriptionColor: Config.warningColor
         }
     }
 }
