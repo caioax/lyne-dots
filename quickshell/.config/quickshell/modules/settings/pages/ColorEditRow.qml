@@ -77,15 +77,21 @@ SettingRow {
     QsTextField {
         id: hexInput
 
-        readonly property bool valid: /^#?[0-9a-fA-F]{6}$/.test(text.trim())
+        readonly property bool valid: isHex(text)
+
+        function isHex(t: string): bool {
+            return /^#?[0-9a-fA-F]{6}$/.test(t.trim());
+        }
 
         Layout.preferredWidth: Config.fontSizeNormal * 6
         compact: true
         color: root.controlColor
         text: root.value
         textColor: valid ? Config.textColor : Config.errorColor
+        // textEdited comes before textChanged: `valid` still holds the
+        // previous text here, so test the new one
         onTextEdited: {
-            if (valid) {
+            if (isHex(text)) {
                 const t = text.trim().toLowerCase();
                 root.edited(t.startsWith("#") ? t : "#" + t);
             }
