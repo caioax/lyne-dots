@@ -17,24 +17,16 @@ ColumnLayout {
     readonly property string dotsDir: Quickshell.env("HOME") + "/.lyne-dots"
     readonly property int heroIconSize: Config.fontSizeIconLarge * 2
 
-    // key -> value from infoProc; git is `lyne update status --json`
+    // key -> value from infoProc
     property var info: ({})
-    property var git: ({})
-    property bool checking: false
 
-    readonly property int behind: git.behind ?? -1
-    readonly property int dirty: git.dirty ?? 0
-    // update.channel, passed to lyne along (the state file is saved later)
-    readonly property string channel: StateService.get("update.channel", "stable")
-    // Off main (dev, a fork's branch) the update follows the branch instead
-    readonly property bool followsChannel: git.follows !== "branch"
-    // Checked again once the running check ends
-    property bool recheck: false
-    // Whether the running check fetches; one that doesn't (a channel switch)
-    // keeps the last fetch's result
-    property bool fetching: false
-
-    onChannelChanged: checkUpdates(false)
+    // `lyne update status --json`, from UpdateService
+    readonly property var git: UpdateService.status
+    readonly property bool checking: UpdateService.checking
+    readonly property int behind: UpdateService.behind
+    readonly property int dirty: UpdateService.dirty
+    readonly property string channel: UpdateService.channel
+    readonly property bool followsChannel: UpdateService.followsChannel
 
     // "Intel Corporation TigerLake-H GT1 [UHD Graphics] (rev 01)" -> "Intel UHD Graphics"
     function shortGpu(line: string): string {
@@ -100,21 +92,12 @@ ColumnLayout {
         return result;
     }
 
-    function checkUpdates(fetch = true) {
-        if (gitProc.running) {
-            recheck = true;
-            return;
-        }
-        checking = true;
-        fetching = fetch;
-        gitProc.command = ["lyne", "update", "status", "--json", "--channel", channel].concat(fetch ? ["--fetch"] : []);
-        gitProc.running = true;
+    function checkUpdates() {
+        UpdateService.check();
     }
 
     function runUpdate() {
-        // In the default terminal, so the output (and any sudo prompt from
-        // migrations) is visible; it stays open until a key is pressed
-        Quickshell.execDetached(AppsService.terminalArgv(["bash", "-c", `lyne update --channel ${channel}; echo; read -rsn1 -p "Press any key to close"`]));
+        UpdateService.runUpdate();
     }
 
     function copyInfo() {
@@ -149,31 +132,6 @@ ColumnLayout {
         `]
         stdout: StdioCollector {
             onStreamFinished: root.info = root.parse(text)
-        }
-    }
-
-    // `lyne update status --json`: version, what an update to the channel
-    // brings (after a fetch, or the local state without network) and the
-    // uncommitted changes, without the files lyne update manages
-    // (lazy-lock.json, kdeglobals...)
-    Process {
-        id: gitProc
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    const result = JSON.parse(text);
-                    if (!root.fetching)
-                        result.fetched = root.git.fetched ?? false;
-                    root.git = result;
-                } catch (e) {
-                    root.git = {};
-                }
-                root.checking = false;
-                if (root.recheck) {
-                    root.recheck = false;
-                    root.checkUpdates(false);
-                }
-            }
         }
     }
 
@@ -369,6 +327,13 @@ ColumnLayout {
                     value: "latest"
                 }
             ]
+        }
+
+        ToggleRow {
+            label: "Notify about updates"
+            description: "Checks a minute after login, and notifies once per new " + (root.channel === "stable" ? "release" : "commit")
+            path: "update.notify"
+            enabled: root.followsChannel
         }
     }
 

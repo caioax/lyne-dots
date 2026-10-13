@@ -44,3 +44,4 @@ singleton ZenService ZenService.qml
 singleton QuickSettingsService QuickSettingsService.qml
 QueuedProcess 1.0 QueuedProcess.qml
 BinaryCheck 1.0 BinaryCheck.qml
+singleton UpdateService UpdateService.qml

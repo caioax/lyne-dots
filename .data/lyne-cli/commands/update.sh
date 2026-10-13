@@ -74,10 +74,10 @@ if [[ "$subcmd" == status ]]; then
     if [[ "$json" == true ]]; then
         jq -n --arg branch "$CH_BRANCH" --arg follows "$CH_FOLLOWS" --arg channel "$channel" \
             --arg commit "$commit" --arg date "$date" --arg version "$version" \
-            --arg upstream "$CH_UPSTREAM" --arg lastRelease "$CH_LAST_RELEASE" --arg target "$CH_TARGET_NAME" \
+            --arg upstream "$CH_UPSTREAM" --arg lastRelease "$CH_LAST_RELEASE" --arg target "$CH_TARGET_NAME" --arg targetCommit "$CH_TARGET_COMMIT" \
             --argjson dirty "$dirty" --argjson fetched "$fetched" --argjson behind "$CH_BEHIND" \
             '{branch: $branch, follows: $follows, channel: $channel, commit: $commit, date: $date,
-              version: $version, upstream: $upstream, lastRelease: $lastRelease, target: $target,
+              version: $version, upstream: $upstream, lastRelease: $lastRelease, target: $target, targetCommit: $targetCommit,
               dirty: $dirty, fetched: $fetched, behind: $behind}'
         return 0
     fi

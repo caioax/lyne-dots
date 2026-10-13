@@ -308,6 +308,8 @@
         "pending": false
     },
     "update": {
-        "channel": "stable"
+        "channel": "stable",
+        "notify": true,
+        "notified": ""
     }
 }

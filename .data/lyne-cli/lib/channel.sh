@@ -13,7 +13,7 @@
 
 local CHANNEL_BRANCH="main"
 local CHANNEL_TAG_RE='^v[0-9]+\.[0-9]+\.[0-9]+$'
-local CH_BRANCH="" CH_FOLLOWS="" CH_UPSTREAM="" CH_LAST_RELEASE="" CH_TARGET="" CH_TARGET_NAME="" CH_BEHIND=0
+local CH_BRANCH="" CH_FOLLOWS="" CH_UPSTREAM="" CH_LAST_RELEASE="" CH_TARGET="" CH_TARGET_NAME="" CH_TARGET_COMMIT="" CH_BEHIND=0
 
 # The channel: $1 when given, else update.channel from state.json, else stable
 channel_get() {
@@ -44,6 +44,7 @@ channel_last_release() {
 #   CH_TARGET        the commit-ish to fast-forward to, empty when there's
 #                    none (no upstream, stable without releases)
 #   CH_TARGET_NAME   what to call it: the tag, or the upstream branch
+#   CH_TARGET_COMMIT its short commit hash
 #   CH_BEHIND        commits from HEAD to the target, 0 when HEAD has it
 channel_resolve() {
     local channel="$1"
@@ -52,6 +53,7 @@ channel_resolve() {
     CH_LAST_RELEASE=""
     CH_TARGET=""
     CH_TARGET_NAME=""
+    CH_TARGET_COMMIT=""
     CH_BEHIND=0
     [[ "$CH_BRANCH" == "$CHANNEL_BRANCH" ]] && CH_FOLLOWS=channel || CH_FOLLOWS=branch
     [[ -n "$CH_UPSTREAM" ]] || return 0
@@ -64,6 +66,7 @@ channel_resolve() {
         CH_TARGET_NAME="$CH_UPSTREAM"
     fi
     [[ -n "$CH_TARGET" ]] || return 0
+    CH_TARGET_COMMIT="$(git -C "$DOTS_DIR" rev-parse --short "$CH_TARGET^{commit}" 2>/dev/null)"
     CH_BEHIND="$(git -C "$DOTS_DIR" rev-list --count "HEAD..$CH_TARGET" 2>/dev/null || echo 0)"
 }
 

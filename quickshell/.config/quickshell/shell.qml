@@ -34,6 +34,9 @@ ShellRoot {
     // Keeps hypr/local/settings.lua in sync with state.json
     property string _hyprlandSettings: HyprlandSettingsService.lua
 
+    // Checks for a lyne-dots update a minute after the start
+    property bool _updateReady: UpdateService.checking
+
     // Recording a shortcut in Settings puts Hyprland in the empty
     // "lyne_capture" submap. If the shell reloaded or crashed mid-recording,
     // Hyprland would be left without binds: always leave it on (re)load
