@@ -5,6 +5,7 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
     echo "Usage: lyne update [--channel stable|latest]"
     echo "       lyne update status [--fetch] [--json] [--channel stable|latest]"
     echo "       lyne update channel [stable|latest]"
+    echo "       lyne update notes [--json] [--since COMMIT]"
     echo ""
     echo "Update the dotfiles, sync state.json with defaults, and run any"
     echo "pending migrations. On main, the channel picks the version:"
@@ -16,6 +17,8 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
     echo "  status   Version, uncommitted changes and what an update would"
     echo "           bring (--fetch fetches first)"
     echo "  channel  Show or set the channel"
+    echo "  notes    Release notes: the current release's, or every release"
+    echo "           since COMMIT (what an update from there brought)"
     return 0
 fi
 
@@ -23,7 +26,44 @@ source "$DOTS_DIR/.data/lyne-cli/lib/managed-files.sh"
 source "$DOTS_DIR/.data/lyne-cli/lib/channel.sh"
 
 local subcmd=""
-[[ "${1:-}" == status || "${1:-}" == channel ]] && subcmd="$1" && shift
+[[ "${1:-}" == status || "${1:-}" == channel || "${1:-}" == notes ]] && subcmd="$1" && shift
+
+if [[ "$subcmd" == notes ]]; then
+    local json=false since="" release
+    while (($#)); do
+        case "$1" in
+        --json) json=true ;;
+        --since)
+            since="$(git -C "$DOTS_DIR" rev-parse -q --verify "${2:-}^{commit}")" || {
+                echo "lyne update notes: unknown commit '${2:-}'"
+                return 1
+            }
+            shift
+            ;;
+        *)
+            echo "lyne update notes: unknown option '$1'"
+            return 1
+            ;;
+        esac
+        shift
+    done
+    # Without --since: the release HEAD is at or past, alone
+    if [[ -z "$since" ]]; then
+        release="$(channel_last_release HEAD)"
+        [[ -n "$release" ]] && since="$(git -C "$DOTS_DIR" rev-parse -q --verify "$release^{commit}^" 2>/dev/null)"
+    fi
+    local notes
+    notes="$(channel_notes_json "$since")"
+    if [[ -z "$release" && -z "$since" ]]; then
+        notes="[]"
+    fi
+    if [[ "$json" == true ]]; then
+        echo "$notes"
+    else
+        jq -r 'if length == 0 then "No release notes" else .[] | "\(.version) (\(.date))\n\(if .notes == "" then "(no notes)" else .notes end)\n" end' <<<"$notes"
+    fi
+    return 0
+fi
 
 if [[ "$subcmd" == channel ]]; then
     if [[ -z "${1:-}" ]]; then
@@ -247,4 +287,16 @@ if [[ -n "$stash_name" ]]; then
     echo "Your changes are in git stash \"$stash_name\": git -C $DOTS_DIR stash pop brings them back"
     summary+=$'\n'"Your changes are stashed as $stash_name"
 fi
-_lyne_notify "Lyne is up to date" "$summary"
+
+# Releases this update brought that have notes: the notification opens them
+# in the What's new window. It waits for the click apart from the terminal,
+# which may close first
+local with_notes
+with_notes="$(channel_notes_json "$old_head" | jq -r '[.[] | select(.notes != "") | .version] | join(", ")')"
+if [[ -n "$with_notes" ]] && command -v notify-send &>/dev/null; then
+    echo "What's new in $with_notes: the notification opens it (or lyne update notes)"
+    setsid -f bash -c 'reply="$(timeout 1h notify-send -a Lyne -i lyne-dots -A default="What'"'"'s new" -A whatsnew="What'"'"'s new" "$1" "$2")"
+        [[ -n "$reply" ]] && qs ipc call whatsnew open "$3"' _ "Lyne is up to date" "$summary" "$old_head" &>/dev/null
+else
+    _lyne_notify "Lyne is up to date" "$summary"
+fi

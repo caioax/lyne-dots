@@ -83,3 +83,24 @@ channel_version() {
         echo "$release"
     fi
 }
+
+# The releases in HEAD that $1 doesn't have (all of HEAD's without it), newest
+# first, as a JSON array of {version, date, notes}. Notes are the tag message
+channel_notes_json() {
+    local since="${1:-}" tag
+    local tags=()
+    while IFS= read -r tag; do
+        [[ "$tag" =~ $CHANNEL_TAG_RE ]] || continue
+        if [[ -n "$since" ]] && git -C "$DOTS_DIR" merge-base --is-ancestor "$tag" "$since" 2>/dev/null; then
+            continue
+        fi
+        tags+=("$tag")
+    done < <(git -C "$DOTS_DIR" tag --merged HEAD --list 'v*' --sort=-v:refname 2>/dev/null)
+    local json="[]" date notes
+    for tag in "${tags[@]}"; do
+        date="$(git -C "$DOTS_DIR" tag -l --format='%(creatordate:short)' "$tag")"
+        notes="$(git -C "$DOTS_DIR" tag -l --format='%(contents)' "$tag")"
+        json="$(jq -c --arg v "$tag" --arg d "$date" --arg n "$notes" '. + [{version: $v, date: $d, notes: $n}]' <<<"$json")"
+    done
+    echo "$json"
+}

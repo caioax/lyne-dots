@@ -191,6 +191,12 @@ ShellRoot {
         sourceComponent: WelcomeWindow {}
     }
 
+    // What's new: from lyne update's notification or Settings › About
+    Loader {
+        active: WhatsNewService.visible
+        sourceComponent: WhatsNewWindow {}
+    }
+
     // Actions requested from the UI (Quick Settings shortcuts)
     Connections {
         target: ShortcutService

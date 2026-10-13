@@ -79,3 +79,12 @@ hl.window_rule({
     float  = true,
     center = true,
 })
+
+-- What's new: opens at the size it asks for (WhatsNewWindow.defaultSize)
+hl.window_rule({
+    name  = "quickshell-whatsnew-float",
+    match = { class = "^(org\\.quickshell)$", title = "^(What's new)$" },
+
+    float  = true,
+    center = true,
+})

@@ -312,6 +312,24 @@ ColumnLayout {
             }
         }
 
+        SettingRow {
+            id: notesRow
+
+            readonly property string release: (root.git.version ?? "").split("+")[0]
+
+            visible: release !== ""
+            label: "What's new in " + release
+            description: "The notes of the release this is at or past"
+
+            // md-party_popper
+            ActionButton {
+                icon: "\u{f1056}"
+                text: "Open"
+                baseColor: notesRow.controlColor
+                onClicked: WhatsNewService.open("")
+            }
+        }
+
         SelectRow {
             label: "Channel"
             description: root.followsChannel ? "Stable gets the releases; Latest every change as soon as it's on main" : "Not used on the " + (root.git.branch ?? "") + " branch, which updates from its upstream"
