@@ -17,13 +17,13 @@ ColumnLayout {
     readonly property string dotsDir: Quickshell.env("HOME") + "/.lyne-dots"
     readonly property int heroIconSize: Config.fontSizeIconLarge * 2
 
-    // key -> value from the scripts below
+    // key -> value from infoProc; git is `lyne update status --json`
     property var info: ({})
     property var git: ({})
     property bool checking: false
 
-    readonly property int behind: git.behind !== undefined && git.behind !== "" ? parseInt(git.behind) : -1
-    readonly property int dirty: parseInt(git.dirty ?? "0")
+    readonly property int behind: git.behind ?? -1
+    readonly property int dirty: git.dirty ?? 0
 
     // "Intel Corporation TigerLake-H GT1 [UHD Graphics] (rev 01)" -> "Intel UHD Graphics"
     function shortGpu(line: string): string {
@@ -138,22 +138,18 @@ ColumnLayout {
     }
 
     // Fetches first so "behind" is current; without network it still reports
-    // the local state
+    // the local state. Changes to the files lyne update manages (lazy-lock.json,
+    // kdeglobals...) don't count as uncommitted
     Process {
         id: gitProc
-        command: ["bash", "-c", `
-            cd "${root.dotsDir}" || exit 1
-            echo "branch=$(git rev-parse --abbrev-ref HEAD)"
-            echo "commit=$(git log -1 --format=%h)"
-            echo "date=$(git log -1 --format=%cd --date=short)"
-            # lazy-lock.json follows :Lazy update; lyne update keeps it
-            echo "dirty=$(git status --porcelain --untracked-files=no -- . ':(exclude)nvim/.config/nvim/lazy-lock.json' | wc -l)"
-            timeout 15 git fetch --quiet 2>/dev/null && echo "fetched=1"
-            echo "behind=$(git rev-list --count HEAD..@{u} 2>/dev/null)"
-        `]
+        command: ["lyne", "update", "status", "--fetch", "--json"]
         stdout: StdioCollector {
             onStreamFinished: {
-                root.git = root.parse(text);
+                try {
+                    root.git = JSON.parse(text);
+                } catch (e) {
+                    root.git = {};
+                }
                 root.checking = false;
             }
         }
@@ -269,7 +265,7 @@ ColumnLayout {
             label: {
                 if (root.checking)
                     return "Checking for updates…";
-                if (root.git.fetched !== "1")
+                if (!root.git.fetched)
                     return root.behind > 0 ? root.behind + " updates available" : "Couldn't reach GitHub";
                 if (root.behind > 0)
                     return root.behind + (root.behind === 1 ? " update" : " updates") + " available";
@@ -282,7 +278,7 @@ ColumnLayout {
             }
 
             leading: Text {
-                readonly property bool upToDate: root.git.fetched === "1" && root.behind === 0
+                readonly property bool upToDate: root.git.fetched === true && root.behind === 0
 
                 // md-alert / md-download / md-check_circle / md-cloud_alert
                 // (GitHub unreachable or no upstream: the state is unknown)
