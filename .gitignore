@@ -28,6 +28,10 @@ hyprland/.config/hypr/workspaces.lua
 theming/.config/gtk-3.0/colors.css
 theming/.config/gtk-4.0/colors.css
 
+# Kitty colors (written by ThemeService on every theme change and shell start;
+# kitty ignores the missing include until then)
+kitty/.config/kitty/current-theme.conf
+
 
 # Python bytecode (written when the scripts are imported)
 __pycache__/

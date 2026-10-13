@@ -18,8 +18,6 @@ local MANAGED_FILES=(
     "nvim/.config/nvim/lazy-lock.json:repo"
     # Default terminal (Settings › System › Apps) and KDE apps write to it
     "kde/.config/kdeglobals:local"
-    # Written by ThemeService on every theme change and shell start
-    "kitty/.config/kitty/current-theme.conf:local"
 )
 
 # Pathspecs that leave the managed files out of a git status/stash
