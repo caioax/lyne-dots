@@ -24,6 +24,17 @@ ColumnLayout {
 
     readonly property int behind: git.behind ?? -1
     readonly property int dirty: git.dirty ?? 0
+    // update.channel, passed to lyne along (the state file is saved later)
+    readonly property string channel: StateService.get("update.channel", "stable")
+    // Off main (dev, a fork's branch) the update follows the branch instead
+    readonly property bool followsChannel: git.follows !== "branch"
+    // Checked again once the running check ends
+    property bool recheck: false
+    // Whether the running check fetches; one that doesn't (a channel switch)
+    // keeps the last fetch's result
+    property bool fetching: false
+
+    onChannelChanged: checkUpdates(false)
 
     // "Intel Corporation TigerLake-H GT1 [UHD Graphics] (rev 01)" -> "Intel UHD Graphics"
     function shortGpu(line: string): string {
@@ -89,21 +100,25 @@ ColumnLayout {
         return result;
     }
 
-    function checkUpdates() {
-        if (gitProc.running)
+    function checkUpdates(fetch = true) {
+        if (gitProc.running) {
+            recheck = true;
             return;
+        }
         checking = true;
+        fetching = fetch;
+        gitProc.command = ["lyne", "update", "status", "--json", "--channel", channel].concat(fetch ? ["--fetch"] : []);
         gitProc.running = true;
     }
 
     function runUpdate() {
         // In the default terminal, so the output (and any sudo prompt from
         // migrations) is visible; it stays open until a key is pressed
-        Quickshell.execDetached(AppsService.terminalArgv(["bash", "-c", 'lyne update; echo; read -rsn1 -p "Press any key to close"']));
+        Quickshell.execDetached(AppsService.terminalArgv(["bash", "-c", `lyne update --channel ${channel}; echo; read -rsn1 -p "Press any key to close"`]));
     }
 
     function copyInfo() {
-        const lines = [`lyne-dots ${git.branch} @ ${git.commit} (${git.date})`];
+        const lines = [`lyne-dots ${git.version || "(no release)"} · ${git.branch} @ ${git.commit} (${git.date})`];
         for (const row of systemRows)
             lines.push(`${row.label}: ${row.value ?? ""}`);
         Quickshell.execDetached(["wl-copy", lines.join("\n")]);
@@ -137,20 +152,27 @@ ColumnLayout {
         }
     }
 
-    // Fetches first so "behind" is current; without network it still reports
-    // the local state. Changes to the files lyne update manages (lazy-lock.json,
-    // kdeglobals...) don't count as uncommitted
+    // `lyne update status --json`: version, what an update to the channel
+    // brings (after a fetch, or the local state without network) and the
+    // uncommitted changes, without the files lyne update manages
+    // (lazy-lock.json, kdeglobals...)
     Process {
         id: gitProc
-        command: ["lyne", "update", "status", "--fetch", "--json"]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
-                    root.git = JSON.parse(text);
+                    const result = JSON.parse(text);
+                    if (!root.fetching)
+                        result.fetched = root.git.fetched ?? false;
+                    root.git = result;
                 } catch (e) {
                     root.git = {};
                 }
                 root.checking = false;
+                if (root.recheck) {
+                    root.recheck = false;
+                    root.checkUpdates(false);
+                }
             }
         }
     }
@@ -207,11 +229,16 @@ ColumnLayout {
                     color: Config.subtextColor
                 }
 
-                // md-source_branch
+                // md-tag (a release) / md-source_branch; "Stable" or the
+                // branch it follows
                 Text {
                     Layout.fillWidth: true
                 visible: root.git.commit !== undefined
-                    text: "\u{f062c} " + root.git.branch + " · " + root.git.commit + " · " + root.git.date
+                    text: {
+                        const g = root.git;
+                        const parts = g.version ? ["\u{f04f9} " + g.version, root.followsChannel ? (root.channel === "stable" ? "Stable" : "Latest") : g.branch] : ["\u{f062c} " + g.branch];
+                        return parts.concat([g.commit, g.date]).join(" · ");
+                    }
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeSmall
                     color: Config.accentColor
@@ -263,18 +290,33 @@ ColumnLayout {
             id: updateRow
 
             label: {
+                const g = root.git;
                 if (root.checking)
                     return "Checking for updates…";
-                if (!root.git.fetched)
-                    return root.behind > 0 ? root.behind + " updates available" : "Couldn't reach GitHub";
-                if (root.behind > 0)
+                if (root.behind > 0) {
+                    if (root.followsChannel && root.channel === "stable")
+                        return "Update available: " + g.target;
                     return root.behind + (root.behind === 1 ? " update" : " updates") + " available";
-                return root.behind === 0 ? "Up to date" : "No upstream branch";
+                }
+                if (!g.fetched)
+                    return "Couldn't reach GitHub";
+                if (!g.upstream)
+                    return "No upstream branch";
+                if (!g.target)
+                    return "No release yet";
+                return "Up to date";
             }
             description: {
+                const g = root.git;
                 if (root.dirty > 0)
                     return root.dirty + " uncommitted " + (root.dirty === 1 ? "change" : "changes") + " in ~/.lyne-dots. Updating asks whether to stash or discard them";
-                return "Pulls the latest dotfiles, syncs state.json and runs pending migrations";
+                if (!root.followsChannel)
+                    return "On the " + g.branch + " branch: updates follow " + g.upstream;
+                if (root.channel === "stable" && !g.target)
+                    return "Stable follows releases, and there's none yet";
+                if (root.channel === "stable" && root.behind === 0 && (g.version ?? "").includes("+"))
+                    return "Newer than the last release (" + g.lastRelease + "): Stable moves on with the next one";
+                return "Updates the dotfiles, syncs state.json and runs pending migrations";
             }
 
             leading: Text {
@@ -310,6 +352,23 @@ ColumnLayout {
                 textColor: root.behind > 0 ? Config.textReverseColor : Config.textColor
                 onClicked: root.runUpdate()
             }
+        }
+
+        SelectRow {
+            label: "Channel"
+            description: root.followsChannel ? "Stable gets the releases; Latest every change as soon as it's on main" : "Not used on the " + (root.git.branch ?? "") + " branch, which updates from its upstream"
+            path: "update.channel"
+            enabled: root.followsChannel
+            options: [
+                {
+                    label: "Stable",
+                    value: "stable"
+                },
+                {
+                    label: "Latest",
+                    value: "latest"
+                }
+            ]
         }
     }
 

@@ -228,10 +228,17 @@ More in [.install/README.md](.install/README.md).
 lyne update
 ```
 
-Pulls the repository, adds new settings to your `state.json` without touching the ones you changed, runs pending migrations (new packages, moved files) and reloads Quickshell. Settings › System › About shows when an update is available and runs it for you.
+Updates the dotfiles, adds new settings to your `state.json` without touching the ones you changed, runs pending migrations (new packages, moved files) and reloads Quickshell. Settings › System › About shows when an update is available and runs it for you.
+
+Two channels, picked in Settings › System › About or with `lyne update channel`:
+
+- **Stable** (default): the newest [release](https://github.com/caioax/lyne-dots/releases).
+- **Latest**: every change as soon as it lands on `main`.
+
+Switching back to Stable never goes back in time: you stay where you are until the next release.
 
 > [!NOTE]
-> `lyne update` runs `git reset --hard` in `~/.lyne-dots`. Keep personal changes in `~/.config/hypr/local/` or in Settings, which are not tracked.
+> Changes you made inside `~/.lyne-dots` are listed first, and you choose to stash them (`git stash pop` brings them back), discard them or cancel. Keep personal changes in `~/.config/hypr/local/` or in Settings, which are not tracked.
 
 ## Reference
 
@@ -243,7 +250,7 @@ Pulls the repository, adds new settings to your `state.json` without touching th
 | Command | Description |
 | --- | --- |
 | `lyne theme` | Show the theme; `list`, `set <name>`, `auto` (Material You), `scheme dark\|light` |
-| `lyne update` | Pull, sync `state.json`, run migrations, reload Quickshell |
+| `lyne update` | Update to the channel's version, sync `state.json`, run migrations, reload Quickshell; `status`, `channel stable\|latest` |
 | `lyne reload` | Restart Quickshell |
 | `lyne state` | Edit `state.json`; `sync`, `rebuild` |
 | `lyne migrate` | `list`, `run`, `done` for migrations |

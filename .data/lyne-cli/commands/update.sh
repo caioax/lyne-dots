@@ -1,52 +1,102 @@
-# lyne update - Pull latest changes, sync state and run migrations
+# lyne update - Update to the channel's version, sync state and run migrations
 
 # shellcheck disable=SC2317 # run-migrations.sh ends in a return, so the rest looks unreachable
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-    echo "Usage: lyne update [status [--fetch] [--json]]"
+    echo "Usage: lyne update [--channel stable|latest]"
+    echo "       lyne update status [--fetch] [--json] [--channel stable|latest]"
+    echo "       lyne update channel [stable|latest]"
     echo ""
-    echo "Pull latest dotfiles changes, sync state.json with defaults,"
-    echo "and run any pending migrations."
+    echo "Update the dotfiles, sync state.json with defaults, and run any"
+    echo "pending migrations. On main, the channel picks the version:"
+    echo "  stable   the newest release (default)"
+    echo "  latest   every change as soon as it's on main"
+    echo "Other branches follow their upstream. --channel overrides the"
+    echo "channel saved in Settings › About for one run."
     echo ""
-    echo "  status   Branch, commit, uncommitted changes and how far behind"
-    echo "           the upstream branch it is (--fetch fetches first)"
+    echo "  status   Version, uncommitted changes and what an update would"
+    echo "           bring (--fetch fetches first)"
+    echo "  channel  Show or set the channel"
     return 0
 fi
 
 source "$DOTS_DIR/.data/lyne-cli/lib/managed-files.sh"
+source "$DOTS_DIR/.data/lyne-cli/lib/channel.sh"
 
-if [[ "${1:-}" == "status" ]]; then
+local subcmd=""
+[[ "${1:-}" == status || "${1:-}" == channel ]] && subcmd="$1" && shift
+
+if [[ "$subcmd" == channel ]]; then
+    if [[ -z "${1:-}" ]]; then
+        channel_get
+        return
+    fi
+    channel_get "$1" >/dev/null || return 1
+    lyne_state_set '.update.channel = $c' --arg c "$1" || {
+        echo "lyne update channel: couldn't write $(lyne_state_file)"
+        return 1
+    }
+    echo "Channel: $1"
+    return 0
+fi
+
+local fetch=false json=false channel_arg="" arg
+while (($#)); do
+    arg="$1"
     shift
-    local fetch=false json=false arg
-    for arg in "$@"; do
-        case "$arg" in
-        --fetch) fetch=true ;;
-        --json) json=true ;;
-        *)
-            echo "lyne update status: unknown option '$arg'"
-            return 1
-            ;;
-        esac
-    done
-    local branch commit date dirty fetched=false behind
-    branch="$(git -C "$DOTS_DIR" rev-parse --abbrev-ref HEAD)" || return 1
-    commit="$(git -C "$DOTS_DIR" log -1 --format=%h)"
+    case "$arg" in
+    --fetch) fetch=true ;;
+    --json) json=true ;;
+    --channel)
+        channel_arg="${1:-}"
+        shift
+        ;;
+    *)
+        echo "lyne update: unknown option '$arg' (lyne update --help)"
+        return 1
+        ;;
+    esac
+done
+if [[ "$subcmd" != status ]] && [[ "$fetch" == true || "$json" == true ]]; then
+    echo "lyne update: --fetch and --json are for lyne update status"
+    return 1
+fi
+local channel
+channel="$(channel_get "$channel_arg")" || return 1
+
+if [[ "$subcmd" == status ]]; then
+    local commit date dirty fetched=false version
+    commit="$(git -C "$DOTS_DIR" log -1 --format=%h)" || return 1
     date="$(git -C "$DOTS_DIR" log -1 --format=%cd --date=short)"
     dirty="$(git -C "$DOTS_DIR" status --porcelain --untracked-files=no -- . "${MANAGED_EXCLUDES[@]}" | wc -l)"
-    [[ "$fetch" == true ]] && timeout 15 git -C "$DOTS_DIR" fetch --quiet 2>/dev/null && fetched=true
-    # -1: no upstream branch
-    behind="$(git -C "$DOTS_DIR" rev-list --count 'HEAD..@{u}' 2>/dev/null || echo -1)"
+    [[ "$fetch" == true ]] && timeout 15 git -C "$DOTS_DIR" fetch --tags --quiet 2>/dev/null && fetched=true
+    channel_resolve "$channel"
+    version="$(channel_version)"
     if [[ "$json" == true ]]; then
-        jq -n --arg branch "$branch" --arg commit "$commit" --arg date "$date" \
-            --argjson dirty "$dirty" --argjson fetched "$fetched" --argjson behind "$behind" \
-            '{branch: $branch, commit: $commit, date: $date, dirty: $dirty, fetched: $fetched, behind: $behind}'
+        jq -n --arg branch "$CH_BRANCH" --arg follows "$CH_FOLLOWS" --arg channel "$channel" \
+            --arg commit "$commit" --arg date "$date" --arg version "$version" \
+            --arg upstream "$CH_UPSTREAM" --arg lastRelease "$CH_LAST_RELEASE" --arg target "$CH_TARGET_NAME" \
+            --argjson dirty "$dirty" --argjson fetched "$fetched" --argjson behind "$CH_BEHIND" \
+            '{branch: $branch, follows: $follows, channel: $channel, commit: $commit, date: $date,
+              version: $version, upstream: $upstream, lastRelease: $lastRelease, target: $target,
+              dirty: $dirty, fetched: $fetched, behind: $behind}'
+        return 0
+    fi
+    echo "${version:-no release} · $CH_BRANCH @ $commit ($date)"
+    if [[ "$CH_FOLLOWS" == channel ]]; then
+        echo "Channel: $channel"
     else
-        echo "$branch @ $commit ($date)"
-        echo "Uncommitted changes: $dirty"
-        if ((behind < 0)); then
-            echo "No upstream branch"
-        else
-            echo "Behind upstream: $behind$([[ "$fetched" == true ]] || echo " (not fetched)")"
-        fi
+        echo "Follows: ${CH_UPSTREAM:-nothing (no upstream branch)}"
+    fi
+    echo "Uncommitted changes: $dirty"
+    local note=""
+    [[ "$fetch" == true && "$fetched" == false ]] && note=" (couldn't fetch)"
+    [[ "$fetch" == false ]] && note=" (not fetched)"
+    if [[ -z "$CH_TARGET" ]]; then
+        [[ -n "$CH_UPSTREAM" ]] && echo "No release yet$note"
+    elif ((CH_BEHIND > 0)); then
+        echo "Update: $CH_TARGET_NAME, $CH_BEHIND commits$note"
+    else
+        echo "Up to date$note"
     fi
     return 0
 fi
@@ -99,13 +149,52 @@ if [[ -n "$changes" ]]; then
     esac
 fi
 
-echo -e "\e[1;34m:: Pulling latest changes...\e[0m"
-if ! git -C "$DOTS_DIR" pull; then
+# Fails like a pull would: the managed files and the user's changes are put back
+_lyne_update_failed() {
     managed_restore HEAD
-    echo "lyne update: git pull failed"
+    echo "lyne update: $1"
     [[ -n "$stash_name" ]] && echo "Your changes are in git stash \"$stash_name\": git -C $DOTS_DIR stash pop brings them back"
-    _lyne_notify -u critical "Lyne update failed" "git pull failed, see the terminal for details"
+    _lyne_notify -u critical "Lyne update failed" "$1, see the terminal for details"
+}
+
+echo -e "\e[1;34m:: Fetching...\e[0m"
+if ! git -C "$DOTS_DIR" fetch --tags; then
+    _lyne_update_failed "git fetch failed"
     return 1
+fi
+channel_resolve "$channel"
+if [[ -z "$CH_UPSTREAM" ]]; then
+    _lyne_update_failed "$CH_BRANCH has no upstream branch to update from"
+    return 1
+fi
+if [[ "$CH_FOLLOWS" == channel ]]; then
+    echo "   Channel: $channel"
+else
+    echo "   On $CH_BRANCH: following $CH_UPSTREAM"
+fi
+if [[ -z "$CH_TARGET" ]]; then
+    echo "   No release yet: staying at $(git -C "$DOTS_DIR" log -1 --format=%h)"
+elif ((CH_BEHIND == 0)); then
+    # Past the last release (it was on latest): stable moves on with the next
+    if [[ "$CH_FOLLOWS" == channel && "$channel" == stable && "$(channel_version)" == *+* ]]; then
+        echo "   Newer than the last release ($CH_LAST_RELEASE): staying here until the next one"
+    else
+        echo "   Already at $CH_TARGET_NAME"
+    fi
+else
+    echo -e "\e[1;34m:: Updating to $CH_TARGET_NAME...\e[0m"
+    if [[ "$CH_FOLLOWS" == branch ]]; then
+        # A branch of one's own may have local commits: git pull, with the
+        # user's pull settings (merge or rebase)
+        if ! git -C "$DOTS_DIR" pull; then
+            _lyne_update_failed "git pull failed"
+            return 1
+        fi
+    elif ! git -C "$DOTS_DIR" merge --ff-only "$CH_TARGET"; then
+        _lyne_update_failed "couldn't update to $CH_TARGET_NAME"
+        echo "$CH_BRANCH has commits of its own: lyne update only fast-forwards it"
+        return 1
+    fi
 fi
 
 managed_restore "$old_head"
@@ -150,7 +239,10 @@ fi
 echo ""
 echo -e "\e[1;32m✔ Lyne is up to date!\e[0m"
 local summary
+local version
+version="$(channel_version)"
 summary="$(git -C "$DOTS_DIR" log -1 --format='%h · %s')"
+[[ -n "$version" ]] && summary="$version · $summary"
 if [[ -n "$stash_name" ]]; then
     echo "Your changes are in git stash \"$stash_name\": git -C $DOTS_DIR stash pop brings them back"
     summary+=$'\n'"Your changes are stashed as $stash_name"
