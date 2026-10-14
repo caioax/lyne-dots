@@ -33,8 +33,13 @@ Scope {
             color: "transparent"
             screen: modelData
 
-            exclusionMode: enableAutoHide ? ExclusionMode.Ignore : ExclusionMode.Normal
-            exclusiveZone: enableAutoHide ? 0 : Config.barReservedHeight
+            // Auto hide reserves nothing: -1 (what ExclusionMode.Ignore sends).
+            // Not 0: the bar starts before state.json is read, reserving its
+            // height, and Quickshell never sends a change back to 0 (it
+            // compares with a committed state that starts at 0), so the space
+            // stayed reserved after login. A single binding: setting
+            // exclusiveZone also switches exclusionMode to Normal
+            exclusiveZone: enableAutoHide ? -1 : Config.barReservedHeight
 
             anchors {
                 top: !Config.barOnBottom
