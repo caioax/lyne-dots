@@ -1,0 +1,32 @@
+! model
+  pc104           Generic 104-key PC
+  pc105           Generic 105-key PC
+
+! layout
+  gb              English (UK)
+  us              English (US)
+  de              German
+  br              Portuguese (Brazil)
+  ba              Bosnian
+
+! variant
+  us              ba: Bosnian (US)
+  extd            gb: English (UK, extended, Windows)
+  intl            gb: English (UK, intl., with dead keys)
+  intl            us: English (US, intl., with dead keys)
+  alt-intl        us: English (US, alt. intl.)
+  nodeadkeys      de: German (no dead keys)
+  nodeadkeys      br: Portuguese (Brazil, no dead keys)
+  thinkpad        br: Portuguese (Brazil, IBM/Lenovo ThinkPad)
+
+! option
+  grp                  Switching to another layout
+  grp:alt_shift_toggle Alt+Shift
+  grp:win_space_toggle Win+Space
+  lv3                  Key to choose the 3rd level
+  caps                 Caps Lock behavior
+  caps:swapescape      Swap Esc and Caps Lock
+  caps:escape          Make Caps Lock an additional Esc
+  compose:ralt         Right Alt
+  terminate            Key sequence to kill the X server
+  terminate:ctrl_alt_bksp Ctrl+Alt+Backspace
