@@ -43,7 +43,8 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     run install --answers "$ANSWERS"
     assert_success
     refute_output --partial "[fail]"
-    assert_line "[ok] Packages · quickshell"
+    # "·" on a UTF-8 terminal, "-" in the ASCII fallback (no locale, the console)
+    assert_line --regexp '^\[ok\] Packages (·|-) quickshell$'
     assert_line "[ok] NVIDIA driver"
     assert_line "[ok] GPU links and order"
     assert_line "[ok] Lyne CLI"
@@ -53,7 +54,7 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     assert_line --partial "[dry-run] sudo mkinitcpio -P"
     assert_line --partial "[dry-run] stow -d $REPO -t $DRY -R quickshell"
     # Not asked for
-    refute_line --partial "Packages · editor"
+    refute_line --regexp 'Packages (·|-) editor'
     # The first login opens the welcome screen; settings from the answers
     local state="$DRY/.config/quickshell/state.json"
     assert_equal "$(jq -c '[.welcome.pending, .system.aurHelper, .gpus.order]' "$state")" '[true,"yay",["0000:00:02.0","0000:01:00.0"]]'

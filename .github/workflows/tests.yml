@@ -1,0 +1,36 @@
+# The parts of tests/run.sh that need no desktop: the shell's JavaScript
+# libraries (node), the lyne CLI, migrations and installer (bats) and
+# shellcheck. The qml and smoke sections need Quickshell and a Hyprland
+# session: run them locally (tests/run.sh).
+name: tests
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    timeout-minutes: 15
+    steps:
+      # git before the checkout, so it's a real clone (the tests check the
+      # repo is left as it was with git status)
+      - name: Packages
+        run: pacman -Syu --noconfirm --needed git nodejs bats bats-assert bats-support shellcheck jq lua python
+
+      - uses: actions/checkout@v4
+
+      # The installer refuses root, and root can write where the tests
+      # expect it can't
+      - name: Test user
+        run: |
+          useradd -m tester
+          chown -R tester: "$GITHUB_WORKSPACE"
+
+      - name: tests/run.sh js bash lint
+        run: runuser -u tester -- env HOME=/home/tester tests/run.sh js bash lint

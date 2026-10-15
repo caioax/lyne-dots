@@ -15,6 +15,8 @@ tests/run.sh js lint    # some sections
 
 A missing tool fails its section with the package to install; nothing is skipped silently.
 
+GitHub Actions (`.github/workflows/tests.yml`) runs `js bash lint` on every push and pull request, in an Arch Linux container as a regular user. `qml` and `smoke` need Quickshell and a Hyprland session, so they run only here.
+
 ## JavaScript tests
 
 `tests/js/<lib>.test.js` uses node's built-in runner (`node:test`, no packages). `load.js` loads a `.pragma library` file and returns its top-level functions, so the libraries need no changes to be tested:
