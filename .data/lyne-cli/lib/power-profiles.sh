@@ -23,10 +23,17 @@
 #   pp_install           install the candidate and enable its service, or
 #                        enable the installed one; 1 when blocked (nothing to
 #                        do when an unknown daemon is on the bus)
+#   pp_has_battery       0 on a laptop (a BAT* power supply)
+#   pp_auto_install      the installer's and migration's take: on a laptop
+#                        with no daemon and no TLP, TuneD or auto-cpufreq,
+#                        install power-profiles-daemon; anything else is
+#                        left as it is (Settings › System › Power profiles
+#                        offers the rest)
 #
-# LYNE_PP_BUS_NAMES (the bus names, one per line) and LYNE_PP_COMMANDS
-# (installed commands, space separated) stand in for the system in tests;
-# pacman is asked as is (stub it with a function).
+# LYNE_PP_BUS_NAMES (the bus names, one per line), LYNE_PP_COMMANDS
+# (installed commands, space separated) and LYNE_PP_POWER_SUPPLY (a
+# /sys/class/power_supply stand-in) replace the system in tests; pacman is
+# asked as is (stub it with a function).
 # =============================================================================
 
 PP_BUS_NAME="org.freedesktop.UPower.PowerProfiles"
@@ -139,4 +146,36 @@ pp_install() {
 
     echo "   Enabling $pkg.service..."
     sudo systemctl enable --now "$pkg.service"
+}
+
+pp_has_battery() {
+    local supply
+    for supply in "${LYNE_PP_POWER_SUPPLY:-/sys/class/power_supply}"/BAT*; do
+        [[ -e "$supply" ]] && return 0
+    done
+    return 1
+}
+
+pp_auto_install() {
+    if ! pp_has_battery; then
+        echo "   No battery, skipping power profiles (Settings › System › Power profiles can install them)"
+        return 0
+    fi
+    local daemon
+    daemon="$(pp_daemon)"
+    if [[ -n "$daemon" ]]; then
+        echo "   $daemon already installed, skipping"
+        return 0
+    fi
+    if _pp_on_bus; then
+        echo "   Another daemon already serves power profiles, skipping"
+        return 0
+    fi
+    local rival
+    rival="$(pp_rival "")"
+    if [[ -n "$rival" ]]; then
+        echo "   $rival manages power here, skipping (Settings › System › Power profiles explains the options)"
+        return 0
+    fi
+    pp_install
 }

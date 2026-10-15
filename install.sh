@@ -339,6 +339,14 @@ step_services() {
     sudo udevadm trigger --subsystem-match=i2c-dev
 }
 
+# Power profiles (Quick Settings, Settings › System › Power profiles): on
+# laptops with nothing else managing power, power-profiles-daemon
+step_power_profiles() {
+    source "$DOTFILES_DIR/.data/lyne-cli/lib/power-profiles.sh"
+    log_step "Checking power profiles..."
+    pp_auto_install
+}
+
 step_wallpaper() {
     local CURRENT_FILE="$HOME/.local/wallpapers/.current"
     local WALLPAPER
@@ -451,6 +459,7 @@ plan_steps() {
         step_add step_tmux "Tmux plugin manager"
     fi
     has_category utils && step_add step_services "Services (Bluetooth, network, i2c)"
+    has_category utils && step_add step_power_profiles "Power profiles (laptops)"
     has_category core && step_add step_wallpaper "Wallpaper"
     has_category theming && step_add step_theming "GTK theme and matugen"
     step_add step_migrations "Lyne CLI"
