@@ -30,7 +30,17 @@ Item {
             icon: PowerProfileService.icon(root.profile)
             iconColor: PowerProfileService.tone(root.profile)
             title: "Power profile"
-            subtitle: PowerProfileService.label(root.profile)
+            subtitle: {
+                const name = PowerProfileService.label(root.profile);
+                switch (PowerProfileService.autoReason) {
+                case "lowBattery":
+                    return name + " · low battery, until you plug in";
+                case "unplugged":
+                    return name + " · on battery, until you plug in";
+                default:
+                    return name;
+                }
+            }
             onBackClicked: root.backRequested()
 
             // md-cog

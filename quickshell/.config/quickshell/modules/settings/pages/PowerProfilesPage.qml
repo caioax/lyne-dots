@@ -94,6 +94,34 @@ ColumnLayout {
         }
     }
 
+    // Power saver by itself (PowerProfileService, powerRules.js)
+    SettingsGroup {
+        title: "Automatic"
+        visible: PowerProfileService.available && BatteryService.hasBattery
+
+        ToggleRow {
+            label: "Low battery"
+            description: "Power saver when the battery drops below the level, and back to the profile from before when you plug in. Picking a profile by hand keeps it"
+            path: "powerProfiles.lowBattery"
+        }
+
+        StepperRow {
+            label: "Level"
+            description: "Battery level that turns power saver on"
+            enabled: PowerProfileService.rules.lowBattery
+            path: "powerProfiles.lowBatteryLevel"
+            values: [10, 15, 20, 25, 30]
+            format: v => v + "%"
+        }
+
+        ToggleRow {
+            label: "On battery"
+            description: PowerProfileService.daemonSwitchesOnUnplug ? "tlp-pd already switches profiles when you unplug (its smart mode)" : "Power saver while unplugged, and back to the profile from before when you plug in"
+            enabled: !PowerProfileService.daemonSwitchesOnUnplug
+            path: "powerProfiles.onUnplug"
+        }
+    }
+
     SettingsGroup {
         title: "Quick Settings"
         visible: PowerProfileService.available

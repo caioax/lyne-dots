@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.UPower
 import qs.config
+import "powerRules.js" as Rules
 
 // Power profiles (power saver, balanced, performance) through Quickshell's
 // PowerProfiles, served by power-profiles-daemon, tuned-ppd or tlp-pd.
@@ -13,7 +14,10 @@ import qs.config
 // is there or what installing one takes. PowerProfiles tries to start the
 // daemon once, when first read, and keeps that answer until Quickshell
 // restarts (its singleton outlives reloads), so it's only read once the
-// daemon is known to be there. `qs ipc call powerprofile get|set|cycle`
+// daemon is known to be there. Automatic profiles (low battery, unplugged:
+// powerRules.js) start a few seconds after the daemon and battery are there,
+// so UPower filling in its values at login isn't taken for an unplug.
+// `qs ipc call powerprofile get|set|cycle`
 Singleton {
     id: root
 
@@ -142,6 +146,85 @@ Singleton {
     }
 
     Component.onCompleted: check()
+
+    // ========== AUTOMATIC ==========
+    // tlp-pd switches on unplug by itself (its "smart" mode)
+    readonly property bool daemonSwitchesOnUnplug: detail === "tlp-pd"
+    readonly property var rules: ({
+            lowBattery: StateService.get("powerProfiles.lowBattery", true),
+            level: StateService.get("powerProfiles.lowBatteryLevel", 20),
+            onUnplug: !daemonSwitchesOnUnplug && StateService.get("powerProfiles.onUnplug", false)
+        })
+    readonly property bool onBattery: UPower.onBattery
+    readonly property int percentage: BatteryService.percentage
+    // The rule that switched to power saver ("lowBattery", "unplugged" or "")
+    readonly property string autoReason: autoState.reason
+    readonly property bool rulesReady: available && BatteryService.hasBattery
+
+    // Power as the rules last saw it (null until they start)
+    property var _was: null
+
+    onRulesReadyChanged: {
+        _was = null;
+        if (rulesReady)
+            settle.restart();
+    }
+    onOnBatteryChanged: _powerChanged()
+    onPercentageChanged: _powerChanged()
+    onProfileChanged: {
+        // "" while the daemon isn't read yet (also right after a reload)
+        if (profile === "")
+            return;
+        const auto = Rules.profileChanged(_auto(), profile);
+        autoState.reason = auto.reason;
+        autoState.previous = auto.previous;
+    }
+
+    function _auto(): var {
+        return {
+            reason: autoState.reason,
+            previous: autoState.previous
+        };
+    }
+
+    function _powerChanged(): void {
+        if (_was === null || !rulesReady)
+            return;
+        const now = {
+            onBattery: onBattery,
+            percentage: percentage
+        };
+        const result = Rules.powerChanged(rules, _was, now, profile, holds.length > 0, _auto());
+        _was = now;
+        autoState.reason = result.auto.reason;
+        autoState.previous = result.auto.previous;
+        if (result.switchTo === "")
+            return;
+        setProfile(result.switchTo);
+        if (result.switchTo === "power-saver") {
+            const back = label(result.auto.previous);
+            const body = result.auto.reason === "lowBattery" ? `Battery at ${percentage}%. ${back} comes back when you plug in` : `Running on battery. ${back} comes back when you plug in`;
+            Quickshell.execDetached(["notify-send", "-a", "Power profile", "-i", "battery-caution", "Power saver on", body]);
+        }
+    }
+
+    Timer {
+        id: settle
+        interval: 5000
+        onTriggered: root._was = {
+            onBattery: root.onBattery,
+            percentage: root.percentage
+        }
+    }
+
+    // Kept across reloads
+    PersistentProperties {
+        id: autoState
+        reloadableId: "powerProfileAuto"
+
+        property string reason: ""
+        property string previous: ""
+    }
 
     Process {
         id: stateProc

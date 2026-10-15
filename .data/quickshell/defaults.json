@@ -290,7 +290,10 @@
         "quickSettings": "focused"
     },
     "powerProfiles": {
-        "quickSettings": true
+        "quickSettings": true,
+        "lowBattery": true,
+        "lowBatteryLevel": 20,
+        "onUnplug": false
     },
     "screenshot": {
         "mode": "region",
