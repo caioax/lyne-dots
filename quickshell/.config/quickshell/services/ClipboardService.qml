@@ -178,11 +178,17 @@ Singleton {
         stdout: StdioCollector {
             id: listOut
         }
+        stderr: StdioCollector {
+            id: listErr
+        }
 
         onExited: code => {
             root.missing = code === 127;
             if (code === 0)
                 root.entries = listOut.text.split("\n").map(line => root.parse(line)).filter(e => e !== null);
+            // A new install: no database until the first copy
+            else if (listErr.text.includes("please store something first"))
+                root.entries = [];
             else if (!root.missing)
                 console.error("[Clipboard] cliphist list failed, exit code:", code);
             root.loaded = true;

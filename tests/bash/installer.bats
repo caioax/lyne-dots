@@ -10,8 +10,7 @@ setup() {
     SYS="$BATS_TEST_TMPDIR/sys"
     DRY="$BATS_TEST_TMPDIR/dry"
     export LYNE_SYSFS="$SYS" LYNE_PCI_IDS="$FIXTURES/pci.ids" LYNE_MODULES_DIR="$BATS_TEST_TMPDIR/modules"
-    # RUN_SUDO_KEEPALIVE: its orphaned sleep would hold bats for 50 s
-    export LYNE_DRY_HOME="$DRY" LYNE_DRY_FRESH=1 LYNE_DRY_DELAY=0 RUN_SUDO_KEEPALIVE=1
+    export LYNE_DRY_HOME="$DRY" LYNE_DRY_FRESH=1 LYNE_DRY_DELAY=0
     export LYNE_PP_POWER_SUPPLY="$BATS_TEST_TMPDIR/power_supply" LYNE_PP_BUS_NAMES="" LYNE_PP_COMMANDS=""
     mkdir -p "$LYNE_MODULES_DIR/6.17.1-arch1-1" "$LYNE_PP_POWER_SUPPLY"
     echo linux >"$LYNE_MODULES_DIR/6.17.1-arch1-1/pkgbase"
@@ -124,4 +123,14 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     assert_output 0
     run log
     assert_line --partial "[dry-run] sudo"
+}
+
+@test "the sudo keepalive leaves nothing running" {
+    hybrid
+    answers "categories=core" "reboot=no"
+    RUN_SUDO_KEEPALIVE=4747 run install --answers "$ANSWERS"
+    assert_success
+    sleep 0.3
+    run /usr/bin/pgrep -fx "sleep 4747"
+    assert_failure
 }

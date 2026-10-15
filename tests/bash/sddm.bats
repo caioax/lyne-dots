@@ -68,12 +68,17 @@ conf() { cat "$LYNE_SDDM_DIR/theme.conf.user"; }
     refute [ -e "$LYNE_SDDM_DIR/wallpaper.jpg" ]
 }
 
-@test "options: LYNE_SDDM_OPTIONS over state.json; no avatar removes the copy" {
+@test "options: LYNE_SDDM_OPTIONS over state.json, even empty; no avatar removes the copy" {
     run sddm sddm_apply
     run sddm 'LYNE_SDDM_OPTIONS='"'"'{"opacity": 1}'"'"' sddm_apply'
     assert_success
     run conf
     assert_line "backgroundOpacity=1"
+    assert [ -e "$LYNE_SDDM_DIR/avatars/$(id -un).png" ]
+    # An empty value in the options wins over state.json (saved a moment later)
+    run sddm 'LYNE_SDDM_OPTIONS='"'"'{"avatar": ""}'"'"' sddm_apply'
+    refute [ -e "$LYNE_SDDM_DIR/avatars/$(id -un).png" ]
+    run sddm sddm_apply
     assert [ -e "$LYNE_SDDM_DIR/avatars/$(id -un).png" ]
     set_state '.profile.avatar = ""'
     run sddm sddm_apply

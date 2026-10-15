@@ -3,6 +3,9 @@
 #   js     node tests of the shell's JavaScript libraries (tests/js)
 #   bash   bats tests of the lyne CLI, migrations and installer (tests/bash)
 #   lint   shellcheck over every script in the repo, the tests included
+#   qml    qmllint over the shell, against tests/qml/lint-baseline.txt
+#   smoke  the whole shell in a nested Hyprland, every window and page
+#          opened, no QML errors (needs a running Hyprland session)
 # No section = all of them. Exits 1 when a section fails or its tool is
 # missing (nothing is skipped silently).
 # shellcheck disable=SC2329  # run_<section> is called as "run_$s"
@@ -18,7 +21,7 @@ else
     C_BOLD="" C_DIM="" C_OK="" C_FAIL="" C_OFF=""
 fi
 
-SECTIONS=(js bash lint)
+SECTIONS=(js bash lint qml smoke)
 declare -A RESULT
 
 header() { printf '\n%s== %s ==%s\n' "$C_BOLD" "$1" "$C_OFF"; }
@@ -52,6 +55,14 @@ run_lint() {
         local/.local/bin/lyne local/.local/bin/cpprun 'tests/bash/stubs/*')
     printf 'shellcheck: %d scripts\n' "${#files[@]}"
     shellcheck -x "${files[@]}" && printf '%sclean%s\n' "$C_OK" "$C_OFF"
+}
+
+run_qml() {
+    tests/qml/lint.sh
+}
+
+run_smoke() {
+    tests/qml/smoke.sh
 }
 
 selected=("$@")

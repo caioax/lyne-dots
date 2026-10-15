@@ -17,7 +17,6 @@ import "./modules/wallpaper/"
 import "./modules/osd/"
 import "./modules/welcome/"
 import "./components/"
-import qs.config
 
 ShellRoot {
     id: root

@@ -59,8 +59,13 @@ run_log_init() {
 run_sudo_start() {
     sudo -v || return 1
     (
+        # The sleep goes with the loop when run_sudo_stop kills it (the trap
+        # runs during wait; a foreground sleep would be left behind)
+        trap '[[ -n "${pause:-}" ]] && kill "$pause" 2>/dev/null; exit 0' TERM
         while kill -0 "$$" 2>/dev/null; do
-            sleep "${RUN_SUDO_KEEPALIVE:-50}"
+            sleep "${RUN_SUDO_KEEPALIVE:-50}" &
+            pause=$!
+            wait "$pause"
             sudo -n -v 2>/dev/null
         done
     ) </dev/null >/dev/null 2>&1 &

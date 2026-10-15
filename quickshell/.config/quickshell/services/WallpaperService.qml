@@ -17,11 +17,17 @@ Singleton {
         StateService.set(path, value);
     }
 
+    function expandHome(path: string): string {
+        return path.startsWith("~/") ? Quickshell.env("HOME") + path.slice(1) : path;
+    }
+
     // ========================================================================
     // PROPERTIES
     // ========================================================================
 
-    property string currentWallpaper: getState("wallpaper.current", "")
+    // defaults.json names it as ~/.local/wallpapers/...: every user of it
+    // (Image sources, sddm.sh) needs the absolute path
+    property string currentWallpaper: expandHome(getState("wallpaper.current", ""))
     property var wallpapers: []
     // Switching theme also switches to the theme's wallpaper
     readonly property bool dynamicWallpaper: getState("wallpaper.dynamic", true)
@@ -63,7 +69,7 @@ Singleton {
         function onStateLoaded(keys) {
             if (!keys.includes("wallpaper"))
                 return;
-            root.currentWallpaper = getState("wallpaper.current", "");
+            root.currentWallpaper = root.expandHome(getState("wallpaper.current", ""));
             root.favorites = getState("wallpaper.favorites", []);
             // What awww shows wins over the saved path
             root.getCurrentWallpaper();

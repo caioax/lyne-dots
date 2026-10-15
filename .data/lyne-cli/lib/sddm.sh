@@ -85,12 +85,13 @@ sddm_active() {
     [[ "$current" == "$SDDM_THEME_NAME" ]]
 }
 
-# An option from LYNE_SDDM_OPTIONS, else state.json (jq path into it)
+# An option from LYNE_SDDM_OPTIONS, else state.json (jq path into it). A key
+# in the options wins even when empty (no avatar): "=" marks that it's there
 _sddm_option() {
     local key="$1" path="$2" v
     if [[ -n "${LYNE_SDDM_OPTIONS:-}" ]]; then
-        v=$(jq -r --arg k "$key" '.[$k] | select(. != null)' <<< "$LYNE_SDDM_OPTIONS" 2>/dev/null)
-        [[ -n "$v" ]] && { printf '%s\n' "$v"; return; }
+        v=$(jq -r --arg k "$key" '.[$k] | select(. != null) | "=\(.)"' <<< "$LYNE_SDDM_OPTIONS" 2>/dev/null)
+        [[ -n "$v" ]] && { printf '%s\n' "${v#=}"; return; }
     fi
     # select, not //: a false value is kept
     jq -r "$path | select(. != null)" "$SDDM_STATE" 2>/dev/null

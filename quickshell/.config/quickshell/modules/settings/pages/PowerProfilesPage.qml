@@ -20,7 +20,7 @@ ColumnLayout {
         SettingRow {
             id: daemonRow
 
-            readonly property string state: PowerProfileService.state
+            readonly property string daemonState: PowerProfileService.state
             readonly property string detail: PowerProfileService.detail
             readonly property string rival: PowerProfileService.rival
             readonly property var rivalText: ({
@@ -31,12 +31,12 @@ ColumnLayout {
 
             label: "Power profiles daemon"
             description: {
-                switch (state) {
+                switch (daemonState) {
                 case "ok":
                 case "stopped":
                     {
                         const daemon = detail === "unknown" ? "A daemon" : detail;
-                        const status = state === "ok" ? daemon + " switches the profiles below" : daemon + " is installed but isn't running: Enable starts it now and at every boot";
+                        const status = daemonState === "ok" ? daemon + " switches the profiles below" : daemon + " is installed but isn't running: Enable starts it now and at every boot";
                         return rival === "" ? status : status + ". " + (rivalText[rival] ?? rival + " is installed too and may fight it");
                     }
                 case "missing":
@@ -47,28 +47,28 @@ ColumnLayout {
                     return "Checking…";
                 }
             }
-            descriptionColor: rival !== "" || state === "conflict" || state === "stopped" ? Config.warningColor : Config.subtextColor
+            descriptionColor: rival !== "" || daemonState === "conflict" || daemonState === "stopped" ? Config.warningColor : Config.subtextColor
 
             // md-check_circle / md-alert_circle
             leading: Text {
-                text: daemonRow.state === "ok" ? "\u{f05e0}" : "\u{f0028}"
+                text: daemonRow.daemonState === "ok" ? "\u{f05e0}" : "\u{f0028}"
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeIcon
-                color: daemonRow.state === "ok" ? (daemonRow.rival !== "" ? Config.warningColor : Config.successColor) : Config.subtextColor
+                color: daemonRow.daemonState === "ok" ? (daemonRow.rival !== "" ? Config.warningColor : Config.successColor) : Config.subtextColor
             }
 
             // md-download / md-play
             ActionButton {
-                visible: daemonRow.state === "missing" || daemonRow.state === "stopped"
-                icon: daemonRow.state === "missing" ? "\u{f01da}" : "\u{f040a}"
-                text: PowerProfileService.installing ? "Waiting…" : daemonRow.state === "missing" ? "Install" : "Enable"
+                visible: daemonRow.daemonState === "missing" || daemonRow.daemonState === "stopped"
+                icon: daemonRow.daemonState === "missing" ? "\u{f01da}" : "\u{f040a}"
+                text: PowerProfileService.installing ? "Waiting…" : daemonRow.daemonState === "missing" ? "Install" : "Enable"
                 opacity: PowerProfileService.installing ? 0.6 : 1
                 onClicked: PowerProfileService.install()
             }
 
             // md-refresh
             ActionButton {
-                visible: daemonRow.state === "conflict" || daemonRow.state === "ok" && daemonRow.rival !== ""
+                visible: daemonRow.daemonState === "conflict" || daemonRow.daemonState === "ok" && daemonRow.rival !== ""
                 icon: "\u{f0450}"
                 text: "Check again"
                 onClicked: PowerProfileService.check()

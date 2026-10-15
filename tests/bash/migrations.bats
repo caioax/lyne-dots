@@ -120,6 +120,13 @@ legacy_home() {
     assert_equal "$(jq -r .wallpaper "$HOME/.local/themes/tokyonight.json")" "themes/tokyonight/lyne-tokyonight-contour.jpg"
 }
 
+@test "a migration with nothing to convert says nothing" {
+    fake_dots
+    run migrate 018-special-workspaces-ids.sh
+    assert_success
+    assert_output ""
+}
+
 @test "nothing outside the temp dir is touched: /etc writes are refused, modprobe is a stand-in" {
     fake_dots
     run migrate 013-install-ddcutil.sh

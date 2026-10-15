@@ -6,7 +6,9 @@
 
 state="$HOME/.config/quickshell/state.json"
 
-if [[ -f "$state" ]] && command -v jq &>/dev/null; then
+# Only when a bind still has an old id: the message would be wrong otherwise
+if [[ -f "$state" ]] && command -v jq &>/dev/null &&
+    jq -e '(.keybinds.overrides | type) == "array" and any(.keybinds.overrides[]; .id == "special-spotify" or .id == "move-to-spotify")' "$state" &>/dev/null; then
     tmp="$(mktemp)"
     if jq '
         if (.keybinds.overrides | type) == "array" then

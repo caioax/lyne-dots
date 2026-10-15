@@ -1,0 +1,9 @@
+# Log lines the smoke test expects from its sandbox (extended regexes, one per
+# line). Only what the sandbox itself causes belongs here, never a QML error.
+
+# Qt Wayland's text-input chatter when focus moves between surfaces (the
+# live session logs it too)
+qt\.qpa\.wayland\.textinput: .*(Trying to (enable|disable))
+# The sandbox has no PipeWire and no desktop portal
+quickshell\.service\.pipewire\.loop: Failed to connect pipewire context
+Failed to register with host portal
