@@ -93,4 +93,15 @@ ColumnLayout {
             onSelected: value => PowerProfileService.setProfile(value)
         }
     }
+
+    SettingsGroup {
+        title: "Quick Settings"
+        visible: PowerProfileService.available
+
+        ToggleRow {
+            label: "Tile"
+            description: "A Power profile tile: a click switches to the next profile, ⋮ opens the profiles. The profile button at the top of Quick Settings stays"
+            path: "powerProfiles.quickSettings"
+        }
+    }
 }

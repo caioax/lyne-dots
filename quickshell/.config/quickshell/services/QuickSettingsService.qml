@@ -48,6 +48,10 @@ Singleton {
             notifications: {
                 depth: 1,
                 back: ""
+            },
+            powerProfile: {
+                depth: 1,
+                back: ""
             }
         })
 
@@ -157,6 +161,17 @@ Singleton {
             toggle: () => IdleService.toggleCaffeine()
         },
         Tile {
+            tileId: "powerProfile"
+            label: "Power profile"
+            icon: PowerProfileService.icon(PowerProfileService.profile)
+            status: PowerProfileService.label(PowerProfileService.profile)
+            // Lit away from the default
+            active: PowerProfileService.profile !== "balanced"
+            available: PowerProfileService.available && PowerProfileService.showTile
+            page: "powerProfile"
+            toggle: () => PowerProfileService.cycle()
+        },
+        Tile {
             tileId: "mic"
             label: "Microphone"
             icon: AudioService.sourceIcon
@@ -192,7 +207,7 @@ Singleton {
     IpcHandler {
         target: "quicksettings"
 
-        // Pages: wifi, bluetooth, nightLight, sound, notifications
+        // Pages: wifi, bluetooth, nightLight, sound, notifications, powerProfile
         function toggle(page: string): void {
             root.toggle(page, root.focusedScreen());
         }

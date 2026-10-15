@@ -28,7 +28,8 @@ QsPopupWindow {
             bluetooth: bluetoothSlot,
             nightLight: nightLightSlot,
             sound: soundSlot,
-            notifications: notificationsSlot
+            notifications: notificationsSlot,
+            powerProfile: powerProfileSlot
         })
 
     popupWidth: Config.fontSizeNormal * 30
@@ -256,6 +257,18 @@ QsPopupWindow {
             page: Component {
                 SoundPage {
                     onBackRequested: QuickSettingsService.back()
+                }
+            }
+        }
+
+        PageSlot {
+            id: powerProfileSlot
+            pageId: "powerProfile"
+
+            page: Component {
+                PowerProfilePage {
+                    onBackRequested: QuickSettingsService.back()
+                    onCloseWindow: root.closeWindow()
                 }
             }
         }

@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.UPower
+import qs.config
 
 // Power profiles (power saver, balanced, performance) through Quickshell's
 // PowerProfiles, served by power-profiles-daemon, tuned-ppd or tlp-pd.
@@ -35,14 +36,17 @@ Singleton {
     readonly property var profileInfo: ({
             "power-saver": {
                 label: "Power saver",
+                description: "Quieter and cooler, longer battery",
                 icon: "\u{f032a}" // md-leaf
             },
             "balanced": {
                 label: "Balanced",
+                description: "Fast when needed, saves when idle",
                 icon: "\u{f05d1}" // md-scale_balance
             },
             "performance": {
                 label: "Performance",
+                description: "Full speed, more heat and power",
                 icon: "\u{f04c5}" // md-speedometer
             }
         })
@@ -50,10 +54,42 @@ Singleton {
     readonly property bool hasPerformance: available && PowerProfiles.hasPerformanceProfile
     readonly property var profiles: profileIds.filter(id => id !== "performance" || hasPerformance)
     // "" without a daemon
-    readonly property string profile: {
+    readonly property string profile: available ? idOf(PowerProfiles.profile) : ""
+
+    // Why performance is held back ("" when it isn't)
+    readonly property string degradation: {
         if (!available)
             return "";
-        switch (PowerProfiles.profile) {
+        switch (PowerProfiles.degradationReason) {
+        case PerformanceDegradationReason.LapDetected:
+            return "On your lap: the laptop keeps cool, so performance is limited";
+        case PerformanceDegradationReason.HighTemperature:
+            return "Running hot: performance is limited until it cools down";
+        default:
+            return "";
+        }
+    }
+
+    // Apps holding a profile while they run: [{ app, profile }]. Picking a
+    // profile by hand releases them
+    readonly property var holds: {
+        if (!available)
+            return [];
+        const out = [];
+        const list = PowerProfiles.holds;
+        for (let i = 0; i < list.length; i++)
+            out.push({
+                app: list[i].applicationId,
+                profile: idOf(list[i].profile)
+            });
+        return out;
+    }
+
+    // Quick Settings tile (Settings › System › Power profiles)
+    readonly property bool showTile: StateService.get("powerProfiles.quickSettings", true)
+
+    function idOf(value: int): string {
+        switch (value) {
         case PowerProfile.PowerSaver:
             return "power-saver";
         case PowerProfile.Performance:
@@ -69,6 +105,15 @@ Singleton {
 
     function icon(id: string): string {
         return profileInfo[id]?.icon ?? "";
+    }
+
+    function description(id: string): string {
+        return profileInfo[id]?.description ?? "";
+    }
+
+    // Saver green, balanced accent, performance warm
+    function tone(id: string): color {
+        return id === "power-saver" ? Config.successColor : id === "performance" ? Config.warningColor : Config.accentColor;
     }
 
     function setProfile(id: string): void {

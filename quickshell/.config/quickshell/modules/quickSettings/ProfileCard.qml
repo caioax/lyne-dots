@@ -207,6 +207,16 @@ Card {
             }
         }
 
+        // Power profile: opens its page
+        ClearButton {
+            visible: PowerProfileService.available
+            icon: PowerProfileService.icon(PowerProfileService.profile)
+            baseColor: PowerProfileService.tone(PowerProfileService.profile)
+            Layout.preferredWidth: root.controlSize
+            Layout.preferredHeight: root.controlSize
+            onClicked: QuickSettingsService.showPage("powerProfile")
+        }
+
         ClearButton {
             icon: "⏻"
             Layout.preferredWidth: root.controlSize

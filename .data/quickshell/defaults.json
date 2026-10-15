@@ -289,6 +289,9 @@
         "pollInterval": 0,
         "quickSettings": "focused"
     },
+    "powerProfiles": {
+        "quickSettings": true
+    },
     "screenshot": {
         "mode": "region",
         "action": "save",
