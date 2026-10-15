@@ -19,11 +19,13 @@ jobs:
     timeout-minutes: 15
     steps:
       # git before the checkout, so it's a real clone (the tests check the
-      # repo is left as it was with git status)
+      # repo is left as it was with git status). diffutils (cmp, used by the
+      # state.json writers) isn't in the image; installs get it with
+      # base-devel and mkinitcpio
       - name: Packages
-        run: pacman -Syu --noconfirm --needed git nodejs bats bats-assert bats-support shellcheck jq lua python
+        run: pacman -Syu --noconfirm --needed git diffutils nodejs bats bats-assert bats-support shellcheck jq lua python
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # The installer refuses root, and root can write where the tests
       # expect it can't
