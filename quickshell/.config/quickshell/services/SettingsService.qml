@@ -189,6 +189,13 @@ Singleton {
             category: "System"
         },
         {
+            id: "powerProfiles",
+            label: "Power profiles",
+            icon: "\u{f04c5}",
+            description: "Power saver, balanced or performance, and the daemon that switches them",
+            category: "System"
+        },
+        {
             id: "apps",
             label: "Apps",
             icon: "\u{f003b}",

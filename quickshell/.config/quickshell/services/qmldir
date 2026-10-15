@@ -3,6 +3,7 @@ singleton TimeService TimeService.qml
 singleton AudioService AudioService.qml
 singleton BluetoothService BluetoothService.qml
 singleton BatteryService BatteryService.qml
+singleton PowerProfileService PowerProfileService.qml
 singleton NetworkService NetworkService.qml
 singleton TrayService TrayService.qml
 singleton MprisService MprisService.qml

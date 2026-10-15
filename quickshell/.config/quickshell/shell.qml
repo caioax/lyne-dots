@@ -37,6 +37,9 @@ ShellRoot {
     // Checks for a lyne-dots update a minute after the start
     property bool _updateReady: UpdateService.checking
 
+    // Answers `qs ipc call powerprofile`
+    property string _powerProfile: PowerProfileService.state
+
     // Recording a shortcut in Settings puts Hyprland in the empty
     // "lyne_capture" submap. If the shell reloaded or crashed mid-recording,
     // Hyprland would be left without binds: always leave it on (re)load
