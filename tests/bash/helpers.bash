@@ -21,7 +21,8 @@ lyne_setup() {
     # Set in the user's session: with a fake HOME they'd still point at the
     # real ~/.local/state and friends
     unset XDG_CONFIG_HOME XDG_STATE_HOME XDG_CACHE_HOME XDG_DATA_HOME
-    unset HYPRLAND_INSTANCE_SIGNATURE LYNE_HYPR_LOG
+    # Nor the graphical session: nothing may reach the user's Hyprland
+    unset HYPRLAND_INSTANCE_SIGNATURE LYNE_HYPR_LOG WAYLAND_DISPLAY DISPLAY
     export DOTS_DIR="$HOME/.lyne-dots"
 
     export PATH="$BATS_TEST_DIRNAME/stubs:$PATH"
@@ -108,4 +109,57 @@ fx_gpu() {
             echo "${out#*:}" >"$dev/drm/$card/$card-${out%:*}/status"
         done
     fi
+}
+
+# fake_dots [MIGRATIONS_DIR]: $DOTS_DIR as the repo seen through per-item
+# links, except what tests write to: the shell config folder is a real one
+# with its own state.json (from defaults.json, linked from
+# ~/.config/quickshell like an install does), and .data/lyne-cli/migrations
+# can point elsewhere (LYNE_TEST_MIGRATIONS for a copy). Writing through a link would change the repo: tests
+# that use this call `repo_unchanged` in teardown.
+fake_dots() {
+    local item cfg="$DOTS_DIR/quickshell/.config/quickshell"
+    mkdir -p "$DOTS_DIR/.data/lyne-cli" "$cfg" "$HOME/.config"
+    for item in "$REPO"/* "$REPO"/.[!.]*; do
+        case "${item##*/}" in
+        .git | .data | quickshell) ;;
+        *) ln -s "$item" "$DOTS_DIR/" ;;
+        esac
+    done
+    for item in "$REPO"/.data/*; do
+        [[ "${item##*/}" == lyne-cli ]] || ln -s "$item" "$DOTS_DIR/.data/"
+    done
+    ln -s "$LIB" "$DOTS_DIR/.data/lyne-cli/lib"
+    ln -s "$REPO/.data/lyne-cli/commands" "$DOTS_DIR/.data/lyne-cli/"
+    ln -s "${1:-${LYNE_TEST_MIGRATIONS:-$REPO/.data/lyne-cli/migrations}}" "$DOTS_DIR/.data/lyne-cli/migrations"
+    for item in "$REPO"/quickshell/.config/quickshell/*; do
+        [[ "${item##*/}" == state.json ]] || ln -s "$item" "$cfg/"
+    done
+    cp "$REPO/.data/quickshell/defaults.json" "$cfg/state.json"
+    ln -s "$cfg" "$HOME/.config/quickshell"
+    REPO_STATUS="$(git -C "$REPO" status --porcelain)"
+}
+
+repo_unchanged() {
+    [[ -z "${REPO_STATUS+x}" ]] && return 0
+    local now
+    now="$(git -C "$REPO" status --porcelain)"
+    if [[ "$now" != "$REPO_STATUS" ]]; then
+        echo "the test changed the repo:" >&2
+        diff <(echo "$REPO_STATUS") <(echo "$now") >&2
+        return 1
+    fi
+}
+
+# Every file under $HOME (links listed, not followed) with a hash of its
+# content, plus the fake package list: two snapshots differ when anything
+# was written
+snapshot() {
+    (
+        cd "$HOME" || exit 1
+        find . -path ./.lyne-dots -prune -o -type l -printf '%p -> %l\n' | sort
+        find . -path ./.lyne-dots -prune -o -type f -print0 | xargs -0 -r sha1sum | sort -k2
+        find .lyne-dots -type f -print0 | xargs -0 -r sha1sum | sort -k2
+    )
+    sort "$FAKE_PKGS"
 }

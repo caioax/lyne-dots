@@ -1,0 +1,5 @@
+#!/bin/bash
+# Test stand-in for hyprctl: no Hyprland running (never the user's session)
+echo "hyprctl $*" >>"${STUB_LOG:-/dev/null}"
+echo "HYPRLAND_INSTANCE_SIGNATURE not set! (is hyprland running?)" >&2
+exit 1

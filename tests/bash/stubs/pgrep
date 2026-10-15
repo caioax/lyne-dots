@@ -1,0 +1,4 @@
+#!/bin/bash
+# Test stand-in for pgrep: nothing is running (never the user's processes)
+echo "pgrep $*" >>"${STUB_LOG:-/dev/null}"
+exit 1

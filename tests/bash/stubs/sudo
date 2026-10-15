@@ -1,7 +1,31 @@
 #!/bin/bash
-# Test stand-in for sudo: logs the call and runs the command as the user
-# (the other stand-ins come first in PATH, so pacman & co. stay fake)
-echo "sudo $*" >>"${STUB_LOG:-/dev/null}"
+# Test stand-in for sudo: logs the call, then runs it as the user only when
+# it's safe: another stand-in, or a file command whose paths are all inside
+# the test's temp dir. Anything else (tee into /etc, modprobe, a real tool)
+# is logged as refused and reported as done, its input read and dropped.
+log="${STUB_LOG:-/dev/null}"
+echo "sudo $*" >>"$log"
 while [[ "${1:-}" == -* ]]; do shift; done
 [[ $# -gt 0 ]] || exit 0
-exec "$@"
+stubs="$(dirname "$(realpath "$0")")"
+if [[ -x "$stubs/$1" ]]; then
+    exec "$stubs/$1" "${@:2}"
+fi
+case "$1" in
+tee | mkdir | rm | cp | mv | sed | chmod | ln | touch)
+    safe=1
+    for arg in "${@:2}"; do
+        # A path: starts with / and its folder exists (not a sed script)
+        [[ "$arg" == /* && -d "$(dirname "$arg")" ]] || continue
+        if [[ "$(realpath -m "$arg")" != "$(realpath -m "${BATS_TEST_TMPDIR:-/nonexistent}")"/* ]]; then
+            safe=0
+        fi
+    done
+    if ((safe)) && [[ -n "${BATS_TEST_TMPDIR:-}" ]]; then
+        exec "$@"
+    fi
+    ;;
+esac
+echo "sudo-refused $*" >>"$log"
+[[ "$1" == tee ]] && cat >/dev/null
+exit 0
