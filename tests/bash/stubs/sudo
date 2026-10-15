@@ -1,0 +1,7 @@
+#!/bin/bash
+# Test stand-in for sudo: logs the call and runs the command as the user
+# (the other stand-ins come first in PATH, so pacman & co. stay fake)
+echo "sudo $*" >>"${STUB_LOG:-/dev/null}"
+while [[ "${1:-}" == -* ]]; do shift; done
+[[ $# -gt 0 ]] || exit 0
+exec "$@"

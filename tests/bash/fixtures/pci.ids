@@ -1,0 +1,20 @@
+# Excerpt of hwdata's pci.ids (same format: vendor, <TAB>device, <TAB><TAB>subsystem)
+1002  Advanced Micro Devices, Inc. [AMD/ATI]
+	15bf  Phoenix1
+	1638  Cezanne [Radeon Vega Series / Radeon Vega Mobile Series]
+	73ff  Navi 23 [Radeon RX 6600/6600 XT/6600M]
+10de  NVIDIA Corporation
+	1004  GK110 [GeForce GTX 780]
+	13c2  GM204 [GeForce GTX 970]
+	1c03  GP106 [GeForce GTX 1060 6GB]
+	1f9d  TU117M [GeForce GTX 1650 Mobile / Max-Q]
+		1043 1f9d  ASUS TU117M (not a device line)
+	2882  AD107 [GeForce RTX 4060]
+1a03  ASPEED Technology, Inc.
+	2000  ASPEED Graphics Family
+1af4  Red Hat, Inc.
+	1050  Virtio 1.0 GPU
+8086  Intel Corporation
+	3e9b  CoffeeLake-H GT2 [UHD Graphics 630]
+	56a0  DG2 [Arc A770]
+	7d55  Meteor Lake-P [Intel Arc Graphics]

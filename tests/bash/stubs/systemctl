@@ -1,0 +1,14 @@
+#!/bin/bash
+# Test stand-in for systemctl: is-enabled/enable/disable over $FAKE_ENABLED
+echo "systemctl $*" >>"${STUB_LOG:-/dev/null}"
+db="${FAKE_ENABLED:-/dev/null}"
+args=()
+for a in "$@"; do [[ "$a" == -* ]] || args+=("$a"); done
+case "${args[0]:-}" in
+is-enabled)
+    if grep -qx "${args[1]}" "$db" 2>/dev/null; then echo enabled; else echo disabled; exit 1; fi
+    ;;
+enable) printf '%s\n' "${args[@]:1}" >>"$db" ;;
+disable) for u in "${args[@]:1}"; do sed -i "/^$u\$/d" "$db"; done ;;
+esac
+exit 0

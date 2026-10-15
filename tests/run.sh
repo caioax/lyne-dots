@@ -2,7 +2,7 @@
 # Runs the lyne-dots test suite: tests/run.sh [section...]
 #   js     node tests of the shell's JavaScript libraries (tests/js)
 #   bash   bats tests of the lyne CLI, migrations and installer (tests/bash)
-#   lint   shellcheck over every script in the repo
+#   lint   shellcheck over every script in the repo, the tests included
 # No section = all of them. Exits 1 when a section fails or its tool is
 # missing (nothing is skipped silently).
 # shellcheck disable=SC2329  # run_<section> is called as "run_$s"
@@ -48,7 +48,8 @@ run_lint() {
     need shellcheck shellcheck || return 1
     local files
     # Tracked and new (not ignored) scripts
-    mapfile -t files < <(git ls-files --cached --others --exclude-standard '*.sh' local/.local/bin/lyne local/.local/bin/cpprun)
+    mapfile -t files < <(git ls-files --cached --others --exclude-standard '*.sh' '*.bats' '*.bash' \
+        local/.local/bin/lyne local/.local/bin/cpprun 'tests/bash/stubs/*')
     printf 'shellcheck: %d scripts\n' "${#files[@]}"
     shellcheck -x "${files[@]}" && printf '%sclean%s\n' "$C_OK" "$C_OFF"
 }

@@ -1,0 +1,38 @@
+#!/bin/bash
+# Test stand-in for pacman over $FAKE_PKGS ("name version" lines)
+echo "pacman $*" >>"${STUB_LOG:-/dev/null}"
+db="${FAKE_PKGS:?FAKE_PKGS not set}"
+touch "$db"
+op=$1
+shift
+names=()
+for a in "$@"; do [[ "$a" == -* ]] || names+=("$a"); done
+case "$op" in
+-Q | -Qq)
+    [[ ${#names[@]} -eq 0 ]] && { if [[ "$op" == -Qq ]]; then cut -d' ' -f1 "$db"; else cat "$db"; fi; exit 0; }
+    status=0
+    for n in "${names[@]}"; do
+        line="$(grep -m1 "^$n " "$db")"
+        if [[ -z "$line" ]]; then
+            echo "error: package '$n' was not found" >&2
+            status=1
+        elif [[ "$op" == -Qq ]]; then
+            echo "$n"
+        else
+            echo "$line"
+        fi
+    done
+    exit $status
+    ;;
+-Qs | -Qqs)
+    cut -d' ' -f1 "$db" | grep -E "${names[0]:-.}"
+    ;;
+-S)
+    for n in "${names[@]}"; do grep -q "^$n " "$db" || echo "$n 1.0-1" >>"$db"; done
+    ;;
+-R* )
+    for n in "${names[@]}"; do sed -i "/^$n /d" "$db"; done
+    ;;
+-Syu | -Sy | -Syy) ;;
+*) exit 0 ;;
+esac
