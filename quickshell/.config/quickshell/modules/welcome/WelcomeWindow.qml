@@ -55,7 +55,7 @@ FloatingWindow {
     }
 
     // Stays English: Hyprland window rules match the title
-    title: I18n.tr("Welcome") // i18n-ignore
+    title: "Welcome" // i18n-ignore
     implicitWidth: defaultSize.width
     implicitHeight: defaultSize.height
     minimumSize: Qt.size(600, 480)

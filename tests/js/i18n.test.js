@@ -324,3 +324,26 @@ test("no UI strings outside I18n (node tools/i18n.js lint --list)", () => {
     tool.bareStrings(SHELL, lines);
     assert.deepEqual(lines, [], "wrap them in I18n.tr (or // i18n-ignore when it isn't UI text)");
 });
+
+test("windows Hyprland rules match by title keep their English literal title", () => {
+    const rules = fs.readFileSync(path.resolve(SHELL, "../../../hyprland/.config/hypr/conf/rules.lua"), "utf8");
+    const titles = [...rules.matchAll(/class = "\^\(org\\\\\.quickshell\)\$", title = "\^\(([^)]+)\)\$"/g)].map(m => m[1]);
+    assert.ok(titles.length >= 3, "no Quickshell window rules found in rules.lua");
+    const qml = [];
+    const walk = dir => {
+        for (const e of fs.readdirSync(dir, {
+                withFileTypes: true
+            })) {
+            const p = path.join(dir, e.name);
+            if (e.isDirectory())
+                walk(p);
+            else if (e.name.endsWith(".qml"))
+                qml.push(fs.readFileSync(p, "utf8"));
+        }
+    };
+    walk(path.join(SHELL, "modules"));
+    for (const title of titles) {
+        const literal = new RegExp(`^\\s*title: ${JSON.stringify(title).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "m");
+        assert.ok(qml.some(t => literal.test(t)), `no window with the literal title "${title}" (a translated title breaks its rule in rules.lua)`);
+    }
+});

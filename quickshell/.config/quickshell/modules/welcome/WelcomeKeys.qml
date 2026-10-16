@@ -68,7 +68,9 @@ Row {
 
             required property string modelData
 
-            anchors.verticalCenter: parent.verticalCenter
+            // Centered by the row's height: `parent` is gone while the
+            // delegate is being destroyed
+            y: Math.round((root.height - height) / 2)
             implicitWidth: Math.max(implicitHeight, capText.implicitWidth + Config.padding * 2)
             implicitHeight: Config.fontSizeIconSmall + Config.padding
             width: implicitWidth

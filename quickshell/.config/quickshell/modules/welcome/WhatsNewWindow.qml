@@ -22,7 +22,7 @@ FloatingWindow {
     readonly property var releases: WhatsNewService.releases
 
     // Stays English: Hyprland window rules match the title
-    title: I18n.tr("What's new") // i18n-ignore
+    title: "What's new" // i18n-ignore
     implicitWidth: defaultSize.width
     implicitHeight: defaultSize.height
     minimumSize: Qt.size(480, 360)
