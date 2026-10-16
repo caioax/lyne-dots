@@ -127,7 +127,7 @@ ClippingRectangle {
         CardStyle {
             value: 0.65
             icon: "\u{f057e}"
-            label: "Volume"
+            label: I18n.tr("Volume")
         }
     }
 

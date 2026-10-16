@@ -19,41 +19,41 @@ ColumnLayout {
     Component.onCompleted: ClipboardService.refresh()
 
     SettingsGroup {
-        title: "History"
+        title: I18n.tr("History")
 
         ToggleRow {
-            label: "Save images"
-            description: "Keep copied images and screenshots too; off stores text only"
+            label: I18n.tr("Save images")
+            description: I18n.tr("Keep copied images and screenshots too; off stores text only")
             path: "clipboard.storeImages"
         }
 
         StepperRow {
-            label: "Entries kept"
-            description: "The oldest are dropped as new ones come in"
+            label: I18n.tr("Entries kept")
+            description: I18n.tr("The oldest are dropped as new ones come in")
             path: "clipboard.maxItems"
             values: [100, 250, 500, 750, 1000, 2000]
         }
     }
 
     SettingsGroup {
-        title: "Data"
+        title: I18n.tr("Data")
 
         SettingRow {
             id: openRow
 
-            label: "Clipboard history"
+            label: I18n.tr("Clipboard history")
             description: {
                 if (ClipboardService.missing)
-                    return "cliphist isn't installed";
+                    return I18n.tr("cliphist isn't installed");
                 if (!ClipboardService.loaded)
-                    return "Reading…";
+                    return I18n.tr("Reading…");
                 const count = ClipboardService.entries.length;
-                return (count === 1 ? "1 entry" : count + " entries") + " · opens with Super + V";
+                return I18n.trn("%n entry · opens with Super + V", "%n entries · opens with Super + V", count);
             }
 
             ActionButton {
                 icon: "\u{f014d}"
-                text: "Open"
+                text: I18n.tr("Open")
                 size: root.buttonSize
                 baseColor: openRow.controlColor
                 onClicked: {
@@ -66,13 +66,13 @@ ColumnLayout {
         SettingRow {
             id: clearRow
 
-            label: "Clear history"
-            description: root.confirmingClear ? "Click again to delete every entry" : "Deletes everything saved, text and images"
+            label: I18n.tr("Clear history")
+            description: root.confirmingClear ? I18n.tr("Click again to delete every entry") : I18n.tr("Deletes everything saved, text and images")
             enabled: ClipboardService.entries.length > 0
 
             ActionButton {
                 icon: "\u{f01b4}"
-                text: root.confirmingClear ? "Delete all" : "Clear"
+                text: root.confirmingClear ? I18n.tr("Delete all") : I18n.tr("Clear")
                 size: root.buttonSize
                 baseColor: root.confirmingClear ? Config.errorColor : clearRow.controlColor
                 hoverColor: root.confirmingClear ? Qt.lighter(Config.errorColor, 1.1) : Config.surface3Color

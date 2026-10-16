@@ -72,41 +72,41 @@ ColumnLayout {
     spacing: Config.spacing * 3
 
     SettingsGroup {
-        title: "Capture"
+        title: I18n.tr("Capture")
 
         SelectRow {
-            label: "Opens in"
+            label: I18n.tr("Opens in")
             description: {
                 switch (Config.screenshotMode) {
                 case "window":
-                    return "Picks the window under the cursor; R, W and S switch modes";
+                    return I18n.tr("Picks the window under the cursor; R, W and S switch modes");
                 case "screen":
-                    return "Takes the whole monitor under the cursor; R, W, S and C switch modes";
+                    return I18n.tr("Takes the whole monitor under the cursor; R, W, S and C switch modes");
                 case "color":
-                    return "Magnifies the pixels under the cursor, a click copies the color; R, W, S and C switch modes";
+                    return I18n.tr("Magnifies the pixels under the cursor, a click copies the color; R, W, S and C switch modes");
                 default:
-                    return "Drag to draw a region; R, W, S and C switch modes";
+                    return I18n.tr("Drag to draw a region; R, W, S and C switch modes");
                 }
             }
             path: "screenshot.mode"
             options: [
                 {
-                    label: "Region",
+                    label: I18n.tr("Region"),
                     value: "region",
                     icon: "\u{f0a6d}"
                 },
                 {
-                    label: "Window",
+                    label: I18n.tr("Window"),
                     value: "window",
                     icon: "\u{f05af}"
                 },
                 {
-                    label: "Screen",
+                    label: I18n.tr("Screen"),
                     value: "screen",
                     icon: "\u{f0379}"
                 },
                 {
-                    label: "Color",
+                    label: I18n.tr("Color"),
                     value: "color",
                     icon: "\u{f020a}"
                 }
@@ -114,12 +114,12 @@ ColumnLayout {
         }
 
         SelectRow {
-            label: "Color format"
-            description: "How color mode copies it, like " + ({
+            label: I18n.tr("Color format")
+            description: I18n.tr("How color mode copies it, like %1", {
                     hex: "#7aa2f7",
                     rgb: "rgb(122, 162, 247)",
                     hsl: "hsl(221, 89%, 72%)"
-                })[Config.screenshotColorFormat]
+                }[Config.screenshotColorFormat])
             path: "screenshot.colorFormat"
             segmentWidth: Config.fontSizeNormal * 5
             options: [
@@ -141,12 +141,12 @@ ColumnLayout {
         SettingRow {
             id: tryRow
 
-            label: "Take a screenshot"
-            description: "Closes Settings and opens the capture overlay · Print"
+            label: I18n.tr("Take a screenshot")
+            description: I18n.tr("Closes Settings and opens the capture overlay · Print")
 
             ActionButton {
                 icon: "\u{f0e51}"
-                text: "Capture"
+                text: I18n.tr("Capture")
                 size: root.buttonSize
                 baseColor: tryRow.controlColor
                 onClicked: {
@@ -159,35 +159,35 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "After capture"
+        title: I18n.tr("After capture")
 
         SelectRow {
-            label: "Capture"
+            label: I18n.tr("Capture")
             description: {
                 switch (Config.screenshotAction) {
                 case "copy":
-                    return "Copies it only; the notification can still save it";
+                    return I18n.tr("Copies it only; the notification can still save it");
                 case "edit":
-                    return "Opens it in Satty first; saved and copied once you save there";
+                    return I18n.tr("Opens it in Satty first; saved and copied once you save there");
                 default:
-                    return "Saves the file and copies it; the notification opens, edits or deletes it";
+                    return I18n.tr("Saves the file and copies it; the notification opens, edits or deletes it");
                 }
             }
             path: "screenshot.action"
             segmentWidth: Config.fontSizeNormal * 8
             options: [
                 {
-                    label: "Save & copy",
+                    label: I18n.tr("Save & copy"),
                     value: "save",
                     icon: "\u{f0193}"
                 },
                 {
-                    label: "Copy only",
+                    label: I18n.tr("Copy only"),
                     value: "copy",
                     icon: "\u{f018f}"
                 },
                 {
-                    label: "Edit first",
+                    label: I18n.tr("Edit first"),
                     value: "edit",
                     icon: "\u{f03eb}"
                 }
@@ -197,8 +197,8 @@ ColumnLayout {
         TextFieldRow {
             id: folderRow
 
-            label: "Folder"
-            description: "Empty uses your Pictures folder; ~ means your home"
+            label: I18n.tr("Folder")
+            description: I18n.tr("Empty uses your Pictures folder; ~ means your home")
             path: "screenshot.folder"
             placeholder: root.defaultFolder
 
@@ -218,8 +218,8 @@ ColumnLayout {
         }
 
         TextFieldRow {
-            label: "File name"
-            description: root.formatName(Config.screenshotFilename) + " · %Y %m %d %H %M %S = date and time"
+            label: I18n.tr("File name")
+            description: I18n.tr("%1 · %Y %m %d %H %M %S = date and time", root.formatName(Config.screenshotFilename))
             path: "screenshot.filename"
             fieldWidth: Config.fontSizeNormal * 20
             placeholder: StateService.getDefault("screenshot.filename", "")
@@ -227,16 +227,16 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Copy text"
+        title: I18n.tr("Copy text")
 
         SettingRow {
-            label: "Languages"
+            label: I18n.tr("Languages")
             description: {
                 if (root.ocrInstalled === null)
-                    return "Looking for tesseract…";
+                    return I18n.tr("Looking for tesseract…");
                 if (root.ocrInstalled.length === 0)
-                    return "Install tesseract and a tesseract-data-<language> package to copy the text in a selection";
-                return "Text (T in the overlay) reads the selection in these; more at once is slower";
+                    return I18n.tr("Install tesseract and a tesseract-data-<language> package to copy the text in a selection");
+                return I18n.tr("Text (T in the overlay) reads the selection in these; more at once is slower");
             }
             path: "screenshot.ocrLanguages"
             // No chips until tesseract has languages to pick
@@ -270,7 +270,7 @@ ColumnLayout {
                         Text {
                             id: chipText
                             anchors.centerIn: parent
-                            text: (root.languageNames[chip.modelData] ?? chip.modelData) + (chip.missing ? " · not installed" : "")
+                            text: chip.missing ? I18n.tr("%1 · not installed", root.languageNames[chip.modelData] ?? chip.modelData) : (root.languageNames[chip.modelData] ?? chip.modelData)
                             font.family: Config.font
                             font.pixelSize: Config.fontSizeSmall
                             font.bold: chip.active
@@ -291,11 +291,11 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Overlay"
+        title: I18n.tr("Overlay")
 
         SliderRow {
-            label: "Dimming"
-            description: "How dark the screen gets outside the selection"
+            label: I18n.tr("Dimming")
+            description: I18n.tr("How dark the screen gets outside the selection")
             path: "screenshot.dim"
             from: 0
             to: 90
@@ -304,20 +304,20 @@ ColumnLayout {
         }
 
         ToggleRow {
-            label: "Guides"
-            description: "Dashed lines from the cursor, and then from the region, to the screen edges"
+            label: I18n.tr("Guides")
+            description: I18n.tr("Dashed lines from the cursor, and then from the region, to the screen edges")
             path: "screenshot.guides"
         }
 
         ToggleRow {
-            label: "Key hints"
-            description: "The keys for what you are doing, under the control bar"
+            label: I18n.tr("Key hints")
+            description: I18n.tr("The keys for what you are doing, under the control bar")
             path: "screenshot.hints"
         }
 
         ToggleRow {
-            label: "Animations"
-            description: "Animate the window and screen selections (a region follows the mouse as it is drawn)"
+            label: I18n.tr("Animations")
+            description: I18n.tr("Animate the window and screen selections (a region follows the mouse as it is drawn)")
             path: "screenshot.animations"
         }
     }

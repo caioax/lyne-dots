@@ -1,4 +1,4 @@
-# UI strings not yet going through I18n, per file (1089 lines): node tools/i18n.js lint --update
+# UI strings not yet going through I18n, per file (803 lines): node tools/i18n.js lint --update
 3 components/KeyboardLayoutButton.qml
 1 modules/bar/MediaButton.qml
 1 modules/calendar/CalendarButton.qml
@@ -42,33 +42,23 @@
 7 modules/settings/pages/AppsPage.qml
 12 modules/settings/pages/AutostartDialog.qml
 38 modules/settings/pages/AutostartPage.qml
-102 modules/settings/pages/BarPage.qml
-6 modules/settings/pages/BarTemplatePicker.qml
 20 modules/settings/pages/BrightnessPage.qml
-14 modules/settings/pages/ClipboardPage.qml
 12 modules/settings/pages/CustomBindDialog.qml
-24 modules/settings/pages/DashboardPage.qml
 36 modules/settings/pages/GraphicsPage.qml
 1 modules/settings/pages/HyprlandErrorGroup.qml
 22 modules/settings/pages/IdlePage.qml
 14 modules/settings/pages/InputPage.qml
 14 modules/settings/pages/KeybindsPage.qml
 62 modules/settings/pages/KeyboardPage.qml
-48 modules/settings/pages/LauncherPage.qml
 18 modules/settings/pages/LockPage.qml
 35 modules/settings/pages/MonitorsPage.qml
 2 modules/settings/pages/NavKeysPicker.qml
-13 modules/settings/pages/NotificationsPage.qml
-42 modules/settings/pages/OsdPage.qml
-1 modules/settings/pages/OsdStylePreview.qml
-18 modules/settings/pages/PowerPage.qml
 21 modules/settings/pages/PowerProfilesPage.qml
 13 modules/settings/pages/ProfilePage.qml
-1 modules/settings/pages/ScreenshotPage.qml
 17 modules/settings/pages/SpecialDialog.qml
 11 modules/settings/pages/SpecialsPage.qml
 1 modules/settings/pages/TilingPicker.qml
-5 modules/settings/pages/TrayStylePreview.qml
+2 modules/settings/pages/TrayStylePreview.qml
 36 modules/settings/pages/WindowsPage.qml
 14 modules/settings/pages/WorkspacesPage.qml
 2 modules/settings/pages/XkbPicker.qml
@@ -92,7 +82,6 @@
 2 services/BatteryService.qml
 3 services/BluetoothService.qml
 11 services/BrightnessService.qml
-8 services/DashboardService.qml
 2 services/GpuService.qml
 5 services/HyprlandSettingsService.qml
 3 services/KeybindsService.qml
@@ -101,7 +90,6 @@
 7 services/NetworkService.qml
 4 services/OsdService.qml
 8 services/PowerProfileService.qml
-6 services/PowerService.qml
 7 services/QuickSettingsService.qml
 1 services/SettingsService.qml
 10 services/SpecialsService.qml

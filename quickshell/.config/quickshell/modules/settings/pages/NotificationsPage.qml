@@ -9,20 +9,20 @@ ColumnLayout {
     spacing: Config.spacing * 3
 
     SettingsGroup {
-        title: "Behavior"
+        title: I18n.tr("Behavior")
 
         // Owned by NotificationService, which keeps its own copy
         ToggleRow {
-            label: "Do not disturb"
-            description: "Silence popups; notifications still go to the history"
+            label: I18n.tr("Do not disturb")
+            description: I18n.tr("Silence popups; notifications still go to the history")
             resettable: false
             checked: NotificationService.dndEnabled
             onToggled: value => NotificationService.setDnd(value)
         }
 
         StepperRow {
-            label: "Timeout"
-            description: "How long a popup stays on screen when the app doesn't set one"
+            label: I18n.tr("Timeout")
+            description: I18n.tr("How long a popup stays on screen when the app doesn't set one")
             path: "notifications.timeout"
             from: 1000
             to: 30000
@@ -31,8 +31,8 @@ ColumnLayout {
         }
 
         StepperRow {
-            label: "Popups on screen"
-            description: "Older popups are hidden when there are more than this"
+            label: I18n.tr("Popups on screen")
+            description: I18n.tr("Older popups are hidden when there are more than this")
             path: "notifications.maxPopups"
             from: 1
             to: 8
@@ -40,10 +40,10 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Appearance"
+        title: I18n.tr("Appearance")
 
         SliderRow {
-            label: "Popup width"
+            label: I18n.tr("Popup width")
             path: "notifications.width"
             from: 280
             to: 520
@@ -52,8 +52,8 @@ ColumnLayout {
         }
 
         SliderRow {
-            label: "Icon size"
-            description: "App icon and image in popups and in the history"
+            label: I18n.tr("Icon size")
+            description: I18n.tr("App icon and image in popups and in the history")
             path: "notifications.imageSize"
             from: 24
             to: 64
@@ -62,8 +62,8 @@ ColumnLayout {
         }
 
         SliderRow {
-            label: "Spacing"
-            description: "Gap between stacked popups"
+            label: I18n.tr("Spacing")
+            description: I18n.tr("Gap between stacked popups")
             path: "notifications.spacing"
             from: 0
             to: 24

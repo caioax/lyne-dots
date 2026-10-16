@@ -11,23 +11,23 @@ ColumnLayout {
     spacing: Config.spacing * 3
 
     SettingsGroup {
-        title: "Style"
+        title: I18n.tr("Style")
 
         TemplatePicker {
-            label: "Template"
-            description: "Card in the middle, a strip on a screen edge, or a full-screen goodbye"
+            label: I18n.tr("Template")
+            description: I18n.tr("Card in the middle, a strip on a screen edge, or a full-screen goodbye")
             path: "power.style"
             options: [
                 {
-                    label: "Card",
+                    label: I18n.tr("Card"),
                     value: "card"
                 },
                 {
-                    label: "Side strip",
+                    label: I18n.tr("Side strip"),
                     value: "strip"
                 },
                 {
-                    label: "Farewell",
+                    label: I18n.tr("Farewell"),
                     value: "farewell"
                 }
             ]
@@ -37,17 +37,17 @@ ColumnLayout {
         }
 
         SelectRow {
-            label: "Side"
-            description: "Screen edge the strip grows out of"
+            label: I18n.tr("Side")
+            description: I18n.tr("Screen edge the strip grows out of")
             path: "power.side"
             enabled: PowerService.style === "strip"
             options: [
                 {
-                    label: "Left",
+                    label: I18n.tr("Left"),
                     value: "left"
                 },
                 {
-                    label: "Right",
+                    label: I18n.tr("Right"),
                     value: "right"
                 }
             ]
@@ -55,16 +55,16 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Confirmation"
+        title: I18n.tr("Confirmation")
 
         SelectRow {
-            label: "Countdown"
-            description: "Log out, reboot and shut down wait this long in the menu; Enter runs them at once, Esc cancels"
+            label: I18n.tr("Countdown")
+            description: I18n.tr("Log out, reboot and shut down wait this long in the menu; Enter runs them at once, Esc cancels")
             path: "power.countdown"
             segmentWidth: Config.fontSizeNormal * 4
             options: [
                 {
-                    label: "Off",
+                    label: I18n.tr("Off"),
                     value: 0
                 },
                 {
@@ -84,11 +84,11 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Actions"
+        title: I18n.tr("Actions")
 
         ToggleRow {
-            label: "Reversed order"
-            description: "Shut down comes first and is selected when the menu opens, instead of lock"
+            label: I18n.tr("Reversed order")
+            description: I18n.tr("Shut down comes first and is selected when the menu opens, instead of lock")
             path: "power.reversed"
         }
 
@@ -103,7 +103,7 @@ ColumnLayout {
                 readonly property bool shown: available && !PowerService.hiddenActions.includes(modelData.id)
 
                 label: modelData.name
-                description: available ? modelData.comment : "Not supported on this system"
+                description: available ? modelData.comment : I18n.tr("Not supported on this system")
                 checked: shown
                 // The last shown action can't be hidden
                 enabled: available && (!shown || PowerService.actions.length > 1)

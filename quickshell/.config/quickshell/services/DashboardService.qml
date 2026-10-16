@@ -15,27 +15,27 @@ Singleton {
     readonly property var allTabs: [
         {
             id: "overview",
-            label: "Overview",
+            label: I18n.tr("Overview"),
             icon: "\u{f056e}",
-            description: "Clock, weather, the month, the player and resource usage"
+            description: I18n.tr("Clock, weather, the month, the player and resource usage")
         },
         {
             id: "media",
-            label: "Media",
+            label: I18n.tr("Media"),
             icon: "\u{f075a}",
-            description: "Full player with the visualizer and the GIF"
+            description: I18n.tr("Full player with the visualizer and the GIF")
         },
         {
             id: "system",
-            label: "System",
+            label: I18n.tr("System"),
             icon: "\u{f035b}",
-            description: "CPU, GPU, memory, storage and network"
+            description: I18n.tr("CPU, GPU, memory, storage and network")
         },
         {
             id: "weather",
-            label: "Weather",
+            label: I18n.tr("Weather"),
             icon: "\u{f0595}",
-            description: "Now, the next 24 hours and the week"
+            description: I18n.tr("Now, the next 24 hours and the week")
         }
     ]
     // Hidden in Settings (at least one always stays)

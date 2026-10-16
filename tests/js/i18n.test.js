@@ -140,6 +140,22 @@ test("extractor: folders linked into the shell are read (a sandbox copy)", t => 
     assert.deepEqual([...tool.extract(copy).strings.keys()], ["Linked"]);
 });
 
+test("lexer: regex literals with quotes, parens or // inside don't derail it", () => {
+    const text = [
+        "const a = s.replace(/%(.)/g, f).replace(/\\//g, \"-\");",
+        "const b = /\"[^\"]*\"/.test(x) ? 1 : 2 / 3;",
+        "text: I18n.tr(\"After the regexes\")",
+        "label: \"Bare text\""
+    ].join("\n");
+    const {
+        calls,
+        literals
+    } = tool.scan(text, false);
+    assert.deepEqual(calls.map(c => c.args), [["After the regexes"]]);
+    const bare = literals.find(l => l.value === "Bare text");
+    assert.equal(bare.callee, "");
+});
+
 test("extractor: non-literal and concatenated arguments are errors", t => {
     const dir = fakeShell(t, {
         "A.qml": [

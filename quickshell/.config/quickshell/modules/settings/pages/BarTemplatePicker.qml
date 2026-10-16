@@ -1,28 +1,29 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.services
 import "../rows/"
 
 // Bar template (bar.style) with drawn previews: Settings › Bar and the
 // welcome screen
 TemplatePicker {
-    label: "Template"
-    description: "How the bar sits on the screen"
+    label: I18n.tr("Template")
+    description: I18n.tr("How the bar sits on the screen")
     path: "bar.style"
     options: [
         {
-            label: "Docked",
+            label: I18n.tr("Docked"),
             value: "docked"
         },
         {
-            label: "Docked corners",
+            label: I18n.tr("Docked corners"),
             value: "docked-corners"
         },
         {
-            label: "Floating",
+            label: I18n.tr("Floating"),
             value: "floating"
         },
         {
-            label: "Islands",
+            label: I18n.tr("Islands"),
             value: "islands"
         }
     ]

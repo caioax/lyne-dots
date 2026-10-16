@@ -14,27 +14,27 @@ ColumnLayout {
     spacing: Config.spacing * 3
 
     SettingsGroup {
-        title: "Style"
+        title: I18n.tr("Style")
 
         TemplatePicker {
-            label: "Template"
-            description: "How the launcher opens"
+            label: I18n.tr("Template")
+            description: I18n.tr("How the launcher opens")
             path: "launcher.style"
             options: [
                 {
-                    label: "Spotlight",
+                    label: I18n.tr("Spotlight"),
                     value: "spotlight"
                 },
                 {
-                    label: "Dropdown",
+                    label: I18n.tr("Dropdown"),
                     value: "dropdown"
                 },
                 {
-                    label: "Sidebar",
+                    label: I18n.tr("Sidebar"),
                     value: "sidebar"
                 },
                 {
-                    label: "Grid",
+                    label: I18n.tr("Grid"),
                     value: "grid"
                 }
             ]
@@ -46,21 +46,21 @@ ColumnLayout {
         // Only the templates with a choice of place
         SelectRow {
             visible: LauncherService.style === "spotlight"
-            label: "Position"
-            description: "Against the top or bottom edge (the bar, when it's there), or in the upper third"
+            label: I18n.tr("Position")
+            description: I18n.tr("Against the top or bottom edge (the bar, when it's there), or in the upper third")
             path: "launcher.position"
             value: LauncherService.position
             options: [
                 {
-                    label: "Top",
+                    label: I18n.tr("Top"),
                     value: "top"
                 },
                 {
-                    label: "Center",
+                    label: I18n.tr("Center"),
                     value: "center"
                 },
                 {
-                    label: "Bottom",
+                    label: I18n.tr("Bottom"),
                     value: "bottom"
                 }
             ]
@@ -68,17 +68,17 @@ ColumnLayout {
 
         SelectRow {
             visible: LauncherService.style === "sidebar"
-            label: "Side"
-            description: "Screen edge the sidebar opens on"
+            label: I18n.tr("Side")
+            description: I18n.tr("Screen edge the sidebar opens on")
             path: "launcher.position"
             value: LauncherService.position
             options: [
                 {
-                    label: "Left",
+                    label: I18n.tr("Left"),
                     value: "left"
                 },
                 {
-                    label: "Right",
+                    label: I18n.tr("Right"),
                     value: "right"
                 }
             ]
@@ -92,12 +92,12 @@ ColumnLayout {
             readonly property bool on: StateService.get("bar.attachPopups", true)
 
             visible: LauncherService.style === "dropdown" || LauncherService.style === "sidebar" || (LauncherService.style === "spotlight" && LauncherService.position !== "center")
-            label: on ? "Attached to the bar" : "Floating"
-            description: "Follows Attach to the bar in the Bar settings, like the bar popups"
+            label: on ? I18n.tr("Attached to the bar") : I18n.tr("Floating")
+            description: I18n.tr("Follows Attach to the bar in the Bar settings, like the bar popups")
 
             ActionButton {
                 icon: "\u{f1513}"
-                text: "Bar settings"
+                text: I18n.tr("Bar settings")
                 size: root.buttonSize
                 baseColor: attachRow.controlColor
                 onClicked: SettingsService.open("bar")
@@ -105,20 +105,20 @@ ColumnLayout {
         }
 
         SelectRow {
-            label: "Search bar"
-            description: "Auto puts it at the bottom when the launcher opens from the bottom edge"
+            label: I18n.tr("Search bar")
+            description: I18n.tr("Auto puts it at the bottom when the launcher opens from the bottom edge")
             path: "launcher.order"
             options: [
                 {
-                    label: "Top",
+                    label: I18n.tr("Top"),
                     value: "top"
                 },
                 {
-                    label: "Bottom",
+                    label: I18n.tr("Bottom"),
                     value: "bottom"
                 },
                 {
-                    label: "Auto",
+                    label: I18n.tr("Auto"),
                     value: "auto"
                 }
             ]
@@ -126,23 +126,23 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Search"
+        title: I18n.trc("section", "Search")
 
         ToggleRow {
-            label: "Show descriptions"
-            description: "A line under each app name with what it does"
+            label: I18n.tr("Show descriptions")
+            description: I18n.tr("A line under each app name with what it does")
             path: "launcher.showDescriptions"
         }
 
         ToggleRow {
-            label: "Rank by usage"
-            description: "Apps you open often come first; off keeps the list alphabetical"
+            label: I18n.tr("Rank by usage")
+            description: I18n.tr("Apps you open often come first; off keeps the list alphabetical")
             path: "launcher.rankByUsage"
         }
 
         StepperRow {
-            label: "Visible rows"
-            description: "How many results show before the list scrolls"
+            label: I18n.tr("Visible rows")
+            description: I18n.tr("How many results show before the list scrolls")
             path: "launcher.rows"
             from: 4
             to: 12
@@ -150,17 +150,17 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Apps"
+        title: I18n.tr("Apps")
 
         SettingRow {
             id: terminalRow
 
-            label: "Terminal"
-            description: "Apps that need a terminal (Terminal=true in their .desktop file) open in " + AppsService.nameOf("terminal") + ", the default terminal"
+            label: I18n.tr("Terminal")
+            description: I18n.tr("Apps that need a terminal (Terminal=true in their .desktop file) open in %1, the default terminal", AppsService.nameOf("terminal"))
 
             ActionButton {
                 icon: "\u{f003b}"
-                text: "Default apps"
+                text: I18n.tr("Default apps")
                 baseColor: terminalRow.controlColor
                 onClicked: SettingsService.open("apps")
             }
@@ -168,12 +168,12 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Favorites"
+        title: I18n.tr("Favorites")
 
         SettingRow {
             visible: LauncherService.favorites.length === 0
-            label: "No favorites yet"
-            description: "Pin apps from the ⋮ menu in the launcher; they show up as tiles above the list"
+            label: I18n.tr("No favorites yet")
+            description: I18n.tr("Pin apps from the ⋮ menu in the launcher; they show up as tiles above the list")
         }
 
         Repeater {
@@ -205,7 +205,7 @@ ColumnLayout {
 
                 ActionButton {
                     icon: "\u{f0404}"
-                    text: "Unpin"
+                    text: I18n.tr("Unpin")
                     size: root.buttonSize
                     baseColor: favoriteRow.controlColor
                     onClicked: LauncherService.unpin(favoriteRow.modelData)
@@ -215,12 +215,12 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Hidden apps"
+        title: I18n.tr("Hidden apps")
 
         SettingRow {
             visible: LauncherService.hidden.length === 0
-            label: "No hidden apps"
-            description: "Hide apps you never open from the ⋮ menu in the launcher"
+            label: I18n.tr("No hidden apps")
+            description: I18n.tr("Hide apps you never open from the ⋮ menu in the launcher")
         }
 
         Repeater {
@@ -235,7 +235,7 @@ ColumnLayout {
 
                 ActionButton {
                     icon: "\u{f0208}"
-                    text: "Restore"
+                    text: I18n.tr("Restore")
                     size: root.buttonSize
                     baseColor: hiddenRow.controlColor
                     onClicked: LauncherService.unhideApp(hiddenRow.modelData)
@@ -245,19 +245,19 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Usage"
+        title: I18n.tr("Usage")
 
         SettingRow {
             id: usageRow
 
-            label: "Usage history"
-            description: LauncherService.usage.length === 0 ? "Nothing yet: apps are counted as you open them" : LauncherService.usage.length + (LauncherService.usage.length === 1 ? " app" : " apps") + " counted, used to rank the list"
+            label: I18n.tr("Usage history")
+            description: LauncherService.usage.length === 0 ? I18n.tr("Nothing yet: apps are counted as you open them") : I18n.trn("%n app counted, used to rank the list", "%n apps counted, used to rank the list", LauncherService.usage.length)
 
             ActionButton {
                 enabled: LauncherService.usage.length > 0
                 opacity: enabled ? 1 : 0.4
                 icon: "\u{f00e2}"
-                text: "Clear"
+                text: I18n.tr("Clear")
                 size: root.buttonSize
                 baseColor: usageRow.controlColor
                 onClicked: LauncherService.clearUsage()
@@ -274,7 +274,7 @@ ColumnLayout {
         readonly property var entry: LauncherService.entryById(appId)
 
         label: entry?.name ?? appId
-        description: entry ? (entry.comment || entry.genericName || "") : "Not installed anymore"
+        description: entry ? (entry.comment || entry.genericName || "") : I18n.tr("Not installed anymore")
 
         leading: Rectangle {
             implicitWidth: Config.fontSizeIconLarge + Config.padding * 2

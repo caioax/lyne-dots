@@ -12,32 +12,32 @@ ColumnLayout {
     spacing: Config.spacing * 3
 
     SettingsGroup {
-        title: "Tabs"
+        title: I18n.tr("Tabs")
 
         SelectRow {
-            label: "Opens on"
-            description: "Tab shown when the clock opens the dashboard"
+            label: I18n.tr("Opens on")
+            description: I18n.tr("Tab shown when the clock opens the dashboard")
             path: "dashboard.defaultTab"
             segmentWidth: Config.fontSizeNormal * 5.5
             options: [
                 {
-                    label: "Last used",
+                    label: I18n.tr("Last used"),
                     value: "last"
                 },
                 {
-                    label: "Overview",
+                    label: I18n.tr("Overview"),
                     value: "overview"
                 },
                 {
-                    label: "Media",
+                    label: I18n.tr("Media"),
                     value: "media"
                 },
                 {
-                    label: "System",
+                    label: I18n.tr("System"),
                     value: "system"
                 },
                 {
-                    label: "Weather",
+                    label: I18n.tr("Weather"),
                     value: "weather"
                 }
             ]
@@ -61,22 +61,22 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Calendar"
+        title: I18n.tr("Calendar")
 
         SelectRow {
-            label: "Holidays"
+            label: I18n.tr("Holidays")
             description: {
-                const shown = HolidayService.enabled ? "Brazil's national holidays" : "no holidays";
-                return HolidayService.setting === "auto" ? "Marked on the Overview calendar; Automatic follows your time zone and language (now: " + shown + ")" : "Marked on the Overview calendar";
+                const shown = HolidayService.enabled ? I18n.tr("Brazil's national holidays") : I18n.tr("no holidays");
+                return HolidayService.setting === "auto" ? I18n.tr("Marked on the Overview calendar; Automatic follows your time zone and language (now: %1)", shown) : I18n.tr("Marked on the Overview calendar");
             }
             path: "dashboard.holidays"
             options: [
                 {
-                    label: "Automatic",
+                    label: I18n.tr("Automatic"),
                     value: "auto"
                 },
                 {
-                    label: "None",
+                    label: I18n.tr("None"),
                     value: "none"
                 }
             ]
@@ -84,38 +84,38 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Media"
+        title: I18n.tr("Media")
 
         ToggleRow {
-            label: "Visualizer"
-            description: CavaService.available ? "Audio spectrum around the cover while something plays (cava)" : "cava isn't installed"
+            label: I18n.tr("Visualizer")
+            description: CavaService.available ? I18n.tr("Audio spectrum around the cover while something plays (cava)") : I18n.tr("cava isn't installed")
             path: "dashboard.visualizer"
             enabled: CavaService.available
         }
 
         ToggleRow {
-            label: "Cover background"
-            description: "Blurred album cover behind the Media tab instead of a plain card"
+            label: I18n.tr("Cover background")
+            description: I18n.tr("Blurred album cover behind the Media tab instead of a plain card")
             path: "dashboard.coverBackdrop"
         }
 
         ToggleRow {
-            label: "Lyrics"
-            description: "Synced lyrics (LRCLIB, NetEase) in place of the album in the Media tab"
+            label: I18n.tr("Lyrics")
+            description: I18n.tr("Synced lyrics (LRCLIB, NetEase) in place of the album in the Media tab")
             path: "dashboard.lyrics"
         }
 
         ToggleRow {
             label: "GIF"
-            description: "In the Media tab and under the Overview player; moves while something plays"
+            description: I18n.tr("In the Media tab and under the Overview player; moves while something plays")
             path: "dashboard.showGif"
         }
 
         SettingRow {
             id: gifRow
 
-            label: "GIF file"
-            description: DashboardService.gifPath !== "" ? "Custom GIF" : "Duck (default)"
+            label: I18n.tr("GIF file")
+            description: DashboardService.gifPath !== "" ? I18n.tr("Custom GIF") : I18n.tr("Duck (default)")
             path: "dashboard.gif"
             enabled: DashboardService.showGif
 
@@ -129,7 +129,7 @@ ColumnLayout {
 
             ActionButton {
                 icon: "\u{f0d78}"
-                text: "Choose GIF"
+                text: I18n.tr("Choose GIF")
                 baseColor: gifRow.controlColor
                 onClicked: DashboardService.pickGif()
             }
@@ -144,7 +144,7 @@ ColumnLayout {
         readonly property var tab: DashboardService.allTabs.find(t => t.id === tabId)
         readonly property bool shown: !DashboardService.hiddenTabs.includes(tabId)
 
-        label: tab.label + " tab"
+        label: I18n.tr("%1 tab", tab.label)
         description: tab.description
         checked: shown
         enabled: !shown || DashboardService.tabs.length > 1

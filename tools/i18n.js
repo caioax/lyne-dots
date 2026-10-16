@@ -126,6 +126,12 @@ function scan(text, self) {
             i = end < 0 ? text.length : end + 2;
             continue;
         }
+        // A regex literal (where an expression starts): skipped whole, so a
+        // quote, a paren or "//" inside it isn't read as code
+        if (ch === "/" && regexCanStart(text, i)) {
+            i = skipRegex(text, i);
+            continue;
+        }
         if (ch === '"' || ch === "'" || ch === "`") {
             const lit = readLiteral(text, i);
             literals.push({
@@ -154,6 +160,40 @@ function scan(text, self) {
         literals,
         calls
     };
+}
+
+// A "/" at `i` starts a regex when what comes before can't end an operand
+function regexCanStart(text, i) {
+    let j = i - 1;
+    while (j >= 0 && /[ \t]/.test(text[j]))
+        j--;
+    if (j < 0 || "(,=:[!&|?{};+-*%<>~^\n".includes(text[j]))
+        return true;
+    return /\b(?:return|typeof|case|in|of)$/.test(text.slice(Math.max(0, j - 6), j + 1));
+}
+
+// Index after the regex literal starting at `i` (its flags included)
+function skipRegex(text, i) {
+    let j = i + 1;
+    let inClass = false;
+    while (j < text.length && text[j] !== "\n") {
+        const c = text[j];
+        if (c === "\\") {
+            j += 2;
+            continue;
+        }
+        if (c === "[")
+            inClass = true;
+        else if (c === "]")
+            inClass = false;
+        else if (c === "/" && !inClass)
+            break;
+        j++;
+    }
+    j++;
+    while (j < text.length && /[a-z]/.test(text[j]))
+        j++;
+    return j;
 }
 
 // The literal arguments of an I18n call whose "(" is just before `i`

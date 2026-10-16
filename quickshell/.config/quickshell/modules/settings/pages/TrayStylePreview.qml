@@ -42,7 +42,7 @@ ClippingRectangle {
             {
                 id: "network",
                 icon: "network-wireless",
-                title: "Network",
+                title: I18n.tr("Network"),
                 status: Status.Active,
                 pinned: true
             },
@@ -55,13 +55,13 @@ ClippingRectangle {
             {
                 id: "volume",
                 icon: "audio-volume-high",
-                title: "Volume",
+                title: I18n.tr("Volume"),
                 status: Status.Active
             },
             {
                 id: "mail",
                 icon: "mail-unread",
-                title: "Mail",
+                title: I18n.tr("Mail"),
                 status: Status.NeedsAttention
             }
         ]
