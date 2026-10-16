@@ -24,7 +24,7 @@ ColumnLayout {
 
     Text {
         Layout.alignment: root.alignment
-        text: TimeService.format("dddd, d MMMM")
+        text: I18n.capitalize(TimeService.format(I18n.trc("date format", "dddd, d MMMM")))
         font.family: Config.font
         font.pixelSize: Math.max(Config.fontSizeLarge, Math.round(root.size / 5))
         color: Config.subtextColor

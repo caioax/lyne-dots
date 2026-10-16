@@ -473,7 +473,7 @@ PanelWindow {
             SectionLabel {
                 Layout.row: column.rowOf.favoritesLabel
                 visible: favoritesGrid.count > 0
-                text: "Favorites"
+                text: I18n.tr("Favorites")
             }
 
             FavoritesGrid {
@@ -490,7 +490,7 @@ PanelWindow {
             SectionLabel {
                 Layout.row: column.rowOf.resultsLabel
                 visible: favoritesGrid.count > 0 && LauncherService.results.length > 0
-                text: LauncherService.mode.id === "apps" ? "Apps" : LauncherService.mode.label
+                text: LauncherService.mode.id === "apps" ? I18n.tr("Apps") : LauncherService.mode.label
             }
 
             ResultsGrid {
@@ -576,14 +576,14 @@ PanelWindow {
                     id: navigateHint
                     visible: footer.shown.includes(this)
                     keys: root.tileResults || favoritesGrid.count > 0 ? "↑↓←→" : "↑↓"
-                    label: "navigate"
+                    label: I18n.trc("key hint", "navigate")
                 }
 
                 KeyHint {
                     id: openHint
                     visible: footer.shown.includes(this)
                     keys: "⏎"
-                    label: root.clipboard ? "copy" : "open"
+                    label: root.clipboard ? I18n.trc("key hint", "copy") : I18n.trc("key hint", "open")
                 }
 
                 KeyHint {
@@ -591,7 +591,7 @@ PanelWindow {
                     visible: footer.shown.includes(this)
                     wanted: root.clipboard
                     keys: "del"
-                    label: "delete"
+                    label: I18n.trc("key hint", "delete")
                 }
 
                 KeyHint {
@@ -599,21 +599,21 @@ PanelWindow {
                     visible: footer.shown.includes(this)
                     wanted: root.clipboard
                     keys: "alt 1-4"
-                    label: "filter"
+                    label: I18n.trc("key hint", "filter")
                 }
 
                 KeyHint {
                     id: modeHint
                     visible: footer.shown.includes(this)
                     keys: "ctrl ⇥"
-                    label: "mode"
+                    label: I18n.trc("key hint", "mode")
                 }
 
                 KeyHint {
                     id: closeHint
                     visible: footer.shown.includes(this)
                     keys: "esc"
-                    label: LauncherService.term !== "" ? "clear" : "close"
+                    label: LauncherService.term !== "" ? I18n.trc("key hint", "clear") : I18n.trc("key hint", "close")
                 }
             }
         }
@@ -648,7 +648,7 @@ PanelWindow {
             if (clipEntry) {
                 const list = [
                     {
-                        label: "Copy",
+                        label: I18n.tr("Copy"),
                         icon: "\u{f018f}",
                         action: "copy"
                     }
@@ -669,12 +669,12 @@ PanelWindow {
             }
             return [
                 {
-                    label: menu.isFavorite ? "Unpin from favorites" : "Pin to favorites",
+                    label: menu.isFavorite ? I18n.tr("Unpin from favorites") : I18n.tr("Pin to favorites"),
                     icon: menu.isFavorite ? "\u{f0404}" : "\u{f0403}",
                     action: "pin"
                 },
                 {
-                    label: "Hide from launcher",
+                    label: I18n.tr("Hide from launcher"),
                     icon: "\u{f0209}",
                     action: "hide"
                 }

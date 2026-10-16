@@ -74,11 +74,11 @@ Item {
             text: {
                 switch (LyricsService.status) {
                 case "instrumental":
-                    return "\u{f075a}  Instrumental";
+                    return "\u{f075a}  " + I18n.tr("Instrumental");
                 case "none":
-                    return "No lyrics found";
+                    return I18n.tr("No lyrics found");
                 case "error":
-                    return "Couldn't reach LRCLIB or NetEase";
+                    return I18n.tr("Couldn't reach LRCLIB or NetEase");
                 default:
                     return "";
                 }

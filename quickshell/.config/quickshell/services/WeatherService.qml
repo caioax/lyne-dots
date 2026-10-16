@@ -102,36 +102,36 @@ Singleton {
 
     function description(code) {
         const map = {
-            0: "Clear sky",
-            1: "Mainly clear",
-            2: "Partly cloudy",
-            3: "Overcast",
-            45: "Fog",
-            48: "Rime fog",
-            51: "Light drizzle",
-            53: "Drizzle",
-            55: "Heavy drizzle",
-            56: "Freezing drizzle",
-            57: "Freezing drizzle",
-            61: "Light rain",
-            63: "Rain",
-            65: "Heavy rain",
-            66: "Freezing rain",
-            67: "Freezing rain",
-            71: "Light snow",
-            73: "Snow",
-            75: "Heavy snow",
-            77: "Snow grains",
-            80: "Light showers",
-            81: "Showers",
-            82: "Violent showers",
-            85: "Snow showers",
-            86: "Snow showers",
-            95: "Thunderstorm",
-            96: "Thunderstorm, hail",
-            99: "Thunderstorm, hail"
+            0: I18n.tr("Clear sky"),
+            1: I18n.tr("Mainly clear"),
+            2: I18n.tr("Partly cloudy"),
+            3: I18n.tr("Overcast"),
+            45: I18n.tr("Fog"),
+            48: I18n.tr("Rime fog"),
+            51: I18n.tr("Light drizzle"),
+            53: I18n.tr("Drizzle"),
+            55: I18n.tr("Heavy drizzle"),
+            56: I18n.tr("Freezing drizzle"),
+            57: I18n.tr("Freezing drizzle"),
+            61: I18n.tr("Light rain"),
+            63: I18n.tr("Rain"),
+            65: I18n.tr("Heavy rain"),
+            66: I18n.tr("Freezing rain"),
+            67: I18n.tr("Freezing rain"),
+            71: I18n.tr("Light snow"),
+            73: I18n.tr("Snow"),
+            75: I18n.tr("Heavy snow"),
+            77: I18n.tr("Snow grains"),
+            80: I18n.tr("Light showers"),
+            81: I18n.tr("Showers"),
+            82: I18n.tr("Violent showers"),
+            85: I18n.tr("Snow showers"),
+            86: I18n.tr("Snow showers"),
+            95: I18n.tr("Thunderstorm"),
+            96: I18n.tr("Thunderstorm, hail"),
+            99: I18n.tr("Thunderstorm, hail")
         };
-        return map[code] ?? "Unknown";
+        return map[code] ?? I18n.tr("Unknown");
     }
 
     // ========================================================================
@@ -144,13 +144,13 @@ Singleton {
             if (xhr.readyState !== XMLHttpRequest.DONE)
                 return;
             if (xhr.status !== 200) {
-                root._fail(xhr.status === 0 ? "No connection" : "Request failed (" + xhr.status + ")");
+                root._fail(xhr.status === 0 ? I18n.tr("No connection") : I18n.tr("Request failed (%1)", xhr.status));
                 return;
             }
             try {
                 onSuccess(JSON.parse(xhr.responseText));
             } catch (e) {
-                root._fail("Invalid response");
+                root._fail(I18n.tr("Invalid response"));
             }
         };
         xhr.open("GET", url);
@@ -168,7 +168,7 @@ Singleton {
         _get("https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&format=json&name=" + encodeURIComponent(configured), data => {
             const r = data.results?.[0];
             if (!r) {
-                root._fail("City not found: " + configured);
+                root._fail(I18n.tr("City not found: %1", configured));
                 return;
             }
             root._coords = {
@@ -184,7 +184,7 @@ Singleton {
     function _locateByIp() {
         _get("https://ipwho.is/?fields=success,city,latitude,longitude", data => {
             if (!data.success) {
-                root._fail("Could not detect location");
+                root._fail(I18n.tr("Could not detect location"));
                 return;
             }
             root._coords = {

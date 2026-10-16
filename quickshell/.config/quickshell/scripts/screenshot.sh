@@ -11,6 +11,8 @@
 #   FOLDER     where to save; empty = <XDG pictures dir>/Screenshots
 #   NAME       date(1) format of the file name, without .png
 #   TEMP_FILE  captures of every monitor, deleted once cropped
+# The notification texts come translated from the shell as LYNE_T_*
+# variables (English when they're unset)
 
 action="$1"
 src="$2"
@@ -62,14 +64,14 @@ ocr:*)
     langs="${action#ocr:}"
     if ! command -v tesseract >/dev/null; then
         rm -f "$shot"
-        notify-send -a Screenshot -i org.xfce.screenshooter "Text not copied" "Install tesseract to copy text from screenshots"
+        notify-send -a Screenshot -i org.xfce.screenshooter "${LYNE_T_TEXT_NOT_COPIED:-Text not copied}" "${LYNE_T_NO_TESSERACT:-Install tesseract to copy text from screenshots}"
         exit 1
     fi
     text="$(tesseract "$shot" - -l "${langs:-eng}" -c page_separator= 2>/dev/null |
         sed -e 's/[[:space:]]*$//' | sed -e '/./,$!d')"
     rm -f "$shot"
     if [ -z "$(printf '%s' "$text" | tr -d '[:space:]')" ]; then
-        notify-send -a Screenshot -i org.xfce.screenshooter "No text found" "Nothing readable in the selection"
+        notify-send -a Screenshot -i org.xfce.screenshooter "${LYNE_T_NO_TEXT:-No text found}" "${LYNE_T_NOTHING_READABLE:-Nothing readable in the selection}"
         exit 0
     fi
     printf '%s' "$text" | wl-copy
@@ -78,7 +80,7 @@ ocr:*)
     lines="$(printf '%s\n' "$text" | grep -cv '^[[:space:]]*$')"
     [ "$lines" -gt 3 ] && preview="$preview
 …"
-    notify-send -a Screenshot -i org.xfce.screenshooter "Text copied" "$preview"
+    notify-send -a Screenshot -i org.xfce.screenshooter "${LYNE_T_TEXT_COPIED:-Text copied}" "$preview"
     exit 0
     ;;
 esac
@@ -125,13 +127,14 @@ while :; do
     if [ "$saved" = true ]; then
         shown="$(printf '%s' "$out" | sed "s|^$HOME|~|")"
         reply="$(notify \
-            -A default=Open -A open=Open -A edit=Edit -A folder=Folder -A delete=Delete \
-            "Screenshot saved" "$size · copied to the clipboard
+            -A "default=${LYNE_T_OPEN:-Open}" -A "open=${LYNE_T_OPEN:-Open}" -A "edit=${LYNE_T_EDIT:-Edit}" \
+            -A "folder=${LYNE_T_FOLDER:-Folder}" -A "delete=${LYNE_T_DELETE:-Delete}" \
+            "${LYNE_T_SAVED:-Screenshot saved}" "$size · ${LYNE_T_ON_CLIPBOARD:-copied to the clipboard}
 $shown")"
     else
         reply="$(notify \
-            -A default=Open -A save=Save -A edit=Edit \
-            "Screenshot copied" "$size · not saved to a file")"
+            -A "default=${LYNE_T_OPEN:-Open}" -A "save=${LYNE_T_SAVE:-Save}" -A "edit=${LYNE_T_EDIT:-Edit}" \
+            "${LYNE_T_COPIED:-Screenshot copied}" "$size · ${LYNE_T_NOT_SAVED:-not saved to a file}")"
     fi
     id="$(printf '%s\n' "$reply" | sed -n 1p)"
     choice="$(printf '%s\n' "$reply" | sed -n 2p)"

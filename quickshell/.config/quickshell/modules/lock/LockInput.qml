@@ -150,7 +150,7 @@ ColumnLayout {
                 visible: LockService.buffer === ""
                 anchors.verticalCenter: parent.verticalCenter
                 leftPadding: Config.padding
-                text: LockService.authenticating ? "Checking…" : "Type your password"
+                text: LockService.authenticating ? I18n.tr("Checking…") : I18n.tr("Type your password")
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeNormal
                 color: LockService.authenticating ? Config.accentColor : Config.mutedColor
@@ -281,7 +281,7 @@ ColumnLayout {
 
         Text {
             visible: LockService.capsLock
-            text: "\u{f0632}  Caps Lock is on"
+            text: "\u{f0632}  " + I18n.tr("Caps Lock is on")
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             color: Config.warningColor
@@ -289,7 +289,7 @@ ColumnLayout {
 
         Text {
             visible: LockService.failed
-            text: LockService.failMessage + (LockService.attempts > 1 ? " (" + LockService.attempts + " attempts)" : "")
+            text: LockService.attempts > 1 ? I18n.tr("%1 (%2 attempts)", LockService.failMessage, LockService.attempts) : LockService.failMessage
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             color: Config.errorColor

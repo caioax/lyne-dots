@@ -50,7 +50,7 @@ ColumnLayout {
         wrapMode: Text.Wrap
         // Rows show the seconds on the pending one already
         visible: root.pending !== null && !root.rows
-        text: root.pending ? root.pending.progress + " in " + Math.ceil(PowerService.remaining / 1000) + "s · esc cancels" : ""
+        text: root.pending ? I18n.tr("%1 in %2s · esc cancels", root.pending.progress, Math.ceil(PowerService.remaining / 1000)) : ""
         font.family: Config.font
         font.pixelSize: Config.fontSizeSmall
         font.bold: true

@@ -40,12 +40,12 @@ Singleton {
     // Smart text (For the Dashboard sublabel)
     readonly property string statusText: {
         if (!isPowered)
-            return "Off";
+            return I18n.tr("Off");
 
         const count = connectedDevices.length;
 
         if (count === 0)
-            return "On";
+            return I18n.tr("On");
 
         if (count === 1)
             return deviceName(connectedDevices[0]);
@@ -208,32 +208,32 @@ Singleton {
         if (has(["headset", "headphone", "audio", "airpod", "buds", "wh-", "wf-", "jbl", "soundcore", "speaker"]))
             return {
                 "icon": "",
-                "label": "Audio"
+                "label": I18n.tr("Audio")
             };
         if (has(["mouse"]))
             return {
                 "icon": "󰍽",
-                "label": "Mouse"
+                "label": I18n.tr("Mouse")
             };
         if (has(["keyboard"]))
             return {
                 "icon": "",
-                "label": "Keyboard"
+                "label": I18n.tr("Keyboard")
             };
         if (has(["phone", "android", "iphone", "redmi", "galaxy", "pixel"]))
             return {
                 "icon": "",
-                "label": "Phone"
+                "label": I18n.tr("Phone")
             };
         if (has(["gamepad", "joystick", "controller"]))
             return {
                 "icon": "",
-                "label": "Controller"
+                "label": I18n.tr("Controller")
             };
         if (has(["computer", "laptop"]))
             return {
                 "icon": "󰌢",
-                "label": "Computer"
+                "label": I18n.tr("Computer")
             };
         if (has(["tv"]))
             return {
@@ -242,7 +242,7 @@ Singleton {
             };
         return {
             "icon": "",
-            "label": "Device"
+            "label": I18n.tr("Device")
         };
     }
 
@@ -251,7 +251,7 @@ Singleton {
     }
 
     function deviceName(device): string {
-        return device?.name || device?.deviceName || device?.address || "Unknown";
+        return device?.name || device?.deviceName || device?.address || I18n.tr("Unknown");
     }
 
     function isKnown(device): bool {

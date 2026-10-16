@@ -29,14 +29,14 @@ ColumnLayout {
 
     function uvLabel(uv: int): string {
         if (uv >= 11)
-            return "Extreme";
+            return I18n.tr("Extreme");
         if (uv >= 8)
-            return "Very high";
+            return I18n.tr("Very high");
         if (uv >= 6)
-            return "High";
+            return I18n.tr("High");
         if (uv >= 3)
-            return "Moderate";
-        return "Low";
+            return I18n.tr("Moderate");
+        return I18n.tr("Low");
     }
 
     function uvColor(uv: int): color {
@@ -67,7 +67,7 @@ ColumnLayout {
         Text {
             Layout.alignment: Qt.AlignHCenter
             visible: !WeatherService.loading
-            text: "\u{f05aa}  " + (WeatherService.error || "Weather unavailable")
+            text: "\u{f05aa}  " + (WeatherService.error || I18n.tr("Weather unavailable"))
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             color: Config.subtextColor
@@ -94,7 +94,7 @@ ColumnLayout {
         CardHeader {
             icon: "\u{f034e}"
             title: WeatherService.location
-            subtitle: WeatherService.lastUpdate > 0 ? "Updated " + Qt.formatTime(new Date(WeatherService.lastUpdate), "hh:mm") : ""
+            subtitle: WeatherService.lastUpdate > 0 ? I18n.tr("Updated %1", new Date(WeatherService.lastUpdate).toLocaleTimeString(I18n.locale, "hh:mm")) : ""
 
             RefreshButton {
                 size: Config.fontSizeSmall * 2
@@ -138,7 +138,7 @@ ColumnLayout {
                     }
 
                     Text {
-                        text: "Feels " + (root.current?.feelsLike ?? 0) + "°"
+                        text: I18n.tr("Feels %1°", root.current?.feelsLike ?? 0)
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeSmall
                         color: Config.subtextColor
@@ -163,19 +163,19 @@ ColumnLayout {
 
                 DetailTile {
                     icon: "\u{f058e}"
-                    label: "Humidity"
+                    label: I18n.tr("Humidity")
                     value: (root.current?.humidity ?? 0) + "%"
                 }
 
                 DetailTile {
                     icon: "\u{f059d}"
-                    label: "Wind"
+                    label: I18n.tr("Wind")
                     value: (root.current?.wind ?? 0) + " km/h"
                 }
 
                 DetailTile {
                     icon: "\u{f058c}"
-                    label: "Rain"
+                    label: I18n.tr("Rain")
                     value: (root.today?.rain ?? 0) + "%"
                 }
 
@@ -188,14 +188,14 @@ ColumnLayout {
 
                 DetailTile {
                     icon: "\u{f059c}"
-                    label: "Sunrise"
+                    label: I18n.tr("Sunrise")
                     value: WeatherService.sunrise
                     accent: Config.warningColor
                 }
 
                 DetailTile {
                     icon: "\u{f059b}"
-                    label: "Sunset"
+                    label: I18n.tr("Sunset")
                     value: WeatherService.sunset
                     accent: Config.warningColor
                 }
@@ -210,7 +210,7 @@ ColumnLayout {
 
         CardHeader {
             icon: "\u{f0150}"
-            title: "Next 24 hours"
+            title: I18n.tr("Next 24 hours")
         }
 
         Item {
@@ -310,7 +310,7 @@ ColumnLayout {
 
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: hour.index === 0 ? "Now" : Qt.formatTime(hour.modelData.date, "hh")
+                        text: hour.index === 0 ? I18n.tr("Now") : hour.modelData.date.toLocaleTimeString(I18n.locale, "hh")
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeSmall
                         font.bold: hour.index === 0
@@ -378,7 +378,7 @@ ColumnLayout {
 
         CardHeader {
             icon: "\u{f0a33}"
-            title: WeatherService.daily.length + " days"
+            title: I18n.trn("%n day", "%n days", WeatherService.daily.length)
         }
 
         Repeater {
@@ -395,11 +395,10 @@ ColumnLayout {
 
                 Text {
                     Layout.preferredWidth: Config.fontSizeNormal * 4
-                    text: day.index === 0 ? "Today" : day.modelData.date.toLocaleDateString(Qt.locale(), "ddd")
+                    text: day.index === 0 ? I18n.tr("Today") : I18n.capitalize(day.modelData.date.toLocaleDateString(I18n.locale, "ddd"))
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeNormal
                     font.bold: day.index === 0
-                    font.capitalization: Font.Capitalize
                     color: day.index === 0 ? Config.textColor : Config.subtextColor
                 }
 

@@ -20,7 +20,7 @@ RowLayout {
 
     Text {
         visible: root.pending !== null
-        text: root.pending ? root.pending.progress + " in " + Math.ceil(PowerService.remaining / 1000) + "s" : ""
+        text: root.pending ? I18n.tr("%1 in %2s", root.pending.progress, Math.ceil(PowerService.remaining / 1000)) : ""
         font.family: Config.font
         font.pixelSize: Config.fontSizeSmall
         font.bold: true
@@ -30,36 +30,36 @@ RowLayout {
     KeyHint {
         visible: root.pending !== null
         keys: "⏎"
-        label: "now"
+        label: I18n.trc("key hint", "now")
     }
 
     KeyHint {
         visible: root.pending !== null
         keys: "esc"
-        label: "cancel"
+        label: I18n.trc("key hint", "cancel")
     }
 
     KeyHint {
         visible: root.pending === null
         keys: root.vertical ? "↑↓" : "←→"
-        label: "move"
+        label: I18n.trc("key hint", "move")
     }
 
     KeyHint {
         visible: root.pending === null
         keys: "⏎"
-        label: "run"
+        label: I18n.trc("key hint", "run")
     }
 
     KeyHint {
         visible: root.pending === null
         keys: root.letters
-        label: "direct"
+        label: I18n.trc("key hint", "direct")
     }
 
     KeyHint {
         visible: root.pending === null
         keys: "esc"
-        label: "close"
+        label: I18n.trc("key hint", "close")
     }
 }

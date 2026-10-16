@@ -18,23 +18,23 @@ Item {
     // Warm → cool, the same direction as the slider
     readonly property var presets: [
         {
-            "label": "Candle",
+            "label": I18n.tr("Candle"),
             "temp": 2500
         },
         {
-            "label": "Warm",
+            "label": I18n.tr("Warm"),
             "temp": 3500
         },
         {
-            "label": "Neutral",
+            "label": I18n.tr("Neutral"),
             "temp": 4500
         },
         {
-            "label": "Cool",
+            "label": I18n.tr("Cool"),
             "temp": 5500
         }
     ]
-    readonly property string presetName: presets.find(p => p.temp === temperature)?.label ?? "Custom"
+    readonly property string presetName: presets.find(p => p.temp === temperature)?.label ?? I18n.tr("Custom")
 
     Layout.fillWidth: true
     implicitHeight: main.implicitHeight
@@ -50,8 +50,8 @@ Item {
             Layout.bottomMargin: Config.padding
             icon: BrightnessService.nightLightIcon
             iconColor: root.isOn ? Config.warningColor : Config.subtextColor
-            title: "Night light"
-            subtitle: root.isOn ? "On · " + root.temperature + "K" : "Off"
+            title: I18n.tr("Night light")
+            subtitle: root.isOn ? I18n.tr("On · %1K", root.temperature) : I18n.tr("Off")
             onBackClicked: root.backRequested()
 
             QsSwitch {
@@ -132,7 +132,7 @@ Item {
 
                     Text {
                         Layout.fillWidth: true
-                        text: root.isOn ? root.presetName + " · less blue light" : "Off · turn on to reduce blue light"
+                        text: root.isOn ? I18n.tr("%1 · less blue light", root.presetName) : I18n.tr("Off · turn on to reduce blue light")
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeSmall
                         color: Config.subtextColor
@@ -150,7 +150,7 @@ Item {
             CardHeader {
                 icon: "󰔏"
                 iconColor: Config.warningColor
-                title: "Temperature"
+                title: I18n.tr("Temperature")
                 subtitle: root.presetName
             }
 
@@ -240,7 +240,7 @@ Item {
                 Layout.fillWidth: true
 
                 Text {
-                    text: "Warmer · " + BrightnessService.nightLightMin + "K"
+                    text: I18n.tr("Warmer · %1K", BrightnessService.nightLightMin)
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeSmall
                     color: Config.subtextColor
@@ -251,7 +251,7 @@ Item {
                 }
 
                 Text {
-                    text: BrightnessService.nightLightMax + "K · Cooler"
+                    text: I18n.tr("%1K · Cooler", BrightnessService.nightLightMax)
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeSmall
                     color: Config.subtextColor

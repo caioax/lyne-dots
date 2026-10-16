@@ -66,7 +66,7 @@ Item {
                 Text {
                     visible: root.weather !== null
                     Layout.fillWidth: true
-                    text: root.weather ? WeatherService.description(root.weather.code) + "\nFeels like " + root.weather.feelsLike + "°" : ""
+                    text: root.weather ? WeatherService.description(root.weather.code) + "\n" + I18n.tr("Feels like %1°", root.weather.feelsLike) : ""
                     wrapMode: Text.Wrap
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeNormal
@@ -120,7 +120,7 @@ Item {
                 Layout.preferredWidth: root.sideWidth
 
                 Text {
-                    text: "Session"
+                    text: I18n.tr("Session")
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeLarge
                     font.bold: true
@@ -135,7 +135,7 @@ Item {
                 }
 
                 Text {
-                    text: "up " + PowerService.uptime
+                    text: I18n.tr("up %1", PowerService.uptime)
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeNormal
                     color: Config.subtextColor

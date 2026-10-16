@@ -53,10 +53,9 @@ Card {
     Text {
         Layout.fillWidth: true
         Layout.topMargin: -Config.padding
-        text: TimeService.format("dddd, d MMMM")
+        text: I18n.capitalize(TimeService.format(I18n.trc("date format", "dddd, d MMMM")))
         font.family: Config.font
         font.pixelSize: Config.fontSizeNormal
-        font.capitalization: Font.Capitalize
         color: Config.subtextColor
         elide: Text.ElideRight
     }
@@ -66,13 +65,13 @@ Card {
 
         StatChip {
             icon: "󰸗"
-            text: "Week " + root.week
+            text: I18n.tr("Week %1", root.week)
             accent: Config.accentColor
         }
 
         StatChip {
             icon: "󰃭"
-            text: "Day " + root.dayOfYear + "/" + root.daysInYear
+            text: I18n.tr("Day %1/%2", root.dayOfYear, root.daysInYear)
         }
     }
 }

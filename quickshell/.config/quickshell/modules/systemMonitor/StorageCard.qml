@@ -12,7 +12,7 @@ Card {
 
     CardHeader {
         icon: "󰋊"
-        title: "Storage"
+        title: I18n.tr("Storage")
         subtitle: root.primary?.mount ?? ""
         iconColor: SystemMonitorService.usageColor(root.primary?.usage ?? 0)
     }
@@ -49,7 +49,7 @@ Card {
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
             visible: SystemMonitorService.disks.length === 1
-            text: SystemMonitorService.formatGiB(root.primary?.total - root.primary?.used) + " GiB free"
+            text: I18n.tr("%1 GiB free", SystemMonitorService.formatGiB(root.primary?.total - root.primary?.used))
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             color: Config.subtextColor

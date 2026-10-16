@@ -203,8 +203,8 @@ Singleton {
         setProfile(result.switchTo);
         if (result.switchTo === "power-saver") {
             const back = label(result.auto.previous);
-            const body = result.auto.reason === "lowBattery" ? `Battery at ${percentage}%. ${back} comes back when you plug in` : `Running on battery. ${back} comes back when you plug in`;
-            Quickshell.execDetached(["notify-send", "-a", "Power profile", "-i", "battery-caution", "Power saver on", body]);
+            const body = result.auto.reason === "lowBattery" ? I18n.tr("Battery at %1%. %2 comes back when you plug in", percentage, back) : I18n.tr("Running on battery. %1 comes back when you plug in", back);
+            Quickshell.execDetached(["notify-send", "-a", "Power profile", "-i", "battery-caution", I18n.tr("Power saver on"), body]);
         }
     }
 

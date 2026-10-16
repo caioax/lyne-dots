@@ -13,7 +13,7 @@ Card {
 
     CardHeader {
         icon: "󰛳"
-        title: "Network"
+        title: I18n.tr("Network")
         subtitle: SystemMonitorService.netInterface
     }
 
@@ -36,7 +36,7 @@ Card {
         Text {
             anchors.centerIn: parent
             visible: SystemMonitorService.netDownHistory.length < 2
-            text: "Collecting data…"
+            text: I18n.tr("Collecting data…")
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             color: Config.mutedColor
@@ -50,7 +50,7 @@ Card {
 
         SpeedLabel {
             icon: "󰇚"
-            label: "Down"
+            label: I18n.trc("network", "Down")
             speed: SystemMonitorService.netDown
             total: SystemMonitorService.netDownTotal
             accent: root.downColor
@@ -58,7 +58,7 @@ Card {
 
         SpeedLabel {
             icon: "󰕒"
-            label: "Up"
+            label: I18n.trc("network", "Up")
             speed: SystemMonitorService.netUp
             total: SystemMonitorService.netUpTotal
             accent: root.upColor

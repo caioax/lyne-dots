@@ -75,7 +75,7 @@ Item {
 
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: "Nothing playing"
+            text: I18n.tr("Nothing playing")
             font.family: Config.font
             font.pixelSize: Config.fontSizeLarge
             font.bold: true
@@ -84,7 +84,7 @@ Item {
 
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: "Play something in Spotify, a browser, mpv or any MPRIS player"
+            text: I18n.tr("Play something in Spotify, a browser, mpv or any MPRIS player")
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             color: Config.subtextColor

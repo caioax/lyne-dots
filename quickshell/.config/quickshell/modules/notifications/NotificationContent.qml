@@ -201,7 +201,7 @@ ColumnLayout {
         id: reply
         visible: root.notif.hasInlineReply
         Layout.fillWidth: true
-        placeholder: root.notif.inlineReplyPlaceholder || "Reply"
+        placeholder: root.notif.inlineReplyPlaceholder || I18n.tr("Reply")
         onSubmitted: text => {
             root.notif.sendReply(text);
             root.actionTriggered();

@@ -81,7 +81,7 @@ AttachedPanel {
             Layout.maximumWidth: Config.fontSizeIcon * 3
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
-            text: root.pending ? "esc to\ncancel" : root.selected?.label ?? ""
+            text: root.pending ? I18n.tr("esc to\ncancel") : root.selected?.label ?? ""
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             font.bold: true

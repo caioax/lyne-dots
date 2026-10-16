@@ -30,17 +30,17 @@ Singleton {
     readonly property var filters: [
         {
             id: "all",
-            label: "All",
+            label: I18n.tr("All"),
             icon: "\u{f02f9}"
         },
         {
             id: "favorites",
-            label: "Favorites",
+            label: I18n.tr("Favorites"),
             icon: "\u{f02d1}"
         },
         {
             id: "theme",
-            label: "Theme",
+            label: I18n.tr("Theme"),
             icon: "\u{f03d8}"
         }
     ]

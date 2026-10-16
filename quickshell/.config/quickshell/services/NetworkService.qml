@@ -62,14 +62,14 @@ Singleton {
     // Status text
     readonly property string statusText: {
         if (!wifiEnabled)
-            return "Off";
+            return I18n.tr("Off");
         const activeNetwork = accessPoints.find(ap => ap.active === true);
         if (activeNetwork) {
             if (hasCaptivePortal)
-                return (activeNetwork.ssid || "Hidden Network") + " · Portal";
-            return activeNetwork.ssid || "Hidden Network";
+                return I18n.tr("%1 · Portal", activeNetwork.ssid || I18n.tr("Hidden network"));
+            return activeNetwork.ssid || I18n.tr("Hidden network");
         }
-        return "On";
+        return I18n.tr("On");
     }
 
     function bandName(freq: int): string {

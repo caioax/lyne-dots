@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 import qs.config
+import qs.services
 
 Scope {
     id: root
@@ -72,10 +73,10 @@ Scope {
 
     readonly property var modes: ["region", "window", "screen", "color"]
     readonly property var modeLabels: ({
-            region: "Region",
-            window: "Window",
-            screen: "Screen",
-            color: "Color"
+            region: I18n.tr("Region"),
+            window: I18n.tr("Window"),
+            screen: I18n.tr("Screen"),
+            color: I18n.tr("Color")
         })
     readonly property var modeIcons: ({
             region: "\u{f0a6d}",
@@ -289,8 +290,8 @@ Scope {
             mkdir -p "$dir"
             swatch="$dir/color-\${2#\\#}.png"
             magick -size 64x64 "xc:$2" "$swatch"
-            notify-send -a Screenshot -i "$swatch" -h string:desktop-entry:org.xfce.screenshooter "Color copied" "$1"
-        `, "sh", text, hex]);
+            notify-send -a Screenshot -i "$swatch" -h string:desktop-entry:org.xfce.screenshooter "$3" "$1"
+        `, "sh", text, hex, I18n.tr("Color copied")]);
         cancelCapture();
     }
 
@@ -441,7 +442,25 @@ Scope {
         root.active = false;
         root.hasSelection = false;
         root.captureTimestamp = "";
-        Quickshell.execDetached([root.finishScript, action, sourcePath, geometry, Config.screenshotFolder, Config.screenshotFilename, ...tempFiles]);
+        // The script's notifications, in the shell's language
+        const texts = {
+            TEXT_NOT_COPIED: I18n.tr("Text not copied"),
+            NO_TESSERACT: I18n.tr("Install tesseract to copy text from screenshots"),
+            NO_TEXT: I18n.tr("No text found"),
+            NOTHING_READABLE: I18n.tr("Nothing readable in the selection"),
+            TEXT_COPIED: I18n.tr("Text copied"),
+            OPEN: I18n.tr("Open"),
+            EDIT: I18n.tr("Edit"),
+            FOLDER: I18n.tr("Folder"),
+            DELETE: I18n.tr("Delete"),
+            SAVE: I18n.tr("Save"),
+            SAVED: I18n.tr("Screenshot saved"),
+            ON_CLIPBOARD: I18n.tr("copied to the clipboard"),
+            COPIED: I18n.tr("Screenshot copied"),
+            NOT_SAVED: I18n.tr("not saved to a file")
+        };
+        const env = Object.keys(texts).map(k => "LYNE_T_" + k + "=" + texts[k]);
+        Quickshell.execDetached(["env", ...env, root.finishScript, action, sourcePath, geometry, Config.screenshotFolder, Config.screenshotFilename, ...tempFiles]);
     }
 
     // =========================================================================

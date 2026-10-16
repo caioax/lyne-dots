@@ -61,11 +61,11 @@ Item {
     function describe(ap): string {
         const parts = [];
         if (ap.saved)
-            parts.push("Saved");
+            parts.push(I18n.tr("Saved"));
         if (ap.band)
             parts.push(ap.band);
         if (!ap.secure)
-            parts.push("Open");
+            parts.push(I18n.trc("network", "Open"));
         return parts.join(" · ");
     }
 
@@ -80,13 +80,13 @@ Item {
             id: header
             Layout.bottomMargin: Config.padding
             icon: NetworkService.systemIcon
-            title: "Wi-Fi"
+            title: I18n.tr("Wi-Fi")
             subtitle: {
                 if (!NetworkService.wifiEnabled)
-                    return "Off";
+                    return I18n.tr("Off");
                 if (root.current)
-                    return "Connected to " + (root.current.ssid || "hidden network");
-                return "Not connected";
+                    return I18n.tr("Connected to %1", root.current.ssid || I18n.tr("hidden network"));
+                return I18n.tr("Not connected");
             }
             onBackClicked: root.backRequested()
 
@@ -139,7 +139,7 @@ Item {
                 icon: NetworkService.systemIcon
                 ring: root.current?.signal ?? 0
                 ringColor: connectedCard.accent
-                title: root.current?.ssid || "Hidden network"
+                title: root.current?.ssid || I18n.tr("Hidden network")
                 subtitle: {
                     if (!root.current)
                         return "";
@@ -203,8 +203,8 @@ Item {
             CardHeader {
                 id: networksHeader
                 icon: "󰖩"
-                title: "Networks"
-                subtitle: NetworkService.scanning && root.others.length === 0 ? "Scanning…" : root.others.length + " available"
+                title: I18n.tr("Networks")
+                subtitle: NetworkService.scanning && root.others.length === 0 ? I18n.tr("Scanning…") : I18n.trn("%n available", "%n available", root.others.length)
             }
 
             Flickable {
@@ -241,17 +241,17 @@ Item {
                             width: rows.width
                             icon: NetworkService.getWifiIcon(modelData.signal)
                             title: modelData.ssid
-                            subtitle: connecting ? "Connecting…" : root.describe(modelData)
+                            subtitle: connecting ? I18n.tr("Connecting…") : root.describe(modelData)
                             secured: modelData.secure && !modelData.saved
                             connecting: NetworkService.connectingSsid === modelData.ssid
                             menuModel: modelData.saved ? [
                                 {
-                                    "text": "Connect",
+                                    "text": I18n.tr("Connect"),
                                     "icon": "󰖩",
                                     "action": "connect"
                                 },
                                 {
-                                    "text": "Forget",
+                                    "text": I18n.tr("Forget"),
                                     "icon": "󰆴",
                                     "action": "forget",
                                     "color": Config.errorColor
@@ -276,7 +276,7 @@ Item {
                 Layout.topMargin: Config.spacing
                 Layout.bottomMargin: Config.spacing
                 horizontalAlignment: Text.AlignHCenter
-                text: NetworkService.scanning ? "Looking for networks…" : "No other networks found"
+                text: NetworkService.scanning ? I18n.tr("Looking for networks…") : I18n.tr("No other networks found")
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
                 color: Config.subtextColor
@@ -313,7 +313,7 @@ Item {
                 Text {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
-                    text: "Wi-Fi is off"
+                    text: I18n.tr("Wi-Fi is off")
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeNormal
                     font.bold: true
@@ -324,7 +324,7 @@ Item {
                     Layout.alignment: Qt.AlignHCenter
                     size: header.boxSize
                     icon: "󰖩"
-                    text: "Turn on"
+                    text: I18n.tr("Turn on")
                     baseColor: Config.accentColor
                     hoverColor: Qt.lighter(Config.accentColor, 1.1)
                     textColor: Config.textReverseColor

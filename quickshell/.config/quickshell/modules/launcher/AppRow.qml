@@ -27,7 +27,7 @@ Item {
     readonly property bool hasMenu: isApp || clipEntry !== null
     // Waiting for a second Enter (power actions)
     readonly property bool confirming: !isApp && LauncherService.pendingConfirm === modelData.id
-    readonly property string description: confirming ? "Press Enter again to confirm" : modelData?.comment || modelData?.genericName || ""
+    readonly property string description: confirming ? I18n.tr("Press Enter again to confirm") : modelData?.comment || modelData?.genericName || ""
 
     signal activated
     signal menuRequested(Item anchor)

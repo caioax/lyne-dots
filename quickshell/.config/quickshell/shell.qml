@@ -211,11 +211,12 @@ ShellRoot {
     // =========================================================================
     // GLOBAL SHORTCUTS
     // =========================================================================
+    // Their descriptions only show in `hyprctl globalshortcuts`: English
 
     // Shortcut: Screenshot (Print)
     GlobalShortcut {
         name: "take_screenshot"
-        description: "Screenshot capture"
+        description: "Screenshot capture" // i18n-ignore
 
         onPressed: {
             console.log("[Shell] Screenshot requested");
@@ -226,7 +227,7 @@ ShellRoot {
     // Shortcut: Lock screen
     GlobalShortcut {
         name: "lock_screen"
-        description: "Lock screen"
+        description: "Lock screen" // i18n-ignore
 
         onPressed: LockService.lock()
     }
@@ -234,7 +235,7 @@ ShellRoot {
     // Shortcut: Power Menu
     GlobalShortcut {
         name: "power_menu"
-        description: "Power menu"
+        description: "Power menu" // i18n-ignore
 
         onPressed: {
             PowerService.toggle();
@@ -245,7 +246,7 @@ ShellRoot {
     // open, in any mode, it closes
     GlobalShortcut {
         name: "app_launcher"
-        description: "App Launcher"
+        description: "App Launcher" // i18n-ignore
 
         onPressed: LauncherService.toggle()
     }
@@ -253,7 +254,7 @@ ShellRoot {
     // Shortcut: Volume Up
     GlobalShortcut {
         name: "volume_up"
-        description: "Increase volume"
+        description: "Increase volume" // i18n-ignore
 
         onPressed: {
             AudioService.increaseVolume();
@@ -264,7 +265,7 @@ ShellRoot {
     // Shortcut: Volume Down
     GlobalShortcut {
         name: "volume_down"
-        description: "Decrease volume"
+        description: "Decrease volume" // i18n-ignore
 
         onPressed: {
             AudioService.decreaseVolume();
@@ -275,7 +276,7 @@ ShellRoot {
     // Shortcut: Volume Mute
     GlobalShortcut {
         name: "volume_mute"
-        description: "Mute volume"
+        description: "Mute volume" // i18n-ignore
 
         onPressed: {
             AudioService.toggleMute();
@@ -286,7 +287,7 @@ ShellRoot {
     // Shortcut: Microphone Mute
     GlobalShortcut {
         name: "mic_mute"
-        description: "Mute microphone"
+        description: "Mute microphone" // i18n-ignore
 
         onPressed: {
             AudioService.toggleSourceMute();
@@ -297,7 +298,7 @@ ShellRoot {
     // Shortcut: Brightness Up
     GlobalShortcut {
         name: "brightness_up"
-        description: "Increase brightness"
+        description: "Increase brightness" // i18n-ignore
 
         onPressed: {
             BrightnessService.increaseBrightness();
@@ -308,7 +309,7 @@ ShellRoot {
     // Shortcut: Brightness Down
     GlobalShortcut {
         name: "brightness_down"
-        description: "Decrease brightness"
+        description: "Decrease brightness" // i18n-ignore
 
         onPressed: {
             BrightnessService.decreaseBrightness();
@@ -320,7 +321,7 @@ ShellRoot {
     // open, it closes
     GlobalShortcut {
         name: "wallpaper_picker"
-        description: "Wallpaper picker"
+        description: "Wallpaper picker" // i18n-ignore
 
         onPressed: WallpaperPickerService.toggle()
     }
@@ -328,7 +329,7 @@ ShellRoot {
     // Shortcut: Clipboard History
     GlobalShortcut {
         name: "clipboard_history"
-        description: "Clipboard history"
+        description: "Clipboard history" // i18n-ignore
 
         onPressed: LauncherService.toggleMode("clipboard")
     }
@@ -336,7 +337,7 @@ ShellRoot {
     // Shortcut: Settings
     GlobalShortcut {
         name: "settings"
-        description: "Settings"
+        description: "Settings" // i18n-ignore
 
         onPressed: SettingsService.toggle()
     }
@@ -344,7 +345,7 @@ ShellRoot {
     // Shortcut: next window layout (dwindle → master → scrolling)
     GlobalShortcut {
         name: "cycle_tiling"
-        description: "Next window layout"
+        description: "Next window layout" // i18n-ignore
 
         onPressed: HyprlandSettingsService.cycleTiling(1)
     }
@@ -352,7 +353,7 @@ ShellRoot {
     // Shortcut: Keybinds (settings page)
     GlobalShortcut {
         name: "keybinds_help"
-        description: "Keybinds settings"
+        description: "Keybinds settings" // i18n-ignore
 
         onPressed: SettingsService.open("keybinds")
     }

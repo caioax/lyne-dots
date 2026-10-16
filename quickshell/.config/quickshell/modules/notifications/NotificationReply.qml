@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.services
 import "../../components/"
 
 // Inline reply field (chat apps that support org.freedesktop.Notifications inline-reply)
@@ -23,7 +24,7 @@ QsTextField {
     }
 
     compact: true
-    placeholder: "Reply"
+    placeholder: I18n.tr("Reply")
     rightInset: sendButton.width
     catchEscape: true
     onEscapePressed: input.focus = false

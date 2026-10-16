@@ -75,34 +75,34 @@ ListView {
                 };
             return {
                 icon: "\u{f00ec}",
-                text: term === "" ? "Type an expression, e.g. 2^10 or 5 km to mi" : "Calculating…"
+                text: term === "" ? I18n.tr("Type an expression, e.g. 2^10 or 5 km to mi") : I18n.tr("Calculating…")
             };
         }
         if (mode === "clipboard") {
             if (ClipboardService.missing)
                 return {
                     icon: "\u{f0028}",
-                    text: "cliphist isn't installed"
+                    text: I18n.tr("cliphist isn't installed")
                 };
             if (!ClipboardService.loaded)
                 return {
                     icon: "\u{f014d}",
-                    text: "Loading…"
+                    text: I18n.tr("Loading…")
                 };
             if (term === "")
                 return {
                     icon: "\u{f014d}",
-                    text: "Nothing copied yet"
+                    text: I18n.tr("Nothing copied yet")
                 };
         }
         if (term !== "")
             return {
                 icon: "\u{f0980}",
-                text: "No " + (mode === "actions" ? "actions" : mode === "clipboard" ? "entries" : "apps") + " match \"" + term + "\""
+                text: mode === "actions" ? I18n.tr("No actions match “%1”", term) : mode === "clipboard" ? I18n.tr("No entries match “%1”", term) : I18n.tr("No apps match “%1”", term)
             };
         return {
             icon: "\u{f003b}",
-            text: "No apps found"
+            text: I18n.tr("No apps found")
         };
     }
 

@@ -116,7 +116,7 @@ Singleton {
     readonly property list<Tile> allTiles: [
         Tile {
             tileId: "wifi"
-            label: "Wi-Fi"
+            label: I18n.tr("Wi-Fi")
             icon: NetworkService.systemIcon
             status: NetworkService.statusText
             active: NetworkService.wifiEnabled
@@ -125,7 +125,7 @@ Singleton {
         },
         Tile {
             tileId: "bluetooth"
-            label: "Bluetooth"
+            label: I18n.tr("Bluetooth")
             icon: BluetoothService.systemIcon
             status: BluetoothService.statusText
             active: BluetoothService.isPowered
@@ -135,34 +135,34 @@ Singleton {
         },
         Tile {
             tileId: "nightLight"
-            label: "Night light"
+            label: I18n.tr("Night light")
             icon: BrightnessService.nightLightIcon
-            status: BrightnessService.nightLightEnabled ? BrightnessService.nightLightTemperature + "K" : "Off"
+            status: BrightnessService.nightLightEnabled ? BrightnessService.nightLightTemperature + "K" : I18n.tr("Off")
             active: BrightnessService.nightLightEnabled
             page: "nightLight"
             toggle: () => BrightnessService.toggleNightLight()
         },
         Tile {
             tileId: "dnd"
-            label: "Do not disturb"
+            label: I18n.tr("Do not disturb")
             // md-bell_off / md-bell
             icon: NotificationService.dndEnabled ? "\u{f009b}" : "\u{f009a}"
-            status: NotificationService.dndEnabled ? "On" : "Off"
+            status: NotificationService.dndEnabled ? I18n.tr("On") : I18n.tr("Off")
             active: NotificationService.dndEnabled
             toggle: () => NotificationService.toggleDnd()
         },
         Tile {
             tileId: "caffeine"
-            label: "Caffeine"
+            label: I18n.tr("Caffeine")
             // md-coffee / md-coffee_outline
             icon: IdleService.caffeineEnabled ? "\u{f06ca}" : "\u{f0faa}"
-            status: IdleService.caffeineEnabled ? "Awake" : "Off"
+            status: IdleService.caffeineEnabled ? I18n.tr("Awake") : I18n.tr("Off")
             active: IdleService.caffeineEnabled
             toggle: () => IdleService.toggleCaffeine()
         },
         Tile {
             tileId: "powerProfile"
-            label: "Power profile"
+            label: I18n.tr("Power profile")
             icon: PowerProfileService.icon(PowerProfileService.profile)
             status: PowerProfileService.label(PowerProfileService.profile)
             // Lit away from the default
@@ -173,9 +173,9 @@ Singleton {
         },
         Tile {
             tileId: "mic"
-            label: "Microphone"
+            label: I18n.tr("Microphone")
             icon: AudioService.sourceIcon
-            status: AudioService.sourceMuted ? "Muted" : "On"
+            status: AudioService.sourceMuted ? I18n.tr("Muted") : I18n.tr("On")
             active: AudioService.sourceReady && !AudioService.sourceMuted
             toggle: () => AudioService.toggleSourceMute()
         }

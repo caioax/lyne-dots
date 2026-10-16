@@ -69,7 +69,7 @@ Singleton {
                 console.log("[Lock] Authentication failed:", PamResult.toString(result));
                 root.attempts++;
                 // PAM's own words when it has them (e.g. faillock's lockout)
-                root.failMessage = pam.messageIsError && pam.message !== "" ? pam.message : "Wrong password";
+                root.failMessage = pam.messageIsError && pam.message !== "" ? pam.message : I18n.tr("Wrong password");
                 root.failed = true;
             }
         }
@@ -78,7 +78,7 @@ Singleton {
             root.authenticating = false;
             root._pendingPassword = "";
             console.log("[Lock] PAM error:", PamError.toString(error));
-            root.failMessage = "Authentication error";
+            root.failMessage = I18n.tr("Authentication error");
             root.failed = true;
         }
     }

@@ -29,14 +29,14 @@ Item {
             Layout.bottomMargin: Config.padding
             icon: PowerProfileService.icon(root.profile)
             iconColor: PowerProfileService.tone(root.profile)
-            title: "Power profile"
+            title: I18n.tr("Power profile")
             subtitle: {
                 const name = PowerProfileService.label(root.profile);
                 switch (PowerProfileService.autoReason) {
                 case "lowBattery":
-                    return name + " · low battery, until you plug in";
+                    return I18n.tr("%1 · low battery, until you plug in", name);
                 case "unplugged":
-                    return name + " · on battery, until you plug in";
+                    return I18n.tr("%1 · on battery, until you plug in", name);
                 default:
                     return name;
                 }
@@ -150,7 +150,7 @@ Item {
             CardHeader {
                 icon: "\u{f0e01}"
                 iconColor: Config.warningColor
-                title: "Performance limited"
+                title: I18n.tr("Performance limited")
                 subtitle: PowerProfileService.degradation
             }
         }
@@ -163,8 +163,8 @@ Item {
             // md-lock_clock
             CardHeader {
                 icon: "\u{f097f}"
-                title: "Held by apps"
-                subtitle: "Picking a profile releases them"
+                title: I18n.tr("Held by apps")
+                subtitle: I18n.tr("Picking a profile releases them")
             }
 
             Repeater {
@@ -187,7 +187,7 @@ Item {
 
                     Text {
                         Layout.fillWidth: true
-                        text: holdRow.modelData.app || "An app"
+                        text: holdRow.modelData.app || I18n.tr("An app")
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeNormal
                         color: Config.textColor

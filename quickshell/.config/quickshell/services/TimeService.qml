@@ -15,7 +15,8 @@ Singleton {
     readonly property date today: new Date(_day + "T00:00:00")
 
     function format(fmt: string): string {
-        return Qt.formatDateTime(clock.date, fmt);
+        // Day and month names in the shell's language
+        return clock.date.toLocaleString(I18n.locale, fmt);
     }
 
     SystemClock {

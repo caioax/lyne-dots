@@ -24,7 +24,7 @@ HeroCard {
         StatChip {
             visible: root.sleeping
             icon: "󰒲"
-            text: "Suspended"
+            text: I18n.tr("Suspended")
             accent: Config.mutedColor
         }
 

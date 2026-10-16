@@ -60,7 +60,7 @@ Item {
             id: hint
 
             anchors.centerIn: parent
-            text: "\u{f030c}  Type your password to unlock"
+            text: "\u{f030c}  " + I18n.tr("Type your password to unlock")
             font.family: Config.font
             font.pixelSize: Config.fontSizeNormal
             color: Config.textColor

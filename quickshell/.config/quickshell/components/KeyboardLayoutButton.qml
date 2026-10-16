@@ -69,7 +69,7 @@ BarButton {
             Text {
                 Layout.leftMargin: Config.padding * 2
                 Layout.bottomMargin: Config.padding
-                text: "Keyboard layout"
+                text: I18n.tr("Keyboard layout")
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
                 font.bold: true
@@ -164,7 +164,7 @@ BarButton {
                 Text {
                     Layout.fillWidth: true
                     readonly property string keys: KeybindsService.split(KeybindsService.binds.find(b => b.id === "switch-layout")?.keys ?? "").join(" + ")
-                    text: keys !== "" ? keys + " switches layouts" : ""
+                    text: keys !== "" ? I18n.tr("%1 switches layouts", keys) : ""
                     elide: Text.ElideRight
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeSmall
@@ -172,7 +172,7 @@ BarButton {
                 }
 
                 ActionButton {
-                    text: "Settings"
+                    text: I18n.tr("Settings")
                     onClicked: {
                         popup.closeWindow();
                         SettingsService.currentPage = "keyboard";

@@ -133,7 +133,7 @@ Item {
 
         items: [
             {
-                label: root.notifs.length > 1 ? "Dismiss all " + root.notifs.length : "Dismiss",
+                label: root.notifs.length > 1 ? I18n.tr("Dismiss all %1", root.notifs.length) : I18n.tr("Dismiss"),
                 // md-notification_clear_all
                 icon: "\u{f039f}",
                 action: "dismiss",

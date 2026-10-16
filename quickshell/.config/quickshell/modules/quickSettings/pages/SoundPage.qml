@@ -23,14 +23,14 @@ Item {
         PageHeader {
             Layout.bottomMargin: Config.padding
             icon: AudioService.systemIcon
-            title: "Sound"
+            title: I18n.tr("Sound")
             subtitle: AudioService.deviceName(AudioService.sink)
             onBackClicked: root.backRequested()
         }
 
         DeviceSection {
             icon: "󰓃"
-            title: "Output"
+            title: I18n.tr("Output")
             devices: AudioService.sinks
             current: AudioService.sink
             isSink: true
@@ -38,7 +38,7 @@ Item {
 
         DeviceSection {
             icon: "󰍬"
-            title: "Input"
+            title: I18n.tr("Input")
             devices: AudioService.sources
             current: AudioService.source
             isSink: false
@@ -59,12 +59,12 @@ Item {
         CardHeader {
             icon: section.icon
             title: section.title
-            subtitle: section.devices.length + (section.devices.length === 1 ? " device" : " devices")
+            subtitle: I18n.trn("%n device", "%n devices", section.devices.length)
         }
 
         Text {
             visible: section.devices.length === 0
-            text: "No devices"
+            text: I18n.tr("No devices")
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             color: Config.subtextColor
@@ -80,7 +80,7 @@ Item {
                 Layout.leftMargin: Config.padding
                 Layout.rightMargin: Config.padding
                 title: AudioService.deviceName(modelData)
-                subtitle: isCurrent ? "In use" : ""
+                subtitle: isCurrent ? I18n.tr("In use") : ""
                 icon: AudioService.deviceIcon(modelData, section.isSink)
                 active: isCurrent
                 onClicked: {

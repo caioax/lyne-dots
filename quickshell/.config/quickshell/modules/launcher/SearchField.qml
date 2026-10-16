@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
+import qs.services
 
 // Pill search input: icon, optional mode chip, text field, result count and a
 // clear button.
@@ -11,7 +12,7 @@ Rectangle {
     id: root
 
     property alias text: input.text
-    property string placeholder: "Search apps…"
+    property string placeholder: I18n.tr("Search apps…")
     property string icon: "\u{f0349}"
     // Shown as a chip before the text when not empty
     property string chip: ""

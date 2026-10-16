@@ -64,15 +64,15 @@ Singleton {
         if (kind === "layout" || kind === "tiling")
             return text;
         if (kind === "brightness")
-            return monitorName || "Brightness";
+            return monitorName || I18n.tr("Brightness");
         if (kind === "mic")
-            return muted ? "Mic muted" : "Microphone";
+            return muted ? I18n.tr("Mic muted") : I18n.tr("Microphone");
         if (kind === "device")
             return deviceName;
-        return muted ? "Muted" : "Volume";
+        return muted ? I18n.tr("Muted") : I18n.tr("Volume");
     }
     // Line of text above the level bar (pill and attached styles)
-    readonly property string caption: kind === "device" ? deviceName : kind === "brightness" ? monitorName : kind === "layout" ? "Keyboard layout" : kind === "tiling" ? "Window layout" : ""
+    readonly property string caption: kind === "device" ? deviceName : kind === "brightness" ? monitorName : kind === "layout" ? I18n.tr("Keyboard layout") : kind === "tiling" ? I18n.tr("Window layout") : ""
 
     readonly property string icon: {
         if (kind === "layout")

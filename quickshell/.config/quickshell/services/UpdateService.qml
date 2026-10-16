@@ -63,9 +63,10 @@ Singleton {
             return;
         StateService.set("update.notified", key);
         const stable = channel === "stable";
-        const title = stable ? "Lyne " + status.target + " is available" : "Lyne: " + behind + (behind === 1 ? " update" : " updates") + " available";
-        const body = (stable ? "New release" : "Latest channel, up to " + status.targetCommit) + ". Update from here or Settings › About";
-        notifyProc.command = ["timeout", "1h", "notify-send", "-a", "Lyne", "-i", "lyne-dots", "-A", "default=Details", "-A", "update=Update", "-A", "about=Details", title, body];
+        const title = stable ? I18n.tr("Lyne %1 is available", status.target) : I18n.trn("Lyne: %n update available", "Lyne: %n updates available", behind);
+        const body = stable ? I18n.tr("New release. Update from here or Settings › About") : I18n.tr("Latest channel, up to %1. Update from here or Settings › About", status.targetCommit);
+        const details = I18n.tr("Details");
+        notifyProc.command = ["timeout", "1h", "notify-send", "-a", "Lyne", "-i", "lyne-dots", "-A", "default=" + details, "-A", "update=" + I18n.tr("Update"), "-A", "about=" + details, title, body];
         notifyProc.running = true;
     }
 

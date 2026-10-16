@@ -9,7 +9,7 @@ import "../../components/"
 ProgressRing {
     id: root
 
-    property string caption: "used"
+    property string caption: I18n.tr("used")
 
     Layout.alignment: Qt.AlignHCenter
     // Sized from the typography scale so text never outgrows the arc

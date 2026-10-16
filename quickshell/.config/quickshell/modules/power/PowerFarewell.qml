@@ -43,7 +43,7 @@ ColumnLayout {
 
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: "See you, " + PowerService.user
+            text: I18n.tr("See you, %1", PowerService.user)
             font.family: Config.font
             font.pixelSize: Config.fontSizeIconLarge
             font.bold: true
@@ -53,7 +53,7 @@ ColumnLayout {
         Text {
             Layout.alignment: Qt.AlignHCenter
             text: {
-                const parts = [TimeService.format("dddd, d MMM · HH:mm"), "up " + PowerService.uptime];
+                const parts = [I18n.capitalize(TimeService.format(I18n.trc("date format", "dddd, d MMM · HH:mm"))), I18n.tr("up %1", PowerService.uptime)];
                 if (BatteryService.hasBattery)
                     parts.push(BatteryService.percentage + "%" + (BatteryService.isCharging ? " charging" : ""));
                 return parts.join("  ·  ");

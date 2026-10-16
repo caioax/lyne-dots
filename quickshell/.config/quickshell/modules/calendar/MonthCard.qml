@@ -51,18 +51,17 @@ Card {
 
         Text {
             Layout.fillWidth: true
-            text: new Date(root.displayYear, root.displayMonth, 1).toLocaleDateString(Qt.locale(), "MMMM yyyy")
+            text: I18n.capitalize(new Date(root.displayYear, root.displayMonth, 1).toLocaleDateString(I18n.locale, I18n.trc("date format", "MMMM yyyy")))
             font.family: Config.font
             font.pixelSize: Config.fontSizeLarge
             font.bold: true
-            font.capitalization: Font.Capitalize
             color: Config.textColor
         }
 
         ActionButton {
             visible: !root.showingCurrentMonth
             icon: "󰃶"
-            text: "Today"
+            text: I18n.tr("Today")
             size: Config.fontSizeSmall * 2
             iconSize: Config.fontSizeSmall
             textColor: Config.accentColor
@@ -152,7 +151,7 @@ Card {
                 height: parent.height
                 month: root.displayMonth
                 year: root.displayYear
-                locale: Qt.locale()
+                locale: I18n.locale
                 spacing: 0
 
                 ParallelAnimation {
@@ -311,12 +310,11 @@ Card {
                 Text {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 1
-                    text: root.sameDay(root.selectedDate, root.today) ? "Today" : root.selectedDate.toLocaleDateString(Qt.locale(), "dddd, d MMMM")
+                    text: root.sameDay(root.selectedDate, root.today) ? I18n.tr("Today") : I18n.capitalize(root.selectedDate.toLocaleDateString(I18n.locale, I18n.trc("date format", "dddd, d MMMM")))
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeNormal
                     font.bold: true
-                    font.capitalization: Font.Capitalize
-                    color: Config.textColor
+                            color: Config.textColor
                     elide: Text.ElideRight
                 }
 
@@ -325,9 +323,9 @@ Card {
                     text: {
                         const h = root.selectedHoliday;
                         if (h)
-                            return h.optional ? "optional" : "holiday";
+                            return h.optional ? I18n.tr("optional") : I18n.tr("holiday");
                         const n = root.nextHoliday;
-                        return n ? "holiday in " + n.days + (n.days === 1 ? " day" : " days") : "";
+                        return n ? I18n.trn("holiday in %n day", "holiday in %n days", n.days) : "";
                     }
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeSmall
@@ -341,7 +339,7 @@ Card {
                 visible: HolidayService.enabled
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
-                text: root.selectedHoliday?.name ?? root.nextHoliday?.name ?? "No holidays"
+                text: I18n.translate(root.selectedHoliday?.name ?? root.nextHoliday?.name ?? I18n.noop("No holidays"))
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
                 color: root.selectedHoliday ? (root.selectedHoliday.optional ? Config.warningColor : Config.errorColor) : Config.subtextColor

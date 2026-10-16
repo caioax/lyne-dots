@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.services
 import "../../../components/"
 
 Item {
@@ -43,7 +44,7 @@ Item {
         PageHeader {
             Layout.bottomMargin: Config.padding
             icon: "󰌾"
-            title: "Password required"
+            title: I18n.tr("Password required")
             subtitle: root.targetSsid
             onBackClicked: root.cancelled()
         }
@@ -54,7 +55,7 @@ Item {
 
             Text {
                 Layout.fillWidth: true
-                text: "Enter the password for <b>" + root.targetSsid + "</b>"
+                text: I18n.tr("Enter the password for %1", "<b>" + root.targetSsid + "</b>")
                 textFormat: Text.StyledText
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
@@ -72,7 +73,7 @@ Item {
                 implicitHeight: root.controlSize
                 echoMode: showPassword ? TextInput.Normal : TextInput.Password
                 input.passwordCharacter: "•"
-                placeholder: "Password"
+                placeholder: I18n.tr("Password")
                 rightInset: eyeButton.width
                 catchEscape: true
                 onEscapePressed: root.cancelled()
@@ -96,7 +97,7 @@ Item {
 
             Text {
                 visible: input.text.length > 0 && !root.valid
-                text: "At least 8 characters"
+                text: I18n.tr("At least 8 characters")
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
                 color: Config.warningColor
@@ -110,7 +111,7 @@ Item {
                     Layout.fillWidth: true
                     size: root.controlSize
                     icon: "󰜺"
-                    text: "Cancel"
+                    text: I18n.tr("Cancel")
                     textColor: Config.subtextColor
                     onClicked: root.cancelled()
                 }
@@ -119,7 +120,7 @@ Item {
                     Layout.fillWidth: true
                     size: root.controlSize
                     icon: "󰖩"
-                    text: "Connect"
+                    text: I18n.tr("Connect")
                     opacity: root.valid ? 1 : 0.5
                     baseColor: Config.accentColor
                     hoverColor: root.valid ? Qt.lighter(Config.accentColor, 1.1) : Config.accentColor

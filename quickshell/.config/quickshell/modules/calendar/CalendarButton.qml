@@ -72,7 +72,7 @@ BarButton {
         }
 
         Text {
-            text: TimeService.format("ddd, dd MMM")
+            text: TimeService.format(I18n.trc("date format", "ddd, dd MMM"))
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             color: Config.subtextColor

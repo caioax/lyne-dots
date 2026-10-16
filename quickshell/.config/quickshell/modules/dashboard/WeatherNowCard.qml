@@ -64,7 +64,7 @@ Card {
         Text {
             Layout.alignment: Qt.AlignHCenter
             visible: !WeatherService.loading
-            text: "\u{f05aa}  " + (WeatherService.error || "Weather unavailable")
+            text: "\u{f05aa}  " + (WeatherService.error || I18n.tr("Weather unavailable"))
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             color: Config.subtextColor
@@ -148,25 +148,25 @@ Card {
 
         DetailTile {
             icon: "\u{f050f}"
-            label: "Feels"
+            label: I18n.tr("Feels")
             value: (root.current?.feelsLike ?? 0) + "°"
         }
 
         DetailTile {
             icon: "\u{f058c}"
-            label: "Rain"
+            label: I18n.tr("Rain")
             value: (root.today?.rain ?? 0) + "%"
         }
 
         DetailTile {
             icon: "\u{f058e}"
-            label: "Humidity"
+            label: I18n.tr("Humidity")
             value: (root.current?.humidity ?? 0) + "%"
         }
 
         DetailTile {
             icon: "\u{f059d}"
-            label: "Wind"
+            label: I18n.tr("Wind")
             value: (root.current?.wind ?? 0) + " km/h"
         }
     }

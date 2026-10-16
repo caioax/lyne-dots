@@ -23,7 +23,7 @@ GridLayout {
     Pill {
         visible: BatteryService.hasBattery
         icon: BatteryService.isCharging ? "\u{f0084}" : "\u{f0079}"
-        text: BatteryService.percentage + "%" + (BatteryService.isCharging ? " · charging" : "")
+        text: BatteryService.isCharging ? I18n.tr("%1% · charging", BatteryService.percentage) : BatteryService.percentage + "%"
         accent: BatteryService.percentage <= 20 && !BatteryService.isCharging ? Config.errorColor : Config.textColor
     }
 
@@ -36,7 +36,7 @@ GridLayout {
     Pill {
         visible: NotificationService.count > 0
         icon: "\u{f0178}"
-        text: NotificationService.count + (NotificationService.count === 1 ? " notification" : " notifications")
+        text: I18n.trn("%n notification", "%n notifications", NotificationService.count)
         accent: Config.accentColor
     }
 

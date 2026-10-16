@@ -26,11 +26,11 @@ Singleton {
             return "";
         const seconds = isCharging ? mainBattery.timeToFull : mainBattery.timeToEmpty;
         if (!seconds || seconds <= 0)
-            return state === UPowerDeviceState.FullyCharged ? "Full" : "";
+            return state === UPowerDeviceState.FullyCharged ? I18n.tr("Full") : "";
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.round((seconds % 3600) / 60);
-        const duration = hours > 0 ? hours + "h " + minutes + "m" : minutes + "m";
-        return duration + (isCharging ? " to full" : " left");
+        const duration = hours > 0 ? I18n.tr("%1h %2m", hours, minutes) : I18n.tr("%1m", minutes);
+        return isCharging ? I18n.tr("%1 to full", duration) : I18n.tr("%1 left", duration);
     }
 
     // UPower's display device: every laptop battery combined. Gone (null)

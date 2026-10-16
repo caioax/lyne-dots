@@ -21,8 +21,8 @@ Singleton {
             })).concat([
             {
                 id: "power-menu",
-                name: "Power menu",
-                comment: "Lock, suspend, log out, reboot or shut down",
+                name: I18n.tr("Power menu"),
+                comment: I18n.tr("Lock, suspend, log out, reboot or shut down"),
                 glyph: "\u{f0426}",
                 keywords: ["session"],
                 run: () => PowerService.show()
@@ -32,16 +32,16 @@ Singleton {
     readonly property var tools: [
         {
             id: "screenshot",
-            name: "Take a screenshot",
-            comment: "Select a region, a window or the screen",
+            name: I18n.tr("Take a screenshot"),
+            comment: I18n.tr("Select a region, a window or the screen"),
             glyph: "\u{f0e51}",
             keywords: ["print", "capture"],
             run: () => ShortcutService.screenshotRequested()
         },
         {
             id: "clipboard",
-            name: "Clipboard history",
-            comment: "Paste something copied earlier",
+            name: I18n.tr("Clipboard history"),
+            comment: I18n.tr("Paste something copied earlier"),
             glyph: "\u{f014d}",
             keywords: ["paste", "copy"],
             // Switches the launcher to its clipboard mode
@@ -50,8 +50,8 @@ Singleton {
         },
         {
             id: "wallpaper",
-            name: "Random wallpaper",
-            comment: "Pick another wallpaper from your library",
+            name: I18n.tr("Random wallpaper"),
+            comment: I18n.tr("Pick another wallpaper from your library"),
             glyph: "\u{f049f}",
             keywords: ["background", "shuffle"],
             run: () => WallpaperService.setRandomWallpaper()
@@ -61,26 +61,26 @@ Singleton {
     readonly property var toggles: [
         {
             id: "dnd",
-            name: NotificationService.dndEnabled ? "Turn off Do not disturb" : "Turn on Do not disturb",
-            comment: NotificationService.dndEnabled ? "Notification popups are hidden" : "Hide notification popups",
+            name: NotificationService.dndEnabled ? I18n.tr("Turn off Do not disturb") : I18n.tr("Turn on Do not disturb"),
+            comment: NotificationService.dndEnabled ? I18n.tr("Notification popups are hidden") : I18n.tr("Hide notification popups"),
             glyph: NotificationService.dndEnabled ? "\u{f009a}" : "\u{f009b}",
             keywords: ["dnd", "notifications", "silence"],
             run: () => NotificationService.toggleDnd()
         },
         {
             id: "caffeine",
-            name: IdleService.caffeineEnabled ? "Turn off Caffeine" : "Turn on Caffeine",
-            comment: IdleService.caffeineEnabled ? "The screen is kept awake" : "Keep the screen awake",
+            name: IdleService.caffeineEnabled ? I18n.tr("Turn off Caffeine") : I18n.tr("Turn on Caffeine"),
+            comment: IdleService.caffeineEnabled ? I18n.tr("The screen is kept awake") : I18n.tr("Keep the screen awake"),
             glyph: IdleService.caffeineEnabled ? "\u{f0faa}" : "\u{f0176}",
             keywords: ["awake", "idle", "inhibit"],
             run: () => IdleService.toggleCaffeine()
         },
         {
             id: "night-light",
-            name: BrightnessService.nightLightEnabled ? "Turn off Night light" : "Turn on Night light",
-            comment: BrightnessService.nightLightEnabled ? "The screen is warmer" : "Warmer colors for the evening",
+            name: BrightnessService.nightLightEnabled ? I18n.tr("Turn off Night light") : I18n.tr("Turn on Night light"),
+            comment: BrightnessService.nightLightEnabled ? I18n.tr("The screen is warmer") : I18n.tr("Warmer colors for the evening"),
             glyph: "\u{f0594}",
-            keywords: ["blue light", "warm"],
+            keywords: [I18n.tr("blue light"), "warm"],
             run: () => BrightnessService.toggleNightLight()
         }
     ]
@@ -88,10 +88,10 @@ Singleton {
     // One action per Settings page
     readonly property var settings: SettingsService.pages.map(page => ({
                 id: "settings-" + page.id,
-                name: page.label + " settings",
-                comment: page.description,
+                name: I18n.tr("%1 settings", I18n.translate(page.label)),
+                comment: I18n.translate(page.description),
                 glyph: page.icon,
-                keywords: ["settings", "preferences", page.category],
+                keywords: ["settings", "preferences", page.category, page.label, I18n.translate(page.category)],
                 run: () => SettingsService.open(page.id)
             }))
 

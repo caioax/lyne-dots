@@ -71,7 +71,7 @@ Card {
         }
 
         Text {
-            text: root.idle ? "Idle" : root.usage + "%"
+            text: root.idle ? I18n.tr("Idle") : root.usage + "%"
             font.family: Config.font
             font.pixelSize: Config.fontSizeIconLarge
             font.bold: true

@@ -238,37 +238,37 @@ Card {
                 {
                     "icon": "󰹑",
                     "action": "screenshot",
-                    "label": "Screenshot"
+                    "label": I18n.tr("Screenshot")
                 },
                 {
                     "icon": "󰅌",
                     "action": "clipboard",
-                    "label": "Clipboard history"
+                    "label": I18n.tr("Clipboard history")
                 },
                 {
                     "icon": "󰸉",
                     "action": "wallpaper",
-                    "label": "Wallpapers"
+                    "label": I18n.tr("Wallpapers")
                 },
                 {
                     "icon": "󰏘",
                     "action": "theme",
-                    "label": "Themes"
+                    "label": I18n.tr("Themes")
                 },
                 {
                     "icon": "󰌌",
                     "action": "keybinds",
-                    "label": "Keybinds"
+                    "label": I18n.tr("Keybinds")
                 },
                 {
                     "icon": "󰌾",
                     "action": "lock",
-                    "label": "Lock screen"
+                    "label": I18n.tr("Lock screen")
                 },
                 {
                     "icon": "󰒓",
                     "action": "settings",
-                    "label": "Settings"
+                    "label": I18n.tr("Settings")
                 }
             ]
 

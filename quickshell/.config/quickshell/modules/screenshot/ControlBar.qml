@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.services
 import "../../components/"
 
 // Card at the bottom center of the active monitor: mode switch, what is
@@ -177,13 +178,13 @@ Rectangle {
                     text: {
                         switch (root.mode) {
                         case "window":
-                            return root.selecting ? root.screenshot.selectedWindowClass || root.screenshot.selectedWindowTitle : "No window";
+                            return root.selecting ? root.screenshot.selectedWindowClass || root.screenshot.selectedWindowTitle : I18n.tr("No window");
                         case "screen":
-                            return root.screenshot.hyprlandMonitor?.name ?? "Screen";
+                            return root.screenshot.hyprlandMonitor?.name ?? I18n.tr("Screen");
                         case "color":
-                            return root.screenshot.pickX >= 0 ? root.screenshot.pickedText : "No color";
+                            return root.screenshot.pickX >= 0 ? root.screenshot.pickedText : I18n.tr("No color");
                         default:
-                            return root.selecting ? root.size : "No region";
+                            return root.selecting ? root.size : I18n.tr("No region");
                         }
                     }
                     elide: Text.ElideRight
@@ -209,7 +210,7 @@ Rectangle {
 
             ActionButton {
                 icon: root.mode === "color" ? "\u{f018f}" : "\u{f012c}"
-                text: root.mode === "color" ? "Copy" : "Capture"
+                text: root.mode === "color" ? I18n.tr("Copy") : I18n.tr("Capture")
                 size: root.buttonSize
                 enabled: root.screenshot.canConfirm
                 opacity: enabled ? 1 : 0.4
@@ -221,7 +222,7 @@ Rectangle {
 
             ActionButton {
                 icon: "\u{f03eb}"
-                text: "Edit"
+                text: I18n.tr("Edit")
                 size: root.buttonSize
                 enabled: root.screenshot.canConfirm && root.mode !== "color"
                 opacity: enabled ? 1 : 0.4
@@ -232,7 +233,7 @@ Rectangle {
             ActionButton {
                 visible: root.screenshot.ocrAvailable && root.mode !== "color"
                 icon: "\u{f113a}"
-                text: "Text"
+                text: I18n.tr("Text")
                 size: root.buttonSize
                 enabled: root.screenshot.canConfirm
                 opacity: enabled ? 1 : 0.4
@@ -269,20 +270,20 @@ Rectangle {
                 model: {
                     const hints = [];
                     if (root.mode === "region" && !root.screenshot.hasSelection)
-                        hints.push(["drag", "select"]);
+                        hints.push(["drag", I18n.trc("key hint", "select")]);
                     if (root.mode === "window")
-                        hints.push(["click", "pick"]);
+                        hints.push(["click", I18n.trc("key hint", "pick")]);
                     if (root.mode === "color")
-                        hints.push(["click", "copy"], ["←↑↓→", "move"], ["shift", "×10"]);
+                        hints.push(["click", I18n.trc("key hint", "copy")], ["←↑↓→", I18n.trc("key hint", "move")], ["shift", "×10"]);
                     else if (root.screenshot.canConfirm)
-                        hints.push(["⏎", "capture"], ["E", "edit"]);
+                        hints.push(["⏎", I18n.trc("key hint", "capture")], ["E", I18n.trc("key hint", "edit")]);
                     if (root.mode !== "color" && root.screenshot.canConfirm && root.screenshot.ocrAvailable)
-                        hints.push(["T", "text"]);
+                        hints.push(["T", I18n.trc("key hint", "text")]);
                     if (root.mode === "region" && root.screenshot.hasSelection)
-                        hints.push(["←↑↓→", "move"], ["ctrl", "resize"], ["shift", "×10"]);
+                        hints.push(["←↑↓→", I18n.trc("key hint", "move")], ["ctrl", I18n.trc("key hint", "resize")], ["shift", "×10"]);
                     else
-                        hints.push(["R W S C", "mode"]);
-                    hints.push(["esc", "cancel"]);
+                        hints.push(["R W S C", I18n.trc("key hint", "mode")]);
+                    hints.push(["esc", I18n.trc("key hint", "cancel")]);
                     return hints;
                 }
 

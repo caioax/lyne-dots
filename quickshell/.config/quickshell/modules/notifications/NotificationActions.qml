@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
 import qs.config
+import qs.services
 
 // Row of action buttons. With includeDefault the app's default action is
 // offered too (as "Open"), for places where a click doesn't trigger it.
@@ -62,7 +63,7 @@ RowLayout {
 
                 Text {
                     Layout.fillWidth: true
-                    text: pill.modelData.text || "Open"
+                    text: pill.modelData.text || I18n.tr("Open")
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeSmall
                     font.bold: true

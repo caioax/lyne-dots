@@ -10,7 +10,7 @@ Card {
 
     CardHeader {
         icon: "󰘚"
-        title: "Memory"
+        title: I18n.tr("Memory")
         iconColor: SystemMonitorService.usageColor(SystemMonitorService.memUsage)
     }
 
@@ -38,7 +38,7 @@ Card {
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
             visible: SystemMonitorService.swapTotal > 0
-            text: "Swap " + SystemMonitorService.formatGiB(SystemMonitorService.swapUsed) + " / " + SystemMonitorService.formatGiB(SystemMonitorService.swapTotal) + " GiB"
+            text: I18n.tr("Swap %1 / %2 GiB", SystemMonitorService.formatGiB(SystemMonitorService.swapUsed), SystemMonitorService.formatGiB(SystemMonitorService.swapTotal))
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             color: Config.subtextColor

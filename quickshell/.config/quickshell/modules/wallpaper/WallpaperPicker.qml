@@ -232,7 +232,7 @@ PanelWindow {
                     Layout.fillWidth: false
                     Layout.preferredWidth: Config.fontSizeNormal * 24
                     icon: "\u{f0e09}"
-                    placeholder: "Search wallpapers…"
+                    placeholder: I18n.tr("Search wallpapers…")
                     count: WallpaperPickerService.items.length
                     onTextChanged: WallpaperPickerService.query = text
                     onKeyPressed: event => root.handleKey(event)
@@ -369,12 +369,12 @@ PanelWindow {
                     wrapMode: Text.Wrap
                     text: {
                         if (empty.searching)
-                            return "No wallpaper matches “" + WallpaperPickerService.query.trim() + "”";
+                            return I18n.tr("No wallpaper matches “%1”", WallpaperPickerService.query.trim());
                         if (empty.filter === "favorites")
-                            return "No favorites yet: right click a wallpaper to add it";
+                            return I18n.tr("No favorites yet: right click a wallpaper to add it");
                         if (empty.filter === "theme")
-                            return WallpaperService.generateErrors[WallpaperPickerService.themeName] ?? "This theme has no wallpapers yet";
-                        return "No wallpapers in ~/.local/wallpapers";
+                            return I18n.translate(WallpaperService.generateErrors[WallpaperPickerService.themeName] ?? I18n.noop("This theme has no wallpapers yet"));
+                        return I18n.tr("No wallpapers in ~/.local/wallpapers");
                     }
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeNormal
@@ -386,7 +386,7 @@ PanelWindow {
                     Layout.alignment: Qt.AlignHCenter
                     visible: !empty.searching && empty.filter === "all"
                     icon: "\u{f087c}"
-                    text: "Add wallpapers"
+                    text: I18n.tr("Add wallpapers")
                     onClicked: WallpaperPickerService.addWallpapers()
                 }
 
@@ -396,7 +396,7 @@ PanelWindow {
                     visible: !empty.searching && empty.filter === "theme"
                     enabled: WallpaperService.generatingFor === ""
                     icon: "\u{f0674}"
-                    text: empty.generating ? "Generating… " + WallpaperService.generatedCount + " / " + WallpaperService.generatorScenes.length : "Generate lyne-dots wallpapers"
+                    text: empty.generating ? I18n.tr("Generating… %1 / %2", WallpaperService.generatedCount, WallpaperService.generatorScenes.length) : I18n.tr("Generate lyne-dots wallpapers")
                     onClicked: WallpaperService.generateThemeWallpapers(WallpaperPickerService.themeName)
                 }
 
@@ -442,7 +442,7 @@ PanelWindow {
                     }
 
                     Text {
-                        text: (WallpaperPickerService.selectedIndex + 1) + " / " + WallpaperPickerService.items.length + (footer.path === WallpaperService.currentWallpaper ? "  ·  in use" : "")
+                        text: footer.path === WallpaperService.currentWallpaper ? I18n.tr("%1 / %2  ·  in use", WallpaperPickerService.selectedIndex + 1, WallpaperPickerService.items.length) : (WallpaperPickerService.selectedIndex + 1) + " / " + WallpaperPickerService.items.length
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeSmall
                         color: Config.mutedColor
@@ -460,22 +460,22 @@ PanelWindow {
 
                 KeyHint {
                     keys: "←→"
-                    label: "navigate"
+                    label: I18n.trc("key hint", "navigate")
                 }
 
                 KeyHint {
                     keys: "⏎"
-                    label: "apply"
+                    label: I18n.trc("key hint", "apply")
                 }
 
                 KeyHint {
                     keys: "alt 1-" + root.filters.length
-                    label: "filter"
+                    label: I18n.trc("key hint", "filter")
                 }
 
                 KeyHint {
                     keys: "esc"
-                    label: WallpaperPickerService.query !== "" ? "clear" : "close"
+                    label: WallpaperPickerService.query !== "" ? I18n.trc("key hint", "clear") : I18n.trc("key hint", "close")
                 }
             }
         }
@@ -515,18 +515,18 @@ PanelWindow {
 
         items: [
             {
-                label: isFavorite ? "Remove from favorites" : "Add to favorites",
+                label: isFavorite ? I18n.tr("Remove from favorites") : I18n.tr("Add to favorites"),
                 icon: isFavorite ? "\u{f02d5}" : "\u{f02d1}",
                 action: "favorite"
             },
             {
-                label: "Use for " + themeLabel,
+                label: I18n.tr("Use for %1", themeLabel),
                 icon: "\u{f03d8}",
                 action: "useForTheme",
                 hidden: WallpaperPickerService.themeName === ""
             },
             {
-                label: "Open in Settings",
+                label: I18n.tr("Open in Settings"),
                 icon: "\u{f0493}",
                 action: "settings"
             }

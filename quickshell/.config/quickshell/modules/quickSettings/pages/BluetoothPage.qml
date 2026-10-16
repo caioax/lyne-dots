@@ -34,13 +34,13 @@ Item {
 
     function status(device): string {
         if (device.pairing)
-            return "Pairing…";
+            return I18n.tr("Pairing…");
         if (BluetoothService.getIsConnecting(device))
-            return "Connecting…";
+            return I18n.tr("Connecting…");
         const kind = BluetoothService.deviceKind(device).label;
         if (device.connected)
-            return "Connected · " + kind;
-        return BluetoothService.isKnown(device) ? "Paired · " + kind : kind;
+            return I18n.tr("Connected · %1", kind);
+        return BluetoothService.isKnown(device) ? I18n.tr("Paired · %1", kind) : kind;
     }
 
     ColumnLayout {
@@ -61,15 +61,15 @@ Item {
                 id: header
                 Layout.bottomMargin: Config.padding
                 icon: BluetoothService.systemIcon
-                title: "Bluetooth"
+                title: I18n.tr("Bluetooth")
                 subtitle: {
                     if (!BluetoothService.isPowered)
-                        return "Off";
+                        return I18n.tr("Off");
                     if (BluetoothService.isDiscoverable)
-                        return "Visible as " + (BluetoothService.adapter?.name ?? "this computer");
+                        return I18n.tr("Visible as %1", BluetoothService.adapter?.name ?? I18n.tr("this computer"));
                     if (root.connected.length > 0)
                         return BluetoothService.statusText;
-                    return "Not connected";
+                    return I18n.tr("Not connected");
                 }
                 onBackClicked: root.backRequested()
 
@@ -150,12 +150,12 @@ Item {
                         onClicked: connectedCard.modelData.disconnect()
                         menuModel: [
                             {
-                                text: "Disconnect",
+                                text: I18n.tr("Disconnect"),
                                 icon: "\u{f00b2}", // md-bluetooth_off
                                 action: "disconnect"
                             },
                             {
-                                text: "Forget",
+                                text: I18n.tr("Forget"),
                                 icon: "\u{f01b4}", // md-delete
                                 action: "forget",
                                 color: Config.errorColor
@@ -178,8 +178,8 @@ Item {
 
                 CardHeader {
                     icon: "󰂯"
-                    title: "My devices"
-                    subtitle: root.known.length + " paired"
+                    title: I18n.tr("My devices")
+                    subtitle: I18n.trn("%n paired", "%n paired", root.known.length)
                 }
 
                 Repeater {
@@ -196,12 +196,12 @@ Item {
                         connecting: modelData.pairing || BluetoothService.getIsConnecting(modelData)
                         menuModel: [
                             {
-                                "text": "Connect",
+                                "text": I18n.tr("Connect"),
                                 "icon": "󰂱",
                                 "action": "connect"
                             },
                             {
-                                "text": "Forget",
+                                "text": I18n.tr("Forget"),
                                 "icon": "󰆴",
                                 "action": "forget",
                                 "color": Config.errorColor
@@ -229,8 +229,8 @@ Item {
             CardHeader {
                 id: foundHeader
                 icon: "󰂰"
-                title: "Available"
-                subtitle: BluetoothService.isDiscovering ? "Searching…" : root.found.length + " found"
+                title: I18n.tr("Available")
+                subtitle: BluetoothService.isDiscovering ? I18n.tr("Searching…") : I18n.trn("%n found", "%n found", root.found.length)
             }
 
             Flickable {
@@ -278,7 +278,7 @@ Item {
                 Layout.topMargin: Config.spacing
                 Layout.bottomMargin: Config.spacing
                 horizontalAlignment: Text.AlignHCenter
-                text: BluetoothService.isDiscovering ? "Looking for devices…" : "Make sure the device is in pairing mode"
+                text: BluetoothService.isDiscovering ? I18n.tr("Looking for devices…") : I18n.tr("Make sure the device is in pairing mode")
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
                 color: Config.subtextColor
@@ -315,7 +315,7 @@ Item {
                 Text {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
-                    text: "Bluetooth is off"
+                    text: I18n.tr("Bluetooth is off")
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeNormal
                     font.bold: true
@@ -326,7 +326,7 @@ Item {
                     Layout.alignment: Qt.AlignHCenter
                     size: header.boxSize
                     icon: "󰂯"
-                    text: "Turn on"
+                    text: I18n.tr("Turn on")
                     baseColor: Config.accentColor
                     hoverColor: Qt.lighter(Config.accentColor, 1.1)
                     textColor: Config.textReverseColor

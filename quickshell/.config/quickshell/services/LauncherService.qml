@@ -58,30 +58,30 @@ Singleton {
         {
             id: "apps",
             prefix: "",
-            label: "Apps",
+            label: I18n.tr("Apps"),
             icon: "\u{f0349}",
-            placeholder: "Search apps…  (> actions, = calculator)"
+            placeholder: I18n.tr("Search apps…  (> actions, = calculator)")
         },
         {
             id: "actions",
             prefix: ">",
-            label: "Actions",
+            label: I18n.tr("Actions"),
             icon: "\u{f140b}",
-            placeholder: "Run an action…"
+            placeholder: I18n.tr("Run an action…")
         },
         {
             id: "calc",
             prefix: "=",
-            label: "Calculator",
+            label: I18n.tr("Calculator"),
             icon: "\u{f00ec}",
-            placeholder: "Calculate…  (2^10, 5 km to mi, 20% of 150)"
+            placeholder: I18n.tr("Calculate…  (2^10, 5 km to mi, 20% of 150)")
         },
         {
             id: "clipboard",
             prefix: ";",
-            label: "Clipboard",
+            label: I18n.tr("Clipboard"),
             icon: "\u{f014d}",
-            placeholder: "Search the clipboard…"
+            placeholder: I18n.tr("Search the clipboard…")
         }
     ]
     readonly property var mode: modes.find(m => m.prefix !== "" && query.startsWith(m.prefix)) ?? modes[0]
@@ -221,7 +221,7 @@ Singleton {
             {
                 id: "calc-result",
                 name: calcResult,
-                comment: calcExpression + "  ·  Enter copies the result",
+                comment: I18n.tr("%1  ·  Enter copies the result", calcExpression),
                 glyph: "\u{f018f}",
                 run: () => Quickshell.execDetached(["wl-copy", root.calcResult])
             }
@@ -242,22 +242,22 @@ Singleton {
     readonly property var clipFilters: [
         {
             id: "all",
-            label: "All",
+            label: I18n.tr("All"),
             icon: "\u{f014d}"
         },
         {
             id: "text",
-            label: "Text",
+            label: I18n.tr("Text"),
             icon: "\u{f09a8}"
         },
         {
             id: "image",
-            label: "Images",
+            label: I18n.tr("Images"),
             icon: "\u{f0976}"
         },
         {
             id: "link",
-            label: "Links",
+            label: I18n.tr("Links"),
             icon: "\u{f0337}"
         }
     ]
@@ -625,8 +625,8 @@ Singleton {
         const size = entry.width > 0 ? entry.width + "×" + entry.height + "  ·  " : "";
         return {
             id: "clip-" + entry.id,
-            name: image ? "Image" : entry.text,
-            comment: image ? size + entry.format.toUpperCase() + "  ·  " + entry.size : entry.kind === "link" ? "Link" : entry.kind === "color" ? "Color" : entry.kind === "path" ? "Path" : "",
+            name: image ? I18n.tr("Image") : entry.text,
+            comment: image ? size + entry.format.toUpperCase() + "  ·  " + entry.size : entry.kind === "link" ? I18n.tr("Link") : entry.kind === "color" ? I18n.tr("Color") : entry.kind === "path" ? I18n.tr("Path") : "",
             glyph: clipGlyphs[entry.kind],
             clip: entry,
             run: () => ClipboardService.copy(entry)
@@ -703,14 +703,14 @@ Singleton {
                 return;
             if (code === 127) {
                 root.calcResult = "";
-                root.calcError = "qalc isn't installed (package libqalculate)";
+                root.calcError = I18n.tr("qalc isn't installed (package libqalculate)");
                 return;
             }
             const lines = calcOut.text.trim().split("\n").filter(l => l.trim() !== "");
             const last = lines[lines.length - 1] ?? "";
             if (code !== 0 || last === "" || /^error/i.test(last)) {
                 root.calcResult = "";
-                root.calcError = last.replace(/^error:\s*/i, "") || "Can't calculate that";
+                root.calcError = last.replace(/^error:\s*/i, "") || I18n.tr("Can't calculate that");
                 return;
             }
             root.calcError = "";

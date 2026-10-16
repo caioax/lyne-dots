@@ -66,7 +66,7 @@ Rectangle {
                 }
 
                 Text {
-                    text: TimeService.format("dddd, d MMM · HH:mm")
+                    text: I18n.capitalize(TimeService.format(I18n.trc("date format", "dddd, d MMM · HH:mm")))
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeSmall
                     color: Config.subtextColor
@@ -79,7 +79,7 @@ Rectangle {
 
             StatChip {
                 icon: "\u{f0150}"
-                text: "up " + PowerService.uptime
+                text: I18n.tr("up %1", PowerService.uptime)
             }
 
             StatChip {

@@ -35,7 +35,7 @@ Rectangle {
         anchors.right: parent.right
         anchors.rightMargin: Config.padding * 2
         anchors.verticalCenter: parent.verticalCenter
-        text: root.list.map(i => "<b>" + i.who + "</b> is blocking " + i.what.replace(/:/g, " and ") + (i.why ? ": " + i.why : "")).join("<br>")
+        text: root.list.map(i => i.why ? I18n.tr("%1 is blocking %2: %3", "<b>" + i.who + "</b>", i.what.replace(/:/g, ", "), i.why) : I18n.tr("%1 is blocking %2", "<b>" + i.who + "</b>", i.what.replace(/:/g, ", "))).join("<br>")
         textFormat: Text.StyledText
         wrapMode: Text.Wrap
         font.family: Config.font

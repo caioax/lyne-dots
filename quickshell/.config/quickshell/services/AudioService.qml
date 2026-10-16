@@ -34,7 +34,7 @@ Singleton {
     readonly property var sources: Pipewire.nodes.values.filter(n => n.audio && !n.isSink && !n.isStream)
 
     function deviceName(node): string {
-        return node?.description || node?.nickname || node?.name || "Unknown";
+        return node?.description || node?.nickname || node?.name || I18n.tr("Unknown");
     }
 
     // Glyph for an output (by its name) or input device

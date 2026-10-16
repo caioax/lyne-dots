@@ -35,8 +35,8 @@ Card {
         visible: root.showHeader
         // md-bell_off / md-bell
         icon: NotificationService.dndEnabled ? "\u{f009b}" : "\u{f009a}"
-        title: "Notifications"
-        subtitle: NotificationService.count + (NotificationService.dndEnabled ? " · Do not disturb" : "")
+        title: I18n.tr("Notifications")
+        subtitle: NotificationService.dndEnabled ? I18n.tr("%1 · Do not disturb", NotificationService.count) : String(NotificationService.count)
 
         ActionButton {
             visible: root.preview
@@ -44,7 +44,7 @@ Card {
             iconSize: Config.fontSizeNormal
             // md-format_list_bulleted
             icon: "\u{f0279}"
-            text: root.hiddenGroups > 0 ? "See all " + NotificationService.groupNames.length : "See all"
+            text: root.hiddenGroups > 0 ? I18n.tr("See all %1", NotificationService.groupNames.length) : I18n.tr("See all")
             onClicked: root.openPageRequested()
         }
 
@@ -118,13 +118,13 @@ Card {
 
         items: [
             {
-                label: NotificationService.dndEnabled ? "Turn off do not disturb" : "Do not disturb",
+                label: NotificationService.dndEnabled ? I18n.tr("Turn off do not disturb") : I18n.tr("Do not disturb"),
                 // md-bell / md-bell_sleep
                 icon: NotificationService.dndEnabled ? "\u{f009a}" : "\u{f00a0}",
                 action: "dnd"
             },
             {
-                label: "Clear all",
+                label: I18n.tr("Clear all"),
                 // md-notification_clear_all
                 icon: "\u{f039f}",
                 action: "clear",

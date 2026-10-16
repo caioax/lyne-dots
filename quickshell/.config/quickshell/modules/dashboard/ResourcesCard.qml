@@ -17,7 +17,7 @@ Rectangle {
     // are narrow beside the player
     function shortFree(bytes: real): string {
         const gib = bytes / 1073741824;
-        return (gib >= 1024 ? (gib / 1024).toFixed(1) + "T" : Math.round(gib) + "G") + " free";
+        return I18n.tr("%1 free", gib >= 1024 ? I18n.number(gib / 1024, 1) + "T" : Math.round(gib) + "G");
     }
 
     Layout.fillWidth: true
@@ -54,7 +54,7 @@ Rectangle {
         }
 
         Resource {
-            label: "Memory"
+            label: I18n.tr("Memory")
             value: SystemMonitorService.memUsage
             detail: SystemMonitorService.formatGiB(SystemMonitorService.memUsed) + " GiB"
         }
@@ -63,17 +63,17 @@ Rectangle {
             visible: root.hasGpu
             label: "GPU"
             value: SystemMonitorService.gpuSleeping ? 0 : SystemMonitorService.gpuUsage
-            detail: SystemMonitorService.gpuSleeping ? "Asleep" : SystemMonitorService.gpuTemp > 0 ? SystemMonitorService.gpuTemp + "°C" : ""
+            detail: SystemMonitorService.gpuSleeping ? I18n.tr("Asleep") : SystemMonitorService.gpuTemp > 0 ? SystemMonitorService.gpuTemp + "°C" : ""
         }
 
         Resource {
-            label: "Disk"
+            label: I18n.tr("Disk")
             value: root.rootDisk?.usage ?? 0
             detail: root.rootDisk ? root.shortFree(root.rootDisk.total - root.rootDisk.used) : ""
         }
 
         Resource {
-            label: "Uptime"
+            label: I18n.tr("Uptime")
             detail: SystemMonitorService.uptime
             icon: "\u{f0150}"
         }

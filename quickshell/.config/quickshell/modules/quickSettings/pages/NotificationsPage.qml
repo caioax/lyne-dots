@@ -30,12 +30,12 @@ Item {
             Layout.bottomMargin: Config.padding
             // md-bell_off / md-bell
             icon: NotificationService.dndEnabled ? "\u{f009b}" : "\u{f009a}"
-            title: "Notifications"
+            title: I18n.tr("Notifications")
             subtitle: {
                 const count = NotificationService.count;
                 const apps = NotificationService.groupNames.length;
-                const text = count === 0 ? "Nothing new" : count + (count === 1 ? " notification" : " notifications") + " · " + apps + (apps === 1 ? " app" : " apps");
-                return NotificationService.dndEnabled ? text + " · Do not disturb" : text;
+                const text = count === 0 ? I18n.tr("Nothing new") : I18n.tr("%1 · %2", I18n.trn("%n notification", "%n notifications", count), I18n.trn("%n app", "%n apps", apps));
+                return NotificationService.dndEnabled ? I18n.tr("%1 · Do not disturb", text) : text;
             }
             onBackClicked: root.backRequested()
 
@@ -53,7 +53,7 @@ Item {
             ClearButton {
                 visible: NotificationService.count > 0
                 icon: "\u{f039f}"
-                text: "Clear"
+                text: I18n.tr("Clear")
                 implicitHeight: header.boxSize
                 onClicked: NotificationService.clearAll()
             }
@@ -84,7 +84,7 @@ Item {
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.bottomMargin: Config.spacing
-                text: "No notifications"
+                text: I18n.tr("No notifications")
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
                 color: Config.subtextColor

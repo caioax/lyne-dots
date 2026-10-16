@@ -155,7 +155,7 @@ Item {
             NotificationReply {
                 visible: root.expanded && root.notif.hasInlineReply
                 width: texts.width
-                placeholder: root.notif.inlineReplyPlaceholder || "Reply"
+                placeholder: root.notif.inlineReplyPlaceholder || I18n.tr("Reply")
                 onSubmitted: text => {
                     root.notif.sendReply(text);
                     root.actionTriggered();
@@ -188,19 +188,19 @@ Item {
 
         items: [
             ...root.actions.map((a, i) => ({
-                        label: a.text || "Open",
+                        label: a.text || I18n.tr("Open"),
                         // md-open_in_new
                         icon: "\u{f03cc}",
                         action: "invoke:" + i
                     })),
             {
-                label: "Copy text",
+                label: I18n.tr("Copy text"),
                 // md-content_copy
                 icon: "\u{f018f}",
                 action: "copy"
             },
             {
-                label: "Dismiss",
+                label: I18n.tr("Dismiss"),
                 // md-close
                 icon: "\u{f0156}",
                 action: "dismiss",

@@ -7,17 +7,18 @@ import Quickshell.Io
 
 // Brazilian national holidays, computed locally (no network).
 // Movable dates are derived from Easter (Carnaval, Good Friday, Corpus Christi).
-// dashboard.holidays: "auto" (Brazil's when the time zone or the language is
-// Brazilian) | "none"
+// dashboard.holidays: "auto" (Brazil's when the time zone is Brazilian or
+// the shell is in Portuguese) | "none"
 Singleton {
     id: root
 
     readonly property string setting: StateService.get("dashboard.holidays", "auto")
-    readonly property bool enabled: setting === "auto" && (_brazilianZone || Qt.locale().name === "pt_BR")
+    readonly property bool enabled: setting === "auto" && (_brazilianZone || I18n.language.split("_")[0] === "pt")
 
     property bool _brazilianZone: false
 
-    // year -> { "M-D": { name, optional } }
+    // year -> { "M-D": { name, optional } }; names in English (I18n.noop),
+    // shown with I18n.translate
     property var _cache: ({})
 
     // optional = "ponto facultativo" / observance, not a mandatory day off
@@ -32,26 +33,26 @@ Singleton {
             };
         const fixed = (month, day, name) => add(new Date(year, month - 1, day), name, false);
 
-        fixed(1, 1, "Confraternização Universal");
-        fixed(4, 21, "Tiradentes");
-        fixed(5, 1, "Dia do Trabalho");
-        fixed(9, 7, "Independência do Brasil");
-        fixed(10, 12, "Nossa Senhora Aparecida");
-        fixed(11, 2, "Finados");
-        fixed(11, 15, "Proclamação da República");
+        fixed(1, 1, I18n.noop("New Year's Day"));
+        fixed(4, 21, I18n.noop("Tiradentes"));
+        fixed(5, 1, I18n.noop("Labour Day"));
+        fixed(9, 7, I18n.noop("Independence Day"));
+        fixed(10, 12, I18n.noop("Our Lady of Aparecida"));
+        fixed(11, 2, I18n.noop("All Souls' Day"));
+        fixed(11, 15, I18n.noop("Republic Day"));
         if (year >= 2024)
-            fixed(11, 20, "Dia da Consciência Negra");
-        fixed(12, 25, "Natal");
+            fixed(11, 20, I18n.noop("Black Consciousness Day"));
+        fixed(12, 25, I18n.noop("Christmas"));
 
         const easter = _easter(year);
         const fromEaster = offset => new Date(year, easter.getMonth(), easter.getDate() + offset);
 
-        add(fromEaster(-48), "Carnaval", true);
-        add(fromEaster(-47), "Carnaval", true);
-        add(fromEaster(-46), "Quarta-feira de Cinzas", true);
-        add(fromEaster(-2), "Sexta-feira Santa", false);
-        add(fromEaster(0), "Páscoa", true);
-        add(fromEaster(60), "Corpus Christi", true);
+        add(fromEaster(-48), I18n.noop("Carnival"), true);
+        add(fromEaster(-47), I18n.noop("Carnival"), true);
+        add(fromEaster(-46), I18n.noop("Ash Wednesday"), true);
+        add(fromEaster(-2), I18n.noop("Good Friday"), false);
+        add(fromEaster(0), I18n.noop("Easter"), true);
+        add(fromEaster(60), I18n.noop("Corpus Christi"), true);
 
         _cache[year] = result;
         return result;

@@ -118,6 +118,12 @@ Singleton {
         return _show(typeof t === "string" ? t : text, args);
     }
 
+    // First letter up only: "Sexta-feira, 16 de outubro", "Friday, 16 October"
+    // (Font.Capitalize would capitalize every word)
+    function capitalize(text: string): string {
+        return text.charAt(0).toLocaleUpperCase() + text.slice(1);
+    }
+
     function number(n: real, decimals: int): string {
         return Number(n).toLocaleString(locale, "f", decimals ?? 0);
     }

@@ -82,7 +82,7 @@ Item {
 
             CardHeader {
                 icon: "󰓃"
-                title: "Output"
+                title: I18n.tr("Output")
                 subtitle: AudioService.deviceName(AudioService.sink)
 
                 ActionButton {
