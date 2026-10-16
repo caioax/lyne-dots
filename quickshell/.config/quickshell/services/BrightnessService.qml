@@ -231,21 +231,21 @@ Singleton {
 
         function get(monitor: string): string {
             const m = root.findMonitor(monitor);
-            return m ? String(Math.round(m.brightness * 100)) : "Unknown monitor: " + monitor;
+            return m ? String(Math.round(m.brightness * 100)) : "Unknown monitor: " + monitor; // i18n-ignore
         }
 
         function set(monitor: string, value: string): string {
             const m = root.findMonitor(monitor);
             if (!m?.available)
-                return m ? m.name + " has no brightness control" : "Unknown monitor: " + monitor;
+                return m ? m.name + " has no brightness control" : "Unknown monitor: " + monitor; // i18n-ignore
             const match = value.match(/^([+]?)(\d*\.?\d+)(%?)(-?)$/);
             if (!match)
-                return "Invalid value: " + value + " (0.5, 50%, +5%, 5%-)";
+                return "Invalid value: " + value + " (0.5, 50%, +5%, 5%-)"; // i18n-ignore
             const amount = parseFloat(match[2]) / (match[3] === "%" ? 100 : 1);
             const target = match[1] === "+" ? m.brightness + amount : match[4] === "-" ? m.brightness - amount : amount;
             m.set(target);
             root.lastChanged = m;
-            return m.name + " set to " + Math.round(m.brightness * 100) + "%";
+            return m.name + " set to " + Math.round(m.brightness * 100) + "%"; // i18n-ignore
         }
     }
 

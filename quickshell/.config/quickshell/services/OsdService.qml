@@ -227,7 +227,7 @@ Singleton {
 
     function _panelOpen(): bool {
         const open = WindowManagerService.activeModules;
-        return open["QuickSettings"] || open["Dashboard"];
+        return open["QuickSettings"] || open["Dashboard"]; // i18n-ignore
     }
 
     // Default output switched (osd.device), whatever the trigger setting.

@@ -54,7 +54,8 @@ FloatingWindow {
         }
     }
 
-    title: "Welcome"
+    // Stays English: Hyprland window rules match the title
+    title: I18n.tr("Welcome") // i18n-ignore
     implicitWidth: defaultSize.width
     implicitHeight: defaultSize.height
     minimumSize: Qt.size(600, 480)
@@ -173,7 +174,7 @@ FloatingWindow {
                 anchors.left: parent.left
                 visible: !WelcomeService.isLast
                 size: root.buttonSize
-                text: "Skip"
+                text: I18n.tr("Skip")
                 baseColor: Qt.alpha(Config.surface2Color, 0)
                 textColor: Config.subtextColor
                 hoverTextColor: Config.textColor
@@ -225,7 +226,7 @@ FloatingWindow {
                     visible: !WelcomeService.isFirst
                     size: root.buttonSize
                     icon: "\u{f0141}"
-                    text: "Back"
+                    text: I18n.tr("Back")
                     onClicked: WelcomeService.back()
                 }
 
@@ -233,7 +234,7 @@ FloatingWindow {
                 ActionButton {
                     size: root.buttonSize
                     icon: WelcomeService.isLast ? "\u{f012c}" : "\u{f0142}"
-                    text: WelcomeService.isFirst ? "Get started" : WelcomeService.isLast ? "Finish" : "Next"
+                    text: WelcomeService.isFirst ? I18n.tr("Get started") : WelcomeService.isLast ? I18n.tr("Finish") : I18n.tr("Next")
                     baseColor: Config.accentColor
                     hoverColor: Qt.lighter(Config.accentColor, 1.1)
                     textColor: Config.textReverseColor

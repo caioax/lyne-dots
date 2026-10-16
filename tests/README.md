@@ -7,7 +7,7 @@ tests/run.sh js lint    # some sections
 
 | Section | What | Needs |
 |---|---|---|
-| `js` | The shell's JavaScript libraries (`quickshell/.config/quickshell/services/*.js`) in node | `nodejs` (and `lua` for one monitors test) |
+| `js` | The shell's JavaScript libraries (`quickshell/.config/quickshell/services/*.js`) in node, and its translations | `nodejs` (and `lua` for one monitors test) |
 | `bash` | lyne CLI, migrations and installer, with bats | `bats bats-assert bats-support` |
 | `lint` | shellcheck over every script (settings in `.shellcheckrc`) | `shellcheck` |
 | `qml` | qmllint over the shell; only warnings missing from `tests/qml/lint-baseline.txt` fail | `qt6-declarative` |
@@ -33,6 +33,8 @@ Fixtures in `tests/js/fixtures/` are trimmed copies of real output (`hyprctl -j`
 
 `LYNE_TEST_SHELL=<dir>` runs the tests against another copy of the shell config, handy to check that a test fails when the code is broken on purpose.
 
+`i18n.test.js` covers the translations ([i18n/README.md](../quickshell/.config/quickshell/i18n/README.md)): `services/i18n.js` (plural rules, language resolution, the pseudo-language), `tools/i18n.js` on small throwaway shells, and the real files: every `I18n` call with literal arguments, `pt_BR.json` complete and in step with the code (`node tools/i18n.js extract` after changing strings), placeholders matching, no piece of a sentence as a key, and no UI string left outside `I18n` (`node tools/i18n.js lint --list` shows them; `// i18n-ignore` marks a line that isn't for people).
+
 ## Bash tests
 
 `tests/bash/<name>.bats` uses [bats](https://bats-core.readthedocs.io) with bats-assert. Start each file with `load helpers` and call `lyne_setup` from `setup()`. Then every test has:
@@ -55,6 +57,6 @@ One file: `bats tests/bash/nvidia.bats`. One test: `bats -f "Kepler" tests/bash/
 
 `tests/qml/lint.sh` runs Qt 6's qmllint (`/usr/lib/qt6/bin/qmllint`; `/usr/bin/qmllint` is Qt 5's) with `qs.config`/`qs.services` mapped. qmllint doesn't know Quickshell well, so today's warnings sit in `lint-baseline.txt` without line numbers and only new ones fail. After fixing some, or when a new warning is really Quickshell's noise, `tests/qml/lint.sh --update` rewrites the baseline (review the diff).
 
-`tests/qml/smoke.sh` starts a nested Hyprland through yours, in a hidden special workspace and without focus (nothing shows, nothing moves), and runs the real `shell.qml` in it with a throwaway HOME, runtime dir and session bus. It opens every Settings page, dashboard tab, Quick Settings page and launcher mode, the notifications, power menu, wallpaper picker, OSD, welcome and what's new windows, locks and unlocks, switches themes, and fails on any warning or error the shell logs. `tests/qml/allowed.txt` lists the lines the sandbox itself causes (no PipeWire, no portal); a QML error never goes there. A new window or page is opened automatically when it's in `SettingsService.pages`, `DashboardService.allTabs`, `QuickSettingsService.pages` or `LauncherService.modes`; anything else gets a `step` line in `run_steps`.
+`tests/qml/smoke.sh` starts a nested Hyprland through yours, in a hidden special workspace and without focus (nothing shows, nothing moves), and runs the real `shell.qml` in it with a throwaway HOME, runtime dir and session bus. It opens every Settings page, dashboard tab, Quick Settings page and launcher mode, the notifications, power menu, wallpaper picker, OSD, welcome and what's new windows, locks and unlocks, switches themes, all in pt_BR, then searches Settings in both languages and switches the language live (en, pt_BR, en), and fails on any warning or error the shell logs. `tests/qml/allowed.txt` lists the lines the sandbox itself causes (no PipeWire, no portal); a QML error never goes there. A new window or page is opened automatically when it's in `SettingsService.pages`, `DashboardService.allTabs`, `QuickSettingsService.pages` or `LauncherService.modes`; anything else gets a `step` line in `run_steps`.
 
 Commands with effects outside the sandbox (nmcli, rfkill, brightness, systemctl, systemd-inhibit, pkill, kitty, nvim, zenity...) are stand-ins logging to `$SB/calls.log`, the Bluetooth agent is a stand-in (the real one registers on the system bus), and battery rules, update checks and idle are off in its state. It also fails when your `state.json` or the repo changed. `SMOKE_KEEP=1` keeps the sandbox (path printed) with `qs.log`, `hyprland.log` and `calls.log`; `SMOKE_WAIT` sets the pause after each step (0.6 s).

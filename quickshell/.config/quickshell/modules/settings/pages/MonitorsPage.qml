@@ -475,7 +475,7 @@ ColumnLayout {
             ActionButton {
                 id: refreshButton
 
-                text: Lib.formatRefresh(refreshRow.refresh) + " Hz  \u{f0140}"
+                text: Lib.formatRefresh(refreshRow.refresh) + " Hz  \u{f0140}" // i18n-ignore
                 size: Config.fontSizeIconSmall + Config.padding * 2
                 baseColor: refreshRow.controlColor
                 onClicked: {

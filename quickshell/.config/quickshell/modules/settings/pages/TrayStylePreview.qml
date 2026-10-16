@@ -35,7 +35,7 @@ ClippingRectangle {
             {
                 id: "spotify",
                 icon: "spotify",
-                title: "Spotify",
+                title: "Spotify", // i18n-ignore
                 status: Status.Active,
                 pinned: true
             },
@@ -49,7 +49,7 @@ ClippingRectangle {
             {
                 id: "steam",
                 icon: "steam",
-                title: "Steam",
+                title: "Steam", // i18n-ignore
                 status: Status.Active
             },
             {

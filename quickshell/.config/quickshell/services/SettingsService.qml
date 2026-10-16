@@ -256,7 +256,7 @@ Singleton {
     readonly property string pagesDir: Qt.resolvedUrl("../modules/settings/pages/").toString().replace("file://", "")
 
     function pageFile(id: string): string {
-        return id.charAt(0).toUpperCase() + id.slice(1) + "Page.qml";
+        return id.charAt(0).toUpperCase() + id.slice(1) + "Page.qml"; // i18n-ignore
     }
 
     function buildIndex() {

@@ -91,7 +91,7 @@ Row {
     Text {
         visible: root._list.length === 0
         anchors.verticalCenter: parent.verticalCenter
-        text: "No keys"
+        text: I18n.tr("No keys")
         font.family: Config.font
         font.pixelSize: Config.fontSizeSmall
         font.italic: true

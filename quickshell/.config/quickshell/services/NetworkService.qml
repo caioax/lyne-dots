@@ -74,11 +74,11 @@ Singleton {
 
     function bandName(freq: int): string {
         if (freq >= 5925)
-            return "6 GHz";
+            return "6 GHz"; // i18n-ignore
         if (freq >= 5000)
-            return "5 GHz";
+            return "5 GHz"; // i18n-ignore
         if (freq > 0)
-            return "2.4 GHz";
+            return "2.4 GHz"; // i18n-ignore
         return "";
     }
 

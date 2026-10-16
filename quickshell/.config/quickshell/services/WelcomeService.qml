@@ -19,31 +19,31 @@ Singleton {
     readonly property var steps: [
         {
             id: "intro",
-            label: "Welcome"
+            label: I18n.tr("Welcome")
         },
         {
             id: "keyboard",
-            label: "Keyboard"
+            label: I18n.tr("Keyboard")
         },
         {
             id: "windows",
-            label: "Windows"
+            label: I18n.tr("Windows")
         },
         {
             id: "appearance",
-            label: "Look"
+            label: I18n.tr("Look")
         },
         {
             id: "bar",
-            label: "Bar"
+            label: I18n.tr("Bar")
         },
         {
             id: "apps",
-            label: "Apps"
+            label: I18n.tr("Apps")
         },
         {
             id: "done",
-            label: "All set"
+            label: I18n.tr("All set")
         }
     ]
     readonly property var currentEntry: steps[Math.max(0, Math.min(currentStep, steps.length - 1))]

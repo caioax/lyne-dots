@@ -39,15 +39,15 @@ ColumnLayout {
     readonly property var capsChoices: [
         {
             value: "",
-            label: "Caps Lock"
+            label: "Caps Lock" // i18n-ignore
         },
         {
             value: "ctrl:nocaps",
-            label: "Ctrl"
+            label: "Ctrl" // i18n-ignore
         },
         {
             value: "caps:escape",
-            label: "Escape"
+            label: "Escape" // i18n-ignore
         },
         {
             value: "caps:escape_shifted_capslock",
@@ -59,7 +59,7 @@ ColumnLayout {
         },
         {
             value: "caps:backspace",
-            label: "Backspace"
+            label: "Backspace" // i18n-ignore
         },
         {
             value: "caps:none",
@@ -91,7 +91,7 @@ ColumnLayout {
         },
         {
             value: "compose:caps",
-            label: "Caps Lock"
+            label: "Caps Lock" // i18n-ignore
         }
     ]
     readonly property string composeValue: KeyboardService.optionIn("compose")

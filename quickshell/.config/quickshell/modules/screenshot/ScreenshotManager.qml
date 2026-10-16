@@ -353,7 +353,7 @@ Scope {
                     y: win.at[1] - monitor.y,
                     width: win.size[0],
                     height: win.size[1],
-                    title: win.title || win.class || "Window",
+                    title: win.title || win.class || I18n.tr("Window"),
                     windowClass: win.class || ""
                 }));
     }

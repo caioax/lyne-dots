@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.services
 import "../settings/rows/"
 import "../settings/pages/"
 
@@ -15,27 +16,27 @@ ColumnLayout {
     // md-dock_top
     WelcomeHeader {
         icon: "\u{f1513}"
-        title: "Bar"
-        description: "How the bar sits on the screen. Settings › Bar has its height, the launcher button and the widgets."
+        title: I18n.tr("Bar")
+        description: I18n.tr("How the bar sits on the screen. Settings › %1 has its height, the launcher button and the widgets.", I18n.translate("Bar"))
     }
 
     SettingsGroup {
-        title: "Style"
+        title: I18n.tr("Style")
 
         BarTemplatePicker {}
 
         SelectRow {
-            label: "Position"
-            description: "Screen edge the bar sits on"
+            label: I18n.tr("Position")
+            description: I18n.tr("Screen edge the bar sits on")
             path: "bar.position"
             options: [
                 {
-                    label: "Top",
+                    label: I18n.tr("Top"),
                     icon: "\u{f1513}",
                     value: "top"
                 },
                 {
-                    label: "Bottom",
+                    label: I18n.tr("Bottom"),
                     icon: "\u{f10a9}",
                     value: "bottom"
                 }

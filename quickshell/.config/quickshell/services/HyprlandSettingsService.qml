@@ -28,17 +28,17 @@ Singleton {
     readonly property var tilingLayouts: [
         {
             value: "dwindle",
-            label: "Dwindle",
+            label: "Dwindle", // i18n-ignore
             icon: "\u{f0574}" // md-view_quilt
         },
         {
             value: "master",
-            label: "Master",
+            label: "Master", // i18n-ignore
             icon: "\u{f0bcc}" // md-view_split_vertical
         },
         {
             value: "scrolling",
-            label: "Scrolling",
+            label: "Scrolling", // i18n-ignore
             icon: "\u{f056c}" // md-view_carousel
         }
     ]
@@ -89,7 +89,7 @@ Singleton {
     // Apps opened by the Apps binds (AppsService), read when a bind is pressed
     readonly property string appsLua: {
         const apps = AppsService.slots.filter(s => s.luaKey !== "").map(s => s.luaKey + " = " + _luaString(AppsService.commandFor(s.key)));
-        return "\n-- Default apps (lyne_apps is defined in conf/keybinds.lua)\nif lyne_apps then\n    lyne_apps({ " + apps.join(", ") + " })\nend\n";
+        return "\n-- Default apps (lyne_apps is defined in conf/keybinds.lua)\nif lyne_apps then\n    lyne_apps({ " + apps.join(", ") + " })\nend\n"; // i18n-ignore
     }
 
     // Special workspaces (SpecialsService), always written so the file
@@ -112,7 +112,7 @@ Singleton {
         const skip = StateService.get("workspaces.skipEmpty", false) === true;
         const wrap = StateService.get("workspaces.wrap", false) === true;
         const lidOff = StateService.get("workspaces.lidOff", true) !== false;
-        return "\n-- Workspaces per monitor (lyne_workspaces is defined in conf/workspaces.lua)\nif lyne_workspaces then\n    lyne_workspaces({ skip_empty = " + skip + ", wrap = " + wrap + ", lid_off = " + lidOff + " })\nend\n";
+        return "\n-- Workspaces per monitor (lyne_workspaces is defined in conf/workspaces.lua)\nif lyne_workspaces then\n    lyne_workspaces({ skip_empty = " + skip + ", wrap = " + wrap + ", lid_off = " + lidOff + " })\nend\n"; // i18n-ignore
     }
 
     // Your apps started at login (Settings › System › Autostart,

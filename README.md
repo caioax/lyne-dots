@@ -386,9 +386,25 @@ Each top-level folder is a [GNU Stow](https://www.gnu.org/software/stow/) packag
 <summary><b>Customization</b></summary>
 
 - **Settings first.** Almost everything is in Settings (<kbd>Super</kbd> + <kbd>I</kbd>). Its values live in `~/.config/quickshell/state.json`; `lyne state` opens it.
+- **Language**: English or Português (Brasil), in Settings › Profile & Region (Automatic follows your system). Dates and numbers follow it.
 - **Machine-specific Hyprland files** live in `~/.config/hypr/local/` (not tracked). Settings writes `settings.lua`, `monitors.lua` and `gpus.lua` there; any other `.lua` file you add is loaded too.
 - **Themes** are JSON files in `~/.local/themes/`. Create one in Settings › Theme › New theme, or copy a file from `.data/themes/`.
 - **Wallpapers** live in `~/.local/wallpapers/`, with each theme's in `themes/<theme>/`. `.data/wallpapers/generator/generate.py --theme-file <json>` renders the lake, waves and contour wallpapers for any palette.
+
+</details>
+
+<details>
+<summary><b>Languages and translations</b></summary>
+
+The shell speaks English and Português (Brasil). Every string goes through an `I18n` singleton with one JSON file per language in `quickshell/.config/quickshell/i18n/`, so a new language needs no code:
+
+```sh
+node tools/i18n.js add de "Deutsch"   # creates i18n/de.json, every value empty
+node tools/i18n.js extract            # after translating: refresh the language list
+node tools/i18n.js check              # placeholders, plural forms, files up to date
+```
+
+Partial translations work (untranslated strings show in English). [i18n/README.md](quickshell/.config/quickshell/i18n/README.md) has the rules (placeholders, plurals, contexts, date formats), how to try a language live and the pseudo-language for finding untranslated or cut text.
 
 </details>
 

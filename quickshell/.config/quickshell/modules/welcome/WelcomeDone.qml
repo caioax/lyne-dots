@@ -13,68 +13,68 @@ ColumnLayout {
     // { label, ids, range }: binds sharing modifiers show as one row
     readonly property var shortcuts: [
         {
-            label: "Apps",
+            label: I18n.tr("Apps"),
             ids: ["launcher"]
         },
         {
-            label: "Terminal",
+            label: I18n.tr("Terminal"),
             ids: ["terminal"]
         },
         {
-            label: "Browser",
+            label: I18n.tr("Browser"),
             ids: ["browser"]
         },
         {
-            label: "Files",
+            label: I18n.tr("Files"),
             ids: ["file-manager"]
         },
         {
-            label: "Close window",
+            label: I18n.tr("Close window"),
             ids: ["close-window"]
         },
         {
-            label: "Fullscreen",
+            label: I18n.tr("Fullscreen"),
             ids: ["fullscreen"]
         },
         {
-            label: "Focus",
+            label: I18n.tr("Focus"),
             ids: ["focus-left", "focus-down", "focus-up", "focus-right"]
         },
         {
-            label: "Move",
+            label: I18n.tr("Move"),
             ids: ["move-left", "move-down", "move-up", "move-right"]
         },
         {
-            label: "Go to workspace",
+            label: I18n.trc("shortcut list", "Go to workspace"),
             ids: ["workspace-1", "workspace-10"],
             range: true
         },
         {
-            label: "Switch workspace",
+            label: I18n.trc("shortcut list", "Switch workspace"),
             ids: ["workspace-prev", "workspace-next"]
         },
         {
-            label: "Next layout",
+            label: I18n.tr("Next layout"),
             ids: ["cycle-layout"]
         },
         {
-            label: "Clipboard history",
+            label: I18n.trc("shortcut list", "Clipboard history"),
             ids: ["clipboard-history"]
         },
         {
-            label: "Screenshot",
+            label: I18n.tr("Screenshot"),
             ids: ["screenshot"]
         },
         {
-            label: "Settings",
+            label: I18n.tr("Settings"),
             ids: ["settings"]
         },
         {
-            label: "Lock screen",
+            label: I18n.tr("Lock screen"),
             ids: ["lock-screen"]
         },
         {
-            label: "Power menu",
+            label: I18n.tr("Power menu"),
             ids: ["power-menu"]
         }
     ]
@@ -95,7 +95,7 @@ ColumnLayout {
         Text {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
-            text: "You're all set"
+            text: I18n.tr("You're all set")
             wrapMode: Text.WordWrap
             font.family: Config.font
             font.pixelSize: Config.fontSizeIconLarge
@@ -106,7 +106,7 @@ ColumnLayout {
         Text {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
-            text: "Some shortcuts to start with. Every one of them can be changed in Settings › Keybinds, and this screen opens again from Settings › About or with lyne welcome."
+            text: I18n.tr("Some shortcuts to start with. Every one of them can be changed in Settings › %1, and this screen opens again from Settings › %2 or with lyne welcome.", I18n.translate("Keybinds"), I18n.translate("About"))
             wrapMode: Text.WordWrap
             font.family: Config.font
             font.pixelSize: Config.fontSizeNormal
@@ -163,7 +163,7 @@ ColumnLayout {
     // ================= EXPLORE =================
     SettingsGroup {
         Layout.fillWidth: true
-        title: "Explore Settings"
+        title: I18n.tr("Explore Settings")
 
         GridLayout {
             Layout.fillWidth: true
@@ -208,7 +208,7 @@ ColumnLayout {
 
                         Text {
                             Layout.fillWidth: true
-                            text: card.modelData.label
+                            text: I18n.translate(card.modelData.label)
                             elide: Text.ElideRight
                             font.family: Config.font
                             font.pixelSize: Config.fontSizeNormal

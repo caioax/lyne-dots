@@ -21,7 +21,8 @@ FloatingWindow {
 
     readonly property var releases: WhatsNewService.releases
 
-    title: "What's new"
+    // Stays English: Hyprland window rules match the title
+    title: I18n.tr("What's new") // i18n-ignore
     implicitWidth: defaultSize.width
     implicitHeight: defaultSize.height
     minimumSize: Qt.size(480, 360)
@@ -66,15 +67,15 @@ FloatingWindow {
                 // md-party_popper
                 WelcomeHeader {
                     icon: "\u{f1056}"
-                    title: "What's new"
+                    title: I18n.tr("What's new")
                     description: {
                         if (WhatsNewService.loading)
-                            return "Reading the release notes…";
+                            return I18n.tr("Reading the release notes…");
                         if (root.releases.length === 0)
-                            return "This release has no notes";
+                            return I18n.tr("This release has no notes");
                         if (root.releases.length === 1)
-                            return "In lyne-dots " + root.releases[0].version;
-                        return root.releases.length + " releases, " + root.releases[root.releases.length - 1].version + " to " + root.releases[0].version;
+                            return I18n.tr("In lyne-dots %1", root.releases[0].version);
+                        return I18n.trn("%n release, %1 to %2", "%n releases, %1 to %2", root.releases.length, root.releases[root.releases.length - 1].version, root.releases[0].version);
                     }
                 }
 
@@ -161,7 +162,7 @@ FloatingWindow {
                 anchors.left: parent.left
                 size: root.buttonSize
                 icon: "\u{f02a4}"
-                text: "All releases"
+                text: I18n.tr("All releases")
                 baseColor: Qt.alpha(Config.surface2Color, 0)
                 textColor: Config.subtextColor
                 hoverTextColor: Config.textColor
@@ -173,7 +174,7 @@ FloatingWindow {
                 anchors.right: parent.right
                 size: root.buttonSize
                 icon: "\u{f012c}"
-                text: "Done"
+                text: I18n.tr("Done")
                 baseColor: Config.accentColor
                 hoverColor: Qt.lighter(Config.accentColor, 1.1)
                 textColor: Config.textReverseColor

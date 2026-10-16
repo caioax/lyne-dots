@@ -63,7 +63,7 @@ ColumnLayout {
         // Hand off to Mission Center for per-process / per-device detail
         ActionButton {
             icon: "󰏌"
-            text: "Mission Center"
+            text: "Mission Center" // i18n-ignore
             size: Config.fontSizeSmall * 2 + Config.padding
             iconSize: Config.fontSizeNormal
             textColor: Config.subtextColor

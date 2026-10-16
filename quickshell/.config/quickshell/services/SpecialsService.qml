@@ -52,7 +52,7 @@ Singleton {
             // WhatsApp Web as a Chromium app with its own profile (the
             // default; lyne whatsapp warns when chromium is missing)
             key: "whatsapp-web",
-            label: "WhatsApp Web",
+            label: "WhatsApp Web", // i18n-ignore
             category: I18n.tr("Chat"),
             name: "WhatsApp",
             icon: "\u{f05a3}",
@@ -62,7 +62,7 @@ Singleton {
         },
         {
             key: "zapzap",
-            label: "ZapZap",
+            label: "ZapZap", // i18n-ignore
             category: I18n.tr("Chat"),
             name: "WhatsApp",
             icon: "\u{f05a3}",
@@ -72,7 +72,7 @@ Singleton {
         },
         {
             key: "telegram",
-            label: "Telegram",
+            label: "Telegram", // i18n-ignore
             category: I18n.tr("Chat"),
             name: "Telegram",
             icon: "\u{f2c6}",
@@ -82,7 +82,7 @@ Singleton {
         },
         {
             key: "vesktop",
-            label: "Vesktop",
+            label: "Vesktop", // i18n-ignore
             category: I18n.tr("Chat"),
             name: "Discord",
             icon: "\u{f066f}",
@@ -92,7 +92,7 @@ Singleton {
         },
         {
             key: "spotify",
-            label: "Spotify",
+            label: "Spotify", // i18n-ignore
             category: I18n.tr("Music"),
             name: "Music",
             icon: "\u{f04c7}",
@@ -102,7 +102,7 @@ Singleton {
         },
         {
             key: "spotube",
-            label: "Spotube",
+            label: "Spotube", // i18n-ignore
             category: I18n.tr("Music"),
             name: "Music",
             icon: "\u{f075a}",
@@ -112,7 +112,7 @@ Singleton {
         },
         {
             key: "youtube-music",
-            label: "YouTube Music",
+            label: "YouTube Music", // i18n-ignore
             category: I18n.tr("Music"),
             name: "Music",
             icon: "\u{f05c3}",
@@ -122,7 +122,7 @@ Singleton {
         },
         {
             key: "feishin",
-            label: "Feishin",
+            label: "Feishin", // i18n-ignore
             category: I18n.tr("Music"),
             name: "Music",
             icon: "\u{f075a}",
@@ -132,7 +132,7 @@ Singleton {
         },
         {
             key: "tidal",
-            label: "Tidal",
+            label: "Tidal", // i18n-ignore
             category: I18n.tr("Music"),
             name: "Music",
             icon: "\u{f075a}",
@@ -142,7 +142,7 @@ Singleton {
         },
         {
             key: "scratchpad",
-            label: "Scratchpad",
+            label: I18n.tr("Scratchpad"),
             category: I18n.tr("Other"),
             name: "Scratchpad",
             icon: "\u{f0018}",

@@ -19,24 +19,24 @@ ColumnLayout {
     // md-palette
     WelcomeHeader {
         icon: "\u{f03d8}"
-        title: "Look"
-        description: "Colors for the shell, GTK and Qt apps, Kitty and Neovim. Settings › Theme also takes colors from your wallpaper and makes new themes."
+        title: I18n.tr("Look")
+        description: I18n.tr("Colors for the shell, GTK and Qt apps, Kitty and Neovim. Settings › %1 also takes colors from your wallpaper and makes new themes.", I18n.translate("Theme"))
     }
 
     SettingsGroup {
-        title: "Colors"
+        title: I18n.tr("Colors")
 
         SelectRow {
-            label: "Mode"
-            description: ThemeService.schemeHint || "The themes below follow it"
+            label: I18n.tr("Mode")
+            description: ThemeService.schemeHint || I18n.tr("The themes below follow it")
             options: [
                 {
-                    label: "Dark",
+                    label: I18n.tr("Dark"),
                     icon: "\u{f0594}",
                     value: "dark"
                 },
                 {
-                    label: "Light",
+                    label: I18n.tr("Light"),
                     icon: "\u{f05a8}",
                     value: "light"
                 }
@@ -47,7 +47,7 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Theme"
+        title: I18n.tr("Theme")
 
         Rectangle {
             Layout.fillWidth: true

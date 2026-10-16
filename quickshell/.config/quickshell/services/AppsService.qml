@@ -186,7 +186,7 @@ Singleton {
     // it readable and Hyprland runs it through sh
     function shellCommandOf(entry): string {
         const command = commandOf(entry);
-        return entry?.runInTerminal ? "~/.config/quickshell/scripts/default-apps.sh term " + command : command;
+        return entry?.runInTerminal ? "~/.config/quickshell/scripts/default-apps.sh term " + command : command; // i18n-ignore
     }
 
     // What a slot's shortcut runs, for display

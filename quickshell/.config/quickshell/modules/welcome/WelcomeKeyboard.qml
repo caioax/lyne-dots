@@ -31,8 +31,8 @@ ColumnLayout {
     XkbPicker {
         id: picker
 
-        title: "Keyboard layout"
-        placeholder: "Search layouts, languages and variants"
+        title: I18n.tr("Keyboard layout")
+        placeholder: I18n.tr("Search layouts, languages and variants")
         items: KeyboardService.allEntries.map(e => ({
                     key: e.layout + "(" + e.variant + ")",
                     label: e.description,
@@ -46,29 +46,29 @@ ColumnLayout {
     // md-keyboard
     WelcomeHeader {
         icon: "\u{f030c}"
-        title: "Keyboard"
-        description: "Your layout, and the keys that move you between windows and workspaces."
+        title: I18n.tr("Keyboard")
+        description: I18n.tr("Your layout, and the keys that move you between windows and workspaces.")
     }
 
     SettingsGroup {
-        title: "Layout"
+        title: I18n.tr("Layout")
 
         SettingRow {
             id: layoutRow
 
-            label: root.first ? KeyboardService.describe(root.first) : "Loading layouts…"
+            label: root.first ? KeyboardService.describe(root.first) : I18n.tr("Loading layouts…")
             description: {
                 const others = root.layouts.slice(1).map(l => KeyboardService.describe(l));
                 if (others.length > 0)
-                    return "Also " + others.join(", ") + ". More layouts and key options in Settings › Keyboard";
+                    return I18n.tr("Also %1. More layouts and key options in Settings › %2", others.join(", "), I18n.translate("Keyboard"));
                 if (WelcomeService.keyboardFromSystem)
-                    return "Taken from your system settings. More layouts and key options in Settings › Keyboard";
-                return "More layouts and key options in Settings › Keyboard";
+                    return I18n.tr("Taken from your system settings. More layouts and key options in Settings › %1", I18n.translate("Keyboard"));
+                return I18n.tr("More layouts and key options in Settings › %1", I18n.translate("Keyboard"));
             }
 
             ActionButton {
                 enabled: KeyboardService.ready
-                text: "Change"
+                text: I18n.tr("Change")
                 baseColor: layoutRow.controlColor
                 onClicked: picker.openWith("")
             }
@@ -77,8 +77,8 @@ ColumnLayout {
         SettingRow {
             id: tryRow
 
-            label: "Try it"
-            description: "Type a few keys to check the layout"
+            label: I18n.tr("Try it")
+            description: I18n.tr("Type a few keys to check the layout")
 
             QsTextField {
                 color: tryRow.controlColor
@@ -88,7 +88,7 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Navigation"
+        title: I18n.tr("Navigation")
 
         NavKeysPicker {}
     }

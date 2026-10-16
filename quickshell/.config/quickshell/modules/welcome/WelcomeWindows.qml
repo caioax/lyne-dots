@@ -18,19 +18,19 @@ ColumnLayout {
     // md-view_quilt
     WelcomeHeader {
         icon: "\u{f0574}"
-        title: "Windows"
-        description: "How windows share the screen. Settings › Windows has more options for each layout."
+        title: I18n.tr("Windows")
+        description: I18n.tr("How windows share the screen. Settings › %1 has more options for each layout.", I18n.translate("Windows"))
     }
 
     SettingsGroup {
-        title: "Tiling"
+        title: I18n.tr("Tiling")
 
         TilingPicker {}
 
         SettingRow {
             visible: root.cycleKeys !== ""
-            label: "Switch any time"
-            description: "Cycles Dwindle, Master and Scrolling, with the layout shown on screen"
+            label: I18n.tr("Switch any time")
+            description: I18n.tr("Cycles Dwindle, Master and Scrolling, with the layout shown on screen")
 
             WelcomeKeys {
                 combos: [root.cycleKeys]

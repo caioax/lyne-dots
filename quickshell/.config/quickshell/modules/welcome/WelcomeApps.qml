@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.services
 import "../settings/pages/"
 
 // Apps step: the default apps, used by the shell, its shortcuts and
@@ -19,8 +20,8 @@ ColumnLayout {
     // md-apps
     WelcomeHeader {
         icon: "\u{f003b}"
-        title: "Apps"
-        description: "The apps the shortcuts, the launcher and links open. Settings › Apps also changes their shortcuts."
+        title: I18n.tr("Apps")
+        description: I18n.tr("The apps the shortcuts, the launcher and links open. Settings › %1 also changes their shortcuts.", I18n.translate("Apps"))
     }
 
     AppDefaultsGroup {

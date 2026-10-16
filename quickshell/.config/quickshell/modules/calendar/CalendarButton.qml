@@ -118,7 +118,7 @@ BarButton {
                 id: track
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(implicitWidth, root.maxTrackWidth)
-                text: "󰝚  " + MprisService.title + (MprisService.artist && MprisService.artist !== "Unknown" ? "  ·  " + MprisService.artist : "")
+                text: "󰝚  " + MprisService.title + (MprisService.artist && MprisService.artist !== "Unknown" ? "  ·  " + MprisService.artist : "") // i18n-ignore
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
                 color: MprisService.isPlaying ? Config.accentColor : Config.subtextColor

@@ -163,7 +163,7 @@ BarButton {
                 id: title
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(implicitWidth, root.maxTitleWidth)
-                text: MprisService.title + (MprisService.artist && MprisService.artist !== "Unknown" ? "  ·  " + MprisService.artist : "")
+                text: MprisService.title + (MprisService.artist && MprisService.artist !== "Unknown" ? "  ·  " + MprisService.artist : "") // i18n-ignore
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
                 color: MprisService.isPlaying ? Config.textColor : Config.subtextColor

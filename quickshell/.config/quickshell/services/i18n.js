@@ -11,10 +11,11 @@ const PLURALS = {
         forms: 2,
         index: n => n === 1 ? 0 : 1
     },
-    // CLDR "i = 0..1": 0 and 1 take the singular
+    // Only 1 takes the singular: "0 dispositivos" reads better in Brazilian
+    // Portuguese than CLDR's "0 dispositivo" (its rule is i = 0..1)
     pt: {
         forms: 2,
-        index: n => Math.floor(Math.abs(n)) <= 1 ? 0 : 1
+        index: n => n === 1 ? 0 : 1
     },
     fr: {
         forms: 2,

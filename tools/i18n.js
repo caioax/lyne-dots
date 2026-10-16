@@ -14,9 +14,9 @@
 //        node tools/i18n.js add <code> <name> start a language (pt_PT
 //                                            "Português (Portugal)")
 //        node tools/i18n.js stats            translated share per language
-//        node tools/i18n.js lint [--update]  UI strings still outside
-//                                            I18n, per file, against
-//                                            tests/js/i18n-bare-baseline.txt
+//        node tools/i18n.js lint [--list]    UI strings outside I18n (none
+//                                            may be left: the tests fail);
+//                                            --list shows each one
 //
 // LYNE_I18N_SHELL points it at another copy of the shell (the tests do).
 // =============================================================================
@@ -29,7 +29,6 @@ const vm = require("node:vm");
 
 const REPO = path.resolve(__dirname, "..");
 const SHELL = process.env.LYNE_I18N_SHELL || path.join(REPO, "quickshell/.config/quickshell");
-const BASELINE = process.env.LYNE_I18N_BASELINE || path.join(REPO, "tests/js/i18n-bare-baseline.txt");
 
 // Languages that must be fully translated (the tests fail otherwise);
 // others may be partial (English shows for the rest)
@@ -581,18 +580,19 @@ function prose(value) {
 
 // Bare strings per file: lines with a UI property (or a return) holding a
 // literal that reads like prose outside any I18n call (or any other call:
-// paths, env names, state keys). `// i18n-ignore` on the line skips it
-function bareStrings(shell = SHELL) {
+// paths, env names, state keys). `// i18n-ignore` on the line skips it.
+// `lines` (an array) gets "file:line: code" for each
+function bareStrings(shell = SHELL, lines = null) {
     const counts = {};
     for (const file of sourceFiles(shell)) {
         if (!file.endsWith(".qml"))
             continue;
         const rel = path.relative(shell, file);
         const text = fs.readFileSync(file, "utf8");
-        const lines = text.split("\n");
+        const lines_ = text.split("\n");
         const starts = [];
         let pos = 0;
-        for (const l of lines) {
+        for (const l of lines_) {
             starts.push(pos);
             pos += l.length + 1;
         }
@@ -615,52 +615,17 @@ function bareStrings(shell = SHELL) {
             if (!prose(lit.value))
                 continue;
             const n = lineOf(lit.start);
-            const line = lines[n];
+            const line = lines_[n];
             if (!UI_LINE.test(line) || line.includes("i18n-ignore"))
                 continue;
             hits.add(n);
         }
         if (hits.size > 0)
             counts[rel] = hits.size;
+        if (lines)
+            [...hits].sort((a, b) => a - b).forEach(n => lines.push(`${rel}:${n + 1}: ${lines_[n].trim()}`));
     }
     return counts;
-}
-
-function readBaseline(file = BASELINE) {
-    const out = {};
-    if (!fs.existsSync(file))
-        return out;
-    for (const line of fs.readFileSync(file, "utf8").split("\n")) {
-        const m = line.match(/^(\d+)\s+(.+)$/);
-        if (m)
-            out[m[2]] = Number(m[1]);
-    }
-    return out;
-}
-
-function writeBaseline(counts, file = BASELINE) {
-    const files = Object.keys(counts).sort();
-    const total = files.reduce((n, f) => n + counts[f], 0);
-    const body = files.map(f => `${counts[f]} ${f}`).join("\n");
-    fs.writeFileSync(file, `# UI strings not yet going through I18n, per file (${total} lines): node tools/i18n.js lint --update\n${body}\n`);
-}
-
-// Files whose count grew (or are new), and the ones that shrank
-function compareBaseline(counts, baseline) {
-    const grew = [];
-    const shrank = [];
-    for (const [f, n] of Object.entries(counts)) {
-        if (n > (baseline[f] ?? 0))
-            grew.push(`${f}: ${n} (baseline ${baseline[f] ?? 0})`);
-    }
-    for (const [f, n] of Object.entries(baseline)) {
-        if ((counts[f] ?? 0) < n)
-            shrank.push(`${f}: ${counts[f] ?? 0} (baseline ${n})`);
-    }
-    return {
-        grew,
-        shrank
-    };
 }
 
 // =============================================================================
@@ -719,29 +684,24 @@ function main(argv) {
             console.log(`${s.code.padEnd(6)} ${String(Math.round(s.done * 100 / Math.max(1, s.total))).padStart(3)}%  ${s.done}/${s.total}  ${s.name}`);
         return 0;
     case "lint": {
-        const counts = bareStrings();
-        const total = Object.values(counts).reduce((a, b) => a + b, 0);
-        if (rest[0] === "--update") {
-            writeBaseline(counts);
-            console.log(`baseline: ${total} lines in ${Object.keys(counts).length} files`);
+        if (rest[0] === "--list") {
+            const found = [];
+            bareStrings(SHELL, found);
+            found.forEach(l => console.log(l));
             return 0;
         }
-        const {
-            grew,
-            shrank
-        } = compareBaseline(counts, readBaseline());
-        console.log(`bare strings: ${total} lines in ${Object.keys(counts).length} files`);
-        if (shrank.length)
-            console.log(`${shrank.length} file(s) have fewer: node tools/i18n.js lint --update shrinks the baseline`);
-        if (grew.length) {
-            console.error("new bare strings (wrap them in I18n.tr, or // i18n-ignore when it isn't UI text):");
-            grew.forEach(g => console.error("  " + g));
-            return 1;
+        const found = [];
+        bareStrings(SHELL, found);
+        if (found.length === 0) {
+            console.log("bare strings: none");
+            return 0;
         }
-        return 0;
+        console.error("UI strings outside I18n (wrap them in I18n.tr, or // i18n-ignore when it isn't UI text):");
+        found.forEach(l => console.error("  " + l));
+        return 1;
     }
     default:
-        console.error("usage: node tools/i18n.js extract|check|add|stats|lint [--update]");
+        console.error("usage: node tools/i18n.js extract|check|add|stats|lint [--update|--list]");
         return 2;
     }
 }
@@ -758,8 +718,6 @@ module.exports = {
     serialize,
     stats,
     bareStrings,
-    compareBaseline,
-    readBaseline,
     loadLib,
     COMPLETE
 };

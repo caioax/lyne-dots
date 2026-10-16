@@ -2,7 +2,7 @@
 // resolution, formatting, pseudo-language), tools/i18n.js (extractor,
 // checks, bare-string lint) on small throwaway shells, and the real files:
 // complete pt_BR, nothing extra, placeholders matching, literal arguments,
-// no new bare strings
+// no UI strings outside I18n
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -58,9 +58,9 @@ test("resolve: exact code, then the same language, then English", () => {
     assert.equal(lib.resolve(["en_US", "", "", "pt_BR.UTF-8"], available), "en");
 });
 
-test("plural rules: Portuguese 0 and 1 singular, English 1 only, Russian three forms", () => {
+test("plural rules: English and Portuguese 1 only (0 is plural), Russian three forms", () => {
     assert.deepEqual([0, 1, 2, 5].map(n => lib.pluralIndex("en", n)), [1, 0, 1, 1]);
-    assert.deepEqual([0, 1, 2, 5].map(n => lib.pluralIndex("pt_BR", n)), [0, 0, 1, 1]);
+    assert.deepEqual([0, 1, 2, 5].map(n => lib.pluralIndex("pt_BR", n)), [1, 0, 1, 1]);
     assert.deepEqual([1, 2, 5, 11, 21, 22, 25].map(n => lib.pluralIndex("ru", n)), [0, 1, 2, 2, 0, 1, 2]);
     assert.equal(lib.pluralForms("ja"), 1);
     assert.equal(lib.pluralIndex("ja", 7), 0);
@@ -307,15 +307,9 @@ test("bare strings: UI properties with prose outside I18n, per file", t => {
     assert.deepEqual(tool.bareStrings(dir), {
         "A.qml": 3
     });
-    const cmp = tool.compareBaseline({
-        "A.qml": 3,
-        "B.qml": 1
-    }, {
-        "A.qml": 4,
-        "C.qml": 2
-    });
-    assert.deepEqual(cmp.grew, ["B.qml: 1 (baseline 0)"]);
-    assert.deepEqual(cmp.shrank, ["A.qml: 3 (baseline 4)", "C.qml: 0 (baseline 2)"]);
+    const lines = [];
+    tool.bareStrings(dir, lines);
+    assert.deepEqual(lines.map(l => l.split(": ")[0]), ["A.qml:2", "A.qml:6", "A.qml:10"]);
 });
 
 test("the shell's translations pass the check (pt_BR complete, nothing extra, placeholders, literal arguments)", () => {
@@ -325,9 +319,8 @@ test("the shell's translations pass the check (pt_BR complete, nothing extra, pl
     assert.deepEqual(problems, [], "fix them, or run node tools/i18n.js extract");
 });
 
-test("no new bare UI strings (tests/js/i18n-bare-baseline.txt)", () => {
-    const {
-        grew
-    } = tool.compareBaseline(tool.bareStrings(SHELL), tool.readBaseline());
-    assert.deepEqual(grew, [], "wrap them in I18n.tr (or // i18n-ignore when it isn't UI text)");
+test("no UI strings outside I18n (node tools/i18n.js lint --list)", () => {
+    const lines = [];
+    tool.bareStrings(SHELL, lines);
+    assert.deepEqual(lines, [], "wrap them in I18n.tr (or // i18n-ignore when it isn't UI text)");
 });
