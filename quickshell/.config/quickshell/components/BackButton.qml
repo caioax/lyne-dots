@@ -3,13 +3,14 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import qs.config
+import qs.services
 
 Button {
     id: root
 
     // --- Properties ---
     property string iconText: ""        // The icon (text)
-    property string tooltipText: "Back" // Tooltip text on hover
+    property string tooltipText: I18n.tr("Back") // Tooltip text on hover
     property int size: 40                // Button size
 
     // --- Fine Tuning (Offsets) ---

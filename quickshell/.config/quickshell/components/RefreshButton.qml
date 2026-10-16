@@ -2,13 +2,14 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.services
 
 Rectangle {
     id: root
 
     property bool loading: false
     property int size: 36
-    property string tooltipText: "Refresh"
+    property string tooltipText: I18n.tr("Refresh")
 
     signal clicked
 

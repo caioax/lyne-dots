@@ -107,20 +107,20 @@ ColumnLayout {
 
     SettingsGroup {
         visible: root.onGrid
-        title: "Colors"
+        title: I18n.tr("Colors")
 
         SelectRow {
-            label: "Source"
-            description: "A theme's palette, or colors picked from your wallpaper"
+            label: I18n.tr("Source")
+            description: I18n.tr("A theme's palette, or colors picked from your wallpaper")
             segmentWidth: Config.fontSizeNormal * 9
             options: [
                 {
-                    label: "Theme",
+                    label: I18n.tr("Theme"),
                     icon: "\u{f03d8}",
                     value: "preset"
                 },
                 {
-                    label: "Material You",
+                    label: I18n.tr("Material You"),
                     icon: "\u{f0e09}",
                     value: "auto"
                 }
@@ -135,16 +135,16 @@ ColumnLayout {
         }
 
         SelectRow {
-            label: "Mode"
-            description: ThemeService.schemeHint || "Also applied to GTK and Qt apps, Kitty and Neovim"
+            label: I18n.tr("Mode")
+            description: ThemeService.schemeHint || I18n.tr("Also applied to GTK and Qt apps, Kitty and Neovim")
             options: [
                 {
-                    label: "Dark",
+                    label: I18n.tr("Dark"),
                     icon: "\u{f0594}",
                     value: "dark"
                 },
                 {
-                    label: "Light",
+                    label: I18n.tr("Light"),
                     icon: "\u{f05a8}",
                     value: "light"
                 }
@@ -157,8 +157,8 @@ ColumnLayout {
             id: wallpaperRow
 
             visible: root.auto
-            label: "Colors follow your wallpaper"
-            description: "Pick another wallpaper to get a new palette"
+            label: I18n.tr("Colors follow your wallpaper")
+            description: I18n.tr("Pick another wallpaper to get a new palette")
 
             PaletteDots {
                 colors: [Config.accentColor, Config.successColor, Config.warningColor, Config.errorColor]
@@ -166,7 +166,7 @@ ColumnLayout {
 
             ActionButton {
                 icon: "\u{f0e09}"
-                text: "Change wallpaper"
+                text: I18n.tr("Change wallpaper")
                 baseColor: wallpaperRow.controlColor
                 onClicked: SettingsService.currentPage = "wallpaper"
             }
@@ -175,17 +175,17 @@ ColumnLayout {
 
     SettingsGroup {
         visible: root.onGrid
-        title: "Themes"
+        title: I18n.tr("Themes")
 
         SettingRow {
             id: createRow
 
-            label: "Make your own"
-            description: "Start from an accent color; the rest of the theme follows"
+            label: I18n.tr("Make your own")
+            description: I18n.tr("Start from an accent color; the rest of the theme follows")
 
             ActionButton {
                 icon: "\u{f0415}"
-                text: "New theme"
+                text: I18n.tr("New theme")
                 baseColor: createRow.controlColor
                 onClicked: root.openCreator("", "")
             }
@@ -225,21 +225,21 @@ ColumnLayout {
 
     SettingsGroup {
         visible: root.onGrid && !root.auto
-        title: "Wallpaper"
+        title: I18n.tr("Wallpaper")
 
         SelectRow {
-            label: "When switching theme"
-            description: WallpaperService.dynamicWallpaper ? "Each theme brings its own wallpaper: pick it in the theme's ⋯ page" : "Your wallpaper stays; themes only change the colors"
+            label: I18n.tr("When switching theme")
+            description: WallpaperService.dynamicWallpaper ? I18n.tr("Each theme brings its own wallpaper: pick it in the theme's ⋯ page") : I18n.tr("Your wallpaper stays; themes only change the colors")
             path: "wallpaper.dynamic"
             segmentWidth: Config.fontSizeNormal * 8
             options: [
                 {
-                    label: "Use theme's",
+                    label: I18n.tr("Use theme's"),
                     icon: "\u{f0339}",
                     value: true
                 },
                 {
-                    label: "Keep mine",
+                    label: I18n.tr("Keep mine"),
                     icon: "\u{f033a}",
                     value: false
                 }
@@ -250,7 +250,7 @@ ColumnLayout {
     // Profiles found in ~/.zen (none until Zen has run once)
     SettingsGroup {
         visible: root.onGrid && ZenService.installed
-        title: "Zen Browser"
+        title: I18n.tr("Zen Browser")
 
         Component.onCompleted: ZenService.refresh()
 
@@ -261,7 +261,7 @@ ColumnLayout {
                 required property var modelData
 
                 label: modelData.name
-                description: [modelData.enabled ? "Follows the theme" : "Zen's own colors", modelData.default ? "default profile" : "", modelData.running ? "open" : ""].filter(s => s !== "").join(" · ")
+                description: [modelData.enabled ? I18n.tr("Follows the theme") : I18n.tr("Zen's own colors"), modelData.default ? I18n.tr("default profile") : "", modelData.running ? I18n.trc("app state", "open") : ""].filter(s => s !== "").join(" · ")
                 checked: modelData.enabled
                 resettable: false
                 onToggled: value => ZenService.setEnabled(modelData.dir, value)
@@ -269,23 +269,23 @@ ColumnLayout {
         }
 
         ToggleRow {
-            label: "Theme background"
-            description: checked ? "Every workspace uses the theme's background" : "Workspaces with their own gradient keep it"
+            label: I18n.tr("Theme background")
+            description: checked ? I18n.tr("Every workspace uses the theme's background") : I18n.tr("Workspaces with their own gradient keep it")
             path: "zen.themeBackground"
             enabled: ZenService.enabledProfiles.length > 0
         }
 
         ToggleRow {
-            label: "Transparency"
-            description: "The window follows Background opacity (Layout), blurred like the shell"
+            label: I18n.tr("Transparency")
+            description: I18n.tr("The window follows Background opacity (Layout), blurred like the shell")
             path: "zen.transparent"
             enabled: ZenService.enabledProfiles.length > 0
         }
 
         SettingRow {
             visible: ZenService.restartNeeded
-            label: "Zen is open"
-            description: "Restart it to see the new colors (Zen reads its theme at startup)"
+            label: I18n.tr("Zen is open")
+            description: I18n.tr("Restart it to see the new colors (Zen reads its theme at startup)")
             descriptionColor: Config.warningColor
         }
     }
@@ -294,19 +294,19 @@ ColumnLayout {
     // over) /var/lib/lyne-sddm, what to run
     SettingsGroup {
         visible: root.onGrid && SddmService.state !== "" && SddmService.state !== "absent"
-        title: "Login screen"
+        title: I18n.tr("Login screen")
 
         ToggleRow {
             visible: SddmService.installed
-            label: "Follow the theme"
-            description: checked ? "Colors, background opacity, wallpaper and profile picture, from the next login" : "The login screen keeps its own look (Tokyo Night)"
+            label: I18n.tr("Follow the theme")
+            description: checked ? I18n.tr("Colors, background opacity, wallpaper and profile picture, from the next login") : I18n.tr("The login screen keeps its own look (Tokyo Night)")
             path: "sddm.sync"
         }
 
         SettingRow {
             visible: !SddmService.installed
-            label: "Not set up"
-            description: SddmService.state === "foreign" ? `${SddmService.owner} controls the login screen: run lyne-sddm to take it over` : "Run lyne-sddm to let the login screen follow the theme"
+            label: I18n.tr("Not set up")
+            description: SddmService.state === "foreign" ? I18n.tr("%1 controls the login screen: run lyne-sddm to take it over", SddmService.owner) : I18n.tr("Run lyne-sddm to let the login screen follow the theme")
             descriptionColor: Config.warningColor
         }
     }

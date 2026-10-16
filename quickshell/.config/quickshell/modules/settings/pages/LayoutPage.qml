@@ -11,17 +11,17 @@ ColumnLayout {
     // Animation speed presets: durations of animations.short/normal/long
     readonly property var speeds: [
         {
-            label: "Fast",
+            label: I18n.tr("Fast"),
             value: "fast",
             durations: [60, 120, 250]
         },
         {
-            label: "Normal",
+            label: I18n.tr("Normal"),
             value: "normal",
             durations: [100, 200, 400]
         },
         {
-            label: "Relaxed",
+            label: I18n.tr("Relaxed"),
             value: "relaxed",
             durations: [150, 300, 600]
         }
@@ -39,11 +39,11 @@ ColumnLayout {
     spacing: Config.spacing * 3
 
     SettingsGroup {
-        title: "Corners"
+        title: I18n.tr("Corners")
 
         SliderRow {
-            label: "Small radius"
-            description: "Chips, handles and other small elements"
+            label: I18n.tr("Small radius")
+            description: I18n.tr("Chips, handles and other small elements")
             path: "geometry.radiusSmall"
             from: 0
             to: 12
@@ -51,8 +51,8 @@ ColumnLayout {
         }
 
         SliderRow {
-            label: "Radius"
-            description: "Buttons, list items and inputs"
+            label: I18n.tr("Radius")
+            description: I18n.tr("Buttons, list items and inputs")
             path: "geometry.radius"
             from: 0
             to: 20
@@ -60,8 +60,8 @@ ColumnLayout {
         }
 
         SliderRow {
-            label: "Large radius"
-            description: "Cards, popups and icon boxes"
+            label: I18n.tr("Large radius")
+            description: I18n.tr("Cards, popups and icon boxes")
             path: "geometry.radiusLarge"
             from: 0
             to: 28
@@ -70,11 +70,11 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Spacing"
+        title: I18n.tr("Spacing")
 
         SliderRow {
-            label: "Spacing"
-            description: "Gap between elements"
+            label: I18n.tr("Spacing")
+            description: I18n.tr("Gap between elements")
             path: "geometry.spacing"
             from: 2
             to: 16
@@ -82,8 +82,8 @@ ColumnLayout {
         }
 
         SliderRow {
-            label: "Padding"
-            description: "Space inside cards, buttons and the bar islands"
+            label: I18n.tr("Padding")
+            description: I18n.tr("Space inside cards, buttons and the bar islands")
             path: "geometry.padding"
             from: 2
             to: 12
@@ -92,11 +92,11 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Transparency"
+        title: I18n.tr("Transparency")
 
         SliderRow {
-            label: "Background opacity"
-            description: "Bar, panels, launcher, notifications, Settings and their cards. Themes may set their own when applied"
+            label: I18n.tr("Background opacity")
+            description: I18n.tr("Bar, panels, launcher, notifications, Settings and their cards. Themes may set their own when applied")
             path: "opacity.background"
             from: 0.5
             to: 1
@@ -106,11 +106,11 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Motion"
+        title: I18n.tr("Motion")
 
         SelectRow {
-            label: "Animation speed"
-            description: "Duration of popups, page switches and other transitions"
+            label: I18n.tr("Animation speed")
+            description: I18n.tr("Duration of popups, page switches and other transitions")
             options: root.speeds
             value: root.currentSpeed
             onSelected: value => {
@@ -122,27 +122,27 @@ ColumnLayout {
         }
 
         ToggleRow {
-            label: "Theme color transition"
-            description: "Fade the shell's colors and the window borders when switching theme or mode. Kitty, GTK/Qt apps and Neovim switch at once"
+            label: I18n.tr("Theme color transition")
+            description: I18n.tr("Fade the shell's colors and the window borders when switching theme or mode. Kitty, GTK/Qt apps and Neovim switch at once")
             path: "animations.themeTransition"
         }
 
         SelectRow {
             visible: Config.themeTransition
-            label: "Transition length"
-            description: Config.themeTransitionDuration + " ms now; follows the animation speed"
+            label: I18n.tr("Transition length")
+            description: I18n.tr("%1 ms now; follows the animation speed", Config.themeTransitionDuration)
             path: "animations.themeTransitionLength"
             options: [
                 {
-                    label: "Short",
+                    label: I18n.tr("Short"),
                     value: "short"
                 },
                 {
-                    label: "Medium",
+                    label: I18n.tr("Medium"),
                     value: "medium"
                 },
                 {
-                    label: "Long",
+                    label: I18n.tr("Long"),
                     value: "long"
                 }
             ]

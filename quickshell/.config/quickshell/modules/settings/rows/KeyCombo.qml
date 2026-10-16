@@ -12,7 +12,7 @@ Rectangle {
 
     property string keys
     property bool recording: false
-    property string emptyText: "Disabled"
+    property string emptyText: I18n.tr("Disabled")
     // Background when idle (the row's control color)
     property color baseColor: Config.surface1Color
 
@@ -147,7 +147,7 @@ Rectangle {
                 return;
             const combo = root._combo(event);
             if (combo === "") {
-                root._hint = "That key can't be used";
+                root._hint = I18n.tr("That key can't be used");
                 return;
             }
             root.recorded(combo);
@@ -172,7 +172,7 @@ Rectangle {
 
         Text {
             visible: root.recording
-            text: root._hint !== "" ? root._hint : "Press a shortcut… Esc to cancel"
+            text: root._hint !== "" ? root._hint : I18n.tr("Press a shortcut… Esc to cancel")
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             font.bold: true

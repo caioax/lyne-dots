@@ -15,7 +15,16 @@ import "../../components/"
 FloatingWindow {
     id: root
 
-    readonly property int sidebarWidth: Config.fontSizeNormal * 16
+    // Room for the longest page name (translations), between 16 and 20 em
+    readonly property int sidebarWidth: Math.min(Config.fontSizeNormal * 20, Math.max(Config.fontSizeNormal * 16, Math.ceil(Math.max(...SettingsService.pages.map(p => navMetrics.advanceWidth(I18n.translate(p.label))))) + boxSize + Config.spacing + Config.padding * 7))
+
+    FontMetrics {
+        id: navMetrics
+
+        font.family: Config.font
+        font.pixelSize: Config.fontSizeNormal
+        font.bold: true
+    }
     readonly property int maxContentWidth: Config.fontSizeNormal * 48
     readonly property int boxSize: Config.fontSizeIconSmall * 2
     // Room on both sides of the page column, so the scrollbar never covers it
@@ -344,7 +353,8 @@ FloatingWindow {
         AboutPage {}
     }
 
-    title: "Settings"
+    // Stays English: Hyprland window rules match the title
+    title: "Settings" // i18n-ignore
     implicitWidth: defaultSize.width
     implicitHeight: defaultSize.height
     minimumSize: Qt.size(720, 480)
@@ -439,7 +449,7 @@ FloatingWindow {
 
                     Text {
                         Layout.fillWidth: true
-                        text: "Settings"
+                        text: I18n.tr("Settings")
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeLarge
                         font.bold: true
@@ -455,8 +465,8 @@ FloatingWindow {
                     Layout.rightMargin: Config.padding * 2
                     Layout.bottomMargin: Config.spacing
                     implicitHeight: root.boxSize + Config.padding
-                    placeholder: "Search"
-                    hint: "Ctrl F"
+                    placeholder: I18n.tr("Search")
+                    hint: "Ctrl F" // i18n-ignore
                     onFocusedChanged: {
                         if (focused)
                             SettingsService.buildIndex();
@@ -570,7 +580,7 @@ FloatingWindow {
                                 Text {
                                     Layout.leftMargin: Config.padding
                                     Layout.bottomMargin: Config.padding
-                                    text: category.modelData.toUpperCase()
+                                    text: I18n.translate(category.modelData).toUpperCase()
                                     font.family: Config.font
                                     font.pixelSize: Config.fontSizeSmall
                                     font.bold: true
@@ -639,7 +649,7 @@ FloatingWindow {
 
                                             Text {
                                                 Layout.fillWidth: true
-                                                text: navItem.modelData.label
+                                                text: I18n.translate(navItem.modelData.label)
                                                 elide: Text.ElideRight
                                                 font.family: Config.font
                                                 font.pixelSize: Config.fontSizeNormal
@@ -714,7 +724,7 @@ FloatingWindow {
 
                         Text {
                             Layout.fillWidth: true
-                            text: SettingsService.currentEntry.label
+                            text: I18n.translate(SettingsService.currentEntry.label)
                             elide: Text.ElideRight
                             font.family: Config.font
                             font.pixelSize: Config.fontSizeIconLarge
@@ -724,7 +734,7 @@ FloatingWindow {
 
                         Text {
                             Layout.fillWidth: true
-                            text: SettingsService.currentEntry.description
+                            text: I18n.translate(SettingsService.currentEntry.description)
                             wrapMode: Text.WordWrap
                             font.family: Config.font
                             font.pixelSize: Config.fontSizeNormal

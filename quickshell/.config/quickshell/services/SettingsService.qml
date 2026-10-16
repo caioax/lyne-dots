@@ -24,203 +24,205 @@ Singleton {
     signal themeDetailRequested(string themeName)
 
     // Sidebar entries, grouped by category in this order. Each id needs a
-    // component in SettingsWindow.pageComponents
-    readonly property var categories: ["Appearance", "Shell", "Hyprland", "System"]
+    // component in SettingsWindow.pageComponents. Labels, descriptions and
+    // categories are kept in English (I18n.noop) and shown with
+    // I18n.translate; `category` matches an entry of `categories`
+    readonly property var categories: [I18n.noop("Appearance"), I18n.noop("Shell"), I18n.noop("Hyprland"), I18n.noop("System")]
     readonly property var pages: [
         {
             id: "theme",
-            label: "Theme",
+            label: I18n.noop("Theme"),
             icon: "\u{f03d8}",
-            description: "Themes, colors, light or dark mode, the wallpaper each theme brings, Zen Browser and the login screen",
+            description: I18n.noop("Themes, colors, light or dark mode, the wallpaper each theme brings, Zen Browser and the login screen"),
             category: "Appearance"
         },
         {
             id: "wallpaper",
-            label: "Wallpaper",
+            label: I18n.noop("Wallpaper"),
             icon: "\u{f0e09}",
-            description: "Your wallpaper library: apply, favorite, add and delete, and the picker that opens with a shortcut",
+            description: I18n.noop("Your wallpaper library: apply, favorite, add and delete, and the picker that opens with a shortcut"),
             category: "Appearance"
         },
         {
             id: "layout",
-            label: "Layout",
+            label: I18n.noop("Layout"),
             icon: "\u{f0607}",
-            description: "Corners, spacing, transparency and motion",
+            description: I18n.noop("Corners, spacing, transparency and motion"),
             category: "Appearance"
         },
         {
             id: "typography",
-            label: "Typography",
+            label: I18n.noop("Typography"),
             icon: "\u{f06d6}",
-            description: "Interface font and text and icon sizes",
+            description: I18n.noop("Interface font and text and icon sizes"),
             category: "Appearance"
         },
         {
             id: "bar",
-            label: "Bar",
+            label: I18n.noop("Bar"),
             icon: "\u{f1513}",
-            description: "Template, position, size and behavior of the bar",
+            description: I18n.noop("Template, position, size and behavior of the bar"),
             category: "Shell"
         },
         {
             id: "launcher",
-            label: "Launcher",
+            label: I18n.noop("Launcher"),
             icon: "\u{f003b}",
-            description: "Template, search, favorites, hidden apps and usage ranking",
+            description: I18n.noop("Template, search, favorites, hidden apps and usage ranking"),
             category: "Shell"
         },
         {
             id: "clipboard",
-            label: "Clipboard",
+            label: I18n.noop("Clipboard"),
             icon: "\u{f014d}",
-            description: "What the history keeps, and clearing it",
+            description: I18n.noop("What the history keeps, and clearing it"),
             category: "Shell"
         },
         {
             id: "dashboard",
-            label: "Dashboard",
+            label: I18n.noop("Dashboard"),
             icon: "\u{f056e}",
-            description: "The panel under the bar clock: overview, system and more",
+            description: I18n.noop("The panel under the bar clock: overview, system and more"),
             category: "Shell"
         },
         {
             id: "power",
-            label: "Power",
+            label: I18n.noop("Power"),
             icon: "\u{f0425}",
-            description: "Power menu template, countdown and actions",
+            description: I18n.noop("Power menu template, countdown and actions"),
             category: "Shell"
         },
         {
             id: "notifications",
-            label: "Notifications",
+            label: I18n.noop("Notifications"),
             icon: "\u{f009a}",
-            description: "Popups, timeout and do not disturb",
+            description: I18n.noop("Popups, timeout and do not disturb"),
             category: "Shell"
         },
         {
             id: "osd",
-            label: "OSD",
+            label: I18n.noop("OSD"),
             icon: "\u{f10a9}",
-            description: "Volume and brightness indicator: style, position and when it shows",
+            description: I18n.noop("Volume and brightness indicator: style, position and when it shows"),
             category: "Shell"
         },
         {
             id: "screenshot",
-            label: "Screenshot",
+            label: I18n.noop("Screenshot"),
             icon: "\u{f0e51}",
-            description: "Capture overlay: opening mode, dimming and guides. Opens with Print",
+            description: I18n.noop("Capture overlay: opening mode, dimming and guides. Opens with Print"),
             category: "Shell"
         },
         {
             id: "windows",
-            label: "Windows",
+            label: I18n.noop("Windows"),
             icon: "\u{f05b2}",
-            description: "Gaps, borders, tiling and effects. Saved to hypr/local/settings.lua",
+            description: I18n.noop("Gaps, borders, tiling and effects. Saved to hypr/local/settings.lua"),
             category: "Hyprland"
         },
         {
             id: "input",
-            label: "Input",
+            label: I18n.noop("Input"),
             icon: "\u{f037d}",
-            description: "Mouse and touchpad. Saved to hypr/local/settings.lua",
+            description: I18n.noop("Mouse and touchpad. Saved to hypr/local/settings.lua"),
             category: "Hyprland"
         },
         {
             id: "keyboard",
-            label: "Keyboard",
+            label: I18n.noop("Keyboard"),
             icon: "\u{f0313}",
-            description: "Layouts, Caps Lock, Compose and key repeat",
+            description: I18n.noop("Layouts, Caps Lock, Compose and key repeat"),
             category: "Hyprland"
         },
         {
             id: "specials",
-            label: "Specials",
+            label: I18n.noop("Specials"),
             icon: "\u{f0018}",
-            description: "Hidden app workspaces toggled with a shortcut, like WhatsApp and music",
+            description: I18n.noop("Hidden app workspaces toggled with a shortcut, like WhatsApp and music"),
             category: "Hyprland"
         },
         {
             id: "monitors",
-            label: "Monitors",
+            label: I18n.noop("Monitors"),
             icon: "\u{f0379}",
-            description: "Resolution, refresh rate, scale, rotation and layout of each monitor, tried before they're kept",
+            description: I18n.noop("Resolution, refresh rate, scale, rotation and layout of each monitor, tried before they're kept"),
             category: "Hyprland"
         },
         {
             id: "graphics",
-            label: "Graphics",
+            label: I18n.noop("Graphics"),
             icon: "\u{f08ae}",
-            description: "Your GPUs, which one renders Hyprland, their links and the NVIDIA driver",
+            description: I18n.noop("Your GPUs, which one renders Hyprland, their links and the NVIDIA driver"),
             category: "Hyprland"
         },
         {
             id: "workspaces",
-            label: "Workspaces",
+            label: I18n.noop("Workspaces"),
             icon: "\u{f0570}",
-            description: "Each monitor's own workspaces, their order, next/previous and the laptop lid",
+            description: I18n.noop("Each monitor's own workspaces, their order, next/previous and the laptop lid"),
             category: "Hyprland"
         },
         {
             id: "keybinds",
-            label: "Keybinds",
+            label: I18n.noop("Keybinds"),
             icon: "\u{f030c}",
-            description: "Change, disable or add shortcuts. Saved to hypr/local/settings.lua",
+            description: I18n.noop("Change, disable or add shortcuts. Saved to hypr/local/settings.lua"),
             category: "Hyprland"
         },
         {
             id: "lock",
-            label: "Lock screen",
+            label: I18n.noop("Lock screen"),
             icon: "\u{f033e}",
-            description: "Lock screen template, what it shows and locking before sleep",
+            description: I18n.noop("Lock screen template, what it shows and locking before sleep"),
             category: "System"
         },
         {
             id: "idle",
-            label: "Idle",
+            label: I18n.noop("Idle"),
             icon: "\u{f04b2}",
-            description: "Screen lock, screen off and what keeps the system awake",
+            description: I18n.noop("Screen lock, screen off and what keeps the system awake"),
             category: "System"
         },
         {
             id: "brightness",
-            label: "Brightness",
+            label: I18n.noop("Brightness"),
             icon: "\u{f00df}",
-            description: "Brightness keys and external monitors over DDC/CI",
+            description: I18n.noop("Brightness keys and external monitors over DDC/CI"),
             category: "System"
         },
         {
             id: "powerProfiles",
-            label: "Power profiles",
+            label: I18n.noop("Power profiles"),
             icon: "\u{f04c5}",
-            description: "Power saver, balanced or performance, and the daemon that switches them",
+            description: I18n.noop("Power saver, balanced or performance, and the daemon that switches them"),
             category: "System"
         },
         {
             id: "apps",
-            label: "Apps",
+            label: I18n.noop("Apps"),
             icon: "\u{f003b}",
-            description: "Default terminal, file manager, browser and editor, and their shortcuts",
+            description: I18n.noop("Default terminal, file manager, browser and editor, and their shortcuts"),
             category: "System"
         },
         {
             id: "autostart",
-            label: "Autostart",
+            label: I18n.noop("Autostart"),
             icon: "\u{f14de}",
-            description: "Apps and scripts started when you log in",
+            description: I18n.noop("Apps and scripts started when you log in"),
             category: "System"
         },
         {
             id: "profile",
-            label: "Profile & Region",
+            label: I18n.noop("Profile & Region"),
             icon: "\u{f0009}",
-            description: "Profile picture, language, weather location and AUR helper",
+            description: I18n.noop("Profile picture, language, weather location and AUR helper"),
             category: "System"
         },
         {
             id: "about",
-            label: "About",
+            label: I18n.noop("About"),
             icon: "\u{f02fd}",
-            description: "Dotfiles version, updates and system information",
+            description: I18n.noop("Dotfiles version, updates and system information"),
             category: "System"
         }
     ]

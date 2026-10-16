@@ -60,7 +60,7 @@ Item {
             required property var modelData
             required property int index
             readonly property bool current: ListView.isCurrentItem
-            readonly property string context: modelData.kind === "page" ? modelData.description : modelData.kind === "group" ? modelData.pageLabel + " · section" : modelData.pageLabel + (modelData.group !== "" ? " › " + modelData.group : "")
+            readonly property string context: modelData.kind === "page" ? modelData.description : modelData.kind === "group" ? I18n.tr("%1 · section", modelData.pageLabel) : modelData.pageLabel + (modelData.group !== "" ? " › " + modelData.group : "")
 
             width: list.width - Config.padding * 2
             implicitHeight: row.implicitHeight + Config.padding * 2
@@ -164,7 +164,7 @@ Item {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
-            text: SettingsService.indexing ? "Searching…" : "No settings match “" + root.query.trim() + "”"
+            text: SettingsService.indexing ? I18n.tr("Searching…") : I18n.tr("No settings match “%1”", root.query.trim())
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             color: Config.subtextColor

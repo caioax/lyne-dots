@@ -28,7 +28,7 @@ ColumnLayout {
     property bool confirmingDelete: false
     readonly property bool generating: WallpaperService.generatingFor === theme
     readonly property bool hasLyneWallpapers: WallpaperService.themeWallpapers.some(p => WallpaperService.fileName(p).startsWith("lyne-" + theme + "-"))
-    readonly property string generateError: WallpaperService.generateErrors[theme] ?? ""
+    readonly property string generateError: I18n.translate(WallpaperService.generateErrors[theme] ?? "")
     readonly property bool custom: preview.custom === true
 
     // Library wallpapers that aren't in the theme's folder yet
@@ -69,17 +69,17 @@ ColumnLayout {
 
         items: [
             {
-                label: "Use for " + root.displayName,
+                label: I18n.tr("Use for %1", root.displayName),
                 icon: "\u{f012c}",
                 action: "use"
             },
             {
-                label: "Show now",
+                label: I18n.tr("Show now"),
                 icon: "\u{f02e9}",
                 action: "apply"
             },
             {
-                label: "Delete",
+                label: I18n.tr("Delete"),
                 icon: "\u{f09e7}",
                 action: "delete",
                 danger: true
@@ -106,18 +106,18 @@ ColumnLayout {
 
         items: [
             {
-                label: "Edit colors",
+                label: I18n.tr("Edit colors"),
                 icon: "\u{f03eb}",
                 action: "edit",
                 hidden: !root.custom
             },
             {
-                label: "Duplicate",
+                label: I18n.tr("Duplicate"),
                 icon: "\u{f0191}",
                 action: "duplicate"
             },
             {
-                label: "Delete",
+                label: I18n.tr("Delete"),
                 icon: "\u{f09e7}",
                 action: "delete",
                 danger: true,
@@ -138,8 +138,9 @@ ColumnLayout {
     PageHeader {
         title: root.displayName
         subtitle: {
-            const kind = (root.preview.variant === "light" ? "Light" : "Dark") + (root.custom ? " · made by you" : " theme");
-            return root.inUse ? kind + " · in use" : kind;
+            const light = root.preview.variant === "light";
+            const kind = root.custom ? (light ? I18n.tr("Light · made by you") : I18n.tr("Dark · made by you")) : (light ? I18n.tr("Light theme") : I18n.tr("Dark theme"));
+            return root.inUse ? I18n.tr("%1 · in use", kind) : kind;
         }
         icon: "\u{f03d8}"
         onBackClicked: root.back()
@@ -147,7 +148,7 @@ ColumnLayout {
         ActionButton {
             visible: !root.inUse
             icon: "\u{f012c}"
-            text: "Apply"
+            text: I18n.tr("Apply")
             baseColor: Config.accentColor
             hoverColor: Qt.lighter(Config.accentColor, 1.1)
             textColor: Config.textReverseColor
@@ -158,7 +159,7 @@ ColumnLayout {
         ActionButton {
             visible: root.custom
             icon: "\u{f03eb}"
-            text: "Edit"
+            text: I18n.tr("Edit")
             onClicked: root.editRequested()
         }
 
@@ -176,12 +177,12 @@ ColumnLayout {
         SettingRow {
             id: deleteRow
 
-            label: "Delete " + root.displayName + "?"
-            description: root.inUse ? "It's the theme in use: switch to another one first" : "Its file and its wallpaper folder are removed"
+            label: I18n.tr("Delete %1?", root.displayName)
+            description: root.inUse ? I18n.tr("It's the theme in use: switch to another one first") : I18n.tr("Its file and its wallpaper folder are removed")
             descriptionColor: root.inUse ? Config.warningColor : Config.subtextColor
 
             ActionButton {
-                text: "Cancel"
+                text: I18n.tr("Cancel")
                 baseColor: deleteRow.controlColor
                 onClicked: root.confirmingDelete = false
             }
@@ -189,7 +190,7 @@ ColumnLayout {
             ActionButton {
                 visible: !root.inUse
                 icon: "\u{f09e7}"
-                text: "Delete"
+                text: I18n.tr("Delete")
                 baseColor: Config.errorColor
                 hoverColor: Qt.lighter(Config.errorColor, 1.1)
                 textColor: Config.textReverseColor
@@ -204,7 +205,7 @@ ColumnLayout {
 
     // ================= COLORS =================
     SettingsGroup {
-        title: "Colors"
+        title: I18n.tr("Colors")
 
         Rectangle {
             Layout.fillWidth: true
@@ -237,35 +238,35 @@ ColumnLayout {
                         model: [
                             {
                                 key: "background",
-                                label: "Background"
+                                label: I18n.tr("Background")
                             },
                             {
                                 key: "surface1",
-                                label: "Surface"
+                                label: I18n.tr("Surface")
                             },
                             {
                                 key: "text",
-                                label: "Text"
+                                label: I18n.tr("Text")
                             },
                             {
                                 key: "subtext",
-                                label: "Subtext"
+                                label: I18n.tr("Subtext")
                             },
                             {
                                 key: "accent",
-                                label: "Accent"
+                                label: I18n.tr("Accent")
                             },
                             {
                                 key: "success",
-                                label: "Success"
+                                label: I18n.tr("Success")
                             },
                             {
                                 key: "warning",
-                                label: "Warning"
+                                label: I18n.tr("Warning")
                             },
                             {
                                 key: "error",
-                                label: "Error"
+                                label: I18n.tr("Error")
                             }
                         ]
 
@@ -311,18 +312,18 @@ ColumnLayout {
 
     // ================= WALLPAPER =================
     SettingsGroup {
-        title: "Wallpaper"
+        title: I18n.tr("Wallpaper")
 
         SettingRow {
             id: activeRow
 
-            label: root.activePath !== "" ? root.displayFileName(root.activePath) : "No wallpaper"
+            label: root.activePath !== "" ? root.displayFileName(root.activePath) : I18n.tr("No wallpaper")
             description: {
                 if (ThemeService.isAutoMode)
-                    return "Not used while the colors follow your wallpaper (Material You)";
+                    return I18n.tr("Not used while the colors follow your wallpaper (Material You)");
                 if (!WallpaperService.dynamicWallpaper)
-                    return "Not used: switching theme keeps your wallpaper (Theme › When switching theme)";
-                return "Shown when you switch to " + root.displayName;
+                    return I18n.tr("Not used: switching theme keeps your wallpaper (Theme › When switching theme)");
+                return I18n.tr("Shown when you switch to %1", root.displayName);
             }
 
             leading: ClippingRectangle {
@@ -343,7 +344,7 @@ ColumnLayout {
             // md-image_plus
             ActionButton {
                 icon: root.pickingFromLibrary ? "\u{f0156}" : "\u{f087c}"
-                text: root.pickingFromLibrary ? "Cancel" : "From library"
+                text: root.pickingFromLibrary ? I18n.tr("Cancel") : I18n.tr("From library")
                 baseColor: activeRow.controlColor
                 onClicked: root.pickingFromLibrary = !root.pickingFromLibrary
             }
@@ -353,17 +354,17 @@ ColumnLayout {
         SettingRow {
             id: generateRow
 
-            label: "lyne-dots wallpapers"
+            label: I18n.tr("lyne-dots wallpapers")
             description: {
                 if (root.generating)
-                    return "Rendering the scenes… " + WallpaperService.generatedCount + " of 3 ready";
+                    return I18n.tr("Rendering the scenes… %1 of %2 ready", WallpaperService.generatedCount, 3);
                 if (root.generateError !== "")
                     return root.generateError;
                 if (WallpaperService.generatingFor !== "")
-                    return "Another theme's wallpapers are rendering";
+                    return I18n.tr("Another theme's wallpapers are rendering");
                 if (root.hasLyneWallpapers)
-                    return "Lake, waves and contour in " + root.displayName + "'s colors. Render them again after changing its colors";
-                return "Render lake, waves and contour scenes in " + root.displayName + "'s colors";
+                    return I18n.tr("Lake, waves and contour in the colors of %1. Render them again after changing its colors", root.displayName);
+                return I18n.tr("Render lake, waves and contour scenes in the colors of %1", root.displayName);
             }
             descriptionColor: root.generateError !== "" && !root.generating ? Config.errorColor : Config.subtextColor
 
@@ -382,7 +383,7 @@ ColumnLayout {
                 visible: !root.generating
                 opacity: WallpaperService.generatingFor === "" ? 1 : 0.4
                 icon: "\u{f1a00}"
-                text: root.hasLyneWallpapers ? "Render again" : "Generate"
+                text: root.hasLyneWallpapers ? I18n.tr("Render again") : I18n.tr("Generate")
                 baseColor: generateRow.controlColor
                 onClicked: {
                     if (WallpaperService.generatingFor === "")
@@ -411,7 +412,7 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                    text: root.pickingFromLibrary ? "Pick a wallpaper from your library: it's copied to " + root.displayName + "'s wallpapers and used for it" : "Click one to use it for " + root.displayName
+                    text: root.pickingFromLibrary ? I18n.tr("Pick a wallpaper from your library: it's copied to the wallpapers of %1 and used for it", root.displayName) : I18n.tr("Click one to use it for %1", root.displayName)
                     wrapMode: Text.WordWrap
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeSmall
@@ -438,7 +439,7 @@ ColumnLayout {
                             Layout.fillWidth: true
                             Layout.preferredWidth: grid.cellWidth
                             path: modelData
-                            badge: !root.pickingFromLibrary && modelData === root.activePath ? "\u{f012c} Active" : ""
+                            badge: !root.pickingFromLibrary && modelData === root.activePath ? "\u{f012c} " + I18n.tr("Active") : ""
                             current: !root.pickingFromLibrary && modelData === WallpaperService.currentWallpaper
                             onActivated: root.pick(modelData)
                             onSelectToggled: root.pick(modelData)
@@ -464,7 +465,7 @@ ColumnLayout {
                     Layout.topMargin: Config.spacing
                     Layout.bottomMargin: Config.spacing
                     horizontalAlignment: Text.AlignHCenter
-                    text: root.pickingFromLibrary ? "Every library wallpaper is already in this theme" : "No wallpapers yet: add one with From library"
+                    text: root.pickingFromLibrary ? I18n.tr("Every library wallpaper is already in this theme") : I18n.tr("No wallpapers yet: add one with From library")
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeNormal
                     color: Config.subtextColor

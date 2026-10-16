@@ -54,7 +54,7 @@ Singleton {
         if (isAutoMode || appliedVariant === colorScheme)
             return "";
         const name = themePreviews[currentThemeName]?.name ?? currentThemeName;
-        return name + " has no " + colorScheme + " version: pick a " + colorScheme + " theme";
+        return colorScheme === "dark" ? I18n.tr("%1 has no dark version: pick a dark theme", name) : I18n.tr("%1 has no light version: pick a light theme", name);
     }
     readonly property string gtkThemeName: isDarkMode ? "adw-gtk3-dark" : "adw-gtk3"
     property var availableThemes: []

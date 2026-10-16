@@ -24,46 +24,46 @@ ColumnLayout {
 
     readonly property var swatches: ["#7aa2f7", "#89b4fa", "#b4befe", "#c678dd", "#f5a3c7", "#f7768e", "#962a1f", "#e0a153", "#e5c07b", "#9ece6a", "#50c8a0", "#7dcfff", "#888888"]
     readonly property var paletteKeys: [
-        ["background", "Background"],
-        ["surface0", "Panels"],
-        ["surface1", "Cards"],
-        ["surface2", "Hover and selection"],
-        ["surface3", "Borders"],
-        ["text", "Text"],
-        ["subtext", "Secondary text"],
-        ["muted", "Muted text"],
-        ["textReverse", "Text on the accent"],
-        ["subtextReverse", "Subtle lines"],
-        ["accent", "Accent"],
-        ["greyBlue", "Selected item"],
-        ["success", "Success"],
-        ["warning", "Warning"],
-        ["error", "Error"],
-        ["blueDark", "Deepest background"]
+        ["background", I18n.tr("Background")],
+        ["surface0", I18n.tr("Panels")],
+        ["surface1", I18n.tr("Cards")],
+        ["surface2", I18n.tr("Hover and selection")],
+        ["surface3", I18n.tr("Borders")],
+        ["text", I18n.tr("Text")],
+        ["subtext", I18n.tr("Secondary text")],
+        ["muted", I18n.tr("Muted text")],
+        ["textReverse", I18n.tr("Text on the accent")],
+        ["subtextReverse", I18n.tr("Subtle lines")],
+        ["accent", I18n.tr("Accent")],
+        ["greyBlue", I18n.tr("Selected item")],
+        ["success", I18n.tr("Success")],
+        ["warning", I18n.tr("Warning")],
+        ["error", I18n.tr("Error")],
+        ["blueDark", I18n.tr("Deepest background")]
     ]
     readonly property var terminalKeys: [
-        ["background", "Background"],
-        ["foreground", "Text"],
-        ["cursor", "Cursor"],
-        ["selectionBackground", "Selection"],
-        ["color0", "Black"],
-        ["color1", "Red"],
-        ["color2", "Green"],
-        ["color3", "Yellow"],
-        ["color4", "Blue"],
-        ["color5", "Magenta"],
-        ["color6", "Cyan"],
-        ["color7", "White"],
-        ["color8", "Bright black"],
-        ["color9", "Bright red"],
-        ["color10", "Bright green"],
-        ["color11", "Bright yellow"],
-        ["color12", "Bright blue"],
-        ["color13", "Bright magenta"],
-        ["color14", "Bright cyan"],
-        ["color15", "Bright white"],
-        ["color16", "Orange"],
-        ["color17", "Dark red"]
+        ["background", I18n.tr("Background")],
+        ["foreground", I18n.tr("Text")],
+        ["cursor", I18n.tr("Cursor")],
+        ["selectionBackground", I18n.tr("Selection")],
+        ["color0", I18n.tr("Black")],
+        ["color1", I18n.tr("Red")],
+        ["color2", I18n.tr("Green")],
+        ["color3", I18n.tr("Yellow")],
+        ["color4", I18n.tr("Blue")],
+        ["color5", I18n.tr("Magenta")],
+        ["color6", I18n.tr("Cyan")],
+        ["color7", I18n.tr("White")],
+        ["color8", I18n.tr("Bright black")],
+        ["color9", I18n.tr("Bright red")],
+        ["color10", I18n.tr("Bright green")],
+        ["color11", I18n.tr("Bright yellow")],
+        ["color12", I18n.tr("Bright blue")],
+        ["color13", I18n.tr("Bright magenta")],
+        ["color14", I18n.tr("Bright cyan")],
+        ["color15", I18n.tr("Bright white")],
+        ["color16", I18n.tr("Orange")],
+        ["color17", I18n.tr("Dark red")]
     ]
 
     property string name: ""
@@ -110,11 +110,11 @@ ColumnLayout {
     readonly property string slug: editSlug !== "" ? editSlug : ThemeGenerator.slugify(name)
     readonly property string nameError: {
         if (name.trim() === "")
-            return "Give it a name";
+            return I18n.tr("Give it a name");
         if (slug === "")
-            return "Use some letters or numbers";
+            return I18n.tr("Use some letters or numbers");
         if (editSlug === "" && ThemeService.availableThemes.includes(slug))
-            return "There's already a theme with this name";
+            return I18n.tr("There's already a theme with this name");
         return "";
     }
     readonly property string mockWallpaper: {
@@ -288,7 +288,7 @@ ColumnLayout {
             if (slug !== root.slug)
                 return;
             root.saving = false;
-            root.saveError = "Couldn't write the theme file";
+            root.saveError = I18n.tr("Couldn't write the theme file");
         }
     }
 
@@ -323,14 +323,14 @@ ColumnLayout {
     spacing: Config.spacing * 3
 
     PageHeader {
-        title: root.editSlug !== "" ? "Edit " + (root.editPreview?.name ?? root.editSlug) : "New theme"
-        subtitle: "A few picks: the rest of the colors follow from them"
+        title: root.editSlug !== "" ? I18n.tr("Edit %1", root.editPreview?.name ?? root.editSlug) : I18n.tr("New theme")
+        subtitle: I18n.tr("A few picks: the rest of the colors follow from them")
         icon: "\u{f03d8}"
         onBackClicked: root.back()
 
         ActionButton {
             icon: root.saving ? "" : "\u{f0193}"
-            text: root.saving ? "Saving…" : "Save"
+            text: root.saving ? I18n.tr("Saving…") : I18n.tr("Save")
             baseColor: root.nameError === "" ? Config.accentColor : Config.surface1Color
             hoverColor: root.nameError === "" ? Qt.lighter(Config.accentColor, 1.1) : Config.surface2Color
             textColor: root.nameError === "" ? Config.textReverseColor : Config.subtextColor
@@ -351,7 +351,7 @@ ColumnLayout {
             anchors.margins: Config.padding
             anchors.leftMargin: Config.padding * 2
             verticalAlignment: Text.AlignVCenter
-            text: "Unsaved changes: press Escape again to discard them"
+            text: I18n.tr("Unsaved changes: press Escape again to discard them")
             wrapMode: Text.WordWrap
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
@@ -371,13 +371,13 @@ ColumnLayout {
             spacing: Config.spacing * 3
 
             SettingsGroup {
-                title: "Name"
+                title: I18n.tr("Name")
 
                 SettingRow {
                     id: nameRow
 
-                    label: root.editSlug !== "" ? "Name" : "Theme name"
-                    description: root.nameError !== "" ? root.nameError : root.editSlug !== "" ? "Saved as " + root.slug + ".json" : "Saved as ~/.local/themes/" + root.slug + ".json"
+                    label: root.editSlug !== "" ? I18n.tr("Name") : I18n.tr("Theme name")
+                    description: root.nameError !== "" ? root.nameError : root.editSlug !== "" ? I18n.tr("Saved as %1", root.slug + ".json") : I18n.tr("Saved as %1", "~/.local/themes/" + root.slug + ".json")
                     descriptionColor: root.nameError !== "" && root.name !== "" ? Config.errorColor : Config.subtextColor
 
                     below: QsTextField {
@@ -385,7 +385,7 @@ ColumnLayout {
                         color: nameRow.controlColor
                         text: root.name
                         maximumLength: 40
-                        placeholder: "My theme"
+                        placeholder: I18n.tr("My theme")
                         onTextEdited: root.name = text
                         onAccepted: root.save()
                     }
@@ -395,37 +395,37 @@ ColumnLayout {
             // ================= START FROM =================
             SettingsGroup {
                 visible: root.editSlug === ""
-                title: "Start from"
+                title: I18n.tr("Start from")
 
                 SettingRow {
                     label: {
                         if (root.source === "wallpaper")
-                            return "A wallpaper";
+                            return I18n.tr("A wallpaper");
                         if (root.source === "theme")
-                            return "Another theme";
-                        return "A color";
+                            return I18n.tr("Another theme");
+                        return I18n.tr("A color");
                     }
                     description: {
                         if (root.source === "wallpaper")
-                            return "Its main colors become accent choices";
+                            return I18n.tr("Its main colors become accent choices");
                         if (root.source === "theme")
-                            return "Its accent, mode and background tone";
-                        return "Pick the accent; everything else follows";
+                            return I18n.tr("Its accent, mode and background tone");
+                        return I18n.tr("Pick the accent; everything else follows");
                     }
 
                     below: SegmentedControl {
                         width: parent.width
                         options: [
                             {
-                                label: "Color",
+                                label: I18n.tr("Color"),
                                 icon: "\u{f08b5}"
                             },
                             {
-                                label: "Wallpaper",
+                                label: I18n.tr("Wallpaper"),
                                 icon: "\u{f02e9}"
                             },
                             {
-                                label: "Theme",
+                                label: I18n.tr("Theme"),
                                 icon: "\u{f03d8}"
                             }
                         ]
@@ -437,8 +437,8 @@ ColumnLayout {
                 // Color: curated accents, or any color picked by eye
                 ColorEditRow {
                     visible: root.source === "color"
-                    label: "Accent"
-                    description: "Pick one, drag to any color or type its hex"
+                    label: I18n.tr("Accent")
+                    description: I18n.tr("Pick one, drag to any color or type its hex")
                     presets: root.swatches
                     alwaysOpen: true
                     value: root.seed.accent
@@ -450,8 +450,8 @@ ColumnLayout {
                     id: wallRow
 
                     visible: root.source === "wallpaper"
-                    label: root.wallpaperPath !== "" ? WallpaperService.fileName(root.wallpaperPath) : "No wallpaper"
-                    description: root.wallpaperColors.length > 0 ? "Pick the accent from its colors" : "Reading its colors…"
+                    label: root.wallpaperPath !== "" ? WallpaperService.fileName(root.wallpaperPath) : I18n.tr("No wallpaper")
+                    description: root.wallpaperColors.length > 0 ? I18n.tr("Pick the accent from its colors") : I18n.tr("Reading its colors…")
 
                     leading: ClippingRectangle {
                         implicitWidth: Math.round(Config.fontSizeIconLarge * 2 * 16 / 9)
@@ -470,7 +470,7 @@ ColumnLayout {
 
                     ActionButton {
                         icon: root.pickingWallpaper ? "\u{f0156}" : "\u{f0977}"
-                        text: root.pickingWallpaper ? "Close" : "Change"
+                        text: root.pickingWallpaper ? I18n.tr("Close") : I18n.tr("Change")
                         baseColor: wallRow.controlColor
                         onClicked: root.pickingWallpaper = !root.pickingWallpaper
                     }
@@ -545,8 +545,8 @@ ColumnLayout {
 
                 ToggleRow {
                     visible: root.source === "wallpaper"
-                    label: "Use it as the theme's wallpaper"
-                    description: "Copied to the theme's wallpapers"
+                    label: I18n.tr("Use it as the theme's wallpaper")
+                    description: I18n.tr("Copied to the theme's wallpapers")
                     checked: root.useWallpaper
                     onToggled: value => root.useWallpaper = value
                 }
@@ -554,13 +554,13 @@ ColumnLayout {
                 // Theme: which one
                 SettingRow {
                     visible: root.source === "theme"
-                    label: root.sourceTheme !== "" ? (ThemeService.themePreviews[root.sourceTheme]?.name ?? root.sourceTheme) : "Pick a theme"
-                    description: root.sourceTheme !== "" && root.overrideCount > 0 ? "Its exact colors are copied: change them in Fine-tune" : "The generator recreates its look; copy its colors to keep them exactly"
+                    label: root.sourceTheme !== "" ? (ThemeService.themePreviews[root.sourceTheme]?.name ?? root.sourceTheme) : I18n.tr("Pick a theme")
+                    description: root.sourceTheme !== "" && root.overrideCount > 0 ? I18n.tr("Its exact colors are copied: change them in Fine-tune") : I18n.tr("The generator recreates its look; copy its colors to keep them exactly")
 
                     ActionButton {
                         visible: root.sourceTheme !== ""
                         icon: "\u{f018f}"
-                        text: "Copy its colors"
+                        text: I18n.tr("Copy its colors")
                         onClicked: root.startFromTheme(root.sourceTheme, true)
                     }
 
@@ -618,25 +618,25 @@ ColumnLayout {
 
             // ================= COLORS =================
             SettingsGroup {
-                title: "Colors"
+                title: I18n.tr("Colors")
 
                 ColorEditRow {
-                    label: "Accent"
-                    description: "Buttons, highlights and the active window border"
+                    label: I18n.tr("Accent")
+                    description: I18n.tr("Buttons, highlights and the active window border")
                     value: root.seed.accent
                     onEdited: value => root.setSeed("accent", value)
                 }
 
                 SelectRow {
-                    label: "Mode"
+                    label: I18n.tr("Mode")
                     options: [
                         {
-                            label: "Dark",
+                            label: I18n.tr("Dark"),
                             icon: "\u{f0594}",
                             value: "dark"
                         },
                         {
-                            label: "Light",
+                            label: I18n.tr("Light"),
                             icon: "\u{f05a8}",
                             value: "light"
                         }
@@ -646,8 +646,8 @@ ColumnLayout {
                 }
 
                 ToggleRow {
-                    label: "Keep the exact accent"
-                    description: "Off: its brightness is adjusted to stay readable"
+                    label: I18n.tr("Keep the exact accent")
+                    description: I18n.tr("Off: its brightness is adjusted to stay readable")
                     checked: root.seed.exactAccent
                     onToggled: value => root.setSeed("exactAccent", value)
                 }
@@ -655,11 +655,11 @@ ColumnLayout {
 
             // ================= MOOD =================
             SettingsGroup {
-                title: "Mood"
+                title: I18n.tr("Mood")
 
                 SliderRow {
-                    label: "Background tint"
-                    description: "How much the backgrounds take the accent's hue"
+                    label: I18n.tr("Background tint")
+                    description: I18n.tr("How much the backgrounds take the accent's hue")
                     value: root.seed.tint
                     stepSize: 0.05
                     format: v => Math.round(v * 100) + "%"
@@ -667,8 +667,8 @@ ColumnLayout {
                 }
 
                 SliderRow {
-                    label: "Vibrance"
-                    description: "Saturation of the status and terminal colors"
+                    label: I18n.tr("Vibrance")
+                    description: I18n.tr("Saturation of the status and terminal colors")
                     value: root.seed.vibrance
                     stepSize: 0.05
                     format: v => Math.round(v * 100) + "%"
@@ -676,8 +676,8 @@ ColumnLayout {
                 }
 
                 SliderRow {
-                    label: "Harmony"
-                    description: "How far those colors lean towards the accent"
+                    label: I18n.tr("Harmony")
+                    description: I18n.tr("How far those colors lean towards the accent")
                     value: root.seed.harmony
                     stepSize: 0.05
                     format: v => Math.round(v * 100) + "%"
@@ -687,13 +687,13 @@ ColumnLayout {
 
             // ================= CONTRAST =================
             SettingsGroup {
-                title: "Contrast"
+                title: I18n.tr("Contrast")
 
                 SettingRow {
                     id: contrastSummary
 
-                    label: root.failing === 0 ? "Everything is readable" : root.failing + (root.failing === 1 ? " pair is" : " pairs are") + " hard to read"
-                    description: "WCAG contrast of the main color pairs"
+                    label: root.failing === 0 ? I18n.tr("Everything is readable") : I18n.trn("%n pair is hard to read", "%n pairs are hard to read", root.failing)
+                    description: I18n.tr("WCAG contrast of the main color pairs")
 
                     leading: Text {
                         text: root.failing === 0 ? "\u{f05e0}" : "\u{f0028}"
@@ -705,7 +705,7 @@ ColumnLayout {
                     ActionButton {
                         visible: root.failing > 0
                         icon: "\u{f0068}"
-                        text: "Fix all"
+                        text: I18n.tr("Fix all")
                         baseColor: contrastSummary.controlColor
                         onClicked: root.fixAll()
                     }
@@ -720,7 +720,7 @@ ColumnLayout {
                         required property var modelData
 
                         label: modelData.label
-                        description: modelData.ratio.toFixed(1) + ":1 · needs " + modelData.min + ":1"
+                        description: I18n.tr("%1:1 · needs %2:1", I18n.number(modelData.ratio, 1), modelData.min)
                         descriptionColor: modelData.ok ? Config.subtextColor : Config.warningColor
 
                         leading: Text {
@@ -733,7 +733,7 @@ ColumnLayout {
                         ActionButton {
                             visible: !checkRow.modelData.ok
                             icon: "\u{f0068}"
-                            text: "Fix"
+                            text: I18n.tr("Fix")
                             baseColor: checkRow.controlColor
                             onClicked: root.fix(checkRow.modelData)
                         }
@@ -743,13 +743,13 @@ ColumnLayout {
 
             // ================= FINE-TUNE =================
             SettingsGroup {
-                title: "Fine-tune"
+                title: I18n.tr("Fine-tune")
 
                 ToggleRow {
                     id: fineTuneRow
 
-                    label: "Set colors one by one"
-                    description: root.overrideCount > 0 ? root.overrideCount + " set by hand; the rest follow the picks above" : "Optional: every color can be changed"
+                    label: I18n.tr("Set colors one by one")
+                    description: root.overrideCount > 0 ? I18n.trn("%n set by hand; the rest follow the picks above", "%n set by hand; the rest follow the picks above", root.overrideCount) : I18n.tr("Optional: every color can be changed")
                     checked: root.fineTune
                     onToggled: value => root.fineTune = value
                 }
@@ -758,12 +758,12 @@ ColumnLayout {
                     id: sectionRow
 
                     visible: root.fineTune
-                    label: "Colors of"
+                    label: I18n.tr("Colors of")
 
                     ActionButton {
                         visible: root.overrideCount > 0
                         icon: "\u{f099b}"
-                        text: "Reset all"
+                        text: I18n.tr("Reset all")
                         baseColor: sectionRow.controlColor
                         onClicked: root.clearOverrides()
                     }
@@ -772,11 +772,11 @@ ColumnLayout {
                         width: parent.width
                         options: [
                             {
-                                label: "Interface",
+                                label: I18n.tr("Interface"),
                                 icon: "\u{f03d8}"
                             },
                             {
-                                label: "Terminal",
+                                label: I18n.tr("Terminal"),
                                 icon: "\u{f018d}"
                             }
                         ]
@@ -802,17 +802,17 @@ ColumnLayout {
 
             // ================= SAVE =================
             SettingsGroup {
-                title: "Save"
+                title: I18n.tr("Save")
 
                 ToggleRow {
-                    label: root.editSlug !== "" && root.editSlug === ThemeService.currentThemeName ? "Update it now" : "Switch to it after saving"
+                    label: root.editSlug !== "" && root.editSlug === ThemeService.currentThemeName ? I18n.tr("Update it now") : I18n.tr("Switch to it after saving")
                     checked: root.applyAfter
                     onToggled: value => root.applyAfter = value
                 }
 
                 ToggleRow {
-                    label: root.editSlug !== "" ? "Render its lyne-dots wallpapers again" : "Generate lyne-dots wallpapers"
-                    description: "Lake, waves and contour scenes in the theme's colors, ready a few seconds after saving" + (root.editSlug === "" && !(root.source === "wallpaper" && root.useWallpaper) ? "; contour becomes its wallpaper" : "")
+                    label: root.editSlug !== "" ? I18n.tr("Render its lyne-dots wallpapers again") : I18n.tr("Generate lyne-dots wallpapers")
+                    description: root.editSlug === "" && !(root.source === "wallpaper" && root.useWallpaper) ? I18n.tr("Lake, waves and contour scenes in the theme's colors, ready a few seconds after saving; contour becomes its wallpaper") : I18n.tr("Lake, waves and contour scenes in the theme's colors, ready a few seconds after saving")
                     checked: root.generateWallpapers
                     onToggled: value => root.generateWallpapers = value
                 }
@@ -821,12 +821,12 @@ ColumnLayout {
                     id: saveRow
 
                     label: root.nameError !== "" ? root.nameError : root.name.trim()
-                    description: root.saveError !== "" ? root.saveError : root.editSlug !== "" ? "Overwrites " + root.slug + ".json" : "Adds it to your themes"
+                    description: root.saveError !== "" ? root.saveError : root.editSlug !== "" ? I18n.tr("Overwrites %1", root.slug + ".json") : I18n.tr("Adds it to your themes")
                     descriptionColor: root.saveError !== "" ? Config.errorColor : Config.subtextColor
 
                     ActionButton {
                         icon: "\u{f0193}"
-                        text: root.saving ? "Saving…" : "Save theme"
+                        text: root.saving ? I18n.tr("Saving…") : I18n.tr("Save theme")
                         baseColor: root.nameError === "" ? Config.accentColor : saveRow.controlColor
                         hoverColor: root.nameError === "" ? Qt.lighter(Config.accentColor, 1.1) : Config.surface2Color
                         textColor: root.nameError === "" ? Config.textReverseColor : Config.subtextColor

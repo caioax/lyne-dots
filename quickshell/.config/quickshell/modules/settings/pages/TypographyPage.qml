@@ -12,19 +12,19 @@ ColumnLayout {
     readonly property var sizeKeys: ["sizeSmall", "sizeNormal", "sizeLarge", "iconSmall", "icon", "iconLarge"]
     readonly property var scales: [
         {
-            label: "Small",
+            label: I18n.tr("Small"),
             value: 0.875
         },
         {
-            label: "Default",
+            label: I18n.tr("Default"),
             value: 1
         },
         {
-            label: "Large",
+            label: I18n.tr("Large"),
             value: 1.125
         },
         {
-            label: "Larger",
+            label: I18n.tr("Larger"),
             value: 1.25
         }
     ]
@@ -61,7 +61,7 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Preview"
+        title: I18n.tr("Preview")
 
         Rectangle {
             Layout.fillWidth: true
@@ -82,7 +82,7 @@ ColumnLayout {
 
                     Text {
                         Layout.fillWidth: true
-                        text: "The quick brown fox"
+                        text: I18n.tr("The quick brown fox")
                         elide: Text.ElideRight
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeLarge
@@ -92,7 +92,7 @@ ColumnLayout {
 
                     Text {
                         Layout.fillWidth: true
-                        text: "jumps over the lazy dog 0123456789"
+                        text: I18n.tr("jumps over the lazy dog 0123456789")
                         elide: Text.ElideRight
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeNormal
@@ -101,7 +101,7 @@ ColumnLayout {
 
                     Text {
                         Layout.fillWidth: true
-                        text: "Small text for captions and descriptions"
+                        text: I18n.tr("Small text for captions and descriptions")
                         elide: Text.ElideRight
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeSmall
@@ -139,18 +139,18 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Font"
+        title: I18n.tr("Font")
 
         SettingRow {
             id: fontRow
 
-            label: "Interface font"
+            label: I18n.tr("Interface font")
             description: Config.font
             path: "typography.font"
 
             ActionButton {
                 icon: "\u{f03eb}"
-                text: "Change"
+                text: I18n.tr("Change")
                 baseColor: fontRow.controlColor
                 onClicked: fontPicker.open()
             }
@@ -158,11 +158,11 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Size"
+        title: I18n.tr("Size")
 
         SelectRow {
-            label: "Scale"
-            description: "Resize all text and icons together"
+            label: I18n.tr("Scale")
+            description: I18n.tr("Resize all text and icons together")
             segmentWidth: Config.fontSizeNormal * 5
             options: root.scales
             value: root.currentScale
@@ -176,11 +176,11 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Text sizes"
+        title: I18n.tr("Text sizes")
 
         StepperRow {
-            label: "Small"
-            description: "Captions, descriptions and labels"
+            label: I18n.trc("size", "Small")
+            description: I18n.tr("Captions, descriptions and labels")
             path: "typography.sizeSmall"
             from: 8
             to: 24
@@ -188,8 +188,8 @@ ColumnLayout {
         }
 
         StepperRow {
-            label: "Normal"
-            description: "Most of the text"
+            label: I18n.trc("size", "Normal")
+            description: I18n.tr("Most of the text")
             path: "typography.sizeNormal"
             from: 8
             to: 24
@@ -197,8 +197,8 @@ ColumnLayout {
         }
 
         StepperRow {
-            label: "Large"
-            description: "Titles and headers"
+            label: I18n.trc("size", "Large")
+            description: I18n.tr("Titles and headers")
             path: "typography.sizeLarge"
             from: 8
             to: 32
@@ -207,10 +207,10 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Icon sizes"
+        title: I18n.tr("Icon sizes")
 
         StepperRow {
-            label: "Small"
+            label: I18n.trc("size", "Small")
             path: "typography.iconSmall"
             from: 10
             to: 40
@@ -218,7 +218,7 @@ ColumnLayout {
         }
 
         StepperRow {
-            label: "Normal"
+            label: I18n.trc("size", "Normal")
             path: "typography.icon"
             from: 10
             to: 40
@@ -226,7 +226,7 @@ ColumnLayout {
         }
 
         StepperRow {
-            label: "Large"
+            label: I18n.trc("size", "Large")
             path: "typography.iconLarge"
             from: 10
             to: 48

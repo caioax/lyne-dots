@@ -14,6 +14,24 @@ Rectangle {
     signal selected(int index)
 
     readonly property real segmentWidth: (width - Config.padding) / Math.max(1, options.length)
+    // Width the widest option needs (its label bold, as when selected), so
+    // rows can make room for long labels (translations)
+    readonly property real neededSegmentWidth: Math.ceil(Math.max(0, ...options.map(o => labelMetrics.advanceWidth(o.label) + ((o.icon ?? "") !== "" ? iconMetrics.advanceWidth(o.icon) + Config.padding : 0))) + Config.padding * 3)
+
+    FontMetrics {
+        id: labelMetrics
+
+        font.family: Config.font
+        font.pixelSize: Config.fontSizeSmall
+        font.bold: true
+    }
+
+    FontMetrics {
+        id: iconMetrics
+
+        font.family: Config.font
+        font.pixelSize: Config.fontSizeNormal
+    }
 
     Layout.fillWidth: true
     implicitHeight: Config.fontSizeIconSmall * 2

@@ -178,7 +178,7 @@ RowLayout {
     // md-arrow_expand_vertical / md-arrow_collapse_vertical / md-restore
     SizeButton {
         icon: root.mode === "tall" ? "\u{f084d}" : root.mode === "custom" ? "\u{f099b}" : "\u{f084f}"
-        tip: root.mode === "tall" ? "Default size" : root.mode === "custom" ? "Restore size" : "Extend vertically"
+        tip: root.mode === "tall" ? I18n.tr("Default size") : root.mode === "custom" ? I18n.tr("Restore size") : I18n.tr("Extend vertically")
         active: root.mode === "tall"
         enabled: root.ready && !root.filled
         onClicked: root.toggleTall()
@@ -187,7 +187,7 @@ RowLayout {
     // md-fullscreen / md-fullscreen_exit
     SizeButton {
         icon: root.filled ? "\u{f0294}" : "\u{f0293}"
-        tip: root.mode === "maximized" ? "Leave maximized" : root.mode === "fullscreen" ? "Leave fullscreen" : root.filled ? "Restore" : "Fill the screen"
+        tip: root.mode === "maximized" ? I18n.tr("Leave maximized") : root.mode === "fullscreen" ? I18n.tr("Leave fullscreen") : root.filled ? I18n.tr("Restore") : I18n.tr("Fill the screen")
         active: root.filled
         enabled: root.ready
         onClicked: root.toggleFill()

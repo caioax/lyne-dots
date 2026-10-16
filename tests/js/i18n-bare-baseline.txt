@@ -1,4 +1,4 @@
-# UI strings not yet going through I18n, per file (1387 lines): node tools/i18n.js lint --update
+# UI strings not yet going through I18n, per file (1089 lines): node tools/i18n.js lint --update
 3 components/KeyboardLayoutButton.qml
 1 modules/bar/MediaButton.qml
 1 modules/calendar/CalendarButton.qml
@@ -36,8 +36,6 @@
 7 modules/screenshot/ControlBar.qml
 1 modules/screenshot/ScreenshotManager.qml
 4 modules/settings/MonitorsConfirm.qml
-1 modules/settings/SearchResults.qml
-4 modules/settings/SettingsWindow.qml
 42 modules/settings/pages/AboutPage.qml
 6 modules/settings/pages/AppDefaultsGroup.qml
 7 modules/settings/pages/AppPicker.qml
@@ -50,7 +48,6 @@
 14 modules/settings/pages/ClipboardPage.qml
 12 modules/settings/pages/CustomBindDialog.qml
 24 modules/settings/pages/DashboardPage.qml
-4 modules/settings/pages/FontPicker.qml
 36 modules/settings/pages/GraphicsPage.qml
 1 modules/settings/pages/HyprlandErrorGroup.qml
 22 modules/settings/pages/IdlePage.qml
@@ -58,7 +55,6 @@
 14 modules/settings/pages/KeybindsPage.qml
 62 modules/settings/pages/KeyboardPage.qml
 48 modules/settings/pages/LauncherPage.qml
-28 modules/settings/pages/LayoutPage.qml
 18 modules/settings/pages/LockPage.qml
 35 modules/settings/pages/MonitorsPage.qml
 2 modules/settings/pages/NavKeysPicker.qml
@@ -71,18 +67,11 @@
 1 modules/settings/pages/ScreenshotPage.qml
 17 modules/settings/pages/SpecialDialog.qml
 11 modules/settings/pages/SpecialsPage.qml
-65 modules/settings/pages/ThemeCreator.qml
-36 modules/settings/pages/ThemeDetail.qml
-7 modules/settings/pages/ThemeMock.qml
-34 modules/settings/pages/ThemePage.qml
 1 modules/settings/pages/TilingPicker.qml
 5 modules/settings/pages/TrayStylePreview.qml
-25 modules/settings/pages/TypographyPage.qml
-37 modules/settings/pages/WallpaperPage.qml
 36 modules/settings/pages/WindowsPage.qml
 14 modules/settings/pages/WorkspacesPage.qml
 2 modules/settings/pages/XkbPicker.qml
-1 modules/settings/rows/KeyCombo.qml
 1 modules/systemMonitor/GpuCard.qml
 1 modules/systemMonitor/HeroCard.qml
 2 modules/systemMonitor/MemoryCard.qml
@@ -114,9 +103,8 @@
 8 services/PowerProfileService.qml
 6 services/PowerService.qml
 7 services/QuickSettingsService.qml
-56 services/SettingsService.qml
+1 services/SettingsService.qml
 10 services/SpecialsService.qml
-1 services/ThemeService.qml
 3 services/WallpaperPickerService.qml
 1 services/WeatherService.qml
 7 services/WelcomeService.qml

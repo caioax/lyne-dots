@@ -490,7 +490,7 @@ function stats(shell = SHELL) {
 // =============================================================================
 
 // Properties whose value is shown to the user
-const UI_PROPS = "text|label|title|description|placeholder|placeholderText|tooltip|toolTip|subtitle|hint|message|summary|body|detail|emptyText|heading|caption";
+const UI_PROPS = "text|label|title|description|placeholder|placeholderText|tooltip|toolTip|tooltipText|tip|badge|subtitle|hint|message|summary|body|detail|emptyText|heading|caption";
 const UI_LINE = new RegExp(`^\\s*(?:(?:[\\w.]+\\.)?(?:${UI_PROPS})\\s*:|return\\b)`);
 
 // Looks like words for people: letters, and a space or a capital first

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell.Widgets
 import qs.config
+import qs.services
 
 // Miniature desktop painted with a theme's colors (not the shell's): the bar,
 // an app window and a Kitty terminal with the ANSI colors, over the theme's
@@ -119,7 +120,7 @@ ClippingRectangle {
 
         Label {
             anchors.centerIn: parent
-            text: "Mon 12:30"
+            text: I18n.tr("Mon 12:30")
             font.bold: true
         }
 
@@ -184,7 +185,7 @@ ClippingRectangle {
             spacing: root.unit * 0.35
 
             Label {
-                text: "Settings"
+                text: I18n.tr("Settings")
                 font.bold: true
                 font.pixelSize: root.textSize * 1.15
             }
@@ -192,18 +193,18 @@ ClippingRectangle {
             Repeater {
                 model: [
                     {
-                        title: "Appearance",
-                        sub: "Colors and wallpaper",
+                        title: I18n.tr("Appearance"),
+                        sub: I18n.tr("Colors and wallpaper"),
                         selected: true
                     },
                     {
-                        title: "Network",
-                        sub: "Connected",
+                        title: I18n.tr("Network"),
+                        sub: I18n.tr("Connected"),
                         selected: false
                     },
                     {
-                        title: "Sound",
-                        sub: "Speakers · 65%",
+                        title: I18n.tr("Sound"),
+                        sub: I18n.tr("Speakers · 65%"),
                         selected: false
                     }
                 ].slice(0, root.portrait ? 2 : 3)
@@ -242,7 +243,7 @@ ClippingRectangle {
 
             Label {
                 width: parent.width
-                text: "Last synced 2 min ago"
+                text: I18n.tr("Last synced 2 min ago")
                 font.pixelSize: root.textSize * 0.85
                 color: root.c("muted", Config.subtextColor)
             }
@@ -312,7 +313,7 @@ ClippingRectangle {
                 Label {
                     id: applyText
                     anchors.centerIn: parent
-                    text: "Apply"
+                    text: I18n.tr("Apply")
                     font.bold: true
                     color: root.c("textReverse", Config.textReverseColor)
                 }

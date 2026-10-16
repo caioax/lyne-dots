@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
+import qs.services
 import "../../../components/"
 
 // Modal list of the installed font families, each name drawn in its own
@@ -66,7 +67,7 @@ Popup {
             id: search
 
             Layout.fillWidth: true
-            placeholder: "Search " + root.families.length + " fonts"
+            placeholder: I18n.trn("Search %n font", "Search %n fonts", root.families.length)
             onTextChanged: root.query = text
             onAccepted: {
                 if (root.filtered.length > 0)
@@ -86,10 +87,10 @@ Popup {
         SegmentedControl {
             options: [
                 {
-                    label: "All"
+                    label: I18n.tr("All")
                 },
                 {
-                    label: "Nerd Fonts"
+                    label: I18n.tr("Nerd Fonts")
                 }
             ]
             currentIndex: root.nerdOnly ? 1 : 0
@@ -178,7 +179,7 @@ Popup {
             Text {
                 anchors.centerIn: parent
                 visible: root.filtered.length === 0
-                text: "No fonts match"
+                text: I18n.tr("No fonts match")
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeNormal
                 color: Config.subtextColor

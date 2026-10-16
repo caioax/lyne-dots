@@ -338,11 +338,12 @@ Singleton {
 
     Process {
         id: addWallpapersProc
+        // The dialog's texts come translated as $1..$4
         command: ["bash", "-c", `
             if command -v zenity >/dev/null; then
-                files=$(zenity --file-selection --multiple --separator=$'\\n' --title="Add Wallpapers" --filename="$HOME/" --file-filter="Image Files | *.png *.jpg *.jpeg *.webp *.gif")
+                files=$(zenity --file-selection --multiple --separator=$'\\n' --title="$1" --filename="$HOME/" --file-filter="$2 | *.png *.jpg *.jpeg *.webp *.gif")
             else
-                notify-send "Wallpaper" "Install zenity to add wallpapers"
+                notify-send "$3" "$4"
                 files=""
             fi
             if [ -n "$files" ]; then
@@ -356,7 +357,7 @@ Singleton {
             else
                 echo "cancelled"
             fi
-        `]
+        `, "bash", I18n.tr("Add wallpapers"), I18n.tr("Images"), I18n.tr("Wallpaper"), I18n.tr("Install zenity to add wallpapers")]
         stdout: SplitParser {
             onRead: data => {
                 const result = data.trim();
@@ -456,7 +457,8 @@ Singleton {
             } else {
                 const errors = Object.assign({}, root.generateErrors);
                 // A missing module is the usual cause: name the package
-                errors[theme] = _error.includes("No module named") ? "Missing Python modules: run lyne update (python-numpy, python-pillow)" : _error.includes("rsvg-convert") ? "rsvg-convert not found: run lyne update (librsvg)" : (_error || "The generator failed");
+                // English, shown with I18n.translate (the generator's own output as it is)
+                errors[theme] = _error.includes("No module named") ? I18n.noop("Missing Python modules: run lyne update (python-numpy, python-pillow)") : _error.includes("rsvg-convert") ? I18n.noop("rsvg-convert not found: run lyne update (librsvg)") : (_error || I18n.noop("The generator failed"));
                 root.generateErrors = errors;
             }
             root.generatingFor = "";

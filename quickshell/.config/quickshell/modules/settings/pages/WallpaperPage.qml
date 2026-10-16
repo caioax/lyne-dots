@@ -161,18 +161,18 @@ ColumnLayout {
 
         items: [
             {
-                label: isFavorite ? "Remove from favorites" : "Add to favorites",
+                label: isFavorite ? I18n.tr("Remove from favorites") : I18n.tr("Add to favorites"),
                 icon: isFavorite ? "\u{f02d5}" : "\u{f02d1}",
                 action: "favorite"
             },
             {
-                label: "Use for " + root.themeLabel,
+                label: I18n.tr("Use for %1", root.themeLabel),
                 icon: "\u{f012c}",
                 action: "useForTheme",
                 hidden: ThemeService.isAutoMode
             },
             {
-                label: "Add to theme",
+                label: I18n.tr("Add to theme"),
                 icon: "\u{f03d8}",
                 children: ThemeService.availableThemes.map(t => ({
                             label: ThemeService.themePreviews[t]?.name ?? t,
@@ -181,12 +181,12 @@ ColumnLayout {
                         }))
             },
             {
-                label: "Select",
+                label: I18n.tr("Select"),
                 icon: "\u{f0485}",
                 action: "select"
             },
             {
-                label: "Delete",
+                label: I18n.tr("Delete"),
                 icon: "\u{f09e7}",
                 action: "delete",
                 danger: true
@@ -217,20 +217,20 @@ ColumnLayout {
 
     // ================= CURRENT =================
     SettingsGroup {
-        title: "Current"
+        title: I18n.tr("Current")
 
         SettingRow {
             id: currentRow
 
-            label: WallpaperService.currentWallpaper !== "" ? root.displayName(WallpaperService.currentWallpaper) : "No wallpaper"
+            label: WallpaperService.currentWallpaper !== "" ? root.displayName(WallpaperService.currentWallpaper) : I18n.tr("No wallpaper")
             description: {
                 if (ThemeService.isAutoMode)
-                    return "Material You: the colors follow this wallpaper";
+                    return I18n.tr("Material You: the colors follow this wallpaper");
                 if (!WallpaperService.dynamicWallpaper)
-                    return "Stays when switching theme";
+                    return I18n.tr("Stays when switching theme");
                 if (root.onThemeWallpaper)
-                    return root.themeLabel + "'s wallpaper · switching theme brings the new theme's";
-                return "Switching theme replaces it with the theme's wallpaper";
+                    return I18n.tr("Wallpaper of %1 · switching theme brings the new theme's", root.themeLabel);
+                return I18n.tr("Switching theme replaces it with the theme's wallpaper");
             }
 
             leading: ClippingRectangle {
@@ -251,7 +251,7 @@ ColumnLayout {
             // md-shuffle_variant
             ActionButton {
                 icon: "\u{f049f}"
-                text: "Random"
+                text: I18n.tr("Random")
                 baseColor: currentRow.controlColor
                 onClicked: WallpaperService.setRandomWallpaper()
             }
@@ -259,7 +259,7 @@ ColumnLayout {
             // md-image_plus
             ActionButton {
                 icon: "\u{f087c}"
-                text: "Add"
+                text: I18n.tr("Add")
                 baseColor: currentRow.controlColor
                 onClicked: WallpaperService.addWallpapers()
             }
@@ -270,8 +270,8 @@ ColumnLayout {
             id: offerRow
 
             visible: root.offerPath !== ""
-            label: "Also make it " + root.themeLabel + "'s wallpaper?"
-            description: "Otherwise it stays until you switch theme, and " + root.themeLabel + " keeps its own"
+            label: I18n.tr("Also make it the wallpaper of %1?", root.themeLabel)
+            description: I18n.tr("Otherwise it stays until you switch theme, and %1 keeps its own", root.themeLabel)
 
             leading: Text {
                 text: "\u{f03d8}"
@@ -281,14 +281,14 @@ ColumnLayout {
             }
 
             ActionButton {
-                text: "Only now"
+                text: I18n.tr("Only now")
                 baseColor: offerRow.controlColor
                 onClicked: root.offerPath = ""
             }
 
             ActionButton {
                 icon: "\u{f012c}"
-                text: "Save to theme"
+                text: I18n.tr("Save to theme")
                 baseColor: Config.accentColor
                 hoverColor: Qt.lighter(Config.accentColor, 1.1)
                 textColor: Config.textReverseColor
@@ -301,8 +301,8 @@ ColumnLayout {
             id: linkRow
 
             visible: !ThemeService.isAutoMode
-            label: WallpaperService.dynamicWallpaper ? "Themes bring their wallpaper" : "Themes keep your wallpaper"
-            description: "Change it, or pick each theme's wallpaper, in Theme"
+            label: WallpaperService.dynamicWallpaper ? I18n.tr("Themes bring their wallpaper") : I18n.tr("Themes keep your wallpaper")
+            description: I18n.tr("Change it, or pick each theme's wallpaper, in Theme")
 
             leading: Text {
                 text: WallpaperService.dynamicWallpaper ? "\u{f0339}" : "\u{f033a}"
@@ -313,7 +313,7 @@ ColumnLayout {
 
             ActionButton {
                 icon: "\u{f03d8}"
-                text: root.themeLabel + "'s wallpapers"
+                text: I18n.tr("Wallpapers of %1", root.themeLabel)
                 baseColor: linkRow.controlColor
                 onClicked: SettingsService.openThemeDetail(root.themeName)
             }
@@ -322,7 +322,7 @@ ColumnLayout {
 
     // ================= PICKER =================
     SettingsGroup {
-        title: "Picker"
+        title: I18n.tr("Picker")
 
         SettingRow {
             id: pickerRow
@@ -331,9 +331,9 @@ ColumnLayout {
             readonly property var conflicts: KeybindsService.conflicts(bind?.keys ?? "", "wallpapers", -1)
 
             resettable: false
-            label: "Wallpaper picker"
+            label: I18n.tr("Wallpaper picker")
             descriptionColor: conflicts.length > 0 ? Config.warningColor : Config.subtextColor
-            description: conflicts.length > 0 ? "Also used by " + conflicts.join(", ") : "A carousel of the library: type to filter, Enter applies, Escape closes"
+            description: conflicts.length > 0 ? I18n.tr("Also used by %1", conflicts.join(", ")) : I18n.tr("A carousel of the library: type to filter, Enter applies, Escape closes")
 
             KeyCombo {
                 visible: pickerRow.bind !== null
@@ -350,24 +350,24 @@ ColumnLayout {
             // md-play
             ActionButton {
                 icon: "\u{f040a}"
-                text: "Open"
+                text: I18n.tr("Open")
                 baseColor: pickerRow.controlColor
                 onClicked: WallpaperPickerService.show()
             }
         }
 
         SelectRow {
-            label: "Position"
-            description: "Screen edge the picker opens against (past the bar, when it's there)"
+            label: I18n.tr("Position")
+            description: I18n.tr("Screen edge the picker opens against (past the bar, when it's there)")
             path: "wallpaper.pickerPosition"
             options: [
                 {
-                    label: "Bottom",
+                    label: I18n.tr("Bottom"),
                     icon: "\u{f10a9}",
                     value: "bottom"
                 },
                 {
-                    label: "Top",
+                    label: I18n.tr("Top"),
                     icon: "\u{f1513}",
                     value: "top"
                 }
@@ -377,7 +377,7 @@ ColumnLayout {
 
     // ================= LIBRARY =================
     SettingsGroup {
-        title: "Library"
+        title: I18n.tr("Library")
 
         Rectangle {
             Layout.fillWidth: true
@@ -404,11 +404,11 @@ ColumnLayout {
                         Layout.preferredWidth: Config.fontSizeNormal * 15
                         options: [
                             {
-                                label: "All",
+                                label: I18n.tr("All"),
                                 icon: "\u{f02f9}"
                             },
                             {
-                                label: "Favorites",
+                                label: I18n.tr("Favorites"),
                                 icon: "\u{f02d1}"
                             }
                         ]
@@ -420,7 +420,7 @@ ColumnLayout {
                         id: search
 
                         Layout.fillWidth: true
-                        placeholder: "Search"
+                        placeholder: I18n.tr("Search")
                         onTextChanged: root.query = text
                     }
                 }
@@ -444,7 +444,7 @@ ColumnLayout {
 
                         Text {
                             Layout.fillWidth: true
-                            text: root.selection.length + " selected · Ctrl+A selects all"
+                            text: I18n.trn("%n selected · Ctrl+A selects all", "%n selected · Ctrl+A selects all", root.selection.length)
                             font.family: Config.font
                             font.pixelSize: Config.fontSizeSmall
                             font.bold: true
@@ -453,7 +453,7 @@ ColumnLayout {
 
                         ActionButton {
                             icon: "\u{f09e7}"
-                            text: root.confirmingDelete ? "Delete " + root.selection.length + "?" : "Delete"
+                            text: root.confirmingDelete ? I18n.tr("Delete %1?", root.selection.length) : I18n.tr("Delete")
                             baseColor: root.confirmingDelete ? Config.errorColor : Config.surface1Color
                             hoverColor: root.confirmingDelete ? Qt.lighter(Config.errorColor, 1.1) : Config.surface2Color
                             textColor: root.confirmingDelete ? Config.textReverseColor : Config.errorColor
@@ -532,10 +532,10 @@ ColumnLayout {
                         wrapMode: Text.Wrap
                         text: {
                             if (root.query !== "")
-                                return "No wallpapers match \"" + root.query + "\"";
+                                return I18n.tr("No wallpapers match “%1”", root.query);
                             if (root.category === "favorites")
-                                return "No favorites yet: use ⋮ › Add to favorites";
-                            return "No wallpapers in ~/.local/wallpapers: use Add";
+                                return I18n.tr("No favorites yet: use ⋮ › Add to favorites");
+                            return I18n.tr("No wallpapers in ~/.local/wallpapers: use Add");
                         }
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeNormal
