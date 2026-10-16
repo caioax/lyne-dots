@@ -62,6 +62,15 @@ ColumnLayout {
     }
 
     SettingsGroup {
+        title: I18n.tr("Region")
+
+        LanguageRow {
+            label: I18n.tr("Language")
+            description: I18n.tr("Dates and numbers follow the language too")
+        }
+    }
+
+    SettingsGroup {
         title: "Weather"
 
         TextFieldRow {

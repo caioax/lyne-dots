@@ -3,10 +3,11 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services
+import "../settings/rows/"
 import "../../components/"
 
-// First step: the logo, what comes next, and the two keys worth knowing
-// before anything else
+// First step: the logo, the language, what comes next, and the two keys
+// worth knowing before anything else
 ColumnLayout {
     id: root
 
@@ -31,7 +32,7 @@ ColumnLayout {
         Text {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
-            text: "Welcome to lyne-dots"
+            text: I18n.tr("Welcome to lyne-dots")
             wrapMode: Text.WordWrap
             font.family: Config.font
             font.pixelSize: Config.fontSizeIconLarge
@@ -42,11 +43,20 @@ ColumnLayout {
         Text {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
-            text: "A few choices to make it yours. Each one applies right away, and all of them can be changed later in Settings."
+            text: I18n.tr("A few choices to make it yours. Each one applies right away, and all of them can be changed later in Settings.")
             wrapMode: Text.WordWrap
             font.family: Config.font
             font.pixelSize: Config.fontSizeNormal
             color: Config.subtextColor
+        }
+    }
+
+    SettingsGroup {
+        title: I18n.tr("Language")
+
+        LanguageRow {
+            label: I18n.tr("Shell language")
+            description: I18n.setting === "auto" ? I18n.tr("Following your system. Can be changed later in Settings › %1", I18n.translate("Profile & Region")) : I18n.tr("Can be changed later in Settings › %1", I18n.translate("Profile & Region"))
         }
     }
 
@@ -68,11 +78,11 @@ ColumnLayout {
                 model: [
                     {
                         id: "launcher",
-                        label: "Open apps and search"
+                        label: I18n.tr("Open apps and search")
                     },
                     {
                         id: "settings",
-                        label: "Open Settings"
+                        label: I18n.tr("Open Settings")
                     }
                 ].filter(t => root.keysOf(t.id) !== "")
 

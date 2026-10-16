@@ -1,4 +1,7 @@
 {
+    "general": {
+        "language": "auto"
+    },
     "system": {
         "editor": "nvim",
         "aurHelper": "yay"

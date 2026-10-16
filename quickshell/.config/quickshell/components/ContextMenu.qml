@@ -4,8 +4,10 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
 
-// ⋮ menu. `items` is a list of { label, icon, action, danger?, children? };
-// an item with `children` opens them in place, with a back row
+// ⋮ menu. `items` is a list of { label, icon, action, danger?, children?,
+// detail?, checked? }; an item with `children` opens them in place, with a
+// back row. `detail` is a muted note after the label, `checked` marks the
+// current choice of a picker
 Popup {
     id: root
 
@@ -94,9 +96,11 @@ Popup {
 
                     label: modelData.label
                     icon: modelData.icon ?? ""
+                    detail: modelData.detail ?? ""
                     danger: modelData.danger ?? false
-                    // md-chevron_right
-                    trailingIcon: modelData.children ? "\u{f0142}" : ""
+                    // md-chevron_right, md-check
+                    trailingIcon: modelData.children ? "\u{f0142}" : modelData.checked ? "\u{f012c}" : ""
+                    trailingAccent: modelData.checked ?? false
                     onClicked: {
                         if (modelData.children) {
                             root._submenu = modelData;
@@ -116,6 +120,8 @@ Popup {
         property string label
         property string icon
         property string trailingIcon
+        property bool trailingAccent: false
+        property string detail
         property bool danger: false
         property bool muted: false
 
@@ -153,11 +159,19 @@ Popup {
             }
 
             Text {
+                visible: item.detail !== ""
+                text: item.detail
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeSmall
+                color: Config.subtextColor
+            }
+
+            Text {
                 visible: item.trailingIcon !== ""
                 text: item.trailingIcon
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeNormal
-                color: Config.subtextColor
+                color: item.trailingAccent ? Config.accentColor : Config.subtextColor
             }
         }
 

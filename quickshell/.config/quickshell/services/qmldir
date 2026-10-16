@@ -43,6 +43,7 @@ singleton GpuService GpuService.qml
 singleton SddmService SddmService.qml
 singleton ZenService ZenService.qml
 singleton QuickSettingsService QuickSettingsService.qml
+singleton I18n I18n.qml
 QueuedProcess 1.0 QueuedProcess.qml
 BinaryCheck 1.0 BinaryCheck.qml
 singleton UpdateService UpdateService.qml

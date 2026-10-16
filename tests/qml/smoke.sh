@@ -7,7 +7,8 @@
 # runs the real shell.qml in it with a throwaway HOME, its own runtime dir
 # and session bus, then opens every window, Settings page, dashboard tab,
 # Quick Settings page and launcher mode, shows the OSD and a notification,
-# locks and unlocks, switches themes. It fails on any QML error or warning
+# locks and unlocks, switches themes; all of it in pt_BR, then the language
+# switched live (en, pt_BR, en). It fails on any QML error or warning
 # the shell logs (tests/qml/allowed.txt lists the expected ones, from the
 # sandbox itself) and when anything outside the sandbox changed.
 #
@@ -134,7 +135,8 @@ probe = """
 open(sys.argv[2], "w").write(text[:end] + probe + text[end:])
 EOF
     jq '.powerProfiles.lowBattery = false | .powerProfiles.onUnplug = false
-        | .update.notify = false | .idle.lockTimeout = 0 | .idle.dpmsTimeout = 0' \
+        | .update.notify = false | .idle.lockTimeout = 0 | .idle.dpmsTimeout = 0
+        | .general.language = "pt_BR"' \
         "$REPO/.data/quickshell/defaults.json" >"$cfg/state.json"
 
     # HOME as an install leaves it: the config linked, themes and their
@@ -281,9 +283,21 @@ step() {
 # A list from the shell, as words: list JS
 list() { ev "$1" | tr ',' ' '; }
 
+# JS that answers "ok" when the shell shows LANG (a string every language
+# file has, translated), an ERROR otherwise
+language_is() {
+    local want="$1" word="Language"
+    [[ "$want" == en ]] || word="$(jq -r '.Language' "$SHELL_DIR/i18n/$want.json")"
+    printf 'I18n.language === "%s" && I18n.tr("Language") === "%s" ? "ok" : "ERROR shows " + I18n.language + ": " + I18n.tr("Language")' "$want" "$word"
+}
+
 run_steps() {
     local id
     step "start" ev '"ok"'
+    step "language › pt_BR from the state" ev "$(language_is pt_BR)"
+    # Settings search: the translated row, found in both languages
+    step "search › index" ev 'SettingsService.buildIndex(); "ok"'
+    step "search › pt_BR and English words" ev 'const hit = q => SettingsService.search(q).some(e => e.page === "profile" && e.label === I18n.tr("Language")); hit("idioma") && hit("language") ? "ok" : "ERROR search: " + JSON.stringify(SettingsService.search("idioma").slice(0, 3).map(e => e.label))'
 
     for id in $(list 'SettingsService.pages.map(p => p.id)'); do
         step "settings › $id" ev "SettingsService.open('$id')"
@@ -328,6 +342,14 @@ run_steps() {
     step "theme › catppuccin-latte" ev "ThemeService.setPresetMode('catppuccin-latte')"
     step "theme › tokyonight" ev "ThemeService.setPresetMode('tokyonight')"
     step "theme › auto" ev "ThemeService.setAutoMode()"
+
+    # Language switched live, with translated windows open
+    step "language › open windows" ev 'SettingsService.open("profile"); WelcomeService.open(); "ok"'
+    for id in en pt_BR en; do
+        step "language › $id (live)" ev "StateService.set('general.language', '$id'); 'ok'"
+        step "language › $id shows" ev "$(language_is "$id")"
+    done
+    step "language › windows closed" ev 'SettingsService.close(); WelcomeService.close(); "ok"'
 }
 
 # -----------------------------------------------------------------------------

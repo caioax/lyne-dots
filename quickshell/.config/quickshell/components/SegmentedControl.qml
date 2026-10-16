@@ -59,6 +59,8 @@ Rectangle {
                     spacing: Config.padding
 
                     Text {
+                        id: segmentIcon
+
                         visible: (segment.modelData.icon ?? "") !== ""
                         text: segment.modelData.icon ?? ""
                         font.family: Config.font
@@ -66,8 +68,12 @@ Rectangle {
                         color: segment.active ? Config.textReverseColor : Config.subtextColor
                     }
 
+                    // Long labels (translations) end in … instead of
+                    // spilling into the next segment
                     Text {
+                        Layout.maximumWidth: segment.width - Config.padding * 2 - (segmentIcon.visible ? segmentIcon.implicitWidth + Config.padding : 0)
                         text: segment.modelData.label
+                        elide: Text.ElideRight
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeSmall
                         font.bold: segment.active

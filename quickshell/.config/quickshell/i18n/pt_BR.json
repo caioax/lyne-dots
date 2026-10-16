@@ -1,0 +1,18 @@
+{
+    "_meta": {
+        "name": "Português (Brasil)"
+    },
+    "Region": "Região",
+    "Language": "Idioma",
+    "Dates and numbers follow the language too": "Datas e números também seguem o idioma",
+    "Automatic (%1)": "Automático (%1)",
+    "Welcome to lyne-dots": "Boas-vindas ao lyne-dots",
+    "A few choices to make it yours. Each one applies right away, and all of them can be changed later in Settings.": "Algumas escolhas para deixar do seu jeito. Cada uma vale na hora, e você pode mudar todas depois nas Configurações.",
+    "Shell language": "Idioma do shell",
+    "Following your system. Can be changed later in Settings › %1": "Seguindo o seu sistema. Você pode mudar depois em Configurações › %1",
+    "Can be changed later in Settings › %1": "Você pode mudar depois em Configurações › %1",
+    "Open apps and search": "Abrir apps e buscar",
+    "Open Settings": "Abrir Configurações",
+    "Automatic": "Automático",
+    "%1% translated": "%1% traduzido"
+}

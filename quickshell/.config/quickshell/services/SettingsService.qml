@@ -213,7 +213,7 @@ Singleton {
             id: "profile",
             label: "Profile & Region",
             icon: "\u{f0009}",
-            description: "Profile picture, weather location and AUR helper",
+            description: "Profile picture, language, weather location and AUR helper",
             category: "System"
         },
         {
@@ -236,8 +236,10 @@ Singleton {
 
     // ================= SEARCH =================
     // Every page, group and row, read from the pages' QML source instead of
-    // instantiating them: label/title/description given as plain strings.
-    // Rows built from models (keybinds, specials) aren't in it
+    // instantiating them: label/title/description given as plain strings or
+    // I18n.tr/trc literals. The index keeps the English; search() translates
+    // it and matches both. Rows built from models (keybinds, specials)
+    // aren't in it
     property var searchIndex: []
     property bool indexing: false
     // Row (or group) the Settings window scrolls to and flashes once the
@@ -246,7 +248,7 @@ Singleton {
 
     signal revealRequested
 
-    readonly property var rowTypes: ["SettingRow", "ToggleRow", "SliderRow", "StepperRow", "SelectRow", "TextFieldRow", "InfoRow", "TemplatePicker", "ColorEditRow", "NavKeysPicker", "BarTemplatePicker", "TilingPicker"]
+    readonly property var rowTypes: ["SettingRow", "ToggleRow", "SliderRow", "StepperRow", "SelectRow", "TextFieldRow", "InfoRow", "TemplatePicker", "ColorEditRow", "NavKeysPicker", "BarTemplatePicker", "TilingPicker", "LanguageRow"]
     // Groups: SettingsGroup and the shared ones built on it
     readonly property var groupTypes: ["SettingsGroup", "AppDefaultsGroup"]
     readonly property string pagesDir: Qt.resolvedUrl("../modules/settings/pages/").toString().replace("file://", "")
@@ -273,12 +275,19 @@ Singleton {
         const groupOf = () => {
             for (let i = stack.length - 1; i >= 0; i--) {
                 if (root.groupTypes.includes(stack[i].type))
-                    return stack[i].props.title?.text ?? "";
+                    return stack[i].props.title ?? {
+                        text: "",
+                        context: ""
+                    };
             }
-            return "";
+            return {
+                text: "",
+                context: ""
+            };
         };
         const finish = e => {
-            const label = e.props.label?.text ?? e.props.title?.text ?? "";
+            const labelProp = e.props.label ?? e.props.title;
+            const label = labelProp?.text ?? "";
             if (label === "")
                 return;
             const isRow = rowTypes.includes(e.type);
@@ -289,10 +298,13 @@ Singleton {
                 page: page.id,
                 pageLabel: page.label,
                 icon: page.icon,
-                group: isRow ? groupOf() : "",
+                group: isRow ? groupOf().text : "",
+                groupContext: isRow ? groupOf().context : "",
                 label: label,
+                labelContext: labelProp.context,
                 description: e.props.description?.text ?? "",
-                words: e.props.description?.words ?? ""
+                descriptionContext: e.props.description?.context ?? "",
+                words: e.props.description?.words ?? []
             });
         };
 
@@ -304,10 +316,14 @@ Singleton {
             }).replace(/\/\/.*$/, "");
             const prop = code.match(/^\s*(label|title|description)\s*:\s*(.*)$/);
             if (prop && stack.length > 0 && stack[stack.length - 1].type !== "") {
-                const pure = prop[2].trim() === '""' && literals.length === 1;
+                // "text", I18n.tr("text") or I18n.trc("context", "text")
+                const value = prop[2].trim();
+                const pure = (value === '""' || /^I18n\.tr\(\s*""\s*\)$/.test(value)) && literals.length === 1;
+                const withContext = /^I18n\.trc\(\s*""\s*,\s*""\s*\)$/.test(value) && literals.length === 2;
                 stack[stack.length - 1].props[prop[1]] = {
-                    text: pure ? literals[0] : "",
-                    words: literals.join(" ")
+                    text: pure ? literals[0] : withContext ? literals[1] : "",
+                    context: withContext ? literals[0] : "",
+                    words: withContext ? [literals[1]] : literals
                 };
             }
             const type = code.match(/^\s*([A-Z]\w*)\s*\{/);
@@ -343,26 +359,47 @@ Singleton {
                 pageLabel: page.label,
                 icon: page.icon,
                 group: "",
+                groupContext: "",
                 label: page.label,
+                labelContext: "",
                 description: page.description,
-                words: page.description + " " + page.category
+                descriptionContext: "",
+                words: [page.description, page.category]
             });
             index = index.concat(parsePage(page, byFile[pagesDir + pageFile(page.id)] ?? ""));
         }
         searchIndex = index;
     }
 
+    // An index entry in the shell's language; `english` keeps the words of
+    // the source so both languages match
+    function translated(e: var): var {
+        const t = (text, context) => text === "" ? "" : context !== "" ? I18n.translateIn(context, text) : I18n.translate(text);
+        const out = Object.assign({}, e, {
+            label: t(e.label, e.labelContext),
+            group: t(e.group, e.groupContext),
+            pageLabel: I18n.translate(e.pageLabel),
+            description: t(e.description, e.descriptionContext),
+            words: e.words.map(w => t(w, e.descriptionContext)).join(" ")
+        });
+        out.english = I18n.language === "en" ? "" : [e.label, e.group, e.pageLabel].concat(e.words).join(" ");
+        return out;
+    }
+
     // Entries matching every word of the query, best first: label matches
-    // before description ones, pages and groups before rows on a tie
+    // before description ones, pages and groups before rows on a tie. The
+    // results are in the shell's language (what reveal() looks for on the
+    // page), the English matches too
     function search(query: string): var {
         const q = query.trim().toLowerCase();
         if (q === "")
             return [];
         const words = q.split(/\s+/);
         const scored = [];
-        searchIndex.forEach((e, i) => {
+        searchIndex.forEach((entry, i) => {
+            const e = translated(entry);
             const label = e.label.toLowerCase();
-            const hay = (e.label + " " + e.group + " " + e.pageLabel + " " + e.words).toLowerCase();
+            const hay = (e.label + " " + e.group + " " + e.pageLabel + " " + e.words + " " + e.english).toLowerCase();
             if (!words.every(w => hay.includes(w)))
                 return;
             let score = e.kind === "page" ? 3 : e.kind === "group" ? 2 : 0;
