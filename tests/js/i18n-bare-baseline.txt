@@ -1,4 +1,4 @@
-# UI strings not yet going through I18n, per file (542 lines): node tools/i18n.js lint --update
+# UI strings not yet going through I18n, per file (317 lines): node tools/i18n.js lint --update
 3 components/KeyboardLayoutButton.qml
 1 modules/bar/MediaButton.qml
 1 modules/calendar/CalendarButton.qml
@@ -35,19 +35,8 @@
 6 modules/quickSettings/pages/WifiPasswordPage.qml
 7 modules/screenshot/ControlBar.qml
 1 modules/screenshot/ScreenshotManager.qml
-42 modules/settings/pages/AboutPage.qml
-6 modules/settings/pages/AppDefaultsGroup.qml
-7 modules/settings/pages/AppPicker.qml
-7 modules/settings/pages/AppsPage.qml
-12 modules/settings/pages/AutostartDialog.qml
-38 modules/settings/pages/AutostartPage.qml
-20 modules/settings/pages/BrightnessPage.qml
-22 modules/settings/pages/IdlePage.qml
 5 modules/settings/pages/KeyboardPage.qml
-18 modules/settings/pages/LockPage.qml
 1 modules/settings/pages/MonitorsPage.qml
-21 modules/settings/pages/PowerProfilesPage.qml
-13 modules/settings/pages/ProfilePage.qml
 2 modules/settings/pages/TrayStylePreview.qml
 1 modules/systemMonitor/GpuCard.qml
 1 modules/systemMonitor/HeroCard.qml
@@ -64,16 +53,15 @@
 4 modules/welcome/WelcomeWindow.qml
 5 modules/welcome/WelcomeWindows.qml
 7 modules/welcome/WhatsNewWindow.qml
-5 services/AppsService.qml
+1 services/AppsService.qml
 1 services/AudioService.qml
 2 services/BatteryService.qml
 3 services/BluetoothService.qml
-11 services/BrightnessService.qml
+4 services/BrightnessService.qml
 5 services/HyprlandSettingsService.qml
 12 services/LauncherService.qml
 7 services/NetworkService.qml
 4 services/OsdService.qml
-8 services/PowerProfileService.qml
 7 services/QuickSettingsService.qml
 1 services/SettingsService.qml
 10 services/SpecialsService.qml

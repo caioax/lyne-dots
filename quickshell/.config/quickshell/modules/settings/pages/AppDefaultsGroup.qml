@@ -16,13 +16,13 @@ SettingsGroup {
         picker.slotKey = key;
         picker.title = slot.label;
         picker.category = slot.category;
-        picker.categoryLabel = slot.label.toLowerCase() + " apps";
+        picker.categoryLabel = slot.pickerLabel;
         picker.currentId = AppsService.entryFor(key)?.id ?? "";
         picker.customPlaceholder = {
-            terminal: "wezterm, foot…",
-            fileManager: "yazi, thunar…",
-            browser: "firefox --private-window…",
-            editor: "hx, code --wait…"
+            terminal: I18n.tr("wezterm, foot…"),
+            fileManager: I18n.tr("yazi, thunar…"),
+            browser: I18n.tr("firefox --private-window…"),
+            editor: I18n.tr("hx, code --wait…")
         }[key];
         picker.openWith(AppsService[key].command);
     }
@@ -38,7 +38,7 @@ SettingsGroup {
 
     Component.onCompleted: AppsService.refresh()
 
-    title: "Default apps"
+    title: I18n.tr("Default apps")
 
     AppPicker {
         id: picker
@@ -69,11 +69,11 @@ SettingsGroup {
                 descriptionColor: missing || mismatch !== "" ? Config.warningColor : Config.subtextColor
                 description: {
                     if (command === "")
-                        return "None: " + modelData.usage.charAt(0).toLowerCase() + modelData.usage.slice(1) + " won't open";
+                        return I18n.tr("None, so these won't open: %1", modelData.usage);
                     if (missing)
-                        return AppsService.binaryOf(command) + " isn't installed";
+                        return I18n.tr("%1 isn't installed", AppsService.binaryOf(command));
                     if (mismatch !== "")
-                        return "xdg-open still uses " + mismatch.replace(/\.desktop$/, "");
+                        return I18n.tr("xdg-open still uses %1", mismatch.replace(/\.desktop$/, ""));
                     return modelData.usage;
                 }
 
@@ -97,7 +97,7 @@ SettingsGroup {
                     visible: slotRow.mismatch !== "" && !slotRow.missing
                     size: Config.fontSizeIconSmall + Config.padding * 3
                     icon: "\u{f0339}"
-                    text: "Use for xdg-open"
+                    text: I18n.tr("Use for xdg-open")
                     baseColor: slotRow.controlColor
                     onClicked: AppsService.apply(slotRow.key)
                 }
@@ -135,7 +135,7 @@ SettingsGroup {
                         }
 
                         Text {
-                            text: slotRow.command === "" ? "None" : AppsService.nameOf(slotRow.key)
+                            text: slotRow.command === "" ? I18n.tr("None") : AppsService.nameOf(slotRow.key)
                             font.family: Config.font
                             font.pixelSize: Config.fontSizeNormal
                             color: slotRow.command === "" ? Config.subtextColor : Config.textColor

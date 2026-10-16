@@ -266,7 +266,7 @@ Singleton {
         required property ShellScreen modelData
         readonly property string name: modelData.name
         readonly property bool internal: /^(eDP|LVDS|DSI)-/.test(name)
-        readonly property string label: internal ? "Built-in" : (modelData.model || name)
+        readonly property string label: internal ? I18n.tr("Built-in") : (modelData.model || name)
         readonly property int bus: root.ddcBuses[name] ?? -1
         // "backlight" | "ddc" | "none"
         readonly property string method: {
@@ -278,18 +278,18 @@ Singleton {
         // How it's controlled, or why it isn't (Settings)
         readonly property string status: {
             if (method === "backlight")
-                return "Backlight (" + root.backlightDevice + ")";
+                return I18n.tr("Backlight (%1)", root.backlightDevice);
             if (method === "ddc")
-                return "DDC/CI on /dev/i2c-" + bus;
+                return I18n.tr("DDC/CI on %1", "/dev/i2c-" + bus);
             if (internal)
-                return "No backlight device";
+                return I18n.tr("No backlight device");
             if (!Config.brightnessDdc)
-                return "DDC/CI is off";
+                return I18n.tr("DDC/CI is off");
             if (root.ddcMissing)
-                return "ddcutil isn't installed";
+                return I18n.tr("ddcutil isn't installed");
             if (failed)
-                return "No answer on /dev/i2c-" + bus;
-            return root.detecting ? "Detecting…" : "Doesn't support DDC/CI";
+                return I18n.tr("No answer on %1", "/dev/i2c-" + bus);
+            return root.detecting ? I18n.tr("Detecting…") : I18n.tr("Doesn't support DDC/CI");
         }
         // The panel can go black at 0; monitors keep their own floor
         readonly property real minimum: method === "backlight" ? 0.05 : 0

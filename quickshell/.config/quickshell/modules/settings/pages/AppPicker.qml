@@ -12,10 +12,10 @@ import "../../../components/"
 Popup {
     id: root
 
-    property string title: "Pick an app"
+    property string title: I18n.tr("Pick an app")
     // .desktop category listed first ("" = every app)
     property string category: ""
-    property string categoryLabel: "apps"
+    property string categoryLabel: I18n.tr("apps")
     // Entry id marked as the current choice
     property string currentId: ""
     property bool allowCustom: false
@@ -97,7 +97,7 @@ Popup {
             id: search
 
             Layout.fillWidth: true
-            placeholder: "Search " + (root.showAll ? "apps" : root.categoryLabel)
+            placeholder: root.showAll ? I18n.tr("Search apps") : I18n.tr("Search %1", root.categoryLabel)
             onTextChanged: root.query = text
             // Enter takes the first result
             onAccepted: {
@@ -169,7 +169,7 @@ Popup {
 
                         Text {
                             Layout.fillWidth: true
-                            text: AppsService.commandOf(appRow.modelData) + (appRow.modelData.runInTerminal ? "  ·  in the terminal" : "")
+                            text: appRow.modelData.runInTerminal ? I18n.tr("%1  ·  in the terminal", AppsService.commandOf(appRow.modelData)) : AppsService.commandOf(appRow.modelData)
                             elide: Text.ElideRight
                             font.family: Config.font
                             font.pixelSize: Config.fontSizeSmall
@@ -199,7 +199,7 @@ Popup {
             Text {
                 anchors.centerIn: parent
                 visible: list.count === 0
-                text: root.query !== "" ? "No apps match \"" + root.query + "\"" : "No " + root.categoryLabel + " installed"
+                text: root.query !== "" ? I18n.tr("No apps match “%1”", root.query) : I18n.tr("No %1 installed", root.categoryLabel)
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
                 color: Config.subtextColor
@@ -209,7 +209,7 @@ Popup {
         // Category apps only / every app
         Text {
             visible: root.category !== ""
-            text: root.showAll ? "Show only " + root.categoryLabel : "Show all apps"
+            text: root.showAll ? I18n.tr("Show only %1", root.categoryLabel) : I18n.tr("Show all apps")
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             font.underline: toggleMouse.containsMouse
@@ -231,7 +231,7 @@ Popup {
             spacing: Config.padding
 
             Text {
-                text: "Custom command"
+                text: I18n.tr("Custom command")
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
                 font.bold: true
@@ -253,7 +253,7 @@ Popup {
                 ActionButton {
                     size: Config.fontSizeIconSmall + Config.padding * 3
                     icon: "\u{f012c}"
-                    text: "Use"
+                    text: I18n.tr("Use")
                     opacity: customField.text.trim() !== "" ? 1 : 0.4
                     baseColor: Config.accentColor
                     hoverColor: Qt.lighter(Config.accentColor, 1.1)
@@ -272,7 +272,7 @@ Popup {
             }
 
             ActionButton {
-                text: "Cancel"
+                text: I18n.tr("Cancel")
                 onClicked: root.close()
             }
         }

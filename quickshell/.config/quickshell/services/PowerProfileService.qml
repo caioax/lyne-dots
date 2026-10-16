@@ -39,18 +39,18 @@ Singleton {
     readonly property var profileIds: ["power-saver", "balanced", "performance"]
     readonly property var profileInfo: ({
             "power-saver": {
-                label: "Power saver",
-                description: "Quieter and cooler, longer battery",
+                label: I18n.tr("Power saver"),
+                description: I18n.tr("Quieter and cooler, longer battery"),
                 icon: "\u{f032a}" // md-leaf
             },
             "balanced": {
-                label: "Balanced",
-                description: "Fast when needed, saves when idle",
+                label: I18n.tr("Balanced"),
+                description: I18n.tr("Fast when needed, saves when idle"),
                 icon: "\u{f05d1}" // md-scale_balance
             },
             "performance": {
-                label: "Performance",
-                description: "Full speed, more heat and power",
+                label: I18n.tr("Performance"),
+                description: I18n.tr("Full speed, more heat and power"),
                 icon: "\u{f04c5}" // md-speedometer
             }
         })
@@ -66,9 +66,9 @@ Singleton {
             return "";
         switch (PowerProfiles.degradationReason) {
         case PerformanceDegradationReason.LapDetected:
-            return "On your lap: the laptop keeps cool, so performance is limited";
+            return I18n.tr("On your lap: the laptop keeps cool, so performance is limited");
         case PerformanceDegradationReason.HighTemperature:
-            return "Running hot: performance is limited until it cools down";
+            return I18n.tr("Running hot: performance is limited until it cools down");
         default:
             return "";
         }

@@ -19,52 +19,61 @@ Singleton {
 
     readonly property string script: Quickshell.shellDir + "/scripts/default-apps.sh"
 
+    // label, openLabel, pickerLabel and usage are shown (translated);
     // `mimes` mirror scripts/default-apps.sh; `bindId` is the keybind that
     // opens the app (hypr/conf/keybinds.lua)
     readonly property var slots: [
         {
             key: "terminal",
-            label: "Terminal",
+            label: I18n.tr("Terminal"),
+            openLabel: I18n.tr("Open the terminal"),
+            pickerLabel: I18n.tr("terminal apps"),
             icon: "\u{f018d}",
             category: "TerminalEmulator",
             path: "apps.terminal",
             bindId: "terminal",
             luaKey: "terminal",
             mimes: [],
-            usage: "Terminal apps from the launcher, lyne update, Dolphin's \"Open terminal here\""
+            usage: I18n.tr("Terminal apps from the launcher, lyne update, Dolphin's \"Open terminal here\"")
         },
         {
             key: "fileManager",
-            label: "File manager",
+            label: I18n.tr("File manager"),
+            openLabel: I18n.tr("Open the file manager"),
+            pickerLabel: I18n.tr("file manager apps"),
             icon: "\u{f024b}",
             category: "FileManager",
             path: "apps.fileManager",
             bindId: "file-manager",
             luaKey: "file_manager",
             mimes: ["inode/directory"],
-            usage: "Folders opened by xdg-open (screenshots, Settings)"
+            usage: I18n.tr("Folders opened by xdg-open (screenshots, Settings)")
         },
         {
             key: "browser",
-            label: "Browser",
+            label: I18n.tr("Browser"),
+            openLabel: I18n.tr("Open the browser"),
+            pickerLabel: I18n.tr("browser apps"),
             icon: "\u{f059f}",
             category: "WebBrowser",
             path: "apps.browser",
             bindId: "browser",
             luaKey: "browser",
             mimes: ["x-scheme-handler/http", "x-scheme-handler/https", "text/html", "application/xhtml+xml"],
-            usage: "Links opened by xdg-open (captive portal, notifications)"
+            usage: I18n.tr("Links opened by xdg-open (captive portal, notifications)")
         },
         {
             key: "editor",
-            label: "Editor",
+            label: I18n.tr("Editor"),
+            openLabel: I18n.tr("Open the editor"),
+            pickerLabel: I18n.tr("editor apps"),
             icon: "\u{f0dc8}",
             category: "TextEditor",
             path: "system.editor",
             bindId: "",
             luaKey: "",
             mimes: ["text/plain"],
-            usage: "Text files, lyne state and $EDITOR in new shells (GUI editors may need a flag like code --wait)"
+            usage: I18n.tr("Text files, lyne state and $EDITOR in new shells (GUI editors may need a flag like code --wait)")
         }
     ]
 

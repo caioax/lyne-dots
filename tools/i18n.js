@@ -3,8 +3,8 @@
 // i18n.js - The shell's translation files, kept in sync with its code
 // =============================================================================
 // Reads every I18n.tr/trn/trc/noop call in the shell (quickshell/.config/
-// quickshell), and the keybind groups and descriptions of hypr/conf/
-// keybinds.lua, and keeps i18n/<code>.json and i18n/languages.json in step.
+// quickshell), the keybind groups and descriptions of hypr/conf/keybinds.lua
+// and the system autostart list of hypr/conf/autostart.lua, and keeps i18n/<code>.json and i18n/languages.json in step.
 //
 // Usage: node tools/i18n.js extract          add new strings ("" = to
 //                                            translate), drop the gone ones
@@ -317,11 +317,13 @@ function extract(shell = SHELL) {
     for (const file of luaSources(shell)) {
         const rel = path.relative(path.dirname(shell), file);
         const text = fs.readFileSync(file, "utf8");
-        const re = /^\s*bind\(\s*"[^"]*"\s*,\s*"((?:[^"\\]|\\.)*)"\s*,\s*"((?:[^"\\]|\\.)*)"/gm;
+        // keybinds.lua: bind("id", "Group", "Description", ...); autostart.lua:
+        // the system list's name = "..." and about = "..."
+        const re = file.endsWith("autostart.lua") ? /\b(?:name|about)\s*=\s*"((?:[^"\\]|\\.)*)"()/g : /^\s*bind\(\s*"[^"]*"\s*,\s*"((?:[^"\\]|\\.)*)"\s*,\s*"((?:[^"\\]|\\.)*)"/gm;
         let m;
         while ((m = re.exec(text)) !== null) {
             const where = `${rel}:${text.slice(0, m.index).split("\n").length}`;
-            for (const key of [m[1], m[2]]) {
+            for (const key of [m[1], m[2]].filter(k => k)) {
                 const seen = strings.get(key);
                 if (!seen)
                     strings.set(key, {
@@ -343,11 +345,11 @@ function extract(shell = SHELL) {
     };
 }
 
-// The Lua files with bind("id", "Group", "Description", ...) calls, next to
-// the shell in the repo (hyprland/.config/hypr/conf)
+// The Lua files with strings the shell shows (keybinds, the system autostart
+// list), next to the shell in the repo (hyprland/.config/hypr/conf)
 function luaSources(shell) {
     const dir = process.env.LYNE_I18N_LUA || path.join(shell, "../../../hyprland/.config/hypr/conf");
-    return ["keybinds.lua"].map(f => path.join(dir, f)).filter(f => fs.existsSync(f));
+    return ["keybinds.lua", "autostart.lua"].map(f => path.join(dir, f)).filter(f => fs.existsSync(f));
 }
 
 // =============================================================================
@@ -503,6 +505,13 @@ function check(shell = SHELL) {
     const lib = loadLib(shell);
     const found = extract(shell);
     const problems = [...found.errors];
+    // " · not installed", "Delete " + name: pieces glued to other text
+    // can't be translated; the whole sentence takes a %1 instead
+    const fragment = k => /^\s|\s$/.test(k);
+    for (const [key, entry] of found.strings) {
+        if (fragment(key) || (entry.plural && fragment(entry.plural)))
+            problems.push(`${entry.refs[0]}: "${key}" starts or ends with a space: a piece of a sentence (use %1 for the part that changes)`);
+    }
     const dir = i18nDir(shell);
     for (const code of languageCodes(shell)) {
         const file = path.join(dir, code + ".json");

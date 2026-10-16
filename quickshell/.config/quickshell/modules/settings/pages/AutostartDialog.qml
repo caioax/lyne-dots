@@ -85,7 +85,7 @@ Popup {
         spacing: Config.spacing + Config.padding
 
         Text {
-            text: root.index >= 0 ? "Edit app" : "New app"
+            text: root.index >= 0 ? I18n.tr("Edit app") : I18n.tr("New app")
             font.family: Config.font
             font.pixelSize: Config.fontSizeLarge
             font.bold: true
@@ -94,15 +94,15 @@ Popup {
 
         Field {
             id: nameField
-            label: "Name"
-            placeholder: "Shown in this list"
+            label: I18n.tr("Name")
+            placeholder: I18n.tr("Shown in this list")
             onAccepted: root.save()
         }
 
         Field {
             id: commandField
-            label: "Command"
-            placeholder: "Run by the shell, like discord --start-minimized"
+            label: I18n.tr("Command")
+            placeholder: I18n.tr("Run by the shell, like discord --start-minimized")
             onTextChanged: checkDebounce.restart()
             onAccepted: root.save()
         }
@@ -111,7 +111,7 @@ Popup {
             visible: root.missing
             Layout.fillWidth: true
             Layout.topMargin: -Config.padding
-            text: root.binary + " isn't installed"
+            text: I18n.tr("%1 isn't installed", root.binary)
             wrapMode: Text.WordWrap
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
@@ -125,8 +125,8 @@ Popup {
             Field {
                 id: delayField
                 Layout.preferredWidth: 1
-                label: "Delay (seconds)"
-                placeholder: "None"
+                label: I18n.tr("Delay (seconds)")
+                placeholder: I18n.tr("None")
                 validator: IntValidator {
                     bottom: 0
                     top: 600
@@ -137,8 +137,8 @@ Popup {
             Field {
                 id: workspaceField
                 Layout.preferredWidth: 2
-                label: "Workspace"
-                placeholder: "Where you are, or like 3 silent"
+                label: I18n.tr("Workspace")
+                placeholder: I18n.tr("Where you are, or like 3 silent")
                 onAccepted: root.save()
             }
         }
@@ -153,13 +153,13 @@ Popup {
             }
 
             ActionButton {
-                text: "Cancel"
+                text: I18n.tr("Cancel")
                 onClicked: root.close()
             }
 
             ActionButton {
                 icon: "\u{f012c}"
-                text: "Save"
+                text: I18n.tr("Save")
                 opacity: root.valid ? 1 : 0.4
                 baseColor: Config.accentColor
                 hoverColor: Qt.lighter(Config.accentColor, 1.1)

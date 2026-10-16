@@ -28,16 +28,17 @@ Singleton {
 
     // The picture is copied (with a unique name, so the Image cache doesn't
     // keep the old one) and survives the original being moved or deleted
+    // The dialog's texts come translated as $1 and $2
     Process {
         id: pickProc
         command: ["bash", "-c", `
-            file=$(zenity --file-selection --title="Choose a profile picture" --file-filter="Images | *.png *.jpg *.jpeg *.webp" 2>/dev/null) || exit 0
+            file=$(zenity --file-selection --title="$1" --file-filter="$2 | *.png *.jpg *.jpeg *.webp" 2>/dev/null) || exit 0
             [ -f "$file" ] || exit 0
             dir="${root.avatarDir}"
             mkdir -p "$dir" && rm -f "$dir"/avatar-*
             dest="$dir/avatar-$(date +%s).\${file##*.}"
             cp "$file" "$dest" && echo "$dest"
-        `]
+        `, "bash", I18n.tr("Choose a profile picture"), I18n.tr("Images")]
         stdout: StdioCollector {
             onStreamFinished: {
                 const path = text.trim();

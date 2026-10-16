@@ -16,18 +16,18 @@ ColumnLayout {
     spacing: Config.spacing * 3
 
     SettingsGroup {
-        title: "Profile"
+        title: I18n.tr("Profile")
 
         SettingRow {
             id: avatarRow
 
             label: Quickshell.env("USER")
-            description: ProfileService.avatar !== "" ? "Custom picture" : "No picture"
+            description: ProfileService.avatar !== "" ? I18n.tr("Custom picture") : I18n.tr("No picture")
             path: "profile.avatar"
 
             ActionButton {
                 icon: "\u{f11e3}"
-                text: "Choose picture"
+                text: I18n.tr("Choose picture")
                 baseColor: avatarRow.controlColor
                 onClicked: ProfileService.pickAvatar()
             }
@@ -71,13 +71,13 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Weather"
+        title: I18n.tr("Weather")
 
         TextFieldRow {
-            label: "City"
-            description: "Leave empty to detect it from your IP address (ipwho.is); the forecast comes from Open-Meteo"
+            label: I18n.tr("City")
+            description: I18n.tr("Leave empty to detect it from your IP address (ipwho.is); the forecast comes from Open-Meteo")
             path: "weather.city"
-            placeholder: "Detect automatically"
+            placeholder: I18n.tr("Detect automatically")
         }
 
         SettingRow {
@@ -85,12 +85,12 @@ ColumnLayout {
 
             label: {
                 if (WeatherService.loading)
-                    return "Updating…";
+                    return I18n.tr("Updating…");
                 if (WeatherService.error !== "")
                     return WeatherService.error;
-                return WeatherService.location !== "" ? WeatherService.location : "Weather unavailable";
+                return WeatherService.location !== "" ? WeatherService.location : I18n.tr("Weather unavailable");
             }
-            description: WeatherService.available ? Math.round(WeatherService.current.temp) + "° now, feels like " + Math.round(WeatherService.current.feelsLike) + "°" : "Forecast from Open-Meteo"
+            description: WeatherService.available ? I18n.tr("%1° now, feels like %2°", Math.round(WeatherService.current.temp), Math.round(WeatherService.current.feelsLike)) : I18n.tr("Forecast from Open-Meteo")
 
             Text {
                 visible: WeatherService.available && !WeatherService.loading
@@ -117,11 +117,11 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Packages"
+        title: I18n.tr("Packages")
 
         SelectRow {
-            label: "AUR helper"
-            description: "Used by the installer and the all-update shell function"
+            label: I18n.tr("AUR helper")
+            description: I18n.tr("Used by the installer and the all-update shell function")
             path: "system.aurHelper"
             options: [
                 {

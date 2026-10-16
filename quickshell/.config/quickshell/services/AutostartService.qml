@@ -234,7 +234,7 @@ Singleton {
                 } catch (e) {
                     root.legacy = {
                         ok: false,
-                        error: "Hyprland couldn't read it (config not reloaded yet?)",
+                        error: I18n.tr("Hyprland couldn't read it (config not reloaded yet?)"),
                         apps: [],
                         other: 0
                     };

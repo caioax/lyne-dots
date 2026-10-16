@@ -27,24 +27,24 @@ ColumnLayout {
 
     function xdgStatus(entry): string {
         if (!entry.enabled)
-            return "Off from the next login";
+            return I18n.tr("Off from the next login");
         switch (entry.status) {
         case "running":
-            return "Running";
+            return I18n.tr("Running");
         case "exited":
-            return "Ran at login";
+            return I18n.tr("Ran at login");
         case "failed":
-            return "Failed at login";
+            return I18n.tr("Failed at login");
         }
-        return AutostartService.xdgActive ? "Starts at the next login" : "";
+        return AutostartService.xdgActive ? I18n.tr("Starts at the next login") : "";
     }
 
     function elsewhereReason(entry): string {
         if (entry.reason === "desktop")
-            return entry.meantFor !== "" ? "Only for " + entry.meantFor : "Not for this desktop";
+            return entry.meantFor !== "" ? I18n.tr("Only for %1", entry.meantFor) : I18n.tr("Not for this desktop");
         if (entry.reason === "skip")
-            return "Started another way (by systemd or its desktop)";
-        return "Not an app";
+            return I18n.tr("Started another way (by systemd or its desktop)");
+        return I18n.tr("Not an app");
     }
 
     // Called by SettingsWindow before Escape closes the window
@@ -75,9 +75,9 @@ ColumnLayout {
 
     AppPicker {
         id: picker
-        title: "Start at login"
+        title: I18n.tr("Start at login")
         allowCustom: true
-        customPlaceholder: "Any command, like ~/.local/scripts/fans.sh"
+        customPlaceholder: I18n.tr("Any command, like ~/.local/scripts/fans.sh")
         onPicked: entry => AutostartService.addEntry(entry)
         onCustomPicked: command => dialog.openNew(command)
     }
@@ -95,30 +95,30 @@ ColumnLayout {
                 return [];
             const list = [
                 {
-                    label: "Edit",
+                    label: I18n.tr("Edit"),
                     icon: "\u{f03eb}",
                     action: "edit"
                 },
                 {
-                    label: "Run now",
+                    label: I18n.tr("Run now"),
                     icon: "\u{f040a}",
                     action: "run"
                 }
             ];
             if (target.index > 0)
                 list.push({
-                    label: "Move up",
+                    label: I18n.tr("Move up"),
                     icon: "\u{f005d}",
                     action: "up"
                 });
             if (target.index < AutostartService.apps.length - 1)
                 list.push({
-                    label: "Move down",
+                    label: I18n.tr("Move down"),
                     icon: "\u{f0045}",
                     action: "down"
                 });
             list.push({
-                label: "Remove",
+                label: I18n.tr("Remove"),
                 icon: "\u{f09e7}",
                 action: "remove",
                 danger: true
@@ -154,7 +154,7 @@ ColumnLayout {
 
         Text {
             Layout.fillWidth: true
-            text: "Started once, when you log in. Changes apply from the next login; Run now starts one right away"
+            text: I18n.tr("Started once, when you log in. Changes apply from the next login; Run now starts one right away")
             wrapMode: Text.WordWrap
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
@@ -165,7 +165,7 @@ ColumnLayout {
         ActionButton {
             size: Config.fontSizeIconSmall * 2
             icon: "\u{f0415}"
-            text: "Add app"
+            text: I18n.tr("Add app")
             baseColor: Config.accentColor
             hoverColor: Qt.lighter(Config.accentColor, 1.1)
             textColor: Config.textReverseColor
@@ -175,7 +175,7 @@ ColumnLayout {
 
     // ================= HAND-WRITTEN FILE =================
     SettingsGroup {
-        title: "Your autostart.lua"
+        title: I18n.tr("Your autostart.lua")
         visible: AutostartService.legacyExists && AutostartService.legacy !== null && (AutostartService.legacy.apps.length > 0 || AutostartService.legacy.other > 0 || !AutostartService.legacy.ok)
 
         SettingRow {
@@ -187,17 +187,17 @@ ColumnLayout {
                 if (!legacy)
                     return "";
                 if (!legacy.ok)
-                    return "It couldn't be read: " + legacy.error;
+                    return I18n.tr("It couldn't be read: %1", legacy.error);
                 if (legacy.other > 0)
-                    return "It also sets up other things (binds, options...), so it stays as it is. Move those to another hypr/local/*.lua file to import it";
-                return "Written by hand before this page. It keeps starting these until you import them here, then it's renamed to autostart.lua.imported";
+                    return I18n.tr("It also sets up other things (binds, options...), so it stays as it is. Move those to another hypr/local/*.lua file to import it");
+                return I18n.tr("Written by hand before this page. It keeps starting these until you import them here, then it's renamed to autostart.lua.imported");
             }
 
             // md-file_import
             ActionButton {
                 visible: AutostartService.legacyImportable
                 icon: "\u{f0220}"
-                text: AutostartService.importing ? "Importing..." : "Import"
+                text: AutostartService.importing ? I18n.tr("Importing...") : I18n.tr("Import")
                 baseColor: Config.accentColor
                 hoverColor: Qt.lighter(Config.accentColor, 1.1)
                 textColor: Config.textReverseColor
@@ -213,20 +213,20 @@ ColumnLayout {
 
                 resettable: false
                 label: AutostartService.nameFor(modelData.command)
-                description: AutostartService.shortCommand(modelData.command) + (modelData.delay > 0 ? "  ·  after " + modelData.delay + " s" : "") + (modelData.workspace ? "  ·  on " + modelData.workspace : "")
+                description: [AutostartService.shortCommand(modelData.command)].concat(modelData.delay > 0 ? [I18n.tr("after %1 s", modelData.delay)] : []).concat(modelData.workspace ? [I18n.tr("on %1", modelData.workspace)] : []).join("  ·  ")
             }
         }
     }
 
     // ================= YOUR APPS =================
     SettingsGroup {
-        title: "Your apps"
+        title: I18n.tr("Your apps")
 
         SettingRow {
             visible: AutostartService.apps.length === 0
             resettable: false
-            label: "Nothing yet"
-            description: "Add apps or scripts to start with the session, like a chat app, a sync client or a fan script"
+            label: I18n.tr("Nothing yet")
+            description: I18n.tr("Add apps or scripts to start with the session, like a chat app, a sync client or a fan script")
         }
 
         Repeater {
@@ -246,12 +246,12 @@ ColumnLayout {
                 descriptionColor: missing ? Config.warningColor : Config.subtextColor
                 description: {
                     if (missing)
-                        return AutostartService.binaryOf(modelData.command) + " isn't installed";
+                        return I18n.tr("%1 isn't installed", AutostartService.binaryOf(modelData.command));
                     let text = AutostartService.shortCommand(modelData.command);
                     if (modelData.delay > 0)
-                        text += "  ·  after " + modelData.delay + " s";
+                        text += "  ·  " + I18n.tr("after %1 s", modelData.delay);
                     if (modelData.workspace)
-                        text += "  ·  on " + modelData.workspace;
+                        text += "  ·  " + I18n.tr("on %1", modelData.workspace);
                     return text;
                 }
                 checked: modelData.enabled !== false
@@ -305,7 +305,7 @@ ColumnLayout {
 
     // ================= SPECIAL WORKSPACES =================
     SettingsGroup {
-        title: "Special workspaces"
+        title: I18n.tr("Special workspaces")
         visible: root.specials.length > 0
 
         Repeater {
@@ -318,7 +318,7 @@ ColumnLayout {
 
                 resettable: false
                 label: modelData.item.name
-                description: "Opens " + modelData.item.command + " hidden in its workspace"
+                description: I18n.tr("Opens %1 hidden in its workspace", modelData.item.command)
                 checked: modelData.item.autostart === true
                 onToggled: value => SpecialsService.setAutostart(modelData.index, value)
 
@@ -343,13 +343,13 @@ ColumnLayout {
 
         SettingRow {
             resettable: false
-            label: "Special workspaces"
-            description: "Their apps, shortcuts and badges are set in Hyprland › Specials"
+            label: I18n.tr("Special workspaces")
+            description: I18n.tr("Their apps, shortcuts and badges are set in Hyprland › Specials")
 
             // md-chevron_right
             ActionButton {
                 icon: "\u{f0142}"
-                text: "Open"
+                text: I18n.tr("Open")
                 onClicked: SettingsService.currentPage = "specials"
             }
         }
@@ -357,14 +357,14 @@ ColumnLayout {
 
     // ================= XDG AUTOSTART =================
     SettingsGroup {
-        title: "Other programs"
+        title: I18n.tr("Other programs")
         visible: AutostartService.xdgLoaded && AutostartService.xdgEntries.length > 0
 
         SettingRow {
             visible: !AutostartService.xdgActive
             resettable: false
-            label: "Not started in this session"
-            description: "systemd starts these in sessions opened with uwsm (Hyprland (uwsm) on the login screen)"
+            label: I18n.tr("Not started in this session")
+            description: I18n.tr("systemd starts these in sessions opened with uwsm (Hyprland (uwsm) on the login screen)")
             descriptionColor: Config.warningColor
         }
 
@@ -382,8 +382,8 @@ ColumnLayout {
                 descriptionColor: modelData.enabled && modelData.status === "failed" ? Config.warningColor : Config.subtextColor
                 description: {
                     const parts = [modelData.exec.replace(/\s*%[uUfFdDnNickvm]/g, "")];
-                    parts.push(modelData.source === "user" && !modelData.systemPath ? "added by you" : "installed by a package");
-                    if (xdgRow.statusText !== "" && xdgRow.statusText !== "Running")
+                    parts.push(modelData.source === "user" && !modelData.systemPath ? I18n.tr("added by you") : I18n.tr("installed by a package"));
+                    if (xdgRow.statusText !== "" && xdgRow.statusText !== I18n.tr("Running"))
                         parts.push(xdgRow.statusText);
                     return parts.filter(p => p !== "").join("  ·  ");
                 }
@@ -427,11 +427,11 @@ ColumnLayout {
         SettingRow {
             visible: root.xdgElsewhere.length > 0
             resettable: false
-            label: root.xdgElsewhere.length + (root.xdgElsewhere.length === 1 ? " program for other desktops" : " programs for other desktops")
-            description: "Installed by packages for KDE, GNOME and others; they don't start here"
+            label: I18n.trn("%n program for other desktops", "%n programs for other desktops", root.xdgElsewhere.length)
+            description: I18n.tr("Installed by packages for KDE, GNOME and others; they don't start here")
 
             ActionButton {
-                text: root.showElsewhere ? "Hide" : "Show"
+                text: root.showElsewhere ? I18n.tr("Hide") : I18n.tr("Show")
                 onClicked: root.showElsewhere = !root.showElsewhere
             }
         }
@@ -453,7 +453,7 @@ ColumnLayout {
         visible: AutostartService.xdgLoaded && root.xdgShown.length > 0
         Layout.fillWidth: true
         Layout.topMargin: -Config.spacing * 2
-        text: "XDG autostart entries (~/.config/autostart and /etc/xdg/autostart), started by systemd. Switching one changes it from the next login"
+        text: I18n.tr("XDG autostart entries (~/.config/autostart and /etc/xdg/autostart), started by systemd. Switching one changes it from the next login")
         wrapMode: Text.WordWrap
         font.family: Config.font
         font.pixelSize: Config.fontSizeSmall
@@ -462,7 +462,7 @@ ColumnLayout {
 
     // ================= SYSTEM =================
     SettingsGroup {
-        title: "System"
+        title: I18n.tr("System")
         visible: AutostartService.system.length > 0
 
         Repeater {
@@ -474,8 +474,9 @@ ColumnLayout {
                 required property var modelData
 
                 resettable: false
-                label: modelData.name
-                description: modelData.about
+                // English in hypr/conf/autostart.lua (read by tools/i18n.js)
+                label: I18n.translate(modelData.name)
+                description: I18n.translate(modelData.about)
 
                 RunningBadge {
                     visible: AutostartService.isRunning(systemRow.modelData.command)
@@ -496,7 +497,7 @@ ColumnLayout {
         visible: AutostartService.system.length > 0
         Layout.fillWidth: true
         Layout.topMargin: -Config.spacing * 2
-        text: "The shell needs these, so they always start (hypr/conf/autostart.lua)"
+        text: I18n.tr("The shell needs these, so they always start (hypr/conf/autostart.lua)")
         wrapMode: Text.WordWrap
         font.family: Config.font
         font.pixelSize: Config.fontSizeSmall
@@ -515,7 +516,7 @@ ColumnLayout {
         }
 
         Text {
-            text: "Running"
+            text: I18n.tr("Running")
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
             color: Config.successColor

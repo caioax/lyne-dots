@@ -71,20 +71,20 @@ ColumnLayout {
                 return [];
             const list = [
                 {
-                    label: "Change shortcut",
+                    label: I18n.tr("Change shortcut"),
                     icon: "\u{f030c}",
                     action: "record"
                 }
             ];
             if (target.keys !== "")
                 list.push({
-                    label: "Disable",
+                    label: I18n.tr("Disable"),
                     icon: "\u{f0156}",
                     action: "disable"
                 });
             if (target.changed)
                 list.push({
-                    label: "Reset to " + (target.defaultKeys || "none"),
+                    label: I18n.tr("Reset to %1", target.defaultKeys || I18n.tr("none")),
                     icon: "\u{f099b}",
                     action: "reset"
                 });
@@ -111,12 +111,12 @@ ColumnLayout {
     AppDefaultsGroup {
         id: defaults
 
-        title: "Default apps"
+        title: I18n.tr("Default apps")
     }
 
     // ================= SHORTCUTS =================
     SettingsGroup {
-        title: "Shortcuts"
+        title: I18n.tr("Shortcuts")
 
         Repeater {
             model: AppsService.slots.filter(s => s.bindId !== "")
@@ -131,15 +131,15 @@ ColumnLayout {
                 readonly property string command: AppsService[modelData.key].command
 
                 resettable: false
-                label: "Open " + modelData.label.toLowerCase()
+                label: modelData.openLabel
                 descriptionColor: conflicts.length > 0 ? Config.warningColor : Config.subtextColor
                 description: {
                     if (!bind)
-                        return "Not found in hypr/conf/keybinds.lua";
+                        return I18n.tr("Not found in hypr/conf/keybinds.lua");
                     if (conflicts.length > 0)
-                        return "Also used by " + conflicts.join(", ");
+                        return I18n.tr("Also used by %1", conflicts.join(", "));
                     if (command === "")
-                        return "No app set";
+                        return I18n.tr("No app set");
                     return AppsService.describe(modelData.key);
                 }
 

@@ -11,7 +11,7 @@ ColumnLayout {
 
     // Every screen, with how its brightness is controlled (or why it isn't)
     SettingsGroup {
-        title: "Monitors"
+        title: I18n.tr("Monitors")
 
         Repeater {
             model: BrightnessService.monitors
@@ -56,21 +56,21 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Keys"
+        title: I18n.tr("Keys")
 
         SelectRow {
-            label: "Adjust"
-            description: Config.brightnessTarget === "all" ? "Every monitor with brightness control, each keeping its own level" : "The focused monitor, or the laptop screen when the focused one has no control"
+            label: I18n.tr("Adjust")
+            description: Config.brightnessTarget === "all" ? I18n.tr("Every monitor with brightness control, each keeping its own level") : I18n.tr("The focused monitor, or the laptop screen when the focused one has no control")
             path: "brightness.target"
             segmentWidth: Config.fontSizeNormal * 7
             options: [
                 {
-                    label: "Focused",
+                    label: I18n.tr("Focused"),
                     icon: "\u{f0379}",
                     value: "focused"
                 },
                 {
-                    label: "All",
+                    label: I18n.tr("All"),
                     icon: "\u{f037a}",
                     value: "all"
                 }
@@ -78,8 +78,8 @@ ColumnLayout {
         }
 
         StepperRow {
-            label: "Step"
-            description: "How much each key press or scroll on the OSD changes"
+            label: I18n.tr("Step")
+            description: I18n.tr("How much each key press or scroll on the OSD changes")
             path: "brightness.step"
             values: [1, 2, 5, 10, 20]
             format: v => v + "%"
@@ -87,21 +87,21 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Quick Settings"
+        title: I18n.tr("Quick Settings")
 
         SelectRow {
-            label: "Sliders"
-            description: Config.brightnessQuickSettings === "all" ? "One slider per monitor, each with its name" : "One slider for the focused monitor, with a button that switches to the others"
+            label: I18n.tr("Sliders")
+            description: Config.brightnessQuickSettings === "all" ? I18n.tr("One slider per monitor, each with its name") : I18n.tr("One slider for the focused monitor, with a button that switches to the others")
             path: "brightness.quickSettings"
             segmentWidth: Config.fontSizeNormal * 7
             options: [
                 {
-                    label: "Focused",
+                    label: I18n.tr("Focused"),
                     icon: "\u{f0379}",
                     value: "focused"
                 },
                 {
-                    label: "All",
+                    label: I18n.tr("All"),
                     icon: "\u{f037a}",
                     value: "all"
                 }
@@ -110,33 +110,33 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "External monitors"
+        title: I18n.tr("External monitors")
 
         ToggleRow {
             label: "DDC/CI"
-            description: BrightnessService.ddcMissing ? "ddcutil isn't installed: run lyne update, or install it and load the i2c-dev module" : "Controls the brightness of external monitors through their cable (needs ddcutil and the i2c-dev module)"
+            description: BrightnessService.ddcMissing ? I18n.tr("ddcutil isn't installed: run lyne update, or install it and load the i2c-dev module") : I18n.tr("Controls the brightness of external monitors through their cable (needs ddcutil and the i2c-dev module)")
             descriptionColor: BrightnessService.ddcMissing && Config.brightnessDdc ? Config.warningColor : Config.subtextColor
             path: "brightness.ddc"
         }
 
         StepperRow {
-            label: "Refresh"
-            description: "Re-reads their brightness to catch changes made on the monitor's own buttons (each read runs ddcutil). It's always read when Quick Settings or the dashboard opens"
+            label: I18n.tr("Refresh")
+            description: I18n.tr("Re-reads their brightness to catch changes made on the monitor's own buttons (each read runs ddcutil). It's always read when Quick Settings or the dashboard opens")
             enabled: Config.brightnessDdc
             path: "brightness.pollInterval"
             values: [0, 30, 60, 120, 300]
-            format: v => v === 0 ? "Never" : v < 60 ? v + "s" : v / 60 + " min"
+            format: v => v === 0 ? I18n.tr("Never") : v < 60 ? v + "s" : v / 60 + " min"
         }
 
         SettingRow {
-            label: "Detect monitors"
-            description: "Looks for DDC/CI monitors again, e.g. after turning on DDC/CI in the monitor's menu. Plugging one in does this by itself"
+            label: I18n.tr("Detect monitors")
+            description: I18n.tr("Looks for DDC/CI monitors again, e.g. after turning on DDC/CI in the monitor's menu. Plugging one in does this by itself")
             enabled: Config.brightnessDdc
 
             // md-refresh
             ActionButton {
                 icon: "\u{f0450}"
-                text: BrightnessService.detecting ? "Detecting…" : "Detect"
+                text: BrightnessService.detecting ? I18n.tr("Detecting…") : I18n.tr("Detect")
                 opacity: BrightnessService.detecting ? 0.6 : 1
                 onClicked: BrightnessService.detect()
             }

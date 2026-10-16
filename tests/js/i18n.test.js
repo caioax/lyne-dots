@@ -156,20 +156,21 @@ test("lexer: regex literals with quotes, parens or // inside don't derail it", (
     assert.equal(bare.callee, "");
 });
 
-test("extractor: keybind groups and descriptions from keybinds.lua, not the built ones", t => {
+test("extractor: keybind groups and descriptions from keybinds.lua (not the built ones), the system autostart list", t => {
     const dir = fakeShell(t, {
         "A.qml": "text: I18n.tr(\"Apps\")",
         "lua/keybinds.lua": [
             "bind(\"terminal\",     \"Apps\", \"Terminal\",     mainMod .. \" + return\", open(\"terminal\"))",
             "    bind(\"workspace-\" .. i, \"Workspaces\", \"Go to workspace \" .. i, keys, fn)",
             "-- bind(\"commented\", \"Nope\", \"Nope\")"
-        ].join("\n")
+        ].join("\n"),
+        "lua/autostart.lua": "    { name = \"Polkit agent\",      command = \"/usr/lib/polkit\",\n      about = \"Asks for your password\" },"
     });
     process.env.LYNE_I18N_LUA = path.join(dir, "lua");
     t.after(() => delete process.env.LYNE_I18N_LUA);
     const found = tool.extract(dir);
     assert.deepEqual(found.errors, []);
-    assert.deepEqual([...found.strings.keys()], ["Apps", "Terminal"]);
+    assert.deepEqual([...found.strings.keys()], ["Apps", "Terminal", "Polkit agent", "Asks for your password"]);
     assert.equal(found.strings.get("Apps").refs.length, 2);
 });
 
@@ -255,6 +256,16 @@ test("check: complete language, placeholders, plural forms, files up to date", t
     assert.match(staleProblems, /pt_BR\.json is out of date/);
     assert.match(staleProblems, /"New" isn't translated/);
     assert.match(staleProblems, /languages\.json is out of date/);
+});
+
+test("check: pieces of sentences (a leading or trailing space) are refused", t => {
+    const dir = fakeShell(t, {
+        "A.qml": "text: name + I18n.tr(\" · not installed\")\ntext: I18n.trn(\"%n file\", \"%n files \", n)",
+        "i18n/languages.json": []
+    });
+    const problems = tool.check(dir).problems.join("\n");
+    assert.match(problems, /A\.qml:1: " · not installed" starts or ends with a space/);
+    assert.match(problems, /A\.qml:2: "%n file" starts or ends with a space/);
 });
 
 test("check: other languages may be partial, pt_BR may not be missing", t => {

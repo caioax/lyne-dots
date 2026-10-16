@@ -35,21 +35,36 @@ ColumnLayout {
         return model ? vendor + " " + model[1] : line.replace(/\s*\(rev [^)]*\)/, "");
     }
 
+    // "2 hours, 55 minutes" from the seconds in /proc/uptime
+    function formatUptime(seconds: real): string {
+        const days = Math.floor(seconds / 86400);
+        const hours = Math.floor(seconds % 86400 / 3600);
+        const minutes = Math.floor(seconds % 3600 / 60);
+        const parts = [];
+        if (days > 0)
+            parts.push(I18n.trn("%n day", "%n days", days));
+        if (hours > 0)
+            parts.push(I18n.trn("%n hour", "%n hours", hours));
+        if (minutes > 0 || parts.length === 0)
+            parts.push(I18n.trn("%n minute", "%n minutes", minutes));
+        return parts.join(", ");
+    }
+
     readonly property var systemRows: [
         {
             label: "OS",
             value: info.os
         },
         {
-            label: "Device",
+            label: I18n.tr("Device"),
             value: info.model
         },
         {
-            label: "Hostname",
+            label: I18n.tr("Hostname"),
             value: info.host
         },
         {
-            label: "Kernel",
+            label: I18n.tr("Kernel"),
             value: info.kernel
         },
         {
@@ -61,23 +76,23 @@ ColumnLayout {
             value: (info.gpu ?? "").split(";").filter(g => g !== "").map(g => shortGpu(g)).join(", ")
         },
         {
-            label: "Memory",
+            label: I18n.tr("Memory"),
             value: info.memory
         },
         {
-            label: "Uptime",
-            value: info.uptime
+            label: I18n.tr("Uptime"),
+            value: root.formatUptime(Number(info.uptime ?? 0))
         },
         {
-            label: "Packages",
+            label: I18n.tr("Packages"),
             value: info.packages ? info.packages + " (pacman)" : ""
         },
         {
-            label: "Hyprland",
+            label: I18n.tr("Hyprland"),
             value: info.hyprland
         },
         {
-            label: "Quickshell",
+            label: I18n.tr("Quickshell"),
             value: info.quickshell
         }
     ]
@@ -125,7 +140,7 @@ ColumnLayout {
             echo "cpu=$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | sed 's/^ //')"
             echo "gpu=$(lspci 2>/dev/null | grep -Ei 'vga|3d' | sed 's/.*: //' | paste -sd ';')"
             echo "memory=$(awk '/MemTotal/ {printf "%.1f GiB", $2/1048576}' /proc/meminfo)"
-            echo "uptime=$(uptime -p | sed 's/^up //')"
+            echo "uptime=$(cut -d. -f1 /proc/uptime)"
             echo "packages=$(pacman -Qq 2>/dev/null | wc -l)"
             echo "hyprland=$(hyprctl version -j 2>/dev/null | jq -r .tag)"
             echo "quickshell=$(qs --version 2>/dev/null | head -1 | awk '{print $2}')"
@@ -172,7 +187,7 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                text: "Lyne"
+                text: I18n.tr("Lyne")
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeIconSmall
                     font.bold: true
@@ -181,7 +196,7 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                text: "Hyprland + Quickshell dotfiles"
+                text: I18n.tr("Hyprland + Quickshell dotfiles")
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeSmall
                     color: Config.subtextColor
@@ -194,7 +209,7 @@ ColumnLayout {
                 visible: root.git.commit !== undefined
                     text: {
                         const g = root.git;
-                        const parts = g.version ? ["\u{f04f9} " + g.version, root.followsChannel ? (root.channel === "stable" ? "Stable" : "Latest") : g.branch] : ["\u{f062c} " + g.branch];
+                        const parts = g.version ? ["\u{f04f9} " + g.version, root.followsChannel ? (root.channel === "stable" ? I18n.tr("Stable") : I18n.tr("Latest")) : g.branch] : ["\u{f062c} " + g.branch];
                         return parts.concat([g.commit, g.date]).join(" · ");
                     }
                     font.family: Config.font
@@ -206,14 +221,14 @@ ColumnLayout {
             // md-github
             ActionButton {
                 icon: "\u{f02a4}"
-                text: "GitHub"
+                text: I18n.tr("GitHub")
                 onClicked: Qt.openUrlExternally(root.repoUrl)
             }
 
             // md-heart_outline
             ActionButton {
                 icon: "\u{f02d5}"
-                text: "Support"
+                text: I18n.tr("Support")
                 textColor: Config.errorColor
                 onClicked: Qt.openUrlExternally(root.repoUrl + "#support")
             }
@@ -222,18 +237,18 @@ ColumnLayout {
 
     // ================= WELCOME =================
     SettingsGroup {
-        title: "Welcome"
+        title: I18n.tr("Welcome")
 
         SettingRow {
             id: welcomeRow
 
-            label: "Welcome screen"
-            description: "The first choices and the main shortcuts, as on the first login (also lyne welcome)"
+            label: I18n.tr("Welcome screen")
+            description: I18n.tr("The first choices and the main shortcuts, as on the first login (also lyne welcome)")
 
             // md-hand_wave_outline
             ActionButton {
                 icon: "\u{f1822}"
-                text: "Open"
+                text: I18n.tr("Open")
                 baseColor: welcomeRow.controlColor
                 onClicked: WelcomeService.open()
             }
@@ -242,7 +257,7 @@ ColumnLayout {
 
     // ================= UPDATES =================
     SettingsGroup {
-        title: "Updates"
+        title: I18n.tr("Updates")
 
         SettingRow {
             id: updateRow
@@ -250,31 +265,31 @@ ColumnLayout {
             label: {
                 const g = root.git;
                 if (root.checking)
-                    return "Checking for updates…";
+                    return I18n.tr("Checking for updates…");
                 if (root.behind > 0) {
                     if (root.followsChannel && root.channel === "stable")
-                        return "Update available: " + g.target;
-                    return root.behind + (root.behind === 1 ? " update" : " updates") + " available";
+                        return I18n.tr("Update available: %1", g.target);
+                    return I18n.trn("%n update available", "%n updates available", root.behind);
                 }
                 if (!g.fetched)
-                    return "Couldn't reach GitHub";
+                    return I18n.tr("Couldn't reach GitHub");
                 if (!g.upstream)
-                    return "No upstream branch";
+                    return I18n.tr("No upstream branch");
                 if (!g.target)
-                    return "No release yet";
-                return "Up to date";
+                    return I18n.tr("No release yet");
+                return I18n.tr("Up to date");
             }
             description: {
                 const g = root.git;
                 if (root.dirty > 0)
-                    return root.dirty + " uncommitted " + (root.dirty === 1 ? "change" : "changes") + " in ~/.lyne-dots. Updating asks whether to stash or discard them";
+                    return I18n.trn("%n uncommitted change in ~/.lyne-dots. Updating asks whether to stash or discard it", "%n uncommitted changes in ~/.lyne-dots. Updating asks whether to stash or discard them", root.dirty);
                 if (!root.followsChannel)
-                    return "On the " + g.branch + " branch: updates follow " + g.upstream;
+                    return I18n.tr("On the %1 branch: updates follow %2", g.branch, g.upstream);
                 if (root.channel === "stable" && !g.target)
-                    return "Stable follows releases, and there's none yet";
+                    return I18n.tr("Stable follows releases, and there's none yet");
                 if (root.channel === "stable" && root.behind === 0 && (g.version ?? "").includes("+"))
-                    return "Newer than the last release (" + g.lastRelease + "): Stable moves on with the next one";
-                return "Updates the dotfiles, syncs state.json and runs pending migrations";
+                    return I18n.tr("Newer than the last release (%1): Stable moves on with the next one", g.lastRelease);
+                return I18n.tr("Updates the dotfiles, syncs state.json and runs pending migrations");
             }
 
             leading: Text {
@@ -304,7 +319,7 @@ ColumnLayout {
 
             ActionButton {
                 icon: "\u{f01da}"
-                text: "Update"
+                text: I18n.tr("Update")
                 baseColor: root.behind > 0 ? Config.accentColor : updateRow.controlColor
                 hoverColor: root.behind > 0 ? Qt.lighter(Config.accentColor, 1.1) : Config.surface3Color
                 textColor: root.behind > 0 ? Config.textReverseColor : Config.textColor
@@ -318,38 +333,38 @@ ColumnLayout {
             readonly property string release: (root.git.version ?? "").split("+")[0]
 
             visible: release !== ""
-            label: "What's new in " + release
-            description: "The notes of the release this is at or past"
+            label: I18n.tr("What's new in %1", release)
+            description: I18n.tr("The notes of the release this is at or past")
 
             // md-party_popper
             ActionButton {
                 icon: "\u{f1056}"
-                text: "Open"
+                text: I18n.tr("Open")
                 baseColor: notesRow.controlColor
                 onClicked: WhatsNewService.open("")
             }
         }
 
         SelectRow {
-            label: "Channel"
-            description: root.followsChannel ? "Stable gets the releases; Latest every change as soon as it's on main" : "Not used on the " + (root.git.branch ?? "") + " branch, which updates from its upstream"
+            label: I18n.tr("Channel")
+            description: root.followsChannel ? I18n.tr("Stable gets the releases; Latest every change as soon as it's on main") : I18n.tr("Not used on the %1 branch, which updates from its upstream", root.git.branch ?? "")
             path: "update.channel"
             enabled: root.followsChannel
             options: [
                 {
-                    label: "Stable",
+                    label: I18n.tr("Stable"),
                     value: "stable"
                 },
                 {
-                    label: "Latest",
+                    label: I18n.tr("Latest"),
                     value: "latest"
                 }
             ]
         }
 
         ToggleRow {
-            label: "Notify about updates"
-            description: "Checks a minute after login, and notifies once per new " + (root.channel === "stable" ? "release" : "commit")
+            label: I18n.tr("Notify about updates")
+            description: root.channel === "stable" ? I18n.tr("Checks a minute after login, and notifies once per new release") : I18n.tr("Checks a minute after login, and notifies once per new commit")
             path: "update.notify"
             enabled: root.followsChannel
         }
@@ -357,7 +372,7 @@ ColumnLayout {
 
     // ================= SYSTEM =================
     SettingsGroup {
-        title: "System"
+        title: I18n.tr("System")
 
         Repeater {
             model: root.systemRows
@@ -372,12 +387,12 @@ ColumnLayout {
         SettingRow {
             id: copyRow
 
-            label: "Copy system info"
-            description: "Handy for bug reports"
+            label: I18n.tr("Copy system info")
+            description: I18n.tr("Handy for bug reports")
 
             ActionButton {
                 icon: copiedTimer.running ? "\u{f012c}" : "\u{f018f}"
-                text: copiedTimer.running ? "Copied" : "Copy"
+                text: copiedTimer.running ? I18n.tr("Copied") : I18n.tr("Copy")
                 baseColor: copyRow.controlColor
                 onClicked: root.copyInfo()
             }
