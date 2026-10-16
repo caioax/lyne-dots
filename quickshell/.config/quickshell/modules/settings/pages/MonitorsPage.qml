@@ -141,7 +141,7 @@ ColumnLayout {
 
     function labelOf(output: string): string {
         const r = draft.find(x => x.output === output);
-        return r ? (r.label || r.name) : output;
+        return r ? I18n.translate(r.label || r.name) : output;
     }
 
     function setMode(width: int, height: int, refresh: real) {
@@ -158,11 +158,11 @@ ColumnLayout {
         if (!r)
             return "";
         if (lidOff.includes(r.name))
-            return "Off (lid closed)";
+            return I18n.tr("Off (lid closed)");
         if (r.disabled)
-            return "Off";
+            return I18n.tr("Off");
         if (r.mirror)
-            return "Mirroring " + labelOf(r.mirror);
+            return I18n.tr("Mirroring %1", labelOf(r.mirror));
         const m = monitors.find(x => x.name === r.name);
         const px = Lib.pixelSize(r, m);
         const hz = Lib.parseMode(r.mode)?.refresh ?? 0;
@@ -188,12 +188,12 @@ ColumnLayout {
     HyprlandErrorGroup {}
 
     SettingsGroup {
-        title: "Layout"
+        title: I18n.tr("Layout")
 
         SettingRow {
             visible: MonitorsService.ready && root.draft.length === 0
-            label: "No monitors"
-            description: "Hyprland doesn't list any connected monitor"
+            label: I18n.tr("No monitors")
+            description: I18n.tr("Hyprland doesn't list any connected monitor")
         }
 
         // The map, as a full-width row
@@ -226,7 +226,7 @@ ColumnLayout {
                     rects: root.layoutRects
                     infos: root.draft.map((r, i) => ({
                                 number: i + 1,
-                                label: r.label || r.name,
+                                label: I18n.translate(r.label || r.name),
                                 detail: root.describe(r),
                                 internal: Lib.isInternal(r.name)
                             }))
@@ -260,7 +260,7 @@ ColumnLayout {
 
                             // md-laptop / md-monitor / md-monitor_off
                             icon: root.layoutRects[index] === null ? "\u{f0d90}" : Lib.isInternal(modelData.name) ? "\u{f0322}" : "\u{f0379}"
-                            text: (index + 1) + "  " + (modelData.label || modelData.name) + " · " + root.describe(modelData)
+                            text: (index + 1) + "  " + I18n.translate(modelData.label || modelData.name) + " · " + root.describe(modelData)
                             size: Config.fontSizeIconSmall + Config.padding * 2
                             baseColor: isSelected ? Qt.alpha(Config.accentColor, 0.2) : Config.surface1Color
                             hoverColor: isSelected ? Qt.alpha(Config.accentColor, 0.3) : Config.surface2Color
@@ -279,9 +279,9 @@ ColumnLayout {
                         wrapMode: Text.Wrap
                         text: {
                             const r = root.layoutRects[root.selected];
-                            const where = r ? "At " + r.x + ", " + r.y + " · " : "";
-                            const apart = r && !Lib.touches(root.layoutRects, root.selected) ? "Not touching another monitor: the pointer can't move between them · " : "";
-                            return where + apart + "Drag to arrange; arrow keys move the selected one (Shift: 10× further)";
+                            const where = r ? I18n.tr("At %1, %2", r.x, r.y) : "";
+                            const apart = r && !Lib.touches(root.layoutRects, root.selected) ? I18n.tr("Not touching another monitor: the pointer can't move between them") : "";
+                            return [where, apart, I18n.tr("Drag to arrange; arrow keys move the selected one (Shift: 10× further)")].filter(s => s !== "").join(" · ");
                         }
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeSmall
@@ -292,7 +292,7 @@ ColumnLayout {
                     ActionButton {
                         Layout.alignment: Qt.AlignTop
                         icon: "\u{f03a0}"
-                        text: "Identify"
+                        text: I18n.tr("Identify")
                         size: Config.fontSizeIconSmall + Config.padding * 2
                         baseColor: Config.surface1Color
                         onClicked: MonitorsService.identify()
@@ -304,19 +304,19 @@ ColumnLayout {
         // Draft → Apply; trial → Keep or Revert
         SettingRow {
             visible: root.dirty || root.trial
-            label: root.trial ? "Keep these settings?" : root.changed.length === 1 ? "1 monitor changed" : root.changed.length + " monitors changed"
-            description: root.trial ? "Going back to the previous ones in " + MonitorsService.trialRemaining + " s" : root.problem !== "" ? root.problem : "Tried right away: keep them within " + MonitorsService.trialSeconds + " seconds or they go back on their own"
+            label: root.trial ? I18n.tr("Keep these settings?") : I18n.trn("%n monitor changed", "%n monitors changed", root.changed.length)
+            description: root.trial ? I18n.tr("Going back to the previous ones in %1 s", MonitorsService.trialRemaining) : root.problem !== "" ? root.problem : I18n.tr("Tried right away: keep them within %1 seconds or they go back on their own", MonitorsService.trialSeconds)
             descriptionColor: !root.trial && root.problem !== "" ? Config.errorColor : Config.subtextColor
 
             ActionButton {
-                text: root.trial ? "Revert" : "Discard"
+                text: root.trial ? I18n.tr("Revert") : I18n.tr("Discard")
                 size: Config.fontSizeIconSmall + Config.padding * 2
                 baseColor: Config.surface1Color
                 onClicked: root.trial ? MonitorsService.revert("") : root.reset()
             }
 
             ActionButton {
-                text: root.trial ? "Keep" : "Apply"
+                text: root.trial ? I18n.tr("Keep") : I18n.tr("Apply")
                 size: Config.fontSizeIconSmall + Config.padding * 2
                 baseColor: Config.accentColor
                 hoverColor: Qt.lighter(Config.accentColor, 1.15)
@@ -333,7 +333,7 @@ ColumnLayout {
 
         SettingRow {
             visible: MonitorsService.error !== ""
-            label: "Hyprland rejected the change"
+            label: I18n.tr("Hyprland rejected the change")
             description: MonitorsService.error
             descriptionColor: Config.errorColor
         }
@@ -342,11 +342,11 @@ ColumnLayout {
         // nwg-displays (or from before an update moved it)
         SettingRow {
             visible: MonitorsService.legacyText !== "" && MonitorsService.fileManaged
-            label: "Old monitors.lua found"
-            description: "~/.config/hypr/monitors.lua (nwg-displays writes there) isn't read anymore. Load its settings to try them, or remove it"
+            label: I18n.tr("Old monitors.lua found")
+            description: I18n.tr("~/.config/hypr/monitors.lua (nwg-displays writes there) isn't read anymore. Load its settings to try them, or remove it")
 
             ActionButton {
-                text: "Load"
+                text: I18n.tr("Load")
                 size: Config.fontSizeIconSmall + Config.padding * 2
                 baseColor: Config.surface1Color
                 opacity: root.trial ? 0.4 : 1
@@ -357,7 +357,7 @@ ColumnLayout {
             }
 
             ActionButton {
-                text: "Remove"
+                text: I18n.tr("Remove")
                 size: Config.fontSizeIconSmall + Config.padding * 2
                 baseColor: Config.surface1Color
                 onClicked: MonitorsService.removeLegacy()
@@ -369,19 +369,19 @@ ColumnLayout {
             // Saved here before migration 025 moved the file, or by nwg-displays
             readonly property bool oldPlace: Lib.isManaged(MonitorsService.legacyText)
 
-            label: MonitorsService.fileText !== "" ? "local/monitors.lua was written by hand" : oldPlace ? "monitors.lua is in the old place" : "Monitors set up by nwg-displays"
-            description: MonitorsService.fileText !== "" ? "Its settings show here, and the first Apply rewrites it" : oldPlace ? "lyne update moves ~/.config/hypr/monitors.lua to hypr/local/, and so does the next Apply here" : "Hyprland reads ~/.config/hypr/monitors.lua until the first Apply here, which saves the settings to hypr/local/monitors.lua"
+            label: MonitorsService.fileText !== "" ? I18n.tr("local/monitors.lua was written by hand") : oldPlace ? I18n.tr("monitors.lua is in the old place") : I18n.tr("Monitors set up by nwg-displays")
+            description: MonitorsService.fileText !== "" ? I18n.tr("Its settings show here, and the first Apply rewrites it") : oldPlace ? I18n.tr("lyne update moves ~/.config/hypr/monitors.lua to hypr/local/, and so does the next Apply here") : I18n.tr("Hyprland reads ~/.config/hypr/monitors.lua until the first Apply here, which saves the settings to hypr/local/monitors.lua")
         }
     }
 
     SettingsGroup {
         visible: root.rule !== null
-        title: root.rule ? (root.rule.label || root.rule.name) + " · " + root.rule.name : ""
+        title: root.rule ? I18n.translate(root.rule.label || root.rule.name) + " · " + root.rule.name : ""
         enabled: !root.trial && !MonitorsService.busy
 
         ToggleRow {
-            label: "Screen on"
-            description: root.ruleLidOff ? "Off while the laptop lid is closed (Settings › Hyprland › Workspaces)" : "Off, its workspaces move to the other monitors"
+            label: I18n.tr("Screen on")
+            description: root.ruleLidOff ? I18n.tr("Off while the laptop lid is closed (Settings › Hyprland › Workspaces)") : I18n.tr("Off, its workspaces move to the other monitors")
             enabled: !root.ruleLidOff
             checked: root.rule ? !root.rule.disabled || root.ruleLidOff : false
             onToggled: value => root.setEnabled(root.selected, value)
@@ -392,28 +392,28 @@ ColumnLayout {
 
             readonly property var targets: root.rule ? Lib.mirrorTargets(root.draft, root.selected, root.lidOff) : []
 
-            label: "Mirror"
-            description: root.mirrorers.length > 0 ? "Mirrored by " + root.mirrorers.map(i => root.draft[i].label || root.draft[i].name).join(", ") + ", so it can't mirror another one" : root.ruleMirrors ? "Shows the picture of " + root.labelOf(root.rule.mirror) + "; its workspaces go to the other monitors meanwhile" : "Show another monitor's picture instead of its own"
+            label: I18n.tr("Mirror")
+            description: root.mirrorers.length > 0 ? I18n.tr("Mirrored by %1, so it can't mirror another one", root.mirrorers.map(i => I18n.translate(root.draft[i].label || root.draft[i].name)).join(", ")) : root.ruleMirrors ? I18n.tr("Shows the picture of %1; its workspaces go to the other monitors meanwhile", root.labelOf(root.rule.mirror)) : I18n.tr("Show another monitor's picture instead of its own")
             enabled: root.ruleOn && root.mirrorers.length === 0 && (targets.length > 0 || root.ruleMirrors)
 
             ActionButton {
                 id: mirrorButton
 
-                text: (root.ruleMirrors ? root.labelOf(root.rule.mirror) : "Off") + "  \u{f0140}"
+                text: (root.ruleMirrors ? root.labelOf(root.rule.mirror) : I18n.tr("Off")) + "  \u{f0140}"
                 size: Config.fontSizeIconSmall + Config.padding * 2
                 baseColor: mirrorRow.controlColor
                 onClicked: {
                     const items = [
                         {
                             // md-check
-                            label: "Off (its own picture)",
+                            label: I18n.tr("Off (its own picture)"),
                             icon: root.ruleMirrors ? "" : "\u{f012c}",
                             action: "-1"
                         }
                     ];
                     for (const i of mirrorRow.targets)
                         items.push({
-                            label: (i + 1) + "  " + (root.draft[i].label || root.draft[i].name),
+                            label: (i + 1) + "  " + I18n.translate(root.draft[i].label || root.draft[i].name),
                             icon: root.rule.mirror === root.draft[i].output ? "\u{f012c}" : "",
                             action: String(i)
                         });
@@ -427,8 +427,8 @@ ColumnLayout {
         SettingRow {
             id: resolutionRow
 
-            label: "Resolution"
-            description: !root.nativeMode ? "" : root.nativeMode.width === root.mode.width && root.nativeMode.height === root.mode.height ? "The monitor's own (recommended)" : "The monitor's own is " + root.nativeMode.width + " × " + root.nativeMode.height
+            label: I18n.tr("Resolution")
+            description: !root.nativeMode ? "" : root.nativeMode.width === root.mode.width && root.nativeMode.height === root.mode.height ? I18n.tr("The monitor's own (recommended)") : I18n.tr("The monitor's own is %1 × %2", root.nativeMode.width, root.nativeMode.height)
             enabled: root.rule !== null && !root.rule.disabled && !root.ruleLidOff && root.modeList.length > 0
 
             ActionButton {
@@ -450,7 +450,7 @@ ColumnLayout {
                         const own = root.nativeMode && m.width === root.nativeMode.width && m.height === root.nativeMode.height;
                         items.push({
                             // md-check
-                            label: m.width + " × " + m.height + (own ? "  (recommended)" : ""),
+                            label: own ? I18n.tr("%1  (recommended)", m.width + " × " + m.height) : m.width + " × " + m.height,
                             icon: current ? "\u{f012c}" : "",
                             action: key
                         });
@@ -468,8 +468,8 @@ ColumnLayout {
             readonly property var rates: root.modeList.filter(m => m.width === root.mode.width && m.height === root.mode.height)
             readonly property real refresh: Lib.parseMode(root.rule?.mode)?.refresh ?? 0
 
-            label: "Refresh rate"
-            description: rates.length > 1 ? "Higher is smoother" : "The only one this resolution has"
+            label: I18n.tr("Refresh rate")
+            description: rates.length > 1 ? I18n.tr("Higher is smoother") : I18n.tr("The only one this resolution has")
             enabled: root.rule !== null && !root.rule.disabled && !root.ruleLidOff && rates.length > 0
 
             ActionButton {
@@ -495,8 +495,8 @@ ColumnLayout {
 
             readonly property var looks: Lib.logicalSize(root.mode.width, root.mode.height, root.scaleNow, 0)
 
-            label: "Scale"
-            description: "Things look like on a " + looks.width + " × " + looks.height + " screen"
+            label: I18n.tr("Scale")
+            description: I18n.tr("Things look like on a %1 × %2 screen", looks.width, looks.height)
             enabled: root.ruleOn && !root.ruleMirrors
 
             ActionButton {
@@ -517,7 +517,7 @@ ColumnLayout {
                     const others = Lib.validScales(root.mode.width, root.mode.height).filter(s => s >= 1 && s <= 3 && !steps.includes(s));
                     if (others.length > 0)
                         items.push({
-                            label: "Other scales",
+                            label: I18n.tr("Other scales"),
                             icon: steps.some(s => Math.abs(s - root.scaleNow) < 0.00001) ? "" : "\u{f012c}",
                             children: others.map(item)
                         });
@@ -529,7 +529,7 @@ ColumnLayout {
         }
 
         SelectRow {
-            label: "Rotation"
+            label: I18n.tr("Rotation")
             enabled: root.ruleOn && !root.ruleMirrors
             segmentWidth: Config.fontSizeNormal * 4
             options: [
@@ -557,8 +557,8 @@ ColumnLayout {
         }
 
         ToggleRow {
-            label: "Flipped"
-            description: "Mirror the picture horizontally, e.g. for a projector behind glass"
+            label: I18n.tr("Flipped")
+            description: I18n.tr("Mirror the picture horizontally, e.g. for a projector behind glass")
             enabled: root.ruleOn && !root.ruleMirrors
             checked: (root.rule?.transform ?? 0) >= 4
             onToggled: value => root.setRule(root.selected, {

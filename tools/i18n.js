@@ -3,7 +3,8 @@
 // i18n.js - The shell's translation files, kept in sync with its code
 // =============================================================================
 // Reads every I18n.tr/trn/trc/noop call in the shell (quickshell/.config/
-// quickshell) and keeps i18n/<code>.json and i18n/languages.json in step.
+// quickshell), and the keybind groups and descriptions of hypr/conf/
+// keybinds.lua, and keeps i18n/<code>.json and i18n/languages.json in step.
 //
 // Usage: node tools/i18n.js extract          add new strings ("" = to
 //                                            translate), drop the gone ones
@@ -311,11 +312,42 @@ function extract(shell = SHELL) {
             }
         }
     }
+    // Keybind groups and descriptions: English in Hyprland's Lua, shown
+    // translated by KeybindsService
+    for (const file of luaSources(shell)) {
+        const rel = path.relative(path.dirname(shell), file);
+        const text = fs.readFileSync(file, "utf8");
+        const re = /^\s*bind\(\s*"[^"]*"\s*,\s*"((?:[^"\\]|\\.)*)"\s*,\s*"((?:[^"\\]|\\.)*)"/gm;
+        let m;
+        while ((m = re.exec(text)) !== null) {
+            const where = `${rel}:${text.slice(0, m.index).split("\n").length}`;
+            for (const key of [m[1], m[2]]) {
+                const seen = strings.get(key);
+                if (!seen)
+                    strings.set(key, {
+                        kind: "text",
+                        source: key,
+                        refs: [where]
+                    });
+                else if (seen.kind !== "text")
+                    errors.push(`${where}: "${key}" is also a plural string (${seen.refs[0]})`);
+                else
+                    seen.refs.push(where);
+            }
+        }
+    }
     return {
         strings,
         contexts,
         errors
     };
+}
+
+// The Lua files with bind("id", "Group", "Description", ...) calls, next to
+// the shell in the repo (hyprland/.config/hypr/conf)
+function luaSources(shell) {
+    const dir = process.env.LYNE_I18N_LUA || path.join(shell, "../../../hyprland/.config/hypr/conf");
+    return ["keybinds.lua"].map(f => path.join(dir, f)).filter(f => fs.existsSync(f));
 }
 
 // =============================================================================

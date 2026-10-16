@@ -115,7 +115,7 @@ Popup {
         spacing: Config.spacing + Config.padding
 
         Text {
-            text: root.index >= 0 ? "Edit special workspace" : "New special workspace"
+            text: root.index >= 0 ? I18n.tr("Edit special workspace") : I18n.tr("New special workspace")
             font.family: Config.font
             font.pixelSize: Config.fontSizeLarge
             font.bold: true
@@ -128,7 +128,7 @@ Popup {
             spacing: Config.padding
 
             FieldLabel {
-                text: "App"
+                text: I18n.tr("App")
             }
 
             Flow {
@@ -152,8 +152,8 @@ Popup {
 
         Field {
             id: commandField
-            label: "Command"
-            placeholder: "Opened when the workspace is shown empty (none for a scratchpad)"
+            label: I18n.tr("Command")
+            placeholder: I18n.tr("Opened when the workspace is shown empty (none for a scratchpad)")
             onTextChanged: checkDebounce.restart()
             onAccepted: root.save()
         }
@@ -162,7 +162,7 @@ Popup {
             visible: root.missing
             Layout.fillWidth: true
             Layout.topMargin: -Config.padding
-            text: root.binary + " isn't installed" + (root.preset?.pkg ? " (package " + root.preset.pkg + ")" : "")
+            text: root.preset?.pkg ? I18n.tr("%1 isn't installed (package %2)", root.binary, root.preset.pkg) : I18n.tr("%1 isn't installed", root.binary)
             wrapMode: Text.WordWrap
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
@@ -171,8 +171,8 @@ Popup {
 
         Field {
             id: classField
-            label: "Window class (optional)"
-            placeholder: "Regex; keeps the app's windows here when reopened from the tray"
+            label: I18n.tr("Window class (optional)")
+            placeholder: I18n.tr("Regex; keeps the app's windows here when reopened from the tray")
             onAccepted: root.save()
         }
 
@@ -183,8 +183,8 @@ Popup {
 
             Field {
                 id: nameField
-                label: "Name"
-                placeholder: "WhatsApp"
+                label: I18n.tr("Name")
+                placeholder: I18n.tr("WhatsApp")
                 onAccepted: root.save()
             }
 
@@ -192,7 +192,7 @@ Popup {
                 spacing: Config.padding
 
                 FieldLabel {
-                    text: "Color"
+                    text: I18n.tr("Color")
                 }
 
                 RowLayout {
@@ -240,7 +240,7 @@ Popup {
             spacing: Config.padding
 
             FieldLabel {
-                text: "Icon"
+                text: I18n.tr("Icon")
             }
 
             Flow {
@@ -295,14 +295,14 @@ Popup {
             spacing: Config.spacing * 2
 
             ShortcutField {
-                label: "Show / hide"
+                label: I18n.tr("Show / hide")
                 which: "keys"
                 keys: root.keys
                 conflicts: root.keyConflicts
             }
 
             ShortcutField {
-                label: "Move window here"
+                label: I18n.tr("Move window here")
                 which: "moveKeys"
                 keys: root.moveKeys
                 conflicts: root.moveConflicts
@@ -319,13 +319,13 @@ Popup {
             }
 
             ActionButton {
-                text: "Cancel"
+                text: I18n.tr("Cancel")
                 onClicked: root.close()
             }
 
             ActionButton {
                 icon: "\u{f012c}"
-                text: "Save"
+                text: I18n.tr("Save")
                 opacity: root.valid ? 1 : 0.4
                 baseColor: Config.accentColor
                 hoverColor: Qt.lighter(Config.accentColor, 1.1)
@@ -413,7 +413,7 @@ Popup {
         KeyCombo {
             Layout.fillWidth: true
             keys: shortcut.keys
-            emptyText: "Click to record"
+            emptyText: I18n.tr("Click to record")
             recording: root.recording === shortcut.which
             onRecordRequested: root.startRecording(shortcut.which)
             onRecorded: combo => {
@@ -425,7 +425,7 @@ Popup {
         Text {
             visible: shortcut.conflicts.length > 0
             Layout.fillWidth: true
-            text: "Also used by " + shortcut.conflicts.join(", ")
+            text: I18n.tr("Also used by %1", shortcut.conflicts.join(", "))
             wrapMode: Text.WordWrap
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall

@@ -51,11 +51,11 @@ ColumnLayout {
         },
         {
             value: "caps:escape_shifted_capslock",
-            label: "Escape, Shift + Caps Lock for Caps Lock"
+            label: I18n.tr("Escape, Shift + Caps Lock for Caps Lock")
         },
         {
             value: "caps:swapescape",
-            label: "Swapped with Escape"
+            label: I18n.tr("Swapped with Escape")
         },
         {
             value: "caps:backspace",
@@ -63,7 +63,7 @@ ColumnLayout {
         },
         {
             value: "caps:none",
-            label: "Nothing"
+            label: I18n.tr("Nothing")
         }
     ]
     readonly property string capsValue: KeyboardService.optionIn("caps") || (options.includes("ctrl:nocaps") ? "ctrl:nocaps" : "")
@@ -71,23 +71,23 @@ ColumnLayout {
     readonly property var composeChoices: [
         {
             value: "",
-            label: "None"
+            label: I18n.tr("None")
         },
         {
             value: "compose:ralt",
-            label: "Right Alt"
+            label: I18n.tr("Right Alt")
         },
         {
             value: "compose:rctrl",
-            label: "Right Ctrl"
+            label: I18n.tr("Right Ctrl")
         },
         {
             value: "compose:rwin",
-            label: "Right Super"
+            label: I18n.tr("Right Super")
         },
         {
             value: "compose:menu",
-            label: "Menu"
+            label: I18n.tr("Menu")
         },
         {
             value: "compose:caps",
@@ -143,8 +143,8 @@ ColumnLayout {
     XkbPicker {
         id: layoutPicker
 
-        title: (root.pickerIndex >= 0 ? "Change layout" : "Add a layout") + (root.pickerDevice !== "" ? " · " + KeyboardService.labelFor(root.pickerDevice) : "")
-        placeholder: "Search layouts, languages and variants"
+        title: (root.pickerIndex >= 0 ? I18n.tr("Change layout") : I18n.tr("Add a layout")) + (root.pickerDevice !== "" ? " · " + KeyboardService.labelFor(root.pickerDevice) : "")
+        placeholder: I18n.tr("Search layouts, languages and variants")
         items: KeyboardService.allEntries.map(e => ({
                     key: e.layout + "(" + e.variant + ")",
                     label: e.description,
@@ -165,13 +165,13 @@ ColumnLayout {
     XkbPicker {
         id: modelPicker
 
-        title: "Keyboard model"
-        placeholder: "Search models"
+        title: I18n.tr("Keyboard model")
+        placeholder: I18n.tr("Search models")
         items: [
             {
                 key: "",
-                label: "Default",
-                detail: "Generic 105-key PC (pc105), right for almost every keyboard"
+                label: I18n.tr("Default"),
+                detail: I18n.tr("Generic 105-key PC (pc105), right for almost every keyboard")
             }
         ].concat(KeyboardService.db.models.map(m => ({
                     key: m.name,
@@ -185,8 +185,8 @@ ColumnLayout {
     XkbPicker {
         id: optionPicker
 
-        title: "Key options"
-        placeholder: "Search options"
+        title: I18n.tr("Key options")
+        placeholder: I18n.tr("Search options")
         multi: true
         items: KeyboardService.db.groups.reduce((out, g) => out.concat([
                 {
@@ -251,7 +251,7 @@ ColumnLayout {
 
     // ================= LAYOUTS =================
     SettingsGroup {
-        title: "Layouts"
+        title: I18n.tr("Layouts")
 
         Repeater {
             model: root.layouts
@@ -266,7 +266,7 @@ ColumnLayout {
 
                 resettable: false
                 label: layoutName
-                description: (modelData.variant ? modelData.layout + " · " + modelData.variant : modelData.layout) + (active ? "  ·  in use" : "")
+                description: active ? I18n.tr("%1  ·  in use", modelData.variant ? modelData.layout + " · " + modelData.variant : modelData.layout) : (modelData.variant ? modelData.layout + " · " + modelData.variant : modelData.layout)
 
                 leading: Rectangle {
                     implicitWidth: Config.fontSizeIconSmall * 2
@@ -292,26 +292,26 @@ ColumnLayout {
                     onClicked: {
                         const list = [
                             {
-                                label: "Change layout or variant",
+                                label: I18n.tr("Change layout or variant"),
                                 icon: "\u{f03eb}",
                                 action: "change"
                             }
                         ];
                         if (layoutRow.index > 0)
                             list.push({
-                                label: "Move up",
+                                label: I18n.tr("Move up"),
                                 icon: "\u{f005d}",
                                 action: "up"
                             });
                         if (layoutRow.index < root.layouts.length - 1)
                             list.push({
-                                label: "Move down",
+                                label: I18n.tr("Move down"),
                                 icon: "\u{f0045}",
                                 action: "down"
                             });
                         if (root.layouts.length > 1)
                             list.push({
-                                label: "Remove",
+                                label: I18n.tr("Remove"),
                                 icon: "\u{f09e7}",
                                 action: "remove",
                                 danger: true
@@ -326,14 +326,14 @@ ColumnLayout {
 
         SettingRow {
             resettable: false
-            label: root.layouts.length >= KeyboardService.maxLayouts ? "Four layouts at most" : "Another layout"
-            description: root.layouts.length > 1 ? "The first one is used when you log in" : "For another language or keyboard"
+            label: root.layouts.length >= KeyboardService.maxLayouts ? I18n.tr("Four layouts at most") : I18n.tr("Another layout")
+            description: root.layouts.length > 1 ? I18n.tr("The first one is used when you log in") : I18n.tr("For another language or keyboard")
             enabled: KeyboardService.ready
 
             // md-plus
             ActionButton {
                 icon: "\u{f0415}"
-                text: "Add layout"
+                text: I18n.tr("Add layout")
                 opacity: root.layouts.length < KeyboardService.maxLayouts ? 1 : 0.4
                 onClicked: {
                     if (root.layouts.length < KeyboardService.maxLayouts)
@@ -345,29 +345,29 @@ ColumnLayout {
 
     // ================= KEYBOARDS =================
     SettingsGroup {
-        title: "Your hypr/local/extra_input.lua"
+        title: I18n.tr("Your hypr/local/extra_input.lua")
         visible: KeyboardService.legacyExists && KeyboardService.legacy !== null && (KeyboardService.legacy.devices.length > 0 || KeyboardService.legacy.other > 0 || !KeyboardService.legacy.ok)
 
         SettingRow {
             resettable: false
-            label: "Keyboards set up by hand"
+            label: I18n.tr("Keyboards set up by hand")
             descriptionColor: KeyboardService.legacyImportable ? Config.subtextColor : Config.warningColor
             description: {
                 const legacy = KeyboardService.legacy;
                 if (!legacy)
                     return "";
                 if (!legacy.ok)
-                    return "It couldn't be read: " + legacy.error;
+                    return I18n.tr("It couldn't be read: %1", legacy.error);
                 if (legacy.other > 0)
-                    return "It also sets up other things (mouse or touchpad options...), so it stays as it is. Move those to another hypr/local/*.lua file to import it";
-                return "Written by hand before this page. It keeps working until you import it here, then it's renamed to extra_input.lua.imported" + (legacy.notes.length > 0 ? ". " + legacy.notes.join(". ") : "");
+                    return I18n.tr("It also sets up other things (mouse or touchpad options...), so it stays as it is. Move those to another hypr/local/*.lua file to import it");
+                return [I18n.tr("Written by hand before this page. It keeps working until you import it here, then it's renamed to extra_input.lua.imported")].concat(legacy.notes).join(". ");
             }
 
             // md-file_import
             ActionButton {
                 visible: KeyboardService.legacyImportable
                 icon: "\u{f0220}"
-                text: KeyboardService.importing ? "Importing..." : "Import"
+                text: KeyboardService.importing ? I18n.tr("Importing...") : I18n.tr("Import")
                 baseColor: Config.accentColor
                 hoverColor: Qt.lighter(Config.accentColor, 1.1)
                 textColor: Config.textReverseColor
@@ -398,7 +398,7 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Keyboards"
+        title: I18n.tr("Keyboards")
 
         Repeater {
             model: root.keyboardRows
@@ -416,15 +416,15 @@ ColumnLayout {
                 description: {
                     const parts = [];
                     if (keyboardRow.legacy)
-                        parts.push("From extra_input.lua: " + (keyboardRow.legacy.kb_layout ? KeyboardService.parseLayoutsOf(keyboardRow.legacy.kb_layout, keyboardRow.legacy.kb_variant ?? "").map(l => KeyboardService.describe(l)).join(" + ") : "own options"));
+                        parts.push(I18n.tr("From extra_input.lua: %1", keyboardRow.legacy.kb_layout ? KeyboardService.parseLayoutsOf(keyboardRow.legacy.kb_layout, keyboardRow.legacy.kb_variant ?? "").map(l => KeyboardService.describe(l)).join(" + ") : I18n.tr("own options")));
                     else
-                        parts.push(keyboardRow.own.length > 0 ? keyboardRow.own.map(l => KeyboardService.describe(l)).join(" + ") : (keyboardRow.entry ? "Same layouts as above, own options" : "Same layouts as above"));
+                        parts.push(keyboardRow.own.length > 0 ? keyboardRow.own.map(l => KeyboardService.describe(l)).join(" + ") : (keyboardRow.entry ? I18n.tr("Same layouts as above, own options") : I18n.tr("Same layouts as above")));
                     if (keyboardRow.entry?.options !== undefined && keyboardRow.own.length > 0)
-                        parts.push("own key options");
+                        parts.push(I18n.tr("own key options"));
                     if (!modelData.connected)
-                        parts.push("not connected");
+                        parts.push(I18n.tr("not connected"));
                     else if (modelData.main && KeyboardService.groups.filter(g => g.typing).length > 1)
-                        parts.push("typing now");
+                        parts.push(I18n.tr("typing now"));
                     return parts.join("  ·  ");
                 }
 
@@ -447,7 +447,7 @@ ColumnLayout {
 
                 ActionButton {
                     visible: keyboardRow.own.length === 0 && !keyboardRow.entry && !keyboardRow.legacy
-                    text: "Own layout"
+                    text: I18n.tr("Own layout")
                     baseColor: keyboardRow.controlColor
                     enabled: KeyboardService.ready
                     onClicked: root.openLayoutPicker(keyboardRow.modelData.name, -1)
@@ -462,24 +462,24 @@ ColumnLayout {
                     onClicked: {
                         const own = keyboardRow.own;
                         const list = own.map((l, i) => ({
-                                    label: "Change " + KeyboardService.describe(l),
+                                    label: I18n.tr("Change %1", KeyboardService.describe(l)),
                                     icon: "\u{f03eb}",
                                     action: "change:" + i
                                 }));
                         if (own.length < KeyboardService.maxLayouts)
                             list.push({
-                                label: own.length > 0 ? "Add another layout" : "Give it its own layout",
+                                label: own.length > 0 ? I18n.tr("Add another layout") : I18n.tr("Give it its own layout"),
                                 icon: "\u{f0415}",
                                 action: "add:-1"
                             });
                         if (own.length > 1)
                             own.forEach((l, i) => list.push({
-                                        label: "Remove " + KeyboardService.describe(l),
+                                        label: I18n.tr("Remove %1", KeyboardService.describe(l)),
                                         icon: "\u{f09e7}",
                                         action: "remove:" + i
                                     }));
                         list.push({
-                            label: keyboardRow.modelData.connected ? "Use the layouts above" : "Forget this keyboard",
+                            label: keyboardRow.modelData.connected ? I18n.tr("Use the layouts above") : I18n.tr("Forget this keyboard"),
                             icon: "\u{f054c}",
                             action: "follow:0",
                             danger: !keyboardRow.modelData.connected
@@ -495,11 +495,11 @@ ColumnLayout {
         SettingRow {
             visible: root.hiddenDevices > 0
             resettable: false
-            label: root.showAllDevices ? "Every input device" : root.hiddenDevices + " more input devices"
-            description: "Buttons and media keys Hyprland also counts as keyboards"
+            label: root.showAllDevices ? I18n.tr("Every input device") : I18n.trn("%n more input device", "%n more input devices", root.hiddenDevices)
+            description: I18n.tr("Buttons and media keys Hyprland also counts as keyboards")
 
             ActionButton {
-                text: root.showAllDevices ? "Hide" : "Show"
+                text: root.showAllDevices ? I18n.tr("Hide") : I18n.tr("Show")
                 onClicked: root.showAllDevices = !root.showAllDevices
             }
         }
@@ -508,7 +508,7 @@ ColumnLayout {
     Text {
         Layout.fillWidth: true
         Layout.topMargin: -Config.spacing * 2
-        text: "A keyboard with its own layouts uses them instead of the ones above; key options and repeat are shared. Changes here reload Hyprland's config"
+        text: I18n.tr("A keyboard with its own layouts uses them instead of the ones above; key options and repeat are shared. Changes here reload Hyprland's config")
         wrapMode: Text.WordWrap
         font.family: Config.font
         font.pixelSize: Config.fontSizeSmall
@@ -517,29 +517,29 @@ ColumnLayout {
 
     // ================= TRY IT =================
     SettingsGroup {
-        title: "Try it"
+        title: I18n.tr("Try it")
 
         SettingRow {
             resettable: false
-            label: "Type here"
-            description: KeyboardService.activeKeymap !== "" ? "Typing with " + KeyboardService.activeKeymap : ""
+            label: I18n.tr("Type here")
+            description: KeyboardService.activeKeymap !== "" ? I18n.tr("Typing with %1", KeyboardService.activeKeymap) : ""
 
             below: QsTextField {
                 width: parent ? parent.width : 0
-                placeholder: "Accents, symbols: ç ã é ~ ^ ` ´ \" @ # |"
+                placeholder: I18n.tr("Accents, symbols: ç ã é ~ ^ ` ´ \" @ # |")
             }
         }
     }
 
     // ================= KEYS =================
     SettingsGroup {
-        title: "Keys"
+        title: I18n.tr("Keys")
 
         SettingRow {
             id: capsRow
 
-            label: "Caps Lock key"
-            description: "What the Caps Lock key does"
+            label: I18n.tr("Caps Lock key")
+            description: I18n.tr("What the Caps Lock key does")
             resettable: false
             enabled: KeyboardService.ready
 
@@ -554,8 +554,8 @@ ColumnLayout {
         SettingRow {
             id: composeRow
 
-            label: "Compose key"
-            description: "Press it, then two keys, to type characters like é, ñ or €"
+            label: I18n.tr("Compose key")
+            description: I18n.tr("Press it, then two keys, to type characters like é, ñ or €")
             resettable: false
             enabled: KeyboardService.ready
 
@@ -568,20 +568,20 @@ ColumnLayout {
         }
 
         ToggleRow {
-            label: "Num Lock on at login"
+            label: I18n.tr("Num Lock on at login")
             path: "hyprland.input.numlock_by_default"
         }
 
         SettingRow {
             id: optionsRow
 
-            label: "All key options"
-            description: root.options.length === 0 ? "Everything xkb offers: Alt and Super, Ctrl position, numpad, Euro sign..." : root.options.map(o => KeyboardService.optionSummary(o)).join(" · ")
+            label: I18n.tr("All key options")
+            description: root.options.length === 0 ? I18n.tr("Everything xkb offers: Alt and Super, Ctrl position, numpad, Euro sign...") : root.options.map(o => KeyboardService.optionSummary(o)).join(" · ")
             path: "hyprland.input.kb_options"
             enabled: KeyboardService.ready
 
             ActionButton {
-                text: root.options.length === 0 ? "Choose" : root.options.length + " on"
+                text: root.options.length === 0 ? I18n.tr("Choose") : I18n.trn("%n on", "%n on", root.options.length)
                 baseColor: optionsRow.controlColor
                 onClicked: optionPicker.openWith("")
             }
@@ -590,11 +590,11 @@ ColumnLayout {
 
     // ================= TYPING =================
     SettingsGroup {
-        title: "Typing"
+        title: I18n.tr("Typing")
 
         SliderRow {
-            label: "Repeat delay"
-            description: "How long a key is held before it repeats"
+            label: I18n.tr("Repeat delay")
+            description: I18n.tr("How long a key is held before it repeats")
             path: "hyprland.input.repeat_delay"
             from: 150
             to: 800
@@ -603,8 +603,8 @@ ColumnLayout {
         }
 
         SliderRow {
-            label: "Repeat rate"
-            description: "Repeats per second while a key is held"
+            label: I18n.tr("Repeat rate")
+            description: I18n.tr("Repeats per second while a key is held")
             path: "hyprland.input.repeat_rate"
             from: 10
             to: 80
@@ -614,18 +614,18 @@ ColumnLayout {
 
     // ================= ADVANCED =================
     SettingsGroup {
-        title: "Advanced"
+        title: I18n.tr("Advanced")
 
         SettingRow {
             id: modelRow
 
-            label: "Keyboard model"
-            description: "Only matters for a few special keyboards (some Apple, Japanese and Brazilian ABNT2 ones)"
+            label: I18n.tr("Keyboard model")
+            description: I18n.tr("Only matters for a few special keyboards (some Apple, Japanese and Brazilian ABNT2 ones)")
             path: "hyprland.input.kb_model"
             enabled: KeyboardService.ready
 
             ActionButton {
-                text: KeyboardService.model === "" ? "Default" : KeyboardService.model
+                text: KeyboardService.model === "" ? I18n.tr("Default") : KeyboardService.model
                 baseColor: modelRow.controlColor
                 onClicked: modelPicker.openWith("")
             }

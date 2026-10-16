@@ -12,11 +12,11 @@ ColumnLayout {
     HyprlandErrorGroup {}
 
     SettingsGroup {
-        title: "Mouse"
+        title: I18n.tr("Mouse")
 
         SliderRow {
-            label: "Sensitivity"
-            description: "0 leaves the device speed unchanged"
+            label: I18n.tr("Sensitivity")
+            description: I18n.tr("0 leaves the device speed unchanged")
             path: "hyprland.input.sensitivity"
             from: -1
             to: 1
@@ -25,46 +25,46 @@ ColumnLayout {
         }
 
         ToggleRow {
-            label: "Mouse acceleration"
-            description: "Pointer speed grows with how fast the mouse moves"
+            label: I18n.tr("Mouse acceleration")
+            description: I18n.tr("Pointer speed grows with how fast the mouse moves")
             path: "hyprland.input.force_no_accel"
             inverted: true
         }
     }
 
     SettingsGroup {
-        title: "Keyboard"
+        title: I18n.tr("Keyboard")
 
         SettingRow {
             resettable: false
-            label: "Layouts, keys and repeat"
-            description: "In their own page now"
+            label: I18n.tr("Layouts, keys and repeat")
+            description: I18n.tr("In their own page now")
 
             // md-chevron_right
             ActionButton {
                 icon: "\u{f0142}"
-                text: "Keyboard"
+                text: I18n.tr("Keyboard")
                 onClicked: SettingsService.currentPage = "keyboard"
             }
         }
     }
 
     SettingsGroup {
-        title: "Touchpad"
+        title: I18n.tr("Touchpad")
 
         ToggleRow {
-            label: "Natural scrolling"
-            description: "Content follows your fingers"
+            label: I18n.tr("Natural scrolling")
+            description: I18n.tr("Content follows your fingers")
             path: "hyprland.input.touchpad.natural_scroll"
         }
 
         ToggleRow {
-            label: "Tap to click"
+            label: I18n.tr("Tap to click")
             path: "hyprland.input.touchpad.tap_to_click"
         }
 
         ToggleRow {
-            label: "Disable while typing"
+            label: I18n.tr("Disable while typing")
             path: "hyprland.input.touchpad.disable_while_typing"
         }
     }

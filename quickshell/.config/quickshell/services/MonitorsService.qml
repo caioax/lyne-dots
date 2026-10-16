@@ -17,6 +17,9 @@ import "monitors.js" as Lib
 Singleton {
     id: root
 
+    // monitors.js (no I18n there) names laptop panels this way; shown translated
+    readonly property string builtInLabel: I18n.noop("Built-in display")
+
     readonly property string script: Qt.resolvedUrl("../scripts/monitors.sh").toString().replace("file://", "")
     readonly property string filePath: Quickshell.env("HOME") + "/.config/hypr/local/monitors.lua"
     // Where nwg-displays writes (and lyne kept it before migration 025):
@@ -98,7 +101,7 @@ Singleton {
                 };
                 rule.output = Lib.selectorFor(m, monitors);
                 rule.name = m.name;
-                rule.label = Lib.labelFor(m);
+                rule.label = I18n.translate(Lib.labelFor(m));
                 rule.disabled = false;
                 return rule;
             }
@@ -109,7 +112,7 @@ Singleton {
     // Why a set of rules can't be applied ("" = it can)
     function problemWith(rules): string {
         if (!rules.some(r => !r.disabled && !r.mirror && !lidOffNames.includes(r.name)))
-            return "At least one monitor has to stay on";
+            return I18n.tr("At least one monitor has to stay on");
         return Lib.mirrorProblem(rules, lidOffNames);
     }
 
@@ -160,12 +163,12 @@ Singleton {
         // Stops the watcher (it would reload once more)
         Quickshell.execDetached(["bash", script, "keep"]);
         refreshSoon.restart();
-        _notify("Hyprland reloaded its config (e.g. the laptop lid), which brought the saved monitor settings back");
+        _notify(I18n.tr("Hyprland reloaded its config (e.g. the laptop lid), which brought the saved monitor settings back"));
         reverted();
     }
 
     function _notify(body: string) {
-        Quickshell.execDetached(["notify-send", "-a", "Settings", "-i", "preferences-desktop-display", "Display settings reverted", body]);
+        Quickshell.execDetached(["notify-send", "-a", "Settings", "-i", "preferences-desktop-display", I18n.tr("Display settings reverted"), body]);
     }
 
     function _ports(list): string {
@@ -255,7 +258,7 @@ Singleton {
         onTriggered: {
             root.trialRemaining -= 1;
             if (root.trialRemaining <= 0)
-                root.revert("They weren't kept within " + root.trialSeconds + " seconds");
+                root.revert(I18n.tr("They weren't kept within %1 seconds", root.trialSeconds));
         }
     }
 
@@ -271,7 +274,7 @@ Singleton {
                     // Turned off monitors stay listed: only a plug or unplug
                     // changes the ports, and the trial's rules don't cover it
                     if (root.trialActive && root._ports(root.monitors) !== root._trialPorts)
-                        root.revert("A monitor was connected or disconnected during the trial");
+                        root.revert(I18n.tr("A monitor was connected or disconnected during the trial"));
                 } catch (e) {
                     console.warn("[Monitors] can't read hyprctl monitors:", e);
                 }
@@ -287,7 +290,7 @@ Singleton {
                 root.busy = false;
                 const out = text.trim();
                 if (out !== "ok") {
-                    root.error = out || "hyprctl eval failed";
+                    root.error = out || I18n.tr("hyprctl eval failed");
                     console.warn("[Monitors]", root.error);
                     // Part of it may have applied: back to the saved file
                     Quickshell.execDetached(["bash", root.script, "revert"]);
@@ -312,7 +315,7 @@ Singleton {
                 root.busy = false;
                 const out = text.trim();
                 if (out !== "ok") {
-                    root.error = out || "writing monitors.lua failed";
+                    root.error = out || I18n.tr("writing monitors.lua failed");
                     console.warn("[Monitors]", root.error);
                     StateService.set("monitors.rules", root._previousRules);
                     // The trial's rules are still live: back to the saved file

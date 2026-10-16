@@ -18,12 +18,12 @@ ColumnLayout {
     HyprlandErrorGroup {}
 
     SettingsGroup {
-        title: "Monitors"
+        title: I18n.tr("Monitors")
 
         SettingRow {
             visible: WorkspacesService.monitors.length === 0
-            label: "No monitors yet"
-            description: "Hyprland lists them here once conf/workspaces.lua has loaded"
+            label: I18n.tr("No monitors yet")
+            description: I18n.tr("Hyprland lists them here once conf/workspaces.lua has loaded")
         }
 
         // In block order: the first one holds 1–99, the next 101–199...
@@ -43,7 +43,7 @@ ColumnLayout {
                 readonly property int buttonSize: Config.fontSizeIconSmall + Config.padding * 2
 
                 label: WorkspacesService.labelOf(modelData)
-                description: connected ? modelData.connected + " · workspaces " + range : lidOff ? "Screen off (lid closed) · workspaces " + range : "Disconnected (last on " + modelData.name + ") · workspaces " + range
+                description: connected ? I18n.tr("%1 · workspaces %2", modelData.connected, range) : lidOff ? I18n.tr("Screen off (lid closed) · workspaces %1", range) : I18n.tr("Disconnected (last on %1) · workspaces %2", modelData.name, range)
 
                 // md-laptop / md-monitor / md-monitor_off
                 leading: Text {
@@ -75,7 +75,7 @@ ColumnLayout {
                 ActionButton {
                     visible: !monitorRow.connected && !monitorRow.lidOff
                     icon: "\u{f0156}"
-                    text: "Forget"
+                    text: I18n.tr("Forget")
                     size: monitorRow.buttonSize
                     baseColor: monitorRow.controlColor
                     onClicked: WorkspacesService.forget(monitorRow.modelData.slot)
@@ -85,7 +85,7 @@ ColumnLayout {
 
         SettingRow {
             visible: WorkspacesService.error !== ""
-            label: "Hyprland rejected the change"
+            label: I18n.tr("Hyprland rejected the change")
             description: WorkspacesService.error
 
             // md-alert
@@ -99,29 +99,29 @@ ColumnLayout {
     }
 
     SettingsGroup {
-        title: "Next & previous"
+        title: I18n.tr("Next & previous")
 
         ToggleRow {
-            label: "Skip empty workspaces"
-            description: "Only stop at workspaces with windows, with the keys and the mouse wheel over the bar"
+            label: I18n.tr("Skip empty workspaces")
+            description: I18n.tr("Only stop at workspaces with windows, with the keys and the mouse wheel over the bar")
             path: "workspaces.skipEmpty"
         }
 
         ToggleRow {
-            label: "Go around"
-            description: StateService.get("workspaces.skipEmpty", false) ? "From the last busy workspace back to the first, and the other way" : "After the last busy workspace and one empty one, back to the first, and the other way"
+            label: I18n.tr("Go around")
+            description: StateService.get("workspaces.skipEmpty", false) ? I18n.tr("From the last busy workspace back to the first, and the other way") : I18n.tr("After the last busy workspace and one empty one, back to the first, and the other way")
             path: "workspaces.wrap"
         }
     }
 
     // Only with a laptop screen among the known monitors
     SettingsGroup {
-        title: "Laptop lid"
+        title: I18n.tr("Laptop lid")
         visible: WorkspacesService.monitors.some(m => WorkspacesService.isInternal(m))
 
         ToggleRow {
-            label: "Turn the screen off when closed"
-            description: "While another monitor is connected: the laptop's workspaces move there and come back when you open the lid"
+            label: I18n.tr("Turn the screen off when closed")
+            description: I18n.tr("While another monitor is connected: the laptop's workspaces move there and come back when you open the lid")
             path: "workspaces.lidOff"
         }
     }

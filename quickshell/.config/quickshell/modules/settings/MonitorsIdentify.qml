@@ -84,7 +84,7 @@ Scope {
 
                     Text {
                         Layout.alignment: Qt.AlignHCenter
-                        text: window.monitor ? Lib.labelFor(window.monitor) : ""
+                        text: window.monitor ? I18n.translate(Lib.labelFor(window.monitor)) : ""
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeLarge
                         font.bold: true

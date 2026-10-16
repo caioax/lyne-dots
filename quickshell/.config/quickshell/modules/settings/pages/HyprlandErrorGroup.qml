@@ -9,7 +9,7 @@ SettingsGroup {
     visible: HyprlandSettingsService.error !== ""
 
     SettingRow {
-        label: "Hyprland rejected a setting"
+        label: I18n.tr("Hyprland rejected a setting")
         description: HyprlandSettingsService.error
 
         // md-alert

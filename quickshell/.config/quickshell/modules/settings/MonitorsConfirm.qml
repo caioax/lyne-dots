@@ -117,7 +117,7 @@ Scope {
 
                             Text {
                                 Layout.fillWidth: true
-                                text: "Keep these display settings?"
+                                text: I18n.tr("Keep these display settings?")
                                 elide: Text.ElideRight
                                 font.family: Config.font
                                 font.pixelSize: Config.fontSizeLarge
@@ -127,7 +127,7 @@ Scope {
 
                             Text {
                                 Layout.fillWidth: true
-                                text: "Going back to the previous ones in " + MonitorsService.trialRemaining + " s"
+                                text: I18n.tr("Going back to the previous ones in %1 s", MonitorsService.trialRemaining)
                                 elide: Text.ElideRight
                                 font.family: Config.font
                                 font.pixelSize: Config.fontSizeNormal
@@ -164,13 +164,13 @@ Scope {
                         KeyHint {
                             visible: window.hasKeyboard
                             keys: "Esc"
-                            label: "revert"
+                            label: I18n.tr("revert")
                         }
 
                         KeyHint {
                             visible: window.hasKeyboard
                             keys: "Enter"
-                            label: "keep"
+                            label: I18n.tr("keep")
                         }
 
                         Item {
@@ -178,14 +178,14 @@ Scope {
                         }
 
                         ActionButton {
-                            text: "Revert"
+                            text: I18n.tr("Revert")
                             size: Config.fontSizeIconSmall + Config.padding * 2
                             baseColor: Config.surface1Color
                             onClicked: MonitorsService.revert("")
                         }
 
                         ActionButton {
-                            text: "Keep"
+                            text: I18n.tr("Keep")
                             size: Config.fontSizeIconSmall + Config.padding * 2
                             baseColor: Config.accentColor
                             hoverColor: Qt.lighter(Config.accentColor, 1.15)

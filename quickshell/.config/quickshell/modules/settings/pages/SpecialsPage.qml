@@ -86,36 +86,36 @@ ColumnLayout {
                 return [];
             const list = [
                 {
-                    label: "Edit",
+                    label: I18n.tr("Edit"),
                     icon: "\u{f03eb}",
                     action: "edit"
                 },
                 {
-                    label: "Change move shortcut",
+                    label: I18n.tr("Change move shortcut"),
                     icon: "\u{f030c}",
                     action: "record-move"
                 }
             ];
             if (target.item.command !== "")
                 list.push({
-                    label: "Start in the background",
+                    label: I18n.tr("Start in the background"),
                     icon: "\u{f040a}",
                     action: "start"
                 });
             if (target.index > 0)
                 list.push({
-                    label: "Move up",
+                    label: I18n.tr("Move up"),
                     icon: "\u{f005d}",
                     action: "up"
                 });
             if (target.index < SpecialsService.list.length - 1)
                 list.push({
-                    label: "Move down",
+                    label: I18n.tr("Move down"),
                     icon: "\u{f0045}",
                     action: "down"
                 });
             list.push({
-                label: "Delete",
+                label: I18n.tr("Delete"),
                 icon: "\u{f09e7}",
                 action: "delete",
                 danger: true
@@ -154,7 +154,7 @@ ColumnLayout {
 
         Text {
             Layout.fillWidth: true
-            text: "Each one shows over the current workspace. Its app opens the first time it's shown"
+            text: I18n.tr("Each one shows over the current workspace. Its app opens the first time it's shown")
             wrapMode: Text.WordWrap
             font.family: Config.font
             font.pixelSize: Config.fontSizeSmall
@@ -165,7 +165,7 @@ ColumnLayout {
         ActionButton {
             size: Config.fontSizeIconSmall * 2
             icon: "\u{f0415}"
-            text: "Add special"
+            text: I18n.tr("Add special")
             baseColor: Config.accentColor
             hoverColor: Qt.lighter(Config.accentColor, 1.1)
             textColor: Config.textReverseColor
@@ -177,8 +177,8 @@ ColumnLayout {
         visible: SpecialsService.list.length === 0
 
         SettingRow {
-            label: "No special workspaces"
-            description: "Add one for an app you want a shortcut away, like WhatsApp or a music player"
+            label: I18n.tr("No special workspaces")
+            description: I18n.tr("Add one for an app you want a shortcut away, like WhatsApp or a music player")
         }
     }
 
@@ -206,11 +206,11 @@ ColumnLayout {
                 descriptionColor: group.missing || group.conflicts.length > 0 ? Config.warningColor : Config.subtextColor
                 description: {
                     if (group.missing)
-                        return SpecialsService.binaryOf(group.modelData.command) + " isn't installed" + (group.preset?.pkg ? " (package " + group.preset.pkg + ")" : "");
+                        return group.preset?.pkg ? I18n.tr("%1 isn't installed (package %2)", SpecialsService.binaryOf(group.modelData.command), group.preset.pkg) : I18n.tr("%1 isn't installed", SpecialsService.binaryOf(group.modelData.command));
                     if (group.conflicts.length > 0)
-                        return "Also used by " + group.conflicts.join(", ");
-                    const app = group.modelData.command || "No app, an empty scratchpad";
-                    return app + (group.moveKeys ? "  ·  " + group.moveKeys + " moves a window here" : "");
+                        return I18n.tr("Also used by %1", group.conflicts.join(", "));
+                    const app = group.modelData.command || I18n.tr("No app, an empty scratchpad");
+                    return group.moveKeys ? I18n.tr("%1  ·  %2 moves a window here", app, group.moveKeys) : app;
                 }
 
                 leading: Rectangle {
@@ -261,8 +261,8 @@ ColumnLayout {
 
             ToggleRow {
                 visible: group.modelData.command !== ""
-                label: "Start at login"
-                description: "Opens the app hidden once notifications are ready, so it notifies before the first toggle"
+                label: I18n.tr("Start at login")
+                description: I18n.tr("Opens the app hidden once notifications are ready, so it notifies before the first toggle")
                 checked: group.modelData.autostart === true
                 onToggled: value => SpecialsService.setAutostart(group.index, value)
             }

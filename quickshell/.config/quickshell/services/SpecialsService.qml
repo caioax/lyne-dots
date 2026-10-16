@@ -53,7 +53,7 @@ Singleton {
             // default; lyne whatsapp warns when chromium is missing)
             key: "whatsapp-web",
             label: "WhatsApp Web",
-            category: "Chat",
+            category: I18n.tr("Chat"),
             name: "WhatsApp",
             icon: "\u{f05a3}",
             command: "lyne whatsapp",
@@ -63,7 +63,7 @@ Singleton {
         {
             key: "zapzap",
             label: "ZapZap",
-            category: "Chat",
+            category: I18n.tr("Chat"),
             name: "WhatsApp",
             icon: "\u{f05a3}",
             command: "zapzap",
@@ -73,7 +73,7 @@ Singleton {
         {
             key: "telegram",
             label: "Telegram",
-            category: "Chat",
+            category: I18n.tr("Chat"),
             name: "Telegram",
             icon: "\u{f2c6}",
             command: "Telegram",
@@ -83,7 +83,7 @@ Singleton {
         {
             key: "vesktop",
             label: "Vesktop",
-            category: "Chat",
+            category: I18n.tr("Chat"),
             name: "Discord",
             icon: "\u{f066f}",
             command: "vesktop",
@@ -93,7 +93,7 @@ Singleton {
         {
             key: "spotify",
             label: "Spotify",
-            category: "Music",
+            category: I18n.tr("Music"),
             name: "Music",
             icon: "\u{f04c7}",
             command: "spotify",
@@ -103,7 +103,7 @@ Singleton {
         {
             key: "spotube",
             label: "Spotube",
-            category: "Music",
+            category: I18n.tr("Music"),
             name: "Music",
             icon: "\u{f075a}",
             command: "spotube",
@@ -113,7 +113,7 @@ Singleton {
         {
             key: "youtube-music",
             label: "YouTube Music",
-            category: "Music",
+            category: I18n.tr("Music"),
             name: "Music",
             icon: "\u{f05c3}",
             command: "youtube-music",
@@ -123,7 +123,7 @@ Singleton {
         {
             key: "feishin",
             label: "Feishin",
-            category: "Music",
+            category: I18n.tr("Music"),
             name: "Music",
             icon: "\u{f075a}",
             command: "feishin",
@@ -133,7 +133,7 @@ Singleton {
         {
             key: "tidal",
             label: "Tidal",
-            category: "Music",
+            category: I18n.tr("Music"),
             name: "Music",
             icon: "\u{f075a}",
             command: "tidal-hifi",
@@ -143,7 +143,7 @@ Singleton {
         {
             key: "scratchpad",
             label: "Scratchpad",
-            category: "Other",
+            category: I18n.tr("Other"),
             name: "Scratchpad",
             icon: "\u{f0018}",
             command: "",

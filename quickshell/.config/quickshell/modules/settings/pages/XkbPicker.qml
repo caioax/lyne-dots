@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
+import qs.services
 import "../../../components/"
 
 // Searchable list for the Keyboard page: layouts and variants, keyboard
@@ -13,7 +14,7 @@ Popup {
     id: root
 
     property string title
-    property string placeholder: "Search"
+    property string placeholder: I18n.tr("Search")
     property var items: []
     // Keys marked as chosen
     property var selected: []
@@ -225,7 +226,7 @@ Popup {
             Text {
                 anchors.centerIn: parent
                 visible: list.count === 0
-                text: "Nothing matches \"" + root.query + "\""
+                text: I18n.tr("Nothing matches “%1”", root.query)
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
                 color: Config.subtextColor
@@ -241,7 +242,7 @@ Popup {
             }
 
             ActionButton {
-                text: root.multi ? "Done" : "Cancel"
+                text: root.multi ? I18n.tr("Done") : I18n.tr("Cancel")
                 onClicked: root.close()
             }
         }

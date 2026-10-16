@@ -156,6 +156,23 @@ test("lexer: regex literals with quotes, parens or // inside don't derail it", (
     assert.equal(bare.callee, "");
 });
 
+test("extractor: keybind groups and descriptions from keybinds.lua, not the built ones", t => {
+    const dir = fakeShell(t, {
+        "A.qml": "text: I18n.tr(\"Apps\")",
+        "lua/keybinds.lua": [
+            "bind(\"terminal\",     \"Apps\", \"Terminal\",     mainMod .. \" + return\", open(\"terminal\"))",
+            "    bind(\"workspace-\" .. i, \"Workspaces\", \"Go to workspace \" .. i, keys, fn)",
+            "-- bind(\"commented\", \"Nope\", \"Nope\")"
+        ].join("\n")
+    });
+    process.env.LYNE_I18N_LUA = path.join(dir, "lua");
+    t.after(() => delete process.env.LYNE_I18N_LUA);
+    const found = tool.extract(dir);
+    assert.deepEqual(found.errors, []);
+    assert.deepEqual([...found.strings.keys()], ["Apps", "Terminal"]);
+    assert.equal(found.strings.get("Apps").refs.length, 2);
+});
+
 test("extractor: non-literal and concatenated arguments are errors", t => {
     const dir = fakeShell(t, {
         "A.qml": [

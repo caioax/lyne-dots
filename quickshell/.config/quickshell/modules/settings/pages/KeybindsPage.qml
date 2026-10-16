@@ -112,17 +112,17 @@ ColumnLayout {
             if (isCustom)
                 return [
                     {
-                        label: "Change shortcut",
+                        label: I18n.tr("Change shortcut"),
                         icon: "\u{f030c}",
                         action: "record"
                     },
                     {
-                        label: "Edit",
+                        label: I18n.tr("Edit"),
                         icon: "\u{f03eb}",
                         action: "edit"
                     },
                     {
-                        label: "Delete",
+                        label: I18n.tr("Delete"),
                         icon: "\u{f09e7}",
                         action: "delete",
                         danger: true
@@ -130,20 +130,20 @@ ColumnLayout {
                 ];
             const list = [
                 {
-                    label: "Change shortcut",
+                    label: I18n.tr("Change shortcut"),
                     icon: "\u{f030c}",
                     action: "record"
                 }
             ];
             if (target.keys !== "")
                 list.push({
-                    label: "Disable",
+                    label: I18n.tr("Disable"),
                     icon: "\u{f0156}",
                     action: "disable"
                 });
             if (target.changed)
                 list.push({
-                    label: "Reset to " + (target.defaultKeys || "none"),
+                    label: I18n.tr("Reset to %1", target.defaultKeys || I18n.tr("none")),
                     icon: "\u{f099b}",
                     action: "reset"
                 });
@@ -181,7 +181,7 @@ ColumnLayout {
 
             Layout.fillWidth: true
             color: Config.cardColor
-            placeholder: "Search actions or keys"
+            placeholder: I18n.tr("Search actions or keys")
             onTextChanged: root.query = text
         }
 
@@ -190,7 +190,7 @@ ColumnLayout {
             visible: root.hasChanges
             size: Config.fontSizeIconSmall * 2
             icon: "\u{f099b}"
-            text: "Reset all"
+            text: I18n.tr("Reset all")
             baseColor: Config.surface0Color
             onClicked: KeybindsService.resetAll()
         }
@@ -199,7 +199,7 @@ ColumnLayout {
         ActionButton {
             size: Config.fontSizeIconSmall * 2
             icon: "\u{f0415}"
-            text: "Add shortcut"
+            text: I18n.tr("Add shortcut")
             baseColor: Config.accentColor
             hoverColor: Qt.lighter(Config.accentColor, 1.1)
             textColor: Config.textReverseColor
@@ -212,25 +212,25 @@ ColumnLayout {
         visible: KeybindsService.catalog.length === 0
 
         SettingRow {
-            label: "No keybinds found"
-            description: "Hyprland writes them to " + KeybindsService.catalogPath + " when it loads hypr/conf/keybinds.lua. Check hyprctl configerrors"
+            label: I18n.tr("No keybinds found")
+            description: I18n.tr("Hyprland writes them to %1 when it loads hypr/conf/keybinds.lua. Check hyprctl configerrors", KeybindsService.catalogPath)
         }
     }
 
     // ================= NAVIGATION =================
     SettingsGroup {
-        title: "Navigation"
+        title: I18n.tr("Navigation")
         visible: KeybindsService.catalog.length > 0 && root.matches("Navigation keys vim arrows", "")
 
         // Label repeated here for the Settings search (it reads the page source)
         NavKeysPicker {
-            label: "Navigation keys"
+            label: I18n.tr("Navigation keys")
         }
     }
 
     // ================= CUSTOM =================
     SettingsGroup {
-        title: "Custom"
+        title: I18n.tr("Custom")
         visible: KeybindsService.custom.length > 0
 
         Repeater {
@@ -263,7 +263,7 @@ ColumnLayout {
             required property string modelData
             readonly property var groupBinds: KeybindsService.binds.filter(b => b.group === modelData && root.matches(b.description, b.keys))
 
-            title: modelData
+            title: I18n.translate(modelData)
             visible: groupBinds.length > 0
 
             Repeater {
@@ -299,11 +299,11 @@ ColumnLayout {
         descriptionColor: conflicts.length > 0 ? Config.warningColor : Config.subtextColor
         description: {
             if (conflicts.length > 0)
-                return "Also used by " + conflicts.join(", ");
+                return I18n.tr("Also used by %1", conflicts.join(", "));
             if (command !== "")
                 return command;
             if (changed)
-                return "Default: " + (defaultKeys || "none");
+                return I18n.tr("Default: %1", defaultKeys || I18n.tr("none"));
             return "";
         }
 

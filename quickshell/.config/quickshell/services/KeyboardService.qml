@@ -76,9 +76,9 @@ Singleton {
             caps: "Caps Lock",
             compose: "Compose",
             ctrl: "Ctrl",
-            grp: "Switch layout",
-            lv3: "3rd level",
-            altwin: "Alt and Super"
+            grp: I18n.tr("Switch layout"),
+            lv3: I18n.tr("3rd level"),
+            altwin: I18n.tr("Alt and Super")
         })
 
     function optionSummary(option: string): string {
@@ -477,7 +477,7 @@ Singleton {
                 } catch (e) {
                     root.legacy = {
                         ok: false,
-                        error: "Hyprland couldn't read it (config not reloaded yet?)",
+                        error: I18n.tr("Hyprland couldn't read it (config not reloaded yet?)"),
                         devices: [],
                         notes: [],
                         other: 0

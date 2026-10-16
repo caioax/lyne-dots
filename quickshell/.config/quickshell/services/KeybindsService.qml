@@ -22,13 +22,16 @@ Singleton {
     readonly property var overrides: StateService.get("keybinds.overrides", [])
     readonly property var custom: StateService.get("keybinds.custom", [])
 
-    // Catalog with the user's keys: [{ id, group, description, keys, defaultKeys, changed, preset }]
+    // Catalog with the user's keys: [{ id, group, groupLabel, description,
+    // keys, defaultKeys, changed, preset }]; `group` is the English one
+    // (a key), groupLabel and description are in the shell's language
     readonly property var binds: catalog.map(b => {
         const o = overrides.find(x => x.id === b.id);
         return {
             id: b.id,
             group: b.group,
-            description: b.description,
+            groupLabel: I18n.translate(b.group),
+            description: describe(b),
             keys: o ? o.keys : b.keys,
             defaultKeys: b.keys,
             changed: o !== undefined,
@@ -37,21 +40,38 @@ Singleton {
     })
     readonly property var groups: [...new Set(catalog.map(b => b.group))]
 
+    // A bind's description in the shell's language. The Lua side writes them
+    // in English (hypr/conf/keybinds.lua, read by tools/i18n.js); the ones
+    // built from a number or a name there are rebuilt here
+    function describe(b: var): string {
+        let m = b.id.match(/^workspace-(\d+)$/);
+        if (m)
+            return I18n.tr("Go to workspace %1", m[1]);
+        m = b.id.match(/^move-to-workspace-(\d+)$/);
+        if (m)
+            return I18n.tr("Move window to workspace %1", m[1]);
+        if (b.id.startsWith("special-") && b.description.startsWith("Toggle "))
+            return I18n.tr("Toggle %1", b.description.slice(7));
+        if (b.id.startsWith("move-to-") && b.description.startsWith("Move window to "))
+            return I18n.tr("Move window to %1", b.description.slice(15));
+        return I18n.translate(b.description);
+    }
+
     // Navigation keys preset (hypr/conf/bind_presets.lua): the starting keys
     // for focus, moving, resizing and workspace steps. It sets their default
     // keys, so the overrides stay on top
     readonly property string preset: StateService.get("keybinds.preset", "vim")
     readonly property var presets: [
         {
-            label: "Vim",
+            label: I18n.tr("Vim"),
             value: "vim"
         },
         {
-            label: "Arrows",
+            label: I18n.tr("Arrows"),
             value: "arrows"
         },
         {
-            label: "Both",
+            label: I18n.tr("Both"),
             value: "both"
         }
     ]
@@ -255,7 +275,7 @@ Singleton {
                         const keys = [...mods, b.key].join(" + ");
                         return {
                             combo: root.normalize(keys),
-                            label: "a bind in hypr/local (" + keys + ")"
+                            label: I18n.tr("a bind in hypr/local (%1)", keys)
                         };
                     });
                 } catch (e) {

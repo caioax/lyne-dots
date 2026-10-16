@@ -12,15 +12,15 @@ TemplatePicker {
 
     readonly property var conflicts: KeybindsService.presetConflicts
 
-    label: "Navigation keys"
+    label: I18n.tr("Navigation keys")
     description: {
         if (conflicts.length > 0)
-            return "Also used by other shortcuts: " + conflicts.map(c => c.description + " (" + c.others.join(", ") + ")").join("; ");
-        return ({
-                vim: "Super + H J K L move the focus, with Shift the window, with Alt its size; Super + Ctrl + H / L switch workspaces",
-                arrows: "Super + arrow keys move the focus, with Shift the window, with Alt its size; Super + Ctrl + ← / → switch workspaces",
-                both: "H J K L and the arrow keys both work, with the same modifiers"
-            })[value] + ". Keys you changed yourself stay";
+            return I18n.tr("Also used by other shortcuts: %1", conflicts.map(c => c.description + " (" + c.others.join(", ") + ")").join("; "));
+        return I18n.tr("%1. Keys you changed yourself stay", ({
+                vim: I18n.tr("Super + H J K L move the focus, with Shift the window, with Alt its size; Super + Ctrl + H / L switch workspaces"),
+                arrows: I18n.tr("Super + arrow keys move the focus, with Shift the window, with Alt its size; Super + Ctrl + ← / → switch workspaces"),
+                both: I18n.tr("H J K L and the arrow keys both work, with the same modifiers")
+            })[value]);
     }
     descriptionColor: conflicts.length > 0 ? Config.warningColor : Config.subtextColor
     path: "keybinds.preset"

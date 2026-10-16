@@ -58,10 +58,10 @@ Popup {
     AppPicker {
         id: picker
 
-        title: "Open an app"
+        title: I18n.tr("Open an app")
         onPicked: entry => {
             if (nameField.text.trim() === "")
-                nameField.text = "Open " + entry.name;
+                nameField.text = I18n.tr("Open %1", entry.name);
             commandField.text = AppsService.shellCommandOf(entry);
         }
     }
@@ -89,7 +89,7 @@ Popup {
         spacing: Config.spacing + Config.padding
 
         Text {
-            text: root.index >= 0 ? "Edit shortcut" : "New shortcut"
+            text: root.index >= 0 ? I18n.tr("Edit shortcut") : I18n.tr("New shortcut")
             font.family: Config.font
             font.pixelSize: Config.fontSizeLarge
             font.bold: true
@@ -98,8 +98,8 @@ Popup {
 
         Field {
             id: nameField
-            label: "Name"
-            placeholder: "Open btop"
+            label: I18n.tr("Name")
+            placeholder: I18n.tr("Open btop")
         }
 
         RowLayout {
@@ -108,8 +108,8 @@ Popup {
 
             Field {
                 id: commandField
-                label: "Command"
-                placeholder: "Any shell command, or pick an app"
+                label: I18n.tr("Command")
+                placeholder: I18n.tr("Any shell command, or pick an app")
                 onAccepted: root.save()
             }
 
@@ -118,7 +118,7 @@ Popup {
                 Layout.alignment: Qt.AlignBottom
                 size: Config.fontSizeIconSmall + Config.padding * 3
                 icon: "\u{f003b}"
-                text: "Pick app"
+                text: I18n.tr("Pick app")
                 onClicked: picker.openWith("")
             }
         }
@@ -128,7 +128,7 @@ Popup {
             spacing: Config.padding
 
             Text {
-                text: "Shortcut"
+                text: I18n.tr("Shortcut")
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
                 font.bold: true
@@ -138,7 +138,7 @@ Popup {
             KeyCombo {
                 Layout.fillWidth: true
                 keys: root.keys
-                emptyText: "Click to record"
+                emptyText: I18n.tr("Click to record")
                 recording: root.recording
                 onRecordRequested: {
                     root.recording = true;
@@ -153,7 +153,7 @@ Popup {
             Text {
                 visible: root.conflicts.length > 0
                 Layout.fillWidth: true
-                text: "Also used by " + root.conflicts.join(", ")
+                text: I18n.tr("Also used by %1", root.conflicts.join(", "))
                 wrapMode: Text.WordWrap
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
@@ -171,13 +171,13 @@ Popup {
             }
 
             ActionButton {
-                text: "Cancel"
+                text: I18n.tr("Cancel")
                 onClicked: root.close()
             }
 
             ActionButton {
                 icon: "\u{f012c}"
-                text: "Save"
+                text: I18n.tr("Save")
                 opacity: root.valid ? 1 : 0.4
                 baseColor: Config.accentColor
                 hoverColor: Qt.lighter(Config.accentColor, 1.1)

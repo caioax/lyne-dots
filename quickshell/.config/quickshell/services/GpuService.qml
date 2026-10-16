@@ -66,15 +66,16 @@ Singleton {
         if (!gpu)
             return "";
         const arch = gpu.arch === "ada" ? "Ada Lovelace" : gpu.arch.charAt(0).toUpperCase() + gpu.arch.slice(1);
-        return gpu.kind + (gpu.arch !== "" ? ", " + arch : "");
+        const kind = gpu.kind === "integrated" ? I18n.tr("integrated") : gpu.kind === "dedicated" ? I18n.tr("dedicated") : gpu.kind;
+        return gpu.arch !== "" ? kind + ", " + arch : kind;
     }
 
     // "Intel renders, NVIDIA also used"
     function orderLabel(order: var): string {
         if (order.length === 0)
-            return "Automatic (the GPU with the built-in screen renders)";
+            return I18n.tr("Automatic (the GPU with the built-in screen renders)");
         const names = order.map(pci => gpuAt(pci)?.brand ?? pci);
-        return names[0] + " renders" + (names.length > 1 ? ", " + names.slice(1).join(", ") + " also used" : " alone");
+        return names.length > 1 ? I18n.tr("%1 renders, %2 also used", names[0], names.slice(1).join(", ")) : I18n.tr("%1 renders alone", names[0]);
     }
 
     function refresh() {

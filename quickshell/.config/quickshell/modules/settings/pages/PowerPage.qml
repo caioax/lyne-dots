@@ -64,7 +64,7 @@ ColumnLayout {
             segmentWidth: Config.fontSizeNormal * 4
             options: [
                 {
-                    label: I18n.tr("Off"),
+                    label: I18n.trc("countdown", "Off"),
                     value: 0
                 },
                 {
