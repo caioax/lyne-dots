@@ -4,12 +4,14 @@ import QtQuick.Layouts
 import qs.config
 
 // Row of equal-width tabs ({ label, icon }) over a divider, with an
-// indicator line sliding under the current one. The wheel steps through them
+// indicator line sliding under the current one (`flipped`: over them, for a
+// tab bar below its pages). The wheel steps through them
 Item {
     id: root
 
     required property var tabs
     property int currentIndex: 0
+    property bool flipped: false
 
     signal selected(int index)
 
@@ -31,6 +33,7 @@ Item {
 
     Row {
         id: row
+        y: root.flipped ? root.indicatorHeight : 0
         width: parent.width
         height: parent.height - root.indicatorHeight
 
@@ -110,7 +113,7 @@ Item {
     }
 
     Rectangle {
-        anchors.bottom: parent.bottom
+        y: root.flipped ? 0 : parent.height - height
         width: parent.width
         height: 1
         color: Config.surface1Color
@@ -125,7 +128,7 @@ Item {
         }
         readonly property real tabContentWidth: tab?.contentWidth ?? root.tabWidth / 2
 
-        anchors.bottom: parent.bottom
+        y: root.flipped ? 0 : parent.height - height
         x: root.tabWidth * root.currentIndex + (root.tabWidth - width) / 2
         width: tabContentWidth + Config.padding * 2
         height: root.indicatorHeight

@@ -69,12 +69,17 @@ QsPopupWindow {
         }
     }
 
-    ColumnLayout {
+    // A one-column grid so the tabs can go below the pages: with the bar at
+    // the bottom they stay next to it while the pages change height
+    GridLayout {
         anchors.fill: parent
-        spacing: Config.spacing
+        columns: 1
+        rowSpacing: Config.spacing
 
         QsTabBar {
             id: tabBar
+            Layout.row: Config.barOnBottom ? 1 : 0
+            flipped: Config.barOnBottom
             tabs: DashboardService.tabs
             currentIndex: DashboardService.tabIndex
             onSelected: index => DashboardService.tab = DashboardService.tabs[index].id
@@ -88,6 +93,7 @@ QsPopupWindow {
                 return repeater.itemAt(DashboardService.tabIndex)?.implicitHeight ?? 0;
             }
 
+            Layout.row: Config.barOnBottom ? 0 : 1
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
