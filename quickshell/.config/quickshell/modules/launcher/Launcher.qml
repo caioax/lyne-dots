@@ -409,23 +409,19 @@ PanelWindow {
 
             // Row of each part, top to bottom
             readonly property var rowOf: root.reversed ? ({
-                    footer: 0,
-                    separator: 1,
-                    resultsLabel: 2,
-                    results: 3,
-                    favoritesLabel: 4,
-                    favorites: 5,
-                    filters: 6,
-                    search: 7
+                    resultsLabel: 0,
+                    results: 1,
+                    favoritesLabel: 2,
+                    favorites: 3,
+                    filters: 4,
+                    search: 5
                 }) : ({
                     search: 0,
                     filters: 1,
                     favoritesLabel: 2,
                     favorites: 3,
                     resultsLabel: 4,
-                    results: 5,
-                    separator: 6,
-                    footer: 7
+                    results: 5
                 })
 
             columns: 1
@@ -535,86 +531,6 @@ PanelWindow {
                 Layout.preferredHeight: fills ? -1 : shownHeight
                 onLaunched: panel.forceActiveFocus()
                 onMenuRequested: (anchor, app) => menu.openAt(anchor, app)
-            }
-
-            Rectangle {
-                Layout.row: column.rowOf.separator
-                Layout.fillWidth: true
-                implicitHeight: 1
-                color: Config.surface1Color
-            }
-
-            RowLayout {
-                id: footer
-
-                Layout.row: column.rowOf.footer
-                Layout.leftMargin: Config.padding
-                Layout.rightMargin: Config.padding
-                Layout.alignment: root.grid ? Qt.AlignHCenter : Qt.AlignLeft
-                spacing: Config.spacing * 2
-
-                // Hints that don't fit hide, least important first, instead
-                // of widening the whole panel (narrow templates)
-                readonly property real room: column.width - Config.padding * 2
-                readonly property var shown: {
-                    const byImportance = [closeHint, openHint, deleteHint, navigateHint, modeHint, filterHint];
-                    const list = [];
-                    let used = 0;
-                    for (const hint of byImportance) {
-                        if (!hint.wanted)
-                            continue;
-                        const width = hint.implicitWidth + (list.length > 0 ? spacing : 0);
-                        if (used + width > room)
-                            break;
-                        used += width;
-                        list.push(hint);
-                    }
-                    return list;
-                }
-
-                KeyHint {
-                    id: navigateHint
-                    visible: footer.shown.includes(this)
-                    keys: root.tileResults || favoritesGrid.count > 0 ? "↑↓←→" : "↑↓"
-                    label: I18n.trc("key hint", "navigate")
-                }
-
-                KeyHint {
-                    id: openHint
-                    visible: footer.shown.includes(this)
-                    keys: "⏎"
-                    label: root.clipboard ? I18n.trc("key hint", "copy") : I18n.trc("key hint", "open")
-                }
-
-                KeyHint {
-                    id: deleteHint
-                    visible: footer.shown.includes(this)
-                    wanted: root.clipboard
-                    keys: "del"
-                    label: I18n.trc("key hint", "delete")
-                }
-
-                KeyHint {
-                    id: filterHint
-                    visible: footer.shown.includes(this)
-                    wanted: root.clipboard
-                    keys: "alt 1-4"
-                    label: I18n.trc("key hint", "filter")
-                }
-
-                KeyHint {
-                    id: modeHint
-                    visible: footer.shown.includes(this)
-                    keys: "ctrl ⇥"
-                    label: I18n.trc("key hint", "mode")
-                }
-
-                KeyHint {
-                    id: closeHint
-                    visible: footer.shown.includes(this)
-                    keys: "esc"
-                    label: LauncherService.term !== "" ? I18n.trc("key hint", "clear") : I18n.trc("key hint", "close")
-                }
             }
         }
     }

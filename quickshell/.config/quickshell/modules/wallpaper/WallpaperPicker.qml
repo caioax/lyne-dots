@@ -405,11 +405,12 @@ PanelWindow {
                 }
             }
 
-            // The selected wallpaper's name, then the keys
+            // The selected wallpaper's name, its height kept while none is
             RowLayout {
                 id: footer
 
                 Layout.fillWidth: true
+                Layout.minimumHeight: nameText.implicitHeight
                 Layout.leftMargin: Config.padding
                 Layout.rightMargin: Config.padding
                 spacing: Config.spacing * 2
@@ -422,6 +423,7 @@ PanelWindow {
                     visible: footer.path !== ""
 
                     Text {
+                        id: nameText
                         Layout.maximumWidth: Config.fontSizeNormal * 24
                         text: WallpaperPickerService.highlightedName(footer.path, Config.accentColor)
                         textFormat: Text.StyledText
@@ -456,26 +458,6 @@ PanelWindow {
                 Item {
                     Layout.fillWidth: true
                     visible: footer.path === ""
-                }
-
-                KeyHint {
-                    keys: "←→"
-                    label: I18n.trc("key hint", "navigate")
-                }
-
-                KeyHint {
-                    keys: "⏎"
-                    label: I18n.trc("key hint", "apply")
-                }
-
-                KeyHint {
-                    keys: "alt 1-" + root.filters.length
-                    label: I18n.trc("key hint", "filter")
-                }
-
-                KeyHint {
-                    keys: "esc"
-                    label: WallpaperPickerService.query !== "" ? I18n.trc("key hint", "clear") : I18n.trc("key hint", "close")
                 }
             }
         }

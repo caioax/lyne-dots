@@ -1632,26 +1632,17 @@
             "dddd, d MMM · HH:mm": "dddd, d 'de' MMM · HH:mm"
         },
         "key hint": {
-            "navigate": "navegar",
-            "copy": "copiar",
-            "open": "abrir",
-            "delete": "excluir",
-            "filter": "filtrar",
-            "mode": "modo",
-            "clear": "limpar",
-            "close": "fechar",
             "now": "agora",
             "cancel": "cancelar",
-            "move": "mover",
-            "run": "executar",
-            "direct": "direto",
             "select": "selecionar",
             "pick": "escolher",
+            "copy": "copiar",
+            "move": "mover",
             "capture": "capturar",
             "edit": "editar",
             "text": "texto",
             "resize": "redimensionar",
-            "apply": "aplicar"
+            "mode": "modo"
         },
         "network": {
             "Open": "Aberta",

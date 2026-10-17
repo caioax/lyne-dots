@@ -52,6 +52,7 @@ Warning: modules/dashboard/DashboardWindow.qml: Member "name" not found on type 
 Warning: modules/dashboard/DashboardWindow.qml: Redundant optional chaining for lookup on non-voidable and non-nullable type QuickshellScreenInfo [redundant-optional-chaining]
 Warning: modules/dashboard/MediaTab.qml: Id for object MediaProgress shadows property "progress". Rename one or the other. [id-shadows-member]
 Warning: modules/dashboard/MediaTab.qml: Note: Id defined here [id-shadows-member]
+Warning: modules/launcher/Launcher.qml: Type PanelWindow is not creatable. [uncreatable-type]
 Warning: modules/lock/LockInput.qml: Member "pop" not found on type "QQuickItem" [missing-property]
 Warning: modules/lock/LockScreen.qml: Member "name" not found on type "QuickshellScreenInfo" [missing-property]
 Warning: modules/lock/LockScreen.qml: Member "typing" not found on type "QObject" [missing-property]
@@ -140,7 +141,6 @@ Warning: services/ShortcutService.qml: Type ShortcutService not declared as sing
 Warning: services/ThemeService.qml: Type ThemeService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/ThemeService.qml: var declaration in block scope is hoisted to function scope
 Warning: services/TimeService.qml: Member "formatDate" not found on type "Qt" [missing-property]
-Warning: services/TimeService.qml: Member "formatDateTime" not found on type "Qt" [missing-property]
 Warning: services/TimeService.qml: Type TimeService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/TrayService.qml: Type TrayService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/UpdateService.qml: Type UpdateService not declared as singleton in qmldir but using pragma Singleton [import]

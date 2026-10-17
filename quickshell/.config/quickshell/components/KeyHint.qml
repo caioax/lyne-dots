@@ -2,14 +2,13 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 
-// Keycap + what it does, for footers (launcher, power menu)
+// Keycap + what it does, for footers (power countdown, screenshot, monitor
+// confirmation)
 RowLayout {
     id: root
 
     property string keys
     property string label
-    // Whether the footer should show it, room permitting
-    property bool wanted: true
 
     spacing: Config.padding
 
