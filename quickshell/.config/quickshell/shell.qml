@@ -357,4 +357,41 @@ ShellRoot {
 
         onPressed: SettingsService.open("keybinds")
     }
+
+    // Shortcuts: Dashboard on the current tab, or on one of them (no keys by
+    // default, set in Settings › Keybinds). Pressed again on that tab, closes
+    GlobalShortcut {
+        name: "dashboard"
+        description: "Dashboard" // i18n-ignore
+
+        onPressed: DashboardService.toggle("", DashboardService.focusedScreen())
+    }
+
+    GlobalShortcut {
+        name: "dashboard_overview"
+        description: "Dashboard tab: overview" // i18n-ignore
+
+        onPressed: DashboardService.toggle("overview", DashboardService.focusedScreen())
+    }
+
+    GlobalShortcut {
+        name: "dashboard_media"
+        description: "Dashboard tab: media" // i18n-ignore
+
+        onPressed: DashboardService.toggle("media", DashboardService.focusedScreen())
+    }
+
+    GlobalShortcut {
+        name: "dashboard_system"
+        description: "Dashboard tab: system" // i18n-ignore
+
+        onPressed: DashboardService.toggle("system", DashboardService.focusedScreen())
+    }
+
+    GlobalShortcut {
+        name: "dashboard_weather"
+        description: "Dashboard tab: weather" // i18n-ignore
+
+        onPressed: DashboardService.toggle("weather", DashboardService.focusedScreen())
+    }
 }

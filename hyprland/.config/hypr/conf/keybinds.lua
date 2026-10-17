@@ -210,6 +210,12 @@ bind("lock-screen",       "Shell", "Lock screen",       mainMod .. " + Escape", 
 bind("wallpapers",        "Shell", "Wallpaper picker",  mainMod .. " + B",         hl.dsp.global("quickshell:wallpaper_picker"))
 bind("settings",          "Shell", "Settings",          mainMod .. " + I",         hl.dsp.global("quickshell:settings"))
 bind("keybinds",          "Shell", "Keybinds",          "",                        hl.dsp.global("quickshell:keybinds_help"))
+-- Dashboard: no keys by default (set them in Settings › Keybinds)
+bind("dashboard",          "Shell", "Dashboard",            "", hl.dsp.global("quickshell:dashboard"))
+bind("dashboard-overview", "Shell", "Dashboard (Overview)", "", hl.dsp.global("quickshell:dashboard_overview"))
+bind("dashboard-media",    "Shell", "Dashboard (Media)",    "", hl.dsp.global("quickshell:dashboard_media"))
+bind("dashboard-system",   "Shell", "Dashboard (System)",   "", hl.dsp.global("quickshell:dashboard_system"))
+bind("dashboard-weather",  "Shell", "Dashboard (Weather)",  "", hl.dsp.global("quickshell:dashboard_weather"))
 bind("reload",            "Shell", "Reload Quickshell", mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("lyne reload"))
 
 -- ==============================================================================
