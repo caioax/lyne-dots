@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import qs.services
 import qs.config
@@ -31,15 +32,18 @@ PanelWindow {
     readonly property string spotlightEdge: style === "spotlight" && position !== "center" ? position : ""
     // Opens from the bar's edge (dropdown, spotlight on the bar's side)
     readonly property bool atBar: dropdown || spotlightEdge === barEdge
+    // A fullscreen window hides the bar on the screen the launcher opens on
+    // (the focused one): the panel goes to the screen edge
+    readonly property bool barCovered: BarService.coveredOn(Hyprland.focusedMonitor?.name ?? "")
     // Distance from the bar's screen edge to just past the bar
-    readonly property int barGap: Config.barReservedHeight + Config.spacing
+    readonly property int barGap: (barCovered ? 0 : Config.barReservedHeight) + Config.spacing
     // Grow out of the bar (or the screen edge) instead of floating near it
     readonly property bool attachable: dropdown || sidebar || spotlightEdge !== ""
     // Same switch as the bar popups (Settings › Bar › Attach to the bar)
     readonly property bool attached: attachable && StateService.get("bar.attachPopups", true)
     // With a docked bar the panel attaches below it; islands and floating
     // bars have no continuous edge, so it attaches to the screen edge
-    readonly property real attachLine: Config.barIslands || Config.barFloating ? 0 : Config.barHeight
+    readonly property real attachLine: Config.barIslands || Config.barFloating || barCovered ? 0 : Config.barHeight
     // Flush sides of the attached panel, the one it slides out of first
     readonly property var attachedEdges: {
         if (sidebar)

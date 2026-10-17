@@ -41,7 +41,8 @@ Scope {
             // Distance from that side: attached panels touch a docked bar (or
             // the screen edge), the others keep clear of the bar
             readonly property real edgeMargin: {
-                const onBar = edge === barEdge;
+                // A bar that is covered or slid away leaves the screen edge
+                const onBar = edge === barEdge && !BarService.hiddenOn(modelData.name);
                 if (attached)
                     return onBar && !Config.barIslands && !Config.barFloating ? Config.barHeight : 0;
                 if (edge === "left" || edge === "right")

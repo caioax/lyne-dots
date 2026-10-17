@@ -58,6 +58,10 @@ Scope {
             // The content slides out of the window; only a 1px strip at the
             // screen edge keeps taking input to bring it back
             readonly property bool shown: WindowManagerService.anyModuleOpen || !enableAutoHide || mouseSensor.hovered
+            // The OSD hangs from the screen edge while the bar is away
+            onShownChanged: BarService.setAutoHidden(modelData.name, !shown)
+            Component.onCompleted: BarService.setAutoHidden(modelData.name, !shown)
+            Component.onDestruction: BarService.setAutoHidden(modelData.name, false)
 
             HoverHandler {
                 id: mouseSensor

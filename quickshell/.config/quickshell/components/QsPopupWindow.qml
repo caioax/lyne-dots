@@ -56,11 +56,16 @@ PanelWindow {
     // Opens toward the middle of the screen from the bar's edge
     readonly property bool upward: Config.barOnBottom
 
+    // A fullscreen window hides the bar: the popup goes to the screen edge.
+    // Popups without a screen open where their bar button is
+    readonly property string screenName: screen?.name ?? anchorItem?.QsWindow.window?.screen?.name ?? ""
+    readonly property bool barCovered: BarService.coveredOn(screenName)
+
     // --- Attached look ---
     readonly property bool attached: StateService.get("bar.attachPopups", true)
     // Docked bars: just below the bar; islands and floating bars have no
     // continuous edge, so the popup grows out of the screen edge
-    readonly property real attachLine: Config.barIslands || Config.barFloating ? 0 : Config.barHeight
+    readonly property real attachLine: Config.barIslands || Config.barFloating || barCovered ? 0 : Config.barHeight
     readonly property real filletSize: Config.radiusLarge
 
     readonly property real screenWidth: screen?.width ?? implicitWidth
@@ -101,7 +106,7 @@ PanelWindow {
     }
 
     margins {
-        readonly property real fromBar: root.attached ? root.attachLine : Config.barReservedHeight + Config.spacing
+        readonly property real fromBar: root.attached ? root.attachLine : (root.barCovered ? 0 : Config.barReservedHeight) + Config.spacing
 
         top: root.upward ? 0 : fromBar
         bottom: root.upward ? fromBar : 0

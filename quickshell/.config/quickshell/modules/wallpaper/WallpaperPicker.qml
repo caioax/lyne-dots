@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import qs.services
 import qs.config
@@ -23,13 +24,16 @@ PanelWindow {
     readonly property string barEdge: Config.barOnBottom ? "bottom" : "top"
     // Against the bar's edge: past the bar, and it keeps an auto-hiding bar shown
     readonly property bool atBar: edge === barEdge
+    // A fullscreen window hides the bar on the screen the picker opens on
+    // (the focused one): the panel goes to the screen edge
+    readonly property bool barCovered: BarService.coveredOn(Hyprland.focusedMonitor?.name ?? "")
     // Same switch as the bar popups (Settings › Bar › Attach to the bar)
     readonly property bool attached: StateService.get("bar.attachPopups", true)
     // A docked bar has a continuous edge to attach below; islands and
     // floating bars don't, so the panel attaches to the screen edge
-    readonly property real attachLine: atBar && !Config.barIslands && !Config.barFloating ? Config.barHeight : 0
+    readonly property real attachLine: atBar && !barCovered && !Config.barIslands && !Config.barFloating ? Config.barHeight : 0
     // Distance from the screen edge to the panel
-    readonly property real edgeOffset: attached ? attachLine : atBar ? Config.barReservedHeight + Config.spacing : Config.spacing
+    readonly property real edgeOffset: attached ? attachLine : atBar && !barCovered ? Config.barReservedHeight + Config.spacing : Config.spacing
 
     readonly property int tileWidth: Config.fontSizeNormal * 18
     readonly property int tileHeight: Math.round(tileWidth * 9 / 16)

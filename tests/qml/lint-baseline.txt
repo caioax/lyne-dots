@@ -7,6 +7,8 @@ Warning: components/QsPopupWindow.qml: Could not find property "bottom". [missin
 Warning: components/QsPopupWindow.qml: Could not find property "left". [missing-property]
 Warning: components/QsPopupWindow.qml: Could not find property "top". [missing-property]
 Warning: components/QsPopupWindow.qml: Expression statement has no obvious effect. [confusing-expression-statement]
+Warning: components/QsPopupWindow.qml: Member "name" not found on type "QuickshellScreenInfo" [missing-property]
+Warning: components/QsPopupWindow.qml: Member "screen" not found on type "QObject" [missing-property]
 Warning: components/QsPopupWindow.qml: Member "width" not found on type "QuickshellScreenInfo" [missing-property]
 Warning: components/QsPopupWindow.qml: Redundant optional chaining for lookup on non-voidable and non-nullable type QuickshellScreenInfo [redundant-optional-chaining]
 Warning: components/QsPopupWindow.qml: Type PanelWindow is not creatable. [uncreatable-type]
