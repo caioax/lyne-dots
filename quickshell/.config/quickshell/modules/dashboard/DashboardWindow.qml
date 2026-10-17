@@ -35,6 +35,19 @@ QsPopupWindow {
     onVisibleChanged: {
         if (visible)
             root.overview?.reset();
+        else
+            preloaded = 0;
+    }
+
+    // Tabs built besides the open one: one per tick once the popup has
+    // opened, so building them doesn't stall the opening animation
+    property int preloaded: 0
+
+    Timer {
+        interval: root.preloaded === 0 ? Config.animDurationLong : Config.animDurationShort
+        running: root.visible && root.preloaded < DashboardService.tabs.length
+        repeat: true
+        onTriggered: root.preloaded++
     }
 
     Connections {
@@ -120,15 +133,16 @@ QsPopupWindow {
                     // Tabs only exist while the dashboard is shown (loaded in
                     // the hidden one on every monitor they took half the
                     // shell's idle CPU). The open one is built at once, the
-                    // others over the next frames
+                    // others after it (`preloaded`). Not asynchronously:
+                    // incubated that way, the month card's MonthGrid and
+                    // DayOfWeekRow came out misaligned and narrow
                     Loader {
                         required property var modelData
                         required property int index
 
                         x: index * pages.width
                         width: pages.width
-                        active: root.visible
-                        asynchronous: index !== DashboardService.tabIndex
+                        active: root.visible && (index === DashboardService.tabIndex || index < root.preloaded)
                         // Off-screen tabs are hidden, so their animations
                         // (Behaviors enabled by visibility) stay still
                         visible: index === DashboardService.tabIndex || slide.running
