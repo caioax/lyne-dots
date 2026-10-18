@@ -120,9 +120,9 @@ package were installed, `LYNE_DRY_FAIL="git ping"` makes those commands fail.
 | editor     | Neovim + development tools                     |
 | apps       | Dolphin, Zen Browser, Spotify, Chromium, mpv   |
 | utils      | Clipboard, audio, bluetooth, brightnessctl     |
-| fonts      | Nerd Fonts, Tela icons                         |
+| fonts      | Nerd Fonts, Noto fonts and emoji               |
 | quickshell | QuickShell bar/shell + Qt6                     |
-| theming    | Qt5ct, Qt6ct, Kvantum, nwg-look, Bibata cursor |
+| theming    | Qt5ct, Qt6ct, nwg-look, Bibata cursor, Tela icons |
 | nvidia     | NVIDIA drivers (install only if needed)        |
 
 ## Templates and Data

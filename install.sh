@@ -37,9 +37,9 @@ CATEGORY_OPTIONS=(
     "editor|editor|Neovim + development tools|1"
     "apps|apps|Dolphin, Zen Browser, Spotify, Chromium, mpv|1"
     "utils|utils|Clipboard, audio, bluetooth, brightness|1"
-    "fonts|fonts|Nerd Fonts, cursors, Tela icons|1"
+    "fonts|fonts|Nerd Fonts, Noto fonts and emoji|1"
     "quickshell|quickshell|QuickShell bar/shell|1"
-    "theming|theming|Qt/GTK theming, matugen|1"
+    "theming|theming|Qt/GTK theming, Bibata cursor, Tela icons, matugen|1"
 )
 
 REBOOT_SECONDS=10
@@ -250,7 +250,7 @@ step_mimetypes() {
 }
 
 step_tela_icons() {
-    source "$PACKAGES_DIR/fonts.sh"
+    source "$PACKAGES_DIR/theming.sh"
     install_tela_icons
 }
 
@@ -453,7 +453,7 @@ plan_steps() {
     gpu_multi && step_add "step_gpus ${ANSWERS[gpu_order]:-auto}" "GPU links and order"
     step_add step_state_aur_helper "Quickshell settings"
     step_add step_mimetypes "Default apps"
-    has_category fonts && step_add step_tela_icons "Tela icon theme" 2
+    has_category theming && step_add step_tela_icons "Tela icon theme" 2
     if has_category terminal; then
         step_add step_zsh "Zsh and Oh My Zsh" 2
         step_add step_tmux "Tmux plugin manager"

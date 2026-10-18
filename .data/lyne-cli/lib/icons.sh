@@ -252,8 +252,10 @@ icons_apply() {
         return 1
     fi
 
+    # Its output (none, but a stand-in's log line) on stderr: stdout only
+    # says "reload"
     if command -v gsettings &>/dev/null; then
-        gsettings set org.gnome.desktop.interface icon-theme "$id" 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface icon-theme "$id" >&2 2>/dev/null || true
     fi
     local qt=0
     _icons_ini_set "$config/qt6ct/qt6ct.conf" Appearance icon_theme "$id" && qt=1

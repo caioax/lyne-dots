@@ -26,6 +26,12 @@ setup() {
     export LYNE_ICON_DIRS="$BATS_TEST_TMPDIR/icons"
     mkdir -p "$LYNE_ICON_DIRS/Bibata-Modern-Classic/cursors"
     : >"$LYNE_ICON_DIRS/Bibata-Modern-Classic/cursors/left_ptr"
+    # Likewise the icon theme (the dry run's git clone installs nothing)
+    local tela
+    for tela in Tela-blue Tela-blue-dark Tela-blue-light; do
+        mkdir -p "$LYNE_ICON_DIRS/$tela"
+        printf '[Icon Theme]\nName=%s\nDirectories=48/apps\n' "$tela" >"$LYNE_ICON_DIRS/$tela/index.theme"
+    done
     ANSWERS="$BATS_TEST_TMPDIR/answers"
     # shellcheck disable=SC2034 # read by repo_unchanged
     REPO_STATUS="$(git -C "$REPO" status --porcelain)"
@@ -44,7 +50,7 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
 
 @test "hybrid laptop: every step, packages by category, NVIDIA driver, GPU order" {
     hybrid
-    answers "categories=core terminal utils fonts quickshell theming" "gpu_order=igpu" "reboot=no"
+    answers "categories=core terminal utils quickshell theming" "gpu_order=igpu" "reboot=no"
     run install --answers "$ANSWERS"
     assert_success
     refute_output --partial "[fail]"
@@ -63,8 +69,14 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     assert_line "[dry-run] gsettings set org.gnome.desktop.interface cursor-theme Bibata-Modern-Classic"
     assert_line "[dry-run] gsettings set org.gnome.desktop.interface cursor-size 24"
     grep -qx "Inherits=Bibata-Modern-Classic" "$DRY/.icons/default/index.theme"
+    # Tela with theming, fonts not asked for (cloned, its deps with the
+    # theming packages), its dark version applied like Settings does
+    assert_line --regexp '^\[dry-run\] git clone --depth=1 https://github.com/vinceliuice/Tela-icon-theme.git '
+    assert_line --regexp '^\[dry-run\] sudo pacman -S --needed --noconfirm .*matugen.*gtk-update-icon-cache'
+    assert_line "[dry-run] gsettings set org.gnome.desktop.interface icon-theme Tela-blue-dark"
     # Not asked for
     refute_line --regexp 'Packages (·|-) editor'
+    refute_line --regexp 'Packages (·|-) fonts'
     # The first login opens the welcome screen; settings from the answers
     local state="$DRY/.config/quickshell/state.json"
     assert_equal "$(jq -c '[.welcome.pending, .system.aurHelper, .gpus.order]' "$state")" '[true,"yay",["0000:00:02.0","0000:01:00.0"]]'
