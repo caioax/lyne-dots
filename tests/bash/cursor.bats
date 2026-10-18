@@ -192,3 +192,96 @@ lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
     run sh -c '. "$1"; echo "$XCURSOR_THEME $XCURSOR_SIZE ${_lyne_value-unset}"' _ "$env"
     assert_output "Bibata-Modern-Classic 24 unset"
 }
+
+# xcur FILE NOMINAL:SIDE[:FRAMES]...: an xcursor file whose images are filled
+# with one premultiplied ARGB pixel (half-transparent red, 0x80800000)
+xcur() {
+    python3 - "$@" <<'PY'
+import struct, sys
+path, specs = sys.argv[1], [tuple(map(int, s.split(":"))) + (1,) for s in sys.argv[2:]]
+images = [(n, side) for n, side, frames, *_ in specs for _ in range(frames)]
+toc_at = 16
+pos = toc_at + 12 * len(images)
+toc, chunks = b"", b""
+for nominal, side in images:
+    toc += struct.pack("<III", 0xFFFD0002, nominal, pos)
+    chunk = struct.pack("<9I", 36, 0xFFFD0002, nominal, 1, side, side, 1, 1, 50) + struct.pack("<I", 0x80800000) * side * side
+    chunks += chunk
+    pos += len(chunk)
+open(path, "wb").write(b"Xcur" + struct.pack("<III", 16, 0x10000, len(images)) + toc + chunks)
+PY
+}
+
+# png_info FILE: width height and the first pixel as r,g,b,a
+png_info() {
+    python3 - "$1" <<'PY'
+import struct, sys, zlib
+data = open(sys.argv[1], "rb").read()
+assert data[:8] == b"\x89PNG\r\n\x1a\n"
+w, h = struct.unpack(">II", data[16:24])
+i, idat = 8, b""
+while i < len(data):
+    n, kind = struct.unpack(">I4s", data[i:i + 8])
+    if kind == b"IDAT":
+        idat += data[i + 8:i + 8 + n]
+    i += 12 + n
+raw = zlib.decompress(idat)
+print(w, h, ",".join(map(str, raw[1:5])))
+PY
+}
+
+# LYNE_TEST_SHELL: a copy of the shell (to sabotage the script)
+preview() { python3 "${LYNE_TEST_SHELL:-$REPO/quickshell/.config/quickshell}/scripts/cursor-preview.py" "$@"; }
+
+@test "previews: closest size, straight alpha, fallback names" {
+    local t="$USER_ICONS/Mine"
+    mkdir -p "$t/cursors"
+    xcur "$t/cursors/left_ptr" 24:24 40:40:3 64:64
+    xcur "$t/cursors/hand2" 32:30
+    xcur "$t/cursors/xterm" 16:16
+    printf 'not a cursor' >"$t/cursors/watch"
+    run preview "$HOME/cache" Mine "$t"
+    assert_success
+    assert_output '{"Mine": ["default", "pointer", "text"]}'
+    run png_info "$HOME/cache/Mine/default-24.png"
+    assert_output "24 24 255,0,0,128"
+    run png_info "$HOME/cache/Mine/default-32.png" # 24 and 40 tie: the larger
+    assert_output --partial "40 40 "
+    run png_info "$HOME/cache/Mine/default-48.png"
+    assert_output --partial "40 40 "
+    run png_info "$HOME/cache/Mine/default-64.png"
+    assert_output --partial "64 64 "
+    run png_info "$HOME/cache/Mine/pointer-64.png"
+    assert_output --partial "30 30 "
+    run ls "$HOME/cache/Mine"
+    refute_output --partial wait
+    refute_output --partial .tmp
+}
+
+@test "previews: made again only when the theme changes; gone themes removed" {
+    local t="$USER_ICONS/Mine"
+    mkdir -p "$t/cursors" "$HOME/cache/mine-by-hand"
+    xcur "$t/cursors/left_ptr" 24:24
+    preview "$HOME/cache" Mine "$t" Gone "$BATS_TEST_TMPDIR/nope"
+    [[ -f "$HOME/cache/Gone/stamp" ]]
+    touch -d 2001-01-01 "$HOME/cache/Mine/default-24.png"
+    run preview "$HOME/cache" Mine "$t"
+    assert_output '{"Mine": ["default"]}'
+    run stat -c %Y "$HOME/cache/Mine/default-24.png"
+    assert_output "$(date -d 2001-01-01 +%s)"
+    [[ ! -e "$HOME/cache/Gone" && -d "$HOME/cache/mine-by-hand" ]]
+    # A new cursor in the theme
+    xcur "$t/cursors/xterm" 24:24
+    touch -d '+1 minute' "$t/cursors"
+    run preview "$HOME/cache" Mine "$t"
+    assert_output '{"Mine": ["default", "text"]}'
+}
+
+@test "previews: odd ids and arguments" {
+    run preview "$HOME/cache" "../x" "$SYSTEM_ICONS/Adwaita" "" "$SYSTEM_ICONS/Adwaita"
+    assert_success
+    assert_output "{}"
+    [[ ! -e "$HOME/x" ]]
+    run preview "$HOME/cache" Mine
+    assert_failure
+}

@@ -369,6 +369,7 @@ run_steps() {
     step "cursor › Adwaita 32" ev 'CursorService.setTheme("Adwaita"); CursorService.setSize(32); "ok"'
     check "cursor › applied" grep -q "gsettings set org.gnome.desktop.interface cursor-theme Adwaita" "$SB/calls.log"
     check "cursor › default theme" grep -qx "Inherits=Adwaita" "$SB/home/.icons/default/index.theme"
+    check "cursor › previews" test -s "$SB/home/.cache/lyne/cursors/Adwaita/default-32.png"
     check "cursor › settings.lua" grep -qF 'hl.env("XCURSOR_SIZE", "32", true)' "$SB/home/.config/hypr/local/settings.lua"
     step "cursor › back to the default" ev 'StateService.set("cursor.theme", StateService.getDefault("cursor.theme", "")); StateService.set("cursor.size", StateService.getDefault("cursor.size", 24)); "ok"'
 
