@@ -56,11 +56,11 @@ lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
     run cursor cursor_themes
     assert_success
     assert_output "$(printf '%s\n' \
-        "Bibata-Modern-Classic	Bibata Mine	$USER_ICONS/Bibata-Modern-Classic	0" \
-        "Both	both	$USER_ICONS/Both	1" \
-        "breeze_cursors	Breeze Dark	$SYSTEM_ICONS/breeze_cursors	0" \
-        "Adwaita	Crlf	$SYSTEM_ICONS/Adwaita	0" \
-        "zz-plain	zz-plain	$HOME/.icons/zz-plain	0")"
+        "Bibata-Modern-Classic	Bibata Mine	$USER_ICONS/Bibata-Modern-Classic	0	1" \
+        "Both	both	$USER_ICONS/Both	1	1" \
+        "breeze_cursors	Breeze Dark	$SYSTEM_ICONS/breeze_cursors	0	0" \
+        "Adwaita	Crlf	$SYSTEM_ICONS/Adwaita	0	0" \
+        "zz-plain	zz-plain	$HOME/.icons/zz-plain	0	1")"
 }
 
 @test "themes: missing icon directories and none at all" {
@@ -73,11 +73,11 @@ lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
     assert_output "[]"
 }
 
-@test "json: id, name, folder and hyprcursor" {
+@test "json: id, name, folder, hyprcursor and removable" {
     theme "$USER_ICONS/Both" name="Both \"quoted\"" hypr=1
     run cursor 'cursor_json | jq -c ".[]"'
-    assert_line --index 1 "{\"id\":\"Bibata-Modern-Classic\",\"name\":\"Bibata-Modern-Classic\",\"path\":\"$SYSTEM_ICONS/Bibata-Modern-Classic\",\"hyprcursor\":false}"
-    assert_line --index 2 "{\"id\":\"Both\",\"name\":\"Both \\\"quoted\\\"\",\"path\":\"$USER_ICONS/Both\",\"hyprcursor\":true}"
+    assert_line --index 1 "{\"id\":\"Bibata-Modern-Classic\",\"name\":\"Bibata-Modern-Classic\",\"path\":\"$SYSTEM_ICONS/Bibata-Modern-Classic\",\"hyprcursor\":false,\"removable\":false}"
+    assert_line --index 2 "{\"id\":\"Both\",\"name\":\"Both \\\"quoted\\\"\",\"path\":\"$USER_ICONS/Both\",\"hyprcursor\":true,\"removable\":true}"
 }
 
 @test "dirs: the user's, ~/.icons, then XDG_DATA_DIRS, without repeats" {
@@ -284,4 +284,140 @@ preview() { python3 "${LYNE_TEST_SHELL:-$REPO/quickshell/.config/quickshell}/scr
     [[ ! -e "$HOME/x" ]]
     run preview "$HOME/cache" Mine
     assert_failure
+}
+
+# pack ARCHIVE DIR ITEM...: an archive of ITEMs (relative to DIR)
+pack() {
+    local archive=$1 dir=$2
+    shift 2
+    bsdtar -a -cf "$archive" -C "$dir" "$@"
+}
+
+@test "install: archives of one or more themes, replacing the user's own copy" {
+    local src="$BATS_TEST_TMPDIR/src"
+    theme "$src/One" name="One Theme"
+    theme "$src/pack/Two" hypr=1
+    theme "$src/pack/Three" file=default
+    ln -s default "$src/pack/Three/cursors/arrow"
+    pack "$BATS_TEST_TMPDIR/one.tar.xz" "$src" One
+    pack "$BATS_TEST_TMPDIR/pack.zip" "$src" pack
+    run cursor "cursor_install '$BATS_TEST_TMPDIR/one.tar.xz'"
+    assert_success
+    assert_output "installed One"
+    run cursor "cursor_install '$BATS_TEST_TMPDIR/pack.zip'"
+    assert_success
+    assert_output "$(printf '%s\n' "installed Three" "installed Two")"
+    [[ -L "$USER_ICONS/Three/cursors/arrow" && -f "$USER_ICONS/Two/manifest.hl" ]]
+    printf 'old' >"$USER_ICONS/One/old-file"
+    run cursor "cursor_install '$BATS_TEST_TMPDIR/one.tar.xz'"
+    assert_output "updated One"
+    [[ ! -e "$USER_ICONS/One/One" && ! -e "$USER_ICONS/One/old-file" ]]
+    run cursor 'cursor_themes | cut -f1,5'
+    assert_line "One	1"
+    assert_line "Two	1"
+    run ls -A "$USER_ICONS"
+    refute_output --partial .lyne-install
+}
+
+@test "install: a theme at the archive's top, a folder, links that leave the theme" {
+    local src="$BATS_TEST_TMPDIR/src"
+    theme "$src/flat" name="Flat Theme"
+    ln -s /etc/passwd "$src/flat/cursors/bad"
+    ln -s ../../flat/cursors/left_ptr "$src/flat/cursors/escape"
+    ln -s left_ptr "$src/flat/cursors/good"
+    pack "$BATS_TEST_TMPDIR/flat-1.0.tar.gz" "$src/flat" index.theme cursors
+    run cursor "cursor_install '$BATS_TEST_TMPDIR/flat-1.0.tar.gz'"
+    assert_output "installed Flat Theme"
+    [[ -L "$USER_ICONS/Flat Theme/cursors/good" ]]
+    [[ ! -e "$USER_ICONS/Flat Theme/cursors/bad" && ! -L "$USER_ICONS/Flat Theme/cursors/bad" ]]
+    [[ ! -L "$USER_ICONS/Flat Theme/cursors/escape" ]]
+    rm "$src/flat/index.theme"
+    pack "$BATS_TEST_TMPDIR/noname-2.tar.gz" "$src/flat" cursors
+    run cursor "cursor_install '$BATS_TEST_TMPDIR/noname-2.tar.gz'"
+    assert_output "installed noname-2"
+    run cursor "cursor_install '$src/flat'"
+    assert_output "installed flat"
+    [[ -f "$src/flat/cursors/left_ptr" ]] # the folder is copied, not moved
+}
+
+@test "install: not an archive, no theme, only hyprcursor, nothing outside" {
+    local src="$BATS_TEST_TMPDIR/src"
+    printf 'hello' >"$BATS_TEST_TMPDIR/notes.txt"
+    run cursor "cursor_install '$BATS_TEST_TMPDIR/notes.txt'"
+    assert_failure 2
+    run cursor "cursor_install '$BATS_TEST_TMPDIR/missing.zip'"
+    assert_failure 2
+    mkdir -p "$src/icons/apps"
+    pack "$BATS_TEST_TMPDIR/icons.zip" "$src" icons
+    run cursor "cursor_install '$BATS_TEST_TMPDIR/icons.zip'"
+    assert_failure 3
+    theme "$src/hypr" hypr=1 cursors=0
+    pack "$BATS_TEST_TMPDIR/hypr.zip" "$src" hypr
+    run cursor "cursor_install '$BATS_TEST_TMPDIR/hypr.zip'"
+    assert_failure 4
+    assert_output --partial "only has hyprcursor themes"
+    theme "$src/odd/default"
+    theme "$src/odd/Fine"
+    pack "$BATS_TEST_TMPDIR/odd.zip" "$src" odd
+    run cursor "cursor_install '$BATS_TEST_TMPDIR/odd.zip'"
+    assert_line "installed Fine"
+    assert_line "Skipped a theme named 'default'"
+    [[ ! -e "$USER_ICONS/default" ]]
+    # An entry with ../ stays inside (bsdtar refuses it)
+    theme "$src/evil"
+    (cd "$src/evil" && bsdtar -cf "$BATS_TEST_TMPDIR/evil.tar" -s '|^|../../|' cursors index.theme 2>/dev/null) || true
+    run bsdtar -tf "$BATS_TEST_TMPDIR/evil.tar"
+    assert_line ../../cursors/left_ptr
+    run cursor "cursor_install '$BATS_TEST_TMPDIR/evil.tar'"
+    assert_failure 2
+    [[ ! -e "$HOME/.local/cursors" && ! -e "$HOME/cursors" ]]
+    run ls -A "$USER_ICONS"
+    refute_output --partial .lyne-install
+}
+
+@test "remove: the user's themes only" {
+    theme "$USER_ICONS/Mine"
+    theme "$HOME/.icons/Old"
+    run cursor 'cursor_remove Mine && cursor_remove Old'
+    assert_success
+    [[ ! -e "$USER_ICONS/Mine" && ! -e "$HOME/.icons/Old" ]]
+    run cursor 'cursor_remove Adwaita'
+    assert_failure 3
+    assert_output --partial "system theme"
+    [[ -d "$SYSTEM_ICONS/Adwaita" ]]
+    run cursor 'cursor_remove Nope'
+    assert_failure 2
+    run cursor 'cursor_remove ""'
+    assert_failure 2
+}
+
+@test "lyne cursor install/remove: never the theme in use" {
+    fake_dots
+    local src="$BATS_TEST_TMPDIR/src"
+    theme "$src/Mine"
+    pack "$BATS_TEST_TMPDIR/mine.tar.gz" "$src" Mine
+    run lyne cursor install "$BATS_TEST_TMPDIR/mine.tar.gz" "$BATS_TEST_TMPDIR/nope.zip"
+    assert_failure
+    assert_line "installed Mine"
+    lyne cursor set Mine
+    run lyne cursor remove Mine
+    assert_failure
+    assert_output --partial "in use"
+    [[ -d "$USER_ICONS/Mine" ]]
+    lyne cursor set Adwaita
+    run lyne cursor remove Mine
+    assert_success
+    assert_output "Removed Mine"
+}
+
+@test "install: links kept when the icons folder is itself a link" {
+    mkdir -p "$BATS_TEST_TMPDIR/elsewhere" "$HOME/.local/share"
+    ln -s "$BATS_TEST_TMPDIR/elsewhere" "$USER_ICONS"
+    local src="$BATS_TEST_TMPDIR/src"
+    theme "$src/Linked"
+    ln -s left_ptr "$src/Linked/cursors/arrow"
+    pack "$BATS_TEST_TMPDIR/linked.tar.gz" "$src" Linked
+    run cursor "cursor_install '$BATS_TEST_TMPDIR/linked.tar.gz'"
+    assert_output "installed Linked"
+    [[ -L "$BATS_TEST_TMPDIR/elsewhere/Linked/cursors/arrow" ]]
 }

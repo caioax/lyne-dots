@@ -300,6 +300,9 @@ check() {
     fi
 }
 
+# ev_is VALUE JS: the shell answers VALUE (for check)
+ev_is() { [[ "$(ev "$2")" == "$1" ]]; }
+
 # A list from the shell, as words: list JS
 list() { ev "$1" | tr ',' ' '; }
 
@@ -371,6 +374,13 @@ run_steps() {
     check "cursor › default theme" grep -qx "Inherits=Adwaita" "$SB/home/.icons/default/index.theme"
     check "cursor › previews" test -s "$SB/home/.cache/lyne/cursors/Adwaita/default-32.png"
     check "cursor › settings.lua" grep -qF 'hl.env("XCURSOR_SIZE", "32", true)' "$SB/home/.config/hypr/local/settings.lua"
+    # A theme copied into the user's folder: listed, removable, removed
+    mkdir -p "$SB/home/.local/share/icons/Smoke-Cursor/cursors"
+    cp /usr/share/icons/Adwaita/cursors/default "$SB/home/.local/share/icons/Smoke-Cursor/cursors/"
+    step "cursor › refresh" ev 'CursorService.refresh(); "ok"'
+    check "cursor › copied theme listed" ev_is true 'CursorService.themes.some(t => t.id === "Smoke-Cursor" && t.removable)'
+    step "cursor › remove" ev 'CursorService.remove("Smoke-Cursor"); "ok"'
+    check "cursor › removed" test ! -e "$SB/home/.local/share/icons/Smoke-Cursor"
     step "cursor › back to the default" ev 'StateService.set("cursor.theme", StateService.getDefault("cursor.theme", "")); StateService.set("cursor.size", StateService.getDefault("cursor.size", 24)); "ok"'
 
     # Language switched live, with translated windows open

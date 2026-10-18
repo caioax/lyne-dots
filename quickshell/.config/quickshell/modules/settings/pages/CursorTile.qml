@@ -3,13 +3,15 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services
+import "../../../components/"
 
 // Cursor theme card: its arrow, hand, text and wait cursors, and its name.
-// A click uses it (CursorService)
+// A click uses it (CursorService); themes you installed get a ⋮ menu to
+// remove them (not the one in use)
 Rectangle {
     id: tile
 
-    // { id, name, path, hyprcursor }
+    // { id, name, path, hyprcursor, removable }
     required property var modelData
     readonly property bool isCurrent: modelData.id === CursorService.theme
     // Shown at the size closest to the icons around them
@@ -85,6 +87,12 @@ Rectangle {
                 elide: Text.ElideRight
             }
 
+            // Keeps the name clear of the ⋮ button
+            Item {
+                visible: tile.modelData.removable && !tile.isCurrent
+                implicitWidth: menuButton.width
+            }
+
             // md-check_circle
             Text {
                 visible: tile.isCurrent
@@ -114,5 +122,29 @@ Rectangle {
             if (!tile.isCurrent)
                 CursorService.setTheme(tile.modelData.id);
         }
+    }
+
+    MenuButton {
+        id: menuButton
+
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: Config.padding
+        visible: tile.modelData.removable && !tile.isCurrent && (tileMouse.containsMouse || hovered || menu.visible)
+        onClicked: menu.openAt(menuButton, null)
+    }
+
+    ContextMenu {
+        id: menu
+
+        items: [
+            {
+                label: I18n.tr("Remove"),
+                icon: "\u{f01b4}", // md-delete
+                action: "remove",
+                danger: true
+            }
+        ]
+        onTriggered: CursorService.remove(tile.modelData.id)
     }
 }

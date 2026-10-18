@@ -16,7 +16,8 @@ _cursor_setting() {
 
 case "$subcmd" in
     -h|--help)
-        echo "Usage: lyne cursor [status|list|--json|set <theme> [size]|size <size>|apply]"
+        echo "Usage: lyne cursor [status|list|--json|set <theme> [size]|size <size>|apply|"
+        echo "                    install <archive|folder>...|remove <theme>]"
         echo ""
         echo "The mouse cursor theme, also in Settings > Cursor. Themes are the folders"
         echo "with xcursor files (cursors/) in ~/.local/share/icons, ~/.icons and"
@@ -30,15 +31,18 @@ case "$subcmd" in
         echo "  set <theme> [size]   Use a theme (by id, as in list), and a size"
         echo "  size <size>          Change only the size (24, 32, 48 or 64 look sharpest)"
         echo "  apply                Apply the saved theme and size again"
+        echo "  install <file>...    Install the themes in an archive (.tar.gz, .tar.xz,"
+        echo "                       .zip...) or folder into ~/.local/share/icons"
+        echo "  remove <theme>       Delete a theme you installed (not the one in use)"
         ;;
     status)
-        local current size id name dir hypr any=false
+        local current size id name dir hypr user any=false
         current="$(_cursor_setting theme "$CURSOR_DEFAULT_THEME")"
         size="$(_cursor_setting size "$CURSOR_DEFAULT_SIZE")"
         echo "Theme: $current, size $size"
         cursor_has "$current" || echo "  (not installed: apps fall back to another theme)"
         echo ""
-        while IFS=$'\t' read -r id name dir hypr; do
+        while IFS=$'\t' read -r id name dir hypr user; do
             any=true
             printf '  %s %-30s %s%s\n' "$([[ "$id" == "$current" ]] && echo "●" || echo "○")" "$id" \
                 "${dir/#$HOME/\~}" "$([[ $hypr == 1 ]] && echo " (hyprcursor too)")"
@@ -46,8 +50,8 @@ case "$subcmd" in
         [[ $any == true ]] || echo "No cursor themes found"
         ;;
     list)
-        local id name dir hypr
-        while IFS=$'\t' read -r id name dir hypr; do
+        local id name dir _
+        while IFS=$'\t' read -r id name dir _; do
             printf '%s\t%s\t%s\n' "$id" "$name" "${dir/#$HOME/\~}"
         done < <(cursor_themes)
         ;;
@@ -71,6 +75,23 @@ case "$subcmd" in
         lyne_state_set '.cursor.theme = $t | .cursor.size = ($s | tonumber)' --arg t "$theme" --arg s "$size" ||
             echo "Couldn't save it to $(lyne_state_file)" >&2
         echo "Cursor: $theme, size $size"
+        ;;
+    install)
+        [[ -n "${2:-}" ]] || { echo "Usage: lyne cursor install <archive|folder>..."; return 1; }
+        shift
+        local file rc=0
+        for file in "$@"; do
+            cursor_install "$file" || rc=1
+        done
+        return "$rc"
+        ;;
+    remove)
+        [[ -n "${2:-}" ]] || { echo "Usage: lyne cursor remove <theme>"; return 1; }
+        if [[ "$2" == "$(_cursor_setting theme "$CURSOR_DEFAULT_THEME")" ]]; then
+            echo "$2 is the theme in use: pick another one first (lyne cursor set)" >&2
+            return 1
+        fi
+        cursor_remove "$2" && echo "Removed $2"
         ;;
     apply)
         cursor_apply "$(_cursor_setting theme "$CURSOR_DEFAULT_THEME")" "$(_cursor_setting size "$CURSOR_DEFAULT_SIZE")"

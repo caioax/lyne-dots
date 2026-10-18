@@ -1,9 +1,12 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Qt.labs.folderlistmodel
+import Quickshell
 import qs.config
 import qs.services
 import "../rows/"
+import "../../../components/"
 
 // The mouse cursor theme and size (CursorService; also `lyne cursor`)
 ColumnLayout {
@@ -13,6 +16,27 @@ ColumnLayout {
 
     // Themes may have been installed or removed since
     Component.onCompleted: CursorService.refresh()
+
+    // While the page is open, themes installed elsewhere (a package, a copy
+    // into the folder) show up by themselves
+    Instantiator {
+        model: [CursorService.installDir, Quickshell.env("HOME") + "/.icons", "/usr/share/icons"]
+
+        FolderListModel {
+            required property string modelData
+
+            folder: "file://" + modelData
+            showFiles: false
+            showHidden: false
+            onCountChanged: watchDebounce.restart()
+        }
+    }
+
+    Timer {
+        id: watchDebounce
+        interval: 500
+        onTriggered: CursorService.refresh()
+    }
 
     SettingsGroup {
         title: I18n.tr("Theme")
@@ -55,6 +79,42 @@ ColumnLayout {
                         Layout.preferredWidth: (grid.width - grid.columnSpacing * (themesCard.columns - 1)) / themesCard.columns
                     }
                 }
+            }
+        }
+    }
+
+    SettingsGroup {
+        title: I18n.tr("More themes")
+
+        SettingRow {
+            id: installRow
+
+            label: I18n.tr("Install from a file")
+            description: CursorService.status ? CursorService.status.text : I18n.tr("A .tar.gz, .tar.xz or .zip with the theme's folder, like the ones on gnome-look.org or GitHub")
+            descriptionColor: !CursorService.status ? Config.subtextColor : CursorService.status.ok ? Config.successColor : Config.warningColor
+
+            // md-download
+            ActionButton {
+                icon: "\u{f01da}"
+                text: CursorService.installing ? I18n.tr("Waiting…") : I18n.tr("Install")
+                opacity: CursorService.installing ? 0.6 : 1
+                baseColor: installRow.controlColor
+                onClicked: CursorService.install()
+            }
+        }
+
+        SettingRow {
+            id: folderRow
+
+            label: I18n.tr("Your themes folder")
+            description: I18n.tr("Themes copied to %1 show up here by themselves", CursorService.installDir.replace(Quickshell.env("HOME"), "~"))
+
+            // md-folder_open
+            ActionButton {
+                icon: "\u{f0770}"
+                text: I18n.tr("Open folder")
+                baseColor: folderRow.controlColor
+                onClicked: CursorService.openFolder()
             }
         }
     }
