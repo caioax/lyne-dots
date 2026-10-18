@@ -23,7 +23,7 @@ https://github.com/user-attachments/assets/63b3c7d6-250e-4c3f-8eb5-343068b08e5a
 <div align="center">
 
 ```bash
-git clone https://github.com/caioax/lyne-dots.git ~/.lyne-dots && ~/.lyne-dots/install.sh
+curl -fsSL https://caioax.github.io/lyne-dots/install | bash
 ```
 
 [Highlights](#highlights) · [Gallery](#gallery) · [Themes](#themes) · [Install](#install) · [Update](#update) · [Reference](#reference) · [Credits](#credits)
@@ -191,13 +191,13 @@ A theme sets the colors of:
 
 ## Install
 
-**Requirements:** Arch Linux (or a close derivative) with `git`, a user with `sudo`, and an internet connection.
+**Requirements:** Arch Linux (or a close derivative), a user with `sudo`, and an internet connection.
 
 ```bash
-git clone https://github.com/caioax/lyne-dots.git ~/.lyne-dots
-cd ~/.lyne-dots
-./install.sh
+curl -fsSL https://caioax.github.io/lyne-dots/install | bash
 ```
+
+It clones the repo into `~/.lyne-dots` (installing `git` if needed) at the latest [release](https://github.com/caioax/lyne-dots/releases), the Stable channel's version, and starts the installer. Prefer to read it first? [`bootstrap.sh`](bootstrap.sh) is short.
 
 The installer asks everything first:
 

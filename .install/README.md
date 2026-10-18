@@ -34,6 +34,12 @@ Organized installation scripts for the dotfiles.
 ./install.sh
 ```
 
+New installs start from `bootstrap.sh` at the repo root (`curl ... | bash`, see
+the main README): it clones into `~/.lyne-dots`, moves `main` back to the
+newest release tag (still tracking `origin/main`, so `lyne update` works on
+either channel) and runs that release's `install.sh`, passing its arguments
+along (`| bash -s -- --dry-run`).
+
 Every question comes first (packages; graphics: the GPUs found and, for an
 NVIDIA GPU, the driver and environment variables, preselected from them;
 reboot), then a review screen. After the sudo password (asked once and kept alive) the
