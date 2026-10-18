@@ -41,6 +41,7 @@ FloatingWindow {
             layout: layoutPage,
             typography: typographyPage,
             cursor: cursorPage,
+            icons: iconsPage,
             bar: barPage,
             launcher: launcherPage,
             clipboard: clipboardPage,
@@ -262,6 +263,11 @@ FloatingWindow {
     Component {
         id: cursorPage
         CursorPage {}
+    }
+
+    Component {
+        id: iconsPage
+        IconsPage {}
     }
 
     Component {

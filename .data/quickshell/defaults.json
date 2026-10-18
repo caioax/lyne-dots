@@ -109,6 +109,9 @@
         "theme": "Bibata-Modern-Classic",
         "size": 24
     },
+    "icons": {
+        "theme": "Tela-blue"
+    },
     "dashboard": {
         "visualizer": true,
         "coverBackdrop": true,

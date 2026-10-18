@@ -151,7 +151,7 @@ Popup {
                         Layout.preferredHeight: Config.fontSizeIconSmall * 1.5
                         sourceSize.width: width
                         sourceSize.height: height
-                        source: "image://icon/" + (appRow.modelData.icon || "application-x-executable")
+                        source: IconService.url(appRow.modelData.icon || "application-x-executable", "")
                     }
 
                     ColumnLayout {

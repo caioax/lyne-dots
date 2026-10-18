@@ -270,7 +270,7 @@ ColumnLayout {
                         height: width
                         sourceSize.width: width
                         sourceSize.height: height
-                        source: appRow.iconName !== "" ? "image://icon/" + appRow.iconName : ""
+                        source: appRow.iconName !== "" ? IconService.url(appRow.iconName, "") : ""
                     }
 
                     // md-console for scripts and commands
@@ -403,7 +403,7 @@ ColumnLayout {
                         height: width
                         sourceSize.width: width
                         sourceSize.height: height
-                        source: xdgRow.modelData.icon !== "" ? "image://icon/" + xdgRow.modelData.icon : ""
+                        source: xdgRow.modelData.icon !== "" ? IconService.url(xdgRow.modelData.icon, "") : ""
                     }
 
                     // md-application

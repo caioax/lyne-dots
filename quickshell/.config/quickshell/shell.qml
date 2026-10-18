@@ -39,6 +39,9 @@ ShellRoot {
     // Applies the saved mouse cursor on start
     property string _cursor: CursorService.theme
 
+    // Applies the saved icon theme on start, and its variant on each mode
+    property string _icons: IconService.variant
+
     // Answers `qs ipc call powerprofile`
     property string _powerProfile: PowerProfileService.state
 

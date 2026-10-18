@@ -1,0 +1,3 @@
+#!/bin/bash
+# Test stand-in: logs the call
+echo "dbus-send $*" >>"${STUB_LOG:-/dev/null}"

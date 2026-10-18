@@ -112,7 +112,7 @@ Item {
                 visible: root.isApp
                 width: Config.fontSizeIconLarge
                 height: width
-                source: root.isApp ? "image://icon/" + (root.modelData?.icon || "application-x-executable") : ""
+                source: root.isApp ? IconService.url(root.modelData?.icon || "application-x-executable", "") : ""
                 sourceSize: Qt.size(width, height)
                 fillMode: Image.PreserveAspectFit
             }

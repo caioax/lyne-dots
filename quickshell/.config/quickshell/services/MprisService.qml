@@ -140,7 +140,7 @@ Singleton {
         // Some players (Harmonoid) give a path instead of the entry's id
         const id = (player.desktopEntry || player.identity).split("/").pop().replace(/\.desktop$/, "");
         const entry = DesktopEntries.heuristicLookup(id);
-        return entry?.icon ? Quickshell.iconPath(entry.icon, true) : "";
+        return entry?.icon && IconService.has(entry.icon) ? IconService.url(entry.icon, "") : "";
     }
 
     // --- CONTROLS ---

@@ -463,10 +463,8 @@ Singleton {
     function _applyGtkThemeSwitch() {
         const theme = gtkThemeName;
         const scheme = isDarkMode ? "prefer-dark" : "prefer-light";
-        // Tela's -dark icons are light grey, for dark themes; -light the
-        // opposite. Qt keeps -dark (qt6ct.conf is a stowed file)
-        const icons = isDarkMode ? "Tela-blue-dark" : "Tela-blue-light";
-        gtkThemeSwitchProc.run(["bash", "-c", "gsettings set org.gnome.desktop.interface gtk-theme " + shellEscape(theme) + " 2>/dev/null; " + "gsettings set org.gnome.desktop.interface color-scheme " + shellEscape(scheme) + " 2>/dev/null; " + "for dir in \"${XDG_DATA_HOME:-$HOME/.local/share}/icons\" /usr/share/icons; do " + "[ -d \"$dir/$1\" ] && { gsettings set org.gnome.desktop.interface icon-theme \"$1\" 2>/dev/null; break; }; done; true", "bash", icons]);
+        // The icon theme's variant follows isDarkMode in IconService
+        gtkThemeSwitchProc.run(["bash", "-c", "gsettings set org.gnome.desktop.interface gtk-theme " + shellEscape(theme) + " 2>/dev/null; " + "gsettings set org.gnome.desktop.interface color-scheme " + shellEscape(scheme) + " 2>/dev/null; true"]);
     }
 
     function _applyGtkFromPalette(pal) {

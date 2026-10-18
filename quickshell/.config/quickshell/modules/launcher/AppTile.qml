@@ -70,7 +70,7 @@ Item {
             visible: !root.clipEntry
             width: root.iconSize
             height: width
-            source: root.clipEntry ? "" : "image://icon/" + (root.modelData?.icon || "application-x-executable")
+            source: root.clipEntry ? "" : IconService.url(root.modelData?.icon || "application-x-executable", "")
             sourceSize: Qt.size(width, height)
             fillMode: Image.PreserveAspectFit
         }

@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import qs.config
+import qs.services
 
 // One tray icon: left click activates the item, right click asks the model
 // for its context menu
@@ -67,7 +68,7 @@ Rectangle {
         // Fallback when the primary icon fails (e.g. pixmap-based icons from nm-applet)
         Image {
             anchors.fill: parent
-            source: "image://icon/application-default-icon"
+            source: IconService.url("application-default-icon", "")
             fillMode: Image.PreserveAspectFit
             sourceSize: Qt.size(root.iconSize * 2, root.iconSize * 2)
             smooth: true

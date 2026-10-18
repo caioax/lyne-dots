@@ -542,7 +542,7 @@ ColumnLayout {
             anchors.centerIn: parent
             width: Config.fontSizeIconLarge
             height: width
-            source: "image://icon/application-x-executable"
+            source: IconService.url("application-x-executable", "")
             sourceSize: Qt.size(width * 2, height * 2)
             fillMode: Image.PreserveAspectFit
             visible: icon.status !== Image.Ready

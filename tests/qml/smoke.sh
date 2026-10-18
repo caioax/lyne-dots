@@ -168,7 +168,7 @@ EOF
     for t in nmcli rfkill brightnessctl ddcutil hyprsunset kitty nvim loginctl zenity \
         awww awww-daemon gsettings systemctl systemd-inhibit pkill killall xdg-open setsid \
         missioncenter kwriteconfig6 kbuildsycoca6 powerprofilesctl lyne-sddm grim slurp satty \
-        wpctl pactl playerctl bluetoothctl cava; do
+        wpctl pactl playerctl bluetoothctl cava dbus-send; do
         printf '#!/bin/bash\necho "%s $*" >>"%s/calls.log"\n' "$t" "$SB" >"$SB/bin/$t"
         chmod +x "$SB/bin/$t"
     done
@@ -392,6 +392,29 @@ run_steps() {
     step "cursor › remove" ev 'CursorService.remove("Smoke-Cursor"); "ok"'
     check "cursor › removed" test ! -e "$SB/home/.local/share/icons/Smoke-Cursor"
     step "cursor › back to the default" ev 'StateService.set("cursor.theme", StateService.getDefault("cursor.theme", "")); StateService.set("cursor.size", StateService.getDefault("cursor.size", 24)); "ok"'
+
+    # Icons: a family with dark and light versions in the user's folder; the
+    # dark one reaches GTK, Qt and KDE, then the shell's icons load again
+    local variant
+    for variant in "" -dark -light; do
+        mkdir -p "$SB/home/.local/share/icons/Smoke-Icons$variant"
+        printf '[Icon Theme]\nName=Smoke Icons%s\nInherits=hicolor\nDirectories=48/apps\n\n[48/apps]\nSize=48\n' "$variant" \
+            >"$SB/home/.local/share/icons/Smoke-Icons$variant/index.theme"
+    done
+    step "icons › refresh" ev 'IconService.refresh(); "ok"'
+    check "icons › family listed" ev_is "Smoke-Icons-dark Smoke-Icons-light" 'const t = IconService.themes.find(t => t.id === "Smoke-Icons"); t ? t.dark + " " + t.light : JSON.stringify(IconService.themes.map(t => t.id))'
+    step "icons › Smoke-Icons" ev 'IconService.setTheme("Smoke-Icons"); "ok"'
+    check "icons › variant" ev_is Smoke-Icons-dark 'IconService.variant'
+    check "icons › gsettings" grep -q "gsettings set org.gnome.desktop.interface icon-theme Smoke-Icons-dark" "$SB/calls.log"
+    check "icons › qt6ct" grep -qx "icon_theme=Smoke-Icons-dark" "$SB/home/.config/qt6ct/qt6ct.conf"
+    check "icons › kdeglobals" grep -qx "Theme=Smoke-Icons-dark" "$SB/home/.config/kdeglobals"
+    check "icons › gtk settings.ini" grep -qx "gtk-icon-theme-name=Smoke-Icons-dark" "$SB/home/.config/gtk-4.0/settings.ini"
+    # After qt6ct's reload: KIconLoader told, the icon URLs changed
+    sleep 2
+    check "icons › KDE apps told" grep -q "dbus-send .*org.kde.KIconLoader.iconChanged" "$SB/calls.log"
+    check "icons › new icon urls" ev_is "image://icon/folder?path=lyne-icons-1" 'IconService.url("folder", "")'
+    check "icons › light variant" ev_is Smoke-Icons-light 'IconService.variantOf(IconService.current, false)'
+    step "icons › back to the default" ev 'StateService.set("icons.theme", StateService.getDefault("icons.theme", "")); "ok"'
 
     # Language switched live, with translated windows open
     step "language › open windows" ev 'SettingsService.open("profile"); WelcomeService.open(); "ok"'

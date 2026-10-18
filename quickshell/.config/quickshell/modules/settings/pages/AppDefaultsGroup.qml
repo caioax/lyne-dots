@@ -131,7 +131,7 @@ SettingsGroup {
                             Layout.preferredHeight: Config.fontSizeIconSmall
                             sourceSize.width: width
                             sourceSize.height: height
-                            source: slotRow.entry ? "image://icon/" + (slotRow.entry.icon || "application-x-executable") : ""
+                            source: slotRow.entry ? IconService.url(slotRow.entry.icon || "application-x-executable", "") : ""
                         }
 
                         Text {

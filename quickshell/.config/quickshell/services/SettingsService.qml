@@ -65,6 +65,13 @@ Singleton {
             category: "Appearance"
         },
         {
+            id: "icons",
+            label: I18n.noop("Icons"),
+            icon: "\u{f0832}",
+            description: I18n.noop("Icon theme for apps and the shell"),
+            category: "Appearance"
+        },
+        {
             id: "bar",
             label: I18n.noop("Bar"),
             icon: "\u{f1513}",

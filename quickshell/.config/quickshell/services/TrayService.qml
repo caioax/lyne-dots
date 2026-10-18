@@ -82,7 +82,7 @@ QtObject {
     // --- ICON LOGIC ---
     function getIconSource(iconString) {
         if (!iconString)
-            return "image://icon/image-missing";
+            return IconService.url("image-missing", "");
 
         // Fix for URL parameters (common in Electron/Steam apps)
         if (iconString.includes("?path=")) {
@@ -104,10 +104,10 @@ QtObject {
 
         // Already a fully qualified URL (file://, image://qsimage/, image://icon/, etc.)
         if (iconString.startsWith("file://") || iconString.startsWith("image://"))
-            return iconString;
+            return IconService.fresh(iconString);
 
         // Theme icon name (Freedesktop standard)
-        return "image://icon/" + iconString;
+        return IconService.url(iconString, "");
     }
 
     // Resolves menu item icon source, returning empty string for missing icons

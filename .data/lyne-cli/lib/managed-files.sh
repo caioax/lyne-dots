@@ -16,8 +16,15 @@ local MANAGED_FILES=(
     # :Lazy update rewrites it; the versions pinned in the repo still reach
     # the user when the repo's lock changes
     "nvim/.config/nvim/lazy-lock.json:repo"
-    # Default terminal (Settings › System › Apps) and KDE apps write to it
+    # Default terminal (Settings › System › Apps), the icon theme
+    # (Settings › Icons) and KDE apps write to it
     "kde/.config/kdeglobals:local"
+    # The icon theme (Settings › Icons, lyne icons); qt6ct, qt5ct and
+    # nwg-look also save there
+    "theming/.config/qt6ct/qt6ct.conf:local"
+    "theming/.config/qt5ct/qt5ct.conf:local"
+    "theming/.config/gtk-3.0/settings.ini:local"
+    "theming/.config/gtk-4.0/settings.ini:local"
 )
 
 # Pathspecs that leave the managed files out of a git status/stash

@@ -69,7 +69,7 @@ QtObject {
     // class often differs from the icon name), else the id itself
     function iconFor(appId) {
         const entry = appId ? DesktopEntries.heuristicLookup(appId) : null;
-        return Quickshell.iconPath(entry?.icon || appId || "application-x-executable", "application-x-executable");
+        return IconService.url(entry?.icon || appId || "application-x-executable", "application-x-executable");
     }
 
     function update() {

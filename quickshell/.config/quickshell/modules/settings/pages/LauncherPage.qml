@@ -286,7 +286,7 @@ ColumnLayout {
                 anchors.centerIn: parent
                 width: Config.fontSizeIconLarge
                 height: width
-                source: "image://icon/" + (appRow.entry?.icon || "application-x-executable")
+                source: IconService.url(appRow.entry?.icon || "application-x-executable", "")
                 sourceSize: Qt.size(width, height)
                 fillMode: Image.PreserveAspectFit
             }

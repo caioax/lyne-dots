@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import Quickshell.Widgets
 import qs.config
 import qs.services
@@ -30,7 +29,7 @@ RowLayout {
             id: pill
 
             required property var modelData
-            readonly property string iconSource: root.notif.hasActionIcons ? Quickshell.iconPath(modelData.identifier, true) : ""
+            readonly property string iconSource: root.notif.hasActionIcons ? (IconService.has(modelData.identifier) ? IconService.url(modelData.identifier, "") : "") : ""
 
             Layout.fillWidth: !root.compact
             implicitWidth: pillRow.implicitWidth + Config.padding * 4

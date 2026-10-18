@@ -102,7 +102,7 @@ Singleton {
             return "file://" + icon;
         if (icon.includes("://"))
             return icon;
-        return Quickshell.iconPath(icon, true);
+        return IconService.has(icon) ? IconService.url(icon, "") : "";
     }
 
     // Keep at most notifMaxPopups on screen, hiding the oldest ones first

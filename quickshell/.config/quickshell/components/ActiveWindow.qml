@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Widgets
 import qs.config
+import qs.services
 
 Item {
     id: root
@@ -51,7 +52,7 @@ Item {
     }
 
     readonly property string appId: toplevel?.wayland?.appId ?? ""
-    readonly property string appIcon: appId !== "" ? Quickshell.iconPath(appId, true) : ""
+    readonly property string appIcon: appId !== "" ? (IconService.has(appId) ? IconService.url(appId, "") : "") : ""
 
     implicitWidth: windowExists && windowTitle !== "" ? content.implicitWidth : 0
     implicitHeight: content.implicitHeight
