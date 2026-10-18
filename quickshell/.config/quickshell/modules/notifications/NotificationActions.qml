@@ -16,11 +16,7 @@ RowLayout {
     property bool includeDefault: false
     property bool compact: false
 
-    readonly property var actions: {
-        const list = root.notif.buttonActions;
-        const def = root.notif.defaultAction;
-        return includeDefault && def ? [def, ...list] : list;
-    }
+    readonly property var actions: includeDefault ? root.notif.listedActions : root.notif.buttonActions
 
     signal triggered
 

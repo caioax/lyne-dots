@@ -22,10 +22,7 @@ Item {
     readonly property int thumbSize: Config.fontSizeIconSmall * 2
     readonly property bool hasImage: notif.image !== "" && thumbImage.status !== Image.Error
     // Default action first (as "Open"): a click here only expands the row
-    readonly property var actions: {
-        const def = notif.defaultAction;
-        return def ? [def, ...notif.buttonActions] : notif.buttonActions;
-    }
+    readonly property var actions: notif.listedActions
     readonly property bool expandable: expanded || summary.truncated || body.truncated || actions.length > 0 || notif.hasInlineReply
     readonly property bool active: hover.hovered || menu.opened
 

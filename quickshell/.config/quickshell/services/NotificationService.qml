@@ -208,6 +208,10 @@ Singleton {
         readonly property bool isCritical: urgency === NotificationUrgency.Critical
         readonly property var defaultAction: actions.find(a => a.identifier === "default") ?? null
         readonly property var buttonActions: actions.filter(a => a.identifier !== "default" && a.text !== "")
+        // Where every action is offered (history rows, their menu): the
+        // default one first, unless a button already carries its label (the
+        // update notification sends "Details" as both)
+        readonly property var listedActions: defaultAction && !buttonActions.some(a => a.text === defaultAction.text) ? [defaultAction, ...buttonActions] : buttonActions
 
         // Popup lifetime in ms; 0 means it stays until dismissed
         readonly property int timeout: {
