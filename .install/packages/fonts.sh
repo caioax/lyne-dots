@@ -22,9 +22,7 @@ FONTS_PACKAGES=(
 )
 
 # AUR packages
-FONTS_AUR_PACKAGES=(
-    "bibata-cursor-theme" # Bibata cursor theme
-)
+FONTS_AUR_PACKAGES=()
 
 # =============================================================================
 # Tela Icon Theme installation via Git

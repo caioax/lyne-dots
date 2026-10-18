@@ -303,6 +303,13 @@ check() {
 # ev_is VALUE JS: the shell answers VALUE (for check)
 ev_is() { [[ "$(ev "$2")" == "$1" ]]; }
 
+# CursorService quotes a name with quotes in it so sh reads it back as is
+cursor_quote_ok() {
+    local quoted
+    quoted="$(ev 'CursorService._quote("it\x27s a \"test\"")')"
+    [[ "$(sh -c "printf %s $quoted")" == "it's a \"test\"" ]]
+}
+
 # A list from the shell, as words: list JS
 list() { ev "$1" | tr ',' ' '; }
 
@@ -370,6 +377,9 @@ run_steps() {
     # and Hyprland's file
     step "cursor › themes" ev 'CursorService.loaded && CursorService.current !== null ? "ok" : "ERROR cursor themes: " + JSON.stringify(CursorService.themes.map(t => t.id))'
     step "cursor › Adwaita 32" ev 'CursorService.setTheme("Adwaita"); CursorService.setSize(32); "ok"'
+    # Apps the launcher starts get the new cursor, not the shell's own
+    check "cursor › launcher env" ev_is "export XCURSOR_THEME='Adwaita' XCURSOR_SIZE=32; " 'CursorService.shellEnv'
+    check "cursor › env quoting" cursor_quote_ok
     check "cursor › applied" grep -q "gsettings set org.gnome.desktop.interface cursor-theme Adwaita" "$SB/calls.log"
     check "cursor › default theme" grep -qx "Inherits=Adwaita" "$SB/home/.icons/default/index.theme"
     check "cursor › previews" test -s "$SB/home/.cache/lyne/cursors/Adwaita/default-32.png"

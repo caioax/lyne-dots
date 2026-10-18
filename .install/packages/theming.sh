@@ -31,6 +31,9 @@ THEMING_AUR_PACKAGES=(
     # Qt Theming
     "qt5ct-kde" # Qt5 theme configuration
     "qt6ct-kde" # Qt6 theme configuration
+
+    # The default mouse cursor (more in Settings > Cursor)
+    "bibata-cursor-theme" # Bibata cursor theme
 )
 
 # =============================================================================
@@ -41,10 +44,18 @@ setup_theming() {
     gsettings set org.gnome.desktop.interface gtk-theme "adw-gtk3-dark"
     gsettings set org.gnome.desktop.interface icon-theme "Tela-blue-dark"
     gsettings set org.gnome.desktop.interface font-name "CaskaydiaCove Nerd Font 10"
-    gsettings set org.gnome.desktop.interface cursor-theme "Bibata-Modern-Classic"
-    gsettings set org.gnome.desktop.interface cursor-size 24
     gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
     log_info "GTK theme applied!"
+
+    # GSettings, the default theme apps without a setting inherit and, inside
+    # Hyprland, the running cursor (lyne cursor; Settings > Cursor)
+    log_step "Applying the cursor theme..."
+    source "$DOTFILES_DIR/.data/lyne-cli/lib/cursor.sh"
+    if cursor_apply "$CURSOR_DEFAULT_THEME" "$CURSOR_DEFAULT_SIZE"; then
+        log_info "Cursor: $CURSOR_DEFAULT_THEME, size $CURSOR_DEFAULT_SIZE"
+    else
+        log_warn "Cursor theme not applied: pick one in Settings > Cursor"
+    fi
 
     log_step "Setting up matugen..."
     mkdir -p "$HOME/.cache/matugen"

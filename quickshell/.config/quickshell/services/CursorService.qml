@@ -99,6 +99,14 @@ Singleton {
         Quickshell.execDetached(["bash", "-c", 'mkdir -p "$1" && xdg-open "$1"', "bash", installDir]);
     }
 
+    // For sh -c scripts that start apps: the shell's own environment still
+    // has the cursor it started with, and X11 apps read it from there
+    readonly property string shellEnv: "export XCURSOR_THEME=" + _quote(theme) + " XCURSOR_SIZE=" + size + "; " // i18n-ignore
+
+    function _quote(text: string): string {
+        return "'" + text.replace(/'/g, "'\\''") + "'";
+    }
+
     function nameOf(id: string): string {
         return themes.find(t => t.id === id)?.name ?? id;
     }

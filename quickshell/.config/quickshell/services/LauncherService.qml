@@ -468,7 +468,7 @@ Singleton {
         // Start in the entry's Path= (or home) instead of the shell's cwd.
         // execDetached here only takes an argv, so the cd goes in the script
         const dir = entry.workingDirectory || Quickshell.env("HOME");
-        const script = "cd '" + dir.replace(/'/g, "'\\''") + "' 2>/dev/null; " + cmd;
+        const script = CursorService.shellEnv + "cd '" + dir.replace(/'/g, "'\\''") + "' 2>/dev/null; " + cmd;
         // Terminal=true entries open in the default terminal (Settings › System › Apps)
         const command = entry.runInTerminal ? AppsService.terminalArgv(["sh", "-c", script]) : ["sh", "-c", script];
         Quickshell.execDetached(command);

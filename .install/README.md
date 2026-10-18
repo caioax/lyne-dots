@@ -17,7 +17,7 @@ Organized installation scripts for the dotfiles.
 │   ├── editor.sh       # Neovim + dev tools
 │   ├── apps.sh         # Dolphin, Zen Browser, Spotify, Chromium (WhatsApp)
 │   ├── utils.sh        # Clipboard, audio, bluetooth
-│   ├── fonts.sh        # Nerd Fonts, cursors, icons
+│   ├── fonts.sh        # Nerd Fonts, icons
 │   ├── quickshell.sh   # QuickShell
 │   ├── theming.sh      # Qt/GTK theming
 │   └── nvidia.sh       # NVIDIA drivers (optional)
@@ -120,9 +120,9 @@ package were installed, `LYNE_DRY_FAIL="git ping"` makes those commands fail.
 | editor     | Neovim + development tools                     |
 | apps       | Dolphin, Zen Browser, Spotify, Chromium, mpv   |
 | utils      | Clipboard, audio, bluetooth, brightnessctl     |
-| fonts      | Nerd Fonts, Bibata cursor, Tela icons          |
+| fonts      | Nerd Fonts, Tela icons                         |
 | quickshell | QuickShell bar/shell + Qt6                     |
-| theming    | Qt5ct, Qt6ct, Kvantum, nwg-look                |
+| theming    | Qt5ct, Qt6ct, Kvantum, nwg-look, Bibata cursor |
 | nvidia     | NVIDIA drivers (install only if needed)        |
 
 ## Templates and Data

@@ -200,7 +200,7 @@ Singleton {
     function open(key: string) {
         const command = commandFor(key);
         if (command !== "")
-            Quickshell.execDetached(["sh", "-c", command]);
+            Quickshell.execDetached(["sh", "-c", CursorService.shellEnv + command]);
     }
 
     // ========================================================================

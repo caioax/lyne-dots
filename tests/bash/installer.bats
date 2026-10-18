@@ -21,6 +21,11 @@ setup() {
     printf 'MODULES=()\nHOOKS=(base udev kms block)\n' >"$etc/mkinitcpio.conf"
     export LYNE_PACMAN_CONF="$etc/pacman.conf" LYNE_MKINITCPIO_CONF="$etc/mkinitcpio.conf"
     export LYNE_MKINITCPIO_DIR="$etc/mkinitcpio.conf.d" LYNE_MKINITCPIO_PRESETS="$etc/mkinitcpio.d"
+    # The cursor theme the theming step applies, whether or not this machine
+    # has it
+    export LYNE_ICON_DIRS="$BATS_TEST_TMPDIR/icons"
+    mkdir -p "$LYNE_ICON_DIRS/Bibata-Modern-Classic/cursors"
+    : >"$LYNE_ICON_DIRS/Bibata-Modern-Classic/cursors/left_ptr"
     ANSWERS="$BATS_TEST_TMPDIR/answers"
     # shellcheck disable=SC2034 # read by repo_unchanged
     REPO_STATUS="$(git -C "$REPO" status --porcelain)"
@@ -53,6 +58,11 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     assert_line "[dry-run] sudo pacman -S --needed --noconfirm linux-headers nvidia-open-dkms nvidia-utils libva-nvidia-driver nvidia-prime"
     assert_line --partial "[dry-run] sudo mkinitcpio -P"
     assert_line --partial "[dry-run] stow -d $REPO -t $DRY -R quickshell"
+    # The default cursor: its package with theming, applied like Settings does
+    assert_line --regexp '^\[dry-run\] yay -S --needed --noconfirm .*bibata-cursor-theme'
+    assert_line "[dry-run] gsettings set org.gnome.desktop.interface cursor-theme Bibata-Modern-Classic"
+    assert_line "[dry-run] gsettings set org.gnome.desktop.interface cursor-size 24"
+    grep -qx "Inherits=Bibata-Modern-Classic" "$DRY/.icons/default/index.theme"
     # Not asked for
     refute_line --regexp 'Packages (·|-) editor'
     # The first login opens the welcome screen; settings from the answers
