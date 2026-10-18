@@ -105,6 +105,10 @@
         "position": "bottom",
         "order": "top"
     },
+    "cursor": {
+        "theme": "Bibata-Modern-Classic",
+        "size": 24
+    },
     "dashboard": {
         "visualizer": true,
         "coverBackdrop": true,

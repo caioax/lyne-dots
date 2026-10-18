@@ -36,6 +36,9 @@ ShellRoot {
     // Checks for a lyne-dots update a minute after the start
     property bool _updateReady: UpdateService.checking
 
+    // Applies the saved mouse cursor on start
+    property string _cursor: CursorService.theme
+
     // Answers `qs ipc call powerprofile`
     property string _powerProfile: PowerProfileService.state
 

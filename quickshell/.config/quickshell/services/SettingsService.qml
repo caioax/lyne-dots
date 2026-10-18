@@ -58,6 +58,13 @@ Singleton {
             category: "Appearance"
         },
         {
+            id: "cursor",
+            label: I18n.noop("Cursor"),
+            icon: "\u{f01bf}",
+            description: I18n.noop("Mouse cursor theme and size"),
+            category: "Appearance"
+        },
+        {
             id: "bar",
             label: I18n.noop("Bar"),
             icon: "\u{f1513}",

@@ -154,6 +154,17 @@ Singleton {
         return out;
     }
 
+    // The mouse cursor (Settings › Cursor, CursorService) for the apps
+    // started from now on: hl.env also hands XCURSOR_* to systemd and D-Bus
+    // (apps they start) when the value changes. conf/environment.lua leaves
+    // them out, so a reload doesn't flip them back; a uwsm login reads the
+    // state in uwsm/env-hyprland
+    readonly property string cursorLua: {
+        const theme = _luaString(CursorService.theme);
+        const size = _luaString(String(CursorService.size));
+        return "\n-- Mouse cursor\n" + "hl.env(\"XCURSOR_THEME\", " + theme + ", true)\n" + "hl.env(\"XCURSOR_SIZE\", " + size + ", true)\n" + "hl.env(\"HYPRCURSOR_THEME\", " + theme + ")\n" + "hl.env(\"HYPRCURSOR_SIZE\", " + size + ")\n"; // i18n-ignore
+    }
+
     // Last `hyprctl eval` error, shown by the settings pages
     property string error: ""
 
@@ -185,6 +196,11 @@ Singleton {
 
     // Binds aren't dragged like sliders: write soon after a change
     onBindsLuaChanged: {
+        if (!StateService.isLoading)
+            bindsDebounce.restart();
+    }
+
+    onCursorLuaChanged: {
         if (!StateService.isLoading)
             bindsDebounce.restart();
     }
@@ -233,7 +249,7 @@ Singleton {
         return "{\n" + entries.join("\n") + "\n" + "    ".repeat(depth) + "}";
     }
 
-    readonly property string _fileContent: "-- Managed by Quickshell (Settings > Hyprland). Changes here are overwritten;\n" + "-- edit the values from the settings window or in state.json instead.\n\n" + lua + bindsLua
+    readonly property string _fileContent: "-- Managed by Quickshell (Settings > Hyprland). Changes here are overwritten;\n" + "-- edit the values from the settings window or in state.json instead.\n\n" + lua + cursorLua + bindsLua
 
     // Live: only the in-memory config, no reload
     function applyLive() {

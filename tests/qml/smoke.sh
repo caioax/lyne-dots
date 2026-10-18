@@ -227,7 +227,8 @@ EOF
             WAYLAND_DISPLAY="$NEST_WL" HYPRLAND_INSTANCE_SIGNATURE="$NEST_SIG" \
             XDG_CURRENT_DESKTOP=Hyprland XDG_DATA_DIRS="/usr/local/share:/usr/share:$HOME/.local/share" \
             QT_QPA_PLATFORM=wayland QT_QPA_PLATFORMTHEME=qt6ct QT_WAYLAND_DISABLE_WINDOWDECORATION=1 \
-            XCURSOR_THEME=Bibata-Modern-Classic XCURSOR_SIZE=24 QT_FORCE_STDERR_LOGGING=1 \
+            XCURSOR_THEME="$(jq -r .cursor.theme "$SB/cfg/state.json")" XCURSOR_SIZE="$(jq -r .cursor.size "$SB/cfg/state.json")" \
+            QT_FORCE_STDERR_LOGGING=1 \
             LYNE_SDDM_DIR="$SB/sddm" \
             /usr/bin/setsid dbus-run-session --config-file="$SB/session.conf" -- qs -p "$SB/cfg/shell.qml"
     ) >"$SB/qs.log" 2>&1 &
@@ -277,6 +278,25 @@ step() {
         printf '%s✗%s %s\n' "$C_FAIL" "$C_OFF" "$label"
     else
         printf '%s✓%s %s\n' "$C_OK" "$C_OFF" "$label"
+    fi
+}
+
+# check LABEL COMMAND...: a step that runs a command here (retried for up to
+# 3 s: the shell writes files a moment after a change)
+check() {
+    local label="$1"
+    shift
+    STEPS=$((STEPS + 1))
+    local _
+    for _ in {1..15}; do
+        "$@" >/dev/null 2>&1 && break
+        sleep 0.2
+    done
+    if "$@" >/dev/null 2>&1; then
+        printf '%s✓%s %s\n' "$C_OK" "$C_OFF" "$label"
+    else
+        FAILURES+=("$label:"$'\n'"    failed: $*")
+        printf '%s✗%s %s\n' "$C_FAIL" "$C_OFF" "$label"
     fi
 }
 
@@ -342,6 +362,15 @@ run_steps() {
     step "theme › catppuccin-latte" ev "ThemeService.setPresetMode('catppuccin-latte')"
     step "theme › tokyonight" ev "ThemeService.setPresetMode('tokyonight')"
     step "theme › auto" ev "ThemeService.setAutoMode()"
+
+    # Cursor: the themes found, and a switch reaching GTK, the default theme
+    # and Hyprland's file
+    step "cursor › themes" ev 'CursorService.loaded && CursorService.current !== null ? "ok" : "ERROR cursor themes: " + JSON.stringify(CursorService.themes.map(t => t.id))'
+    step "cursor › Adwaita 32" ev 'CursorService.setTheme("Adwaita"); CursorService.setSize(32); "ok"'
+    check "cursor › applied" grep -q "gsettings set org.gnome.desktop.interface cursor-theme Adwaita" "$SB/calls.log"
+    check "cursor › default theme" grep -qx "Inherits=Adwaita" "$SB/home/.icons/default/index.theme"
+    check "cursor › settings.lua" grep -qF 'hl.env("XCURSOR_SIZE", "32", true)' "$SB/home/.config/hypr/local/settings.lua"
+    step "cursor › back to the default" ev 'StateService.set("cursor.theme", StateService.getDefault("cursor.theme", "")); StateService.set("cursor.size", StateService.getDefault("cursor.size", 24)); "ok"'
 
     # Language switched live, with translated windows open
     step "language › open windows" ev 'SettingsService.open("profile"); WelcomeService.open(); "ok"'

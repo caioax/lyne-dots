@@ -25,10 +25,9 @@ hl.env("QT_AUTO_SCREEN_SCALE_FACTOR", "1")
 hl.env("QT_WAYLAND_DISABLE_WINDOWDECORATION", "1")
 
 -- --- Cursors ---
-hl.env("XCURSOR_SIZE", "24")
-hl.env("XCURSOR_THEME", "Bibata-Modern-Classic")
-hl.env("HYPRCURSOR_THEME", "Bibata-Modern-Classic")
-hl.env("HYPRCURSOR_SIZE", "24")
+-- XCURSOR_* and HYPRCURSOR_* come from local/settings.lua (Settings › Cursor,
+-- written by the shell); setting them here too would flip them back on every
+-- reload
 
 -- --- PATH ---
 -- Once: every config reload runs this again with the PATH it set
