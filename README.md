@@ -412,6 +412,7 @@ Partial translations work (untranslated strings show in English). [i18n/README.m
 
 - [Caelestia shell](https://github.com/caelestia-dots/shell): inspiration for many of the shell's panels and its Settings
 - [HyprQuickFrame](https://github.com/Ronin-CK/HyprQuickFrame): the screenshot tool's starting point
+- [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell): inspiration for the installer's TUI layout and its questions before installing
 - [Quickshell](https://quickshell.org), [Hyprland](https://hypr.land), [matugen](https://github.com/InioX/matugen), [awww](https://codeberg.org/LGFae/awww), [cliphist](https://github.com/sentriz/cliphist), [cava](https://github.com/karlstav/cava), [tesseract](https://github.com/tesseract-ocr/tesseract)
 - Weather from [Open-Meteo](https://open-meteo.com); lyrics from [LRCLIB](https://lrclib.net) and NetEase
 
