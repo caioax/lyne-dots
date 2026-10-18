@@ -8,8 +8,7 @@ one JSON file here:
 ```
 i18n/
 ├── languages.json     the list Settings shows (generated: don't edit)
-├── pt_BR.json         one file per language
-└── glossary-pt_BR.md  the terms a translation keeps the same everywhere
+└── pt_BR.json         one file per language
 ```
 
 The language is picked in Settings › Profile & Region › Language (or on the
@@ -72,9 +71,8 @@ The shell reloads the file when it changes, so edits show up live.
 - **Rich text**: keep `<b>`, `<br>` and the like as they are.
 - **Proper names stay**: Hyprland, Quickshell, Zen Browser, NVIDIA, Wi-Fi,
   Bluetooth, key names (Super, Ctrl, Caps Lock, Print).
-- Start with a glossary like `glossary-pt_BR.md`: the words that come back
-  everywhere (Settings, workspace, launcher, theme, wallpaper…), translated
-  once and kept.
+- Pick the words that come back everywhere (Settings, workspace, launcher,
+  theme, wallpaper…) once and keep them the same in every string.
 
 ## The pseudo-language
 
