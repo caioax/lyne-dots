@@ -400,8 +400,12 @@ run_steps() {
         mkdir -p "$SB/home/.local/share/icons/Smoke-Icons$variant"
         printf '[Icon Theme]\nName=Smoke Icons%s\nInherits=hicolor\nDirectories=48/apps\n\n[48/apps]\nSize=48\n' "$variant" \
             >"$SB/home/.local/share/icons/Smoke-Icons$variant/index.theme"
+        mkdir -p "$SB/home/.local/share/icons/Smoke-Icons$variant/48/apps"
+        cp /usr/share/icons/hicolor/48x48/apps/*.png "$SB/home/.local/share/icons/Smoke-Icons$variant/48/apps/folder.png" 2>/dev/null ||
+            printf 'png' >"$SB/home/.local/share/icons/Smoke-Icons$variant/48/apps/folder.png"
     done
     step "icons › refresh" ev 'IconService.refresh(); "ok"'
+    check "icons › previews" ev_is "file://$SB/home/.local/share/icons/Smoke-Icons-light/48/apps/folder.png" 'IconService.previewUrl("Smoke-Icons-light", "folder")'
     check "icons › family listed" ev_is "Smoke-Icons-dark Smoke-Icons-light" 'const t = IconService.themes.find(t => t.id === "Smoke-Icons"); t ? t.dark + " " + t.light : JSON.stringify(IconService.themes.map(t => t.id))'
     step "icons › Smoke-Icons" ev 'IconService.setTheme("Smoke-Icons"); "ok"'
     check "icons › variant" ev_is Smoke-Icons-dark 'IconService.variant'
@@ -415,6 +419,11 @@ run_steps() {
     check "icons › new icon urls" ev_is "image://icon/folder?path=lyne-icons-1" 'IconService.url("folder", "")'
     check "icons › light variant" ev_is Smoke-Icons-light 'IconService.variantOf(IconService.current, false)'
     step "icons › back to the default" ev 'StateService.set("icons.theme", StateService.getDefault("icons.theme", "")); "ok"'
+    # The family is the user's: removable, and removed with its versions
+    check "icons › removable" ev_is true 'IconService.themes.some(t => t.id === "Smoke-Icons" && t.removable)'
+    step "icons › remove" ev 'IconService.remove("Smoke-Icons"); "ok"'
+    check "icons › removed" test ! -e "$SB/home/.local/share/icons/Smoke-Icons-dark"
+    check "icons › list without it" ev_is false 'IconService.themes.some(t => t.id === "Smoke-Icons")'
 
     # Language switched live, with translated windows open
     step "language › open windows" ev 'SettingsService.open("profile"); WelcomeService.open(); "ok"'

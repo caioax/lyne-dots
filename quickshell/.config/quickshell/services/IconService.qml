@@ -17,11 +17,15 @@ import Quickshell.Io
 // KIconLoader's signal: the signal goes out after that, then `generation`
 // grows. Icons already on screen stay in Qt's image cache under the same
 // URL, so the shell's icon images take theirs from url(), which changes
-// with the generation
+// with the generation. Previews: the files a few icons of each theme come
+// from (scripts/icon-preview.py), read again with the list. install() picks
+// an archive with zenity and unpacks its themes into ~/.local/share/icons
+// (icons_install in the lib); remove() deletes one of those families
 Singleton {
     id: root
 
     readonly property string script: Qt.resolvedUrl("../scripts/icons.sh").toString().replace("file://", "")
+    readonly property string installDir: (Quickshell.env("XDG_DATA_HOME") || Quickshell.env("HOME") + "/.local/share") + "/icons"
 
     readonly property string theme: StateService.get("icons.theme", StateService.getDefault("icons.theme", "Tela-blue"))
 
@@ -35,6 +39,19 @@ Singleton {
     // The theme in use: the family's variant for the shell's mode
     readonly property string variant: variantOf(current, ThemeService.isDarkMode)
 
+    // Icons shown in the previews, as icon-preview.py names them; narrow
+    // cards show the first ones
+    readonly property var slots: ["folder", "terminal", "browser", "symbolic", "settings", "home"]
+    // { theme id: { slot: file } }, for every family's themes
+    property var previews: ({})
+
+    property bool installing: false
+    // Outcome of the last install or removal, for Settings: { ok, text }
+    // (null until there's one)
+    property var status: null
+    // Ids just installed, for the status
+    property var _installed: []
+
     // Grows each time the shell's own icons change theme
     property int generation: 0
 
@@ -44,6 +61,7 @@ Singleton {
     property string _applied: ""
     property bool _pending: false
     property bool _refreshAgain: false
+    property bool _previewsAgain: false
 
     onVariantChanged: applyDebounce.restart()
 
@@ -56,6 +74,32 @@ Singleton {
 
     function setTheme(id: string) {
         StateService.set("icons.theme", id);
+    }
+
+    // A preview icon of a theme as an image source, "" when it has none
+    function previewUrl(id: string, slot: string): string {
+        const file = previews[id]?.[slot] ?? "";
+        return file === "" ? "" : "file://" + file.split("/").map(encodeURIComponent).join("/");
+    }
+
+    function install() {
+        if (installProc.running)
+            return;
+        installing = true;
+        status = null;
+        installProc.running = true;
+    }
+
+    function remove(id: string) {
+        if (id === theme || removeProc.running)
+            return;
+        removeProc.removing = nameOf(id);
+        removeProc.command = [script, "remove", id];
+        removeProc.running = true;
+    }
+
+    function openFolder() {
+        Quickshell.execDetached(["bash", "-c", 'mkdir -p "$1" && xdg-open "$1"', "bash", installDir]);
     }
 
     function nameOf(id: string): string {
@@ -109,6 +153,18 @@ Singleton {
         applyProc.running = true;
     }
 
+    function _makePreviews() {
+        if (previewProc.running) {
+            _previewsAgain = true;
+            return;
+        }
+        const ids = [];
+        for (const t of themes)
+            ids.push(t.path.split("/").pop(), t.dark, t.light);
+        previewProc.command = [script, "preview"].concat(ids.filter(id => id !== ""));
+        previewProc.running = true;
+    }
+
     Component.onCompleted: refresh()
 
     Connections {
@@ -149,10 +205,116 @@ Singleton {
                 }
                 root.loaded = true;
                 applyDebounce.restart();
+                root._makePreviews();
+                if (root._installed.length > 0) {
+                    // A family's variants come in as themes of their own
+                    const names = [...new Set(root._installed.map(id => {
+                            const family = root.themes.find(t => t.id === id || t.dark === id || t.light === id);
+                            return family?.name ?? id;
+                        }))];
+                    root._installed = [];
+                    root.status = {
+                        ok: true,
+                        text: names.length === 1 ? I18n.tr("Installed %1: pick it above", names[0]) : I18n.tr("Installed %1: pick one above", names.join(", "))
+                    };
+                }
                 if (root._refreshAgain) {
                     root._refreshAgain = false;
                     Qt.callLater(root.refresh);
                 }
+            }
+        }
+    }
+
+    // zenity's dialog texts come translated as $2..$5; the lib's lines
+    // ("installed <id>", "updated <id>") on stdout, its exit code tells why
+    // it failed
+    Process {
+        id: installProc
+
+        property var lines: []
+
+        command: ["bash", "-c", `
+            if ! command -v zenity >/dev/null; then
+                notify-send "$4" "$5"
+                exit 10
+            fi
+            file=$(zenity --file-selection --title="$2" --filename="$HOME/" --file-filter="$3 | *.tar.gz *.tgz *.tar.xz *.txz *.tar.bz2 *.tar.zst *.tar *.zip *.7z") || exit 11
+            "$1" install "$file"
+        `, "bash", root.script, I18n.tr("Install an icon theme"), I18n.tr("Archives"), I18n.tr("Icons"), I18n.tr("Install zenity to pick a file")]
+        stdout: SplitParser {
+            onRead: data => installProc.lines.push(data.trim())
+        }
+        onStarted: lines = []
+        onExited: code => {
+            root.installing = false;
+            switch (code) {
+            case 0:
+                // Said once the list is read again, with the themes' names
+                root._installed = installProc.lines.map(l => l.split(" ").slice(1).join(" ")).filter(id => id !== "");
+                break;
+            case 2:
+                root.status = {
+                    ok: false,
+                    text: I18n.tr("Couldn't open that file: use a .tar.gz, .tar.xz or .zip archive")
+                };
+                break;
+            case 3:
+                root.status = {
+                    ok: false,
+                    text: I18n.tr("No icon theme in that file (a folder with an index.theme that lists icons)")
+                };
+                break;
+            case 4:
+                root.status = {
+                    ok: false,
+                    text: I18n.tr("That file has a cursor theme: install it in Settings › %1", I18n.translate("Cursor"))
+                };
+                break;
+            default:
+                // Cancelled, or no zenity (it said so in a notification)
+                break;
+            }
+            root.refresh();
+        }
+    }
+
+    Process {
+        id: removeProc
+
+        property string removing: ""
+
+        onExited: code => {
+            root.status = code === 0 ? {
+                ok: true,
+                text: I18n.tr("Removed %1", removing)
+            } : {
+                ok: false,
+                text: I18n.tr("Couldn't remove %1", removing)
+            };
+            root.refresh();
+        }
+    }
+
+    Process {
+        id: previewProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    root.previews = JSON.parse(text);
+                } catch (e) {
+                    root.previews = {};
+                }
+                if (root._previewsAgain) {
+                    root._previewsAgain = false;
+                    Qt.callLater(root._makePreviews);
+                }
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (text.trim() !== "")
+                    console.warn("[Icons] previews:", text.trim());
             }
         }
     }

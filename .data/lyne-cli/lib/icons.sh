@@ -33,6 +33,19 @@
 #                              apps); files only when their value changes.
 #                              Prints "reload" when a Qt or KDE file
 #                              changed (see icons_notify)
+#   icons_install <archive|folder>
+#                              install the icon themes inside (an archive
+#                              bsdtar opens) into ~/.local/share/icons,
+#                              replacing the user's own copy of the same id;
+#                              prints "installed <id>" or "updated <id>" per
+#                              theme. Links between its themes (Tela's
+#                              variants link to the base theme) stay; others
+#                              are dropped. Fails with 2 when it can't be
+#                              read, 3 when there's no icon theme in it, 4
+#                              when there are only cursor themes
+#   icons_remove <id>          delete a family (or the family of a variant)
+#                              from the user's folders; 2 when it isn't
+#                              installed, 3 when any of it is a system theme
 #   icons_notify               tell running KDE/Qt apps to load the icons
 #                              again (KIconLoader's signal). Qt apps reload
 #                              qt6ct's settings ~3 s after the file changes:
@@ -255,4 +268,117 @@ icons_apply() {
 icons_notify() {
     command -v dbus-send &>/dev/null || return 0
     dbus-send --session --type=signal /KIconLoader org.kde.KIconLoader.iconChanged int32:0 2>/dev/null || true
+}
+
+icons_install() {
+    local source="$1" dest tmp
+    dest="$(cursor_install_dir)"
+    if [[ ! -e "$source" ]]; then
+        echo "No file or folder at '$source'" >&2
+        return 2
+    fi
+    mkdir -p "$dest" || return 2
+    # In the same folder, so the themes move in with a rename
+    tmp="$(mktemp -d "$dest/.lyne-install.XXXXXX")" || return 2
+
+    local rc=0
+    _icons_install_into "$source" "$tmp" "$dest" || rc=$?
+    rm -rf "$tmp"
+    return "$rc"
+}
+
+_icons_install_into() {
+    local source="$1" tmp="$2" dest="$3" base
+    base="$(basename -- "$source")"
+    if [[ -d "$source" ]]; then
+        cp -a -- "$source" "$tmp/$base" || return 2
+    # bsdtar refuses absolute paths and ".." by itself
+    elif ! bsdtar -xf "$source" -C "$tmp" 2>/dev/null; then
+        echo "Couldn't open '$source': not an archive bsdtar reads (.tar.gz, .tar.xz, .zip...)" >&2
+        return 2
+    fi
+
+    # Theme folders: an index.theme listing icons; cursor themes noted
+    local themes=() cursors=0 index dir info
+    while IFS= read -r -d '' index; do
+        dir="${index%/index.theme}"
+        info="$(_icons_info "$dir")" || continue
+        if [[ "${info##*$'\x1f'}" == 1 ]]; then
+            themes+=("$dir")
+        elif [[ -d "$dir/cursors" ]]; then
+            cursors=1
+        fi
+    done < <(find "$tmp" -maxdepth 5 -name index.theme -type f -print0 | LC_ALL=C sort -z)
+
+    if ((${#themes[@]} == 0)); then
+        if ((cursors)); then
+            echo "'$base' only has cursor themes: install them with lyne cursor install" >&2
+            return 4
+        fi
+        echo "No icon theme in '$base' (a folder whose index.theme lists icon folders)" >&2
+        return 3
+    fi
+
+    # Links may only point into one of these themes (absolute ones never
+    # do: they point outside the folder the archive went to). In one Python
+    # process: Tela has some 27 000 links
+    python3 -I -c '
+import os, sys
+roots = [os.path.realpath(t) for t in sys.argv[1:]]
+for theme in sys.argv[1:]:
+    for folder, dirs, files in os.walk(theme):
+        for name in dirs + files:
+            path = os.path.join(folder, name)
+            if not os.path.islink(path):
+                continue
+            real = os.path.realpath(path)
+            if not any(real == r or real.startswith(r + "/") for r in roots):
+                os.remove(path)
+' "${themes[@]}" || return 2
+
+    local theme id
+    for theme in "${themes[@]}"; do
+        id="${theme##*/}"
+        # The archive was the theme itself: the archive's name
+        if [[ "$theme" == "$tmp" ]]; then
+            id="${base%%.*}"
+        fi
+        # Not the fallback themes every theme inherits
+        if ! _cursor_valid_id "$id" || [[ "$id" == hicolor || "$id" == locolor ]]; then
+            echo "Skipped a theme named '$id'" >&2
+            continue
+        fi
+        if [[ -e "$dest/$id" ]]; then
+            rm -rf -- "${dest:?}/$id" || return 2
+            echo "updated $id"
+        else
+            echo "installed $id"
+        fi
+        mv -- "$theme" "$dest/$id" || return 2
+        # GTK reads a theme much faster with its cache
+        if command -v gtk-update-icon-cache &>/dev/null; then
+            gtk-update-icon-cache -q -f -t "$dest/$id" 2>/dev/null || true
+        fi
+    done
+}
+
+icons_remove() {
+    local id="$1" family line dark light user path
+    family="$(icons_family "$id")" || {
+        echo "No icon theme named '$id' (see lyne icons list)" >&2
+        return 2
+    }
+    line="$(_icons_split | awk -F'\037' -v id="$family" '$1 == id')"
+    IFS=$'\x1f' read -r _ _ path dark light user <<<"$line"
+    if [[ "$user" != 1 ]]; then
+        echo "$family is a system theme in ${path%/*}: remove the package that installed it" >&2
+        return 3
+    fi
+    local member folder
+    for member in "$family" "$dark" "$light"; do
+        [[ -n "$member" ]] || continue
+        folder="$(_icons_scan 2>/dev/null | awk -F'\t' -v id="$member" '$1 == id { print $3 }')"
+        [[ -n "$folder" ]] && rm -rf -- "$folder"
+    done
+    return 0
 }

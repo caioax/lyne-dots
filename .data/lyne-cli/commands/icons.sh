@@ -33,7 +33,8 @@ _icons_apply_saved() {
 
 case "$subcmd" in
     -h|--help)
-        echo "Usage: lyne icons [status|list|--json|set <theme>|apply [dark|light]]"
+        echo "Usage: lyne icons [status|list|--json|set <theme>|apply [dark|light]|"
+        echo "                   install <archive|folder>...|remove <theme>]"
         echo ""
         echo "The icon theme, also in Settings > Icons. Themes are the folders with an"
         echo "index.theme listing icons in ~/.local/share/icons, ~/.icons and"
@@ -47,6 +48,10 @@ case "$subcmd" in
         echo "  --json               The installed themes as JSON"
         echo "  set <theme>          Use a theme (by id, as in list)"
         echo "  apply [dark|light]   Apply the saved theme again (for the current mode)"
+        echo "  install <file>...    Install the themes in an archive (.tar.gz, .tar.xz,"
+        echo "                       .zip...) or folder into ~/.local/share/icons"
+        echo "  remove <theme>       Delete a theme you installed, with its dark and light"
+        echo "                       versions (not the one in use)"
         ;;
     status)
         local current mode id name dir dark light _ any=false
@@ -88,6 +93,28 @@ case "$subcmd" in
         local variant
         variant="$(_icons_apply_saved)" || return 1
         echo "Icons: $family ($variant)"
+        ;;
+    install)
+        [[ -n "${2:-}" ]] || { echo "Usage: lyne icons install <archive|folder>..."; return 1; }
+        shift
+        local file rc=0
+        for file in "$@"; do
+            icons_install "$file" || rc=1
+        done
+        return "$rc"
+        ;;
+    remove)
+        [[ -n "${2:-}" ]] || { echo "Usage: lyne icons remove <theme>"; return 1; }
+        local family
+        family="$(icons_family "$2")" || {
+            echo "No icon theme named '$2' (see lyne icons list)" >&2
+            return 1
+        }
+        if [[ "$family" == "$(_icons_saved)" ]]; then
+            echo "$family is the theme in use: pick another one first (lyne icons set)" >&2
+            return 1
+        fi
+        icons_remove "$family" && echo "Removed $family"
         ;;
     apply)
         case "${2:-}" in

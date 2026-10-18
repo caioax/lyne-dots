@@ -90,11 +90,9 @@ lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
 }
 
 @test "themes: missing icon directories and none at all" {
-    export LYNE_ICON_DIRS="$BATS_TEST_TMPDIR/nope:$SYSTEM_ICONS"
-    run lib 'icons_themes | cut -f1'
+    LYNE_ICON_DIRS="$BATS_TEST_TMPDIR/nope:$SYSTEM_ICONS" run lib 'icons_themes | cut -f1'
     assert_output breeze
-    export LYNE_ICON_DIRS="$BATS_TEST_TMPDIR/nope"
-    run lib 'icons_themes; icons_json'
+    LYNE_ICON_DIRS="$BATS_TEST_TMPDIR/nope" run lib 'icons_themes; icons_json'
     assert_success
     assert_output "[]"
 }
@@ -257,4 +255,203 @@ lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
     assert_failure
     run lyne icons list
     assert_line "Tela-blue	Tela blue	~/.local/share/icons/Tela-blue	Tela-blue-dark	Tela-blue-light"
+}
+
+# LYNE_TEST_SHELL: a copy of the shell (to sabotage the script)
+PREVIEW_SHELL="${LYNE_TEST_SHELL:-$REPO/quickshell/.config/quickshell}"
+preview() { timeout 5 python3 "$PREVIEW_SHELL/scripts/icon-preview.py" "$LYNE_ICON_DIRS" "$@"; }
+
+# sized DIR INHERITS SUBDIR:TYPE:SIZE[:MIN:MAX[:SCALE]]...: a theme with
+# sized folders
+sized() {
+    local dir=$1 inherits=$2 spec name type size names=""
+    shift 2
+    mkdir -p "$dir"
+    for spec in "$@"; do names+="${names:+,}${spec%%:*}"; done
+    {
+        printf '[Icon Theme]\nName=%s\nInherits=%s\nDirectories=%s\n' "${dir##*/}" "$inherits" "$names"
+        for spec in "$@"; do
+            IFS=: read -r name type size min max scale <<<"$spec"
+            printf '\n[%s]\nSize=%s\nType=%s\n' "$name" "$size" "$type"
+            [[ -n "$min" ]] && printf 'MinSize=%s\nMaxSize=%s\n' "$min" "$max"
+            [[ -n "$scale" ]] && printf 'Scale=%s\n' "$scale"
+            mkdir -p "$dir/$name"
+        done
+    } >"$dir/index.theme"
+}
+
+@test "preview: the exact size first (at scale 1), else the closest; scalable folders match a range" {
+    local t="$USER_ICONS/Sizes"
+    sized "$t" "" 24@2:Fixed:24:::2 16:Fixed:16 48:Fixed:48 64:Fixed:64 scalable:Scalable:64:8:512
+    touch "$t/24@2/folder.svg" "$t/16/folder.svg" "$t/48/folder.png" "$t/16/utilities-terminal.svg" \
+        "$t/64/utilities-terminal.png" "$t/scalable/web-browser.svg" "$t/48/web-browser.xpm" "$t/scalable/preferences-system.svg"
+    run preview Sizes
+    assert_success
+    run jq -r '.Sizes | to_entries[] | "\(.key) \(.value)"' <<<"$output"
+    assert_output "$(printf '%s\n' "folder $t/48/folder.png" "terminal $t/64/utilities-terminal.png" "browser $t/48/web-browser.xpm" "settings $t/scalable/preferences-system.svg")"
+}
+
+@test "preview: fallback names across the inherited themes, then hicolor; missing icons left out" {
+    sized "$USER_ICONS/Child" "Parent" 48:Fixed:48
+    sized "$SYSTEM_ICONS/Parent" "" 32:Threshold:32
+    sized "$SYSTEM_ICONS/hicolor" "" 48x48/apps:Threshold:48
+    touch "$USER_ICONS/Child/48/folder-home.svg" "$SYSTEM_ICONS/Parent/32/user-home.svg" \
+        "$SYSTEM_ICONS/Parent/32/folder.svg" "$USER_ICONS/Child/48/folder.svg" \
+        "$SYSTEM_ICONS/hicolor/48x48/apps/internet-web-browser.png"
+    run preview Child
+    assert_success
+    run jq -c .Child <<<"$output"
+    assert_output "{\"folder\":\"$USER_ICONS/Child/48/folder.svg\",\"browser\":\"$SYSTEM_ICONS/hicolor/48x48/apps/internet-web-browser.png\",\"home\":\"$SYSTEM_ICONS/Parent/32/user-home.svg\"}"
+}
+
+@test "preview: inheritance loops, unknown themes and ids with a slash" {
+    sized "$USER_ICONS/Loop-a" "Loop-b" 48:Fixed:48
+    sized "$USER_ICONS/Loop-b" "Loop-a,Nope" 48:Fixed:48
+    touch "$USER_ICONS/Loop-b/48/folder.svg"
+    run preview Loop-a Nope "../Loop-b" ""
+    assert_success
+    assert_output "{\"Loop-a\": {\"folder\": \"$USER_ICONS/Loop-b/48/folder.svg\"}, \"Nope\": {}}"
+}
+
+@test "preview: icons.sh looks in the lib's icon directories" {
+    sized "$HOME/.icons/Home-theme" "" 48:Fixed:48
+    touch "$HOME/.icons/Home-theme/48/folder.svg"
+    run "$REPO/quickshell/.config/quickshell/scripts/icons.sh" preview Home-theme
+    assert_success
+    assert_output "{\"Home-theme\": {\"folder\": \"$HOME/.icons/Home-theme/48/folder.svg\"}}"
+}
+
+# --- install and remove ---
+
+pack() {
+    local archive=$1 dir=$2
+    shift 2
+    bsdtar -a -cf "$archive" -C "$dir" "$@"
+}
+
+@test "install: a family with links between its themes; the user's copy replaced; GTK's cache made" {
+    local src="$BATS_TEST_TMPDIR/src"
+    icons "$src/Fam" name=Fam
+    icons "$src/Fam-dark" name="Fam dark"
+    mkdir -p "$src/Fam/48" && touch "$src/Fam/48/folder.svg"
+    ln -s ../Fam/48 "$src/Fam-dark/48"
+    ln -s folder.svg "$src/Fam/48/folder-open.svg"
+    ln -s /etc/passwd "$src/Fam/48/bad.svg"
+    ln -s ../../outside "$src/Fam-dark/away"
+    mkdir -p "$src/outside"
+    pack "$BATS_TEST_TMPDIR/fam.tar.xz" "$src" Fam Fam-dark outside
+    run lib "icons_install '$BATS_TEST_TMPDIR/fam.tar.xz'"
+    assert_success
+    assert_output "$(printf '%s\n' "installed Fam-dark" "installed Fam")"
+    [[ -L "$USER_ICONS/Fam-dark/48" && -f "$USER_ICONS/Fam-dark/48/folder.svg" ]]
+    [[ -L "$USER_ICONS/Fam/48/folder-open.svg" ]]
+    [[ ! -L "$USER_ICONS/Fam/48/bad.svg" && ! -L "$USER_ICONS/Fam-dark/away" && ! -e "$USER_ICONS/outside" ]]
+    run grep -c "gtk-update-icon-cache -q -f -t $USER_ICONS/Fam" "$STUB_LOG"
+    assert_output 2
+    run lib 'icons_themes | cut -f1,4,6'
+    assert_line "Fam	Fam-dark	1"
+    printf 'old' >"$USER_ICONS/Fam/old-file"
+    run lib "icons_install '$BATS_TEST_TMPDIR/fam.tar.xz'"
+    assert_line "updated Fam"
+    [[ ! -e "$USER_ICONS/Fam/old-file" ]]
+    run ls -A "$USER_ICONS"
+    refute_output --partial .lyne-install
+}
+
+@test "install: a theme at the archive's top takes the archive's name; a folder" {
+    local src="$BATS_TEST_TMPDIR/src"
+    icons "$src/flat" name="Flat Theme"
+    pack "$BATS_TEST_TMPDIR/Flat-icons.tar.gz" "$src/flat" index.theme
+    run lib "icons_install '$BATS_TEST_TMPDIR/Flat-icons.tar.gz'"
+    assert_output "installed Flat-icons"
+    icons "$src/Folder-theme" name=Folder
+    run lib "icons_install '$src/Folder-theme'"
+    assert_output "installed Folder-theme"
+    [[ -d "$src/Folder-theme" ]]
+}
+
+@test "install: not an archive, no theme, only cursor themes, fallback names, nothing outside" {
+    local src="$BATS_TEST_TMPDIR/src"
+    printf 'hello' >"$BATS_TEST_TMPDIR/notes.txt"
+    run lib "icons_install '$BATS_TEST_TMPDIR/notes.txt'"
+    assert_failure 2
+    run lib "icons_install '$BATS_TEST_TMPDIR/missing.zip'"
+    assert_failure 2
+    mkdir -p "$src/plain/apps"
+    pack "$BATS_TEST_TMPDIR/plain.zip" "$src" plain
+    run lib "icons_install '$BATS_TEST_TMPDIR/plain.zip'"
+    assert_failure 3
+    icons "$src/cur/Pointer" name=Pointer dirs=
+    mkdir -p "$src/cur/Pointer/cursors"
+    pack "$BATS_TEST_TMPDIR/cur.zip" "$src" cur
+    run lib "icons_install '$BATS_TEST_TMPDIR/cur.zip'"
+    assert_failure 4
+    assert_output --partial "only has cursor themes"
+    icons "$src/odd/hicolor"
+    icons "$src/odd/default"
+    icons "$src/odd/Fine"
+    icons "$src/odd/Hidden" hidden=1
+    pack "$BATS_TEST_TMPDIR/odd.zip" "$src" odd
+    run lib "icons_install '$BATS_TEST_TMPDIR/odd.zip'"
+    assert_success
+    assert_line "installed Fine"
+    assert_line "Skipped a theme named 'hicolor'"
+    assert_line "Skipped a theme named 'default'"
+    refute_output --partial Hidden
+    [[ ! -e "$USER_ICONS/hicolor" && ! -e "$USER_ICONS/default" && ! -e "$USER_ICONS/Hidden" ]]
+    icons "$src/evil"
+    (cd "$src/evil" && bsdtar -cf "$BATS_TEST_TMPDIR/evil.tar" -s '|^|../../|' index.theme 2>/dev/null) || true
+    run lib "icons_install '$BATS_TEST_TMPDIR/evil.tar'"
+    assert_failure 2
+    [[ ! -e "$HOME/.local/index.theme" && ! -e "$HOME/index.theme" ]]
+    run ls -A "$USER_ICONS"
+    refute_output --partial .lyne-install
+}
+
+@test "install: links kept when the icons folder is itself a link" {
+    mkdir -p "$BATS_TEST_TMPDIR/elsewhere" "$HOME/.local/share"
+    rm -rf "$USER_ICONS"
+    ln -s "$BATS_TEST_TMPDIR/elsewhere" "$USER_ICONS"
+    local src="$BATS_TEST_TMPDIR/src"
+    icons "$src/Linked"
+    icons "$src/Linked-light"
+    ln -s ../Linked/index.theme "$src/Linked-light/base.theme"
+    pack "$BATS_TEST_TMPDIR/linked.tar.gz" "$src" Linked Linked-light
+    run lib "icons_install '$BATS_TEST_TMPDIR/linked.tar.gz'"
+    assert_success
+    [[ -L "$BATS_TEST_TMPDIR/elsewhere/Linked-light/base.theme" ]]
+}
+
+@test "remove: a whole family of the user's; system themes and unknown ones refused" {
+    icons "$HOME/.icons/Old" name=Old
+    run lib 'icons_remove Tela-blue-light && icons_remove Old'
+    assert_success
+    [[ ! -e "$USER_ICONS/Tela-blue" && ! -e "$USER_ICONS/Tela-blue-dark" && ! -e "$USER_ICONS/Tela-blue-light" && ! -e "$HOME/.icons/Old" ]]
+    run lib 'icons_remove breeze'
+    assert_failure 3
+    assert_output --partial "system theme"
+    [[ -d "$SYSTEM_ICONS/breeze" && -d "$SYSTEM_ICONS/breeze-dark" ]]
+    run lib 'icons_remove Nope'
+    assert_failure 2
+    run lib 'icons_remove ""'
+    assert_failure 2
+}
+
+@test "lyne icons install/remove: never the theme in use" {
+    fake_dots
+    local src="$BATS_TEST_TMPDIR/src"
+    icons "$src/Mine"
+    pack "$BATS_TEST_TMPDIR/mine.tar.gz" "$src" Mine
+    run lyne icons install "$BATS_TEST_TMPDIR/mine.tar.gz" "$BATS_TEST_TMPDIR/nope.zip"
+    assert_failure
+    assert_line "installed Mine"
+    lyne icons set Mine
+    run lyne icons remove Mine
+    assert_failure
+    assert_output --partial "in use"
+    [[ -d "$USER_ICONS/Mine" ]]
+    run lyne icons remove Tela-blue-dark
+    assert_success
+    assert_output "Removed Tela-blue"
+    [[ ! -e "$USER_ICONS/Tela-blue-dark" ]]
 }
