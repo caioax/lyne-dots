@@ -484,9 +484,14 @@ FloatingWindow {
                             SettingsService.buildIndex();
                     }
                     onAccepted: results.activateCurrent()
+                    // Arrows always move the selection; Tab / Shift+Tab only
+                    // while results show, so an empty field still moves focus
                     onKeyPressed: event => {
                         if (event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
                             results.move(event.key === Qt.Key_Up ? -1 : 1);
+                            event.accepted = true;
+                        } else if ((event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) && results.visible && !(event.modifiers & Qt.ControlModifier)) {
+                            results.move(event.key === Qt.Key_Backtab || (event.modifiers & Qt.ShiftModifier) ? -1 : 1);
                             event.accepted = true;
                         }
                     }
