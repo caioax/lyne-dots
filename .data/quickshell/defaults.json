@@ -120,6 +120,7 @@
         "gif": "",
         "hiddenTabs": [],
         "defaultTab": "overview",
+    "swipeTabs": true,
         "holidays": "auto"
     },
     "opacity": {

@@ -47,6 +47,8 @@ Singleton {
 
     // Tab the dashboard opens on: a tab id, or "last" for the one it was on
     readonly property string openOn: StateService.get("dashboard.defaultTab", "overview")
+    // Dragging the pages sideways (mouse, two fingers on a touchpad) changes tab
+    readonly property bool swipeTabs: StateService.get("dashboard.swipeTabs", true)
     readonly property string defaultTab: hasTab(openOn) ? openOn : tabs[0].id
 
     onTabsChanged: {

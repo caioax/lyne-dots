@@ -486,6 +486,8 @@ Item {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
+            // Its drag, not the dashboard's swipe between tabs
+            preventStealing: true
 
             function update(x: real) {
                 slider.dragValue = Math.max(0, Math.min(1, x / width));

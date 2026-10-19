@@ -188,6 +188,9 @@ RowLayout {
             anchors.bottomMargin: -Config.padding
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
+            // Seeking keeps the drag (a swipe between dashboard tabs, a
+            // scrolling page would take it)
+            preventStealing: true
 
             onPressed: mouse => {
                 progressBar.dragRatio = Math.max(0, Math.min(1, mouse.x / width));

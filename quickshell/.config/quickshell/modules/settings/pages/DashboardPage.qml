@@ -43,6 +43,12 @@ ColumnLayout {
             ]
         }
 
+        ToggleRow {
+            label: I18n.tr("Swipe between tabs")
+            description: I18n.tr("Drag the pages sideways with the mouse, or two fingers on the touchpad")
+            path: "dashboard.swipeTabs"
+        }
+
         TabRow {
             tabId: "overview"
         }
