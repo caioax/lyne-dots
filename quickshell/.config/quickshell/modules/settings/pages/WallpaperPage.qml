@@ -139,11 +139,6 @@ ColumnLayout {
     spacing: Config.spacing * 3
 
     Shortcut {
-        sequence: "Ctrl+F"
-        onActivated: search.focusInput()
-    }
-
-    Shortcut {
         sequence: "Ctrl+A"
         onActivated: root.selection = [...root.shown]
     }

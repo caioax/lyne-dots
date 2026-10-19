@@ -408,7 +408,9 @@ FloatingWindow {
         onActivated: SettingsService.stepPage(-1)
     }
 
-    // A text field keeps "/" for itself (typed, not a shortcut)
+    // A text field keeps "/" for itself (typed, not a shortcut). Pages must
+    // not bind these keys again: two Shortcuts with one sequence in a window
+    // are ambiguous and neither fires (tests/js/settings-shortcuts.test.js)
     Shortcut {
         sequences: ["Ctrl+F", "/"]
         onActivated: {
