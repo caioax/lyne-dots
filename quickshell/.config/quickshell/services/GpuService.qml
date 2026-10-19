@@ -131,7 +131,7 @@ Singleton {
 
     // sudo things run in the default terminal; the page refreshes after
     function inTerminal(command: string) {
-        Quickshell.execDetached(AppsService.terminalArgv(["bash", "-c", command + '; echo; read -rsn1 -p "Press any key to close"']));
+        Quickshell.execDetached(AppsService.floatingTerminalArgv(["bash", "-c", command + '; echo; read -rsn1 -p "Press any key to close"']));
         refreshAfter.restart();
     }
 

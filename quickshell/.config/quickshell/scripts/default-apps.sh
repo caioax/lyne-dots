@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 # default-apps.sh - Default apps of Settings > System > Apps outside the shell
 #
-#   term <command> [args...]
+#   term [--float] <command> [args...]
 #       Runs a command in the default terminal (apps with Terminal=true, the
-#       launcher, lyne update...). Reads the terminal from state.json
+#       launcher, lyne update...). Reads the terminal from state.json.
+#       --float gives the window the class lyne.terminal, which Hyprland
+#       floats in the middle (hypr/conf/rules.lua): the terminals Settings
+#       opens would otherwise tile behind it. Terminals without a class flag
+#       open as usual
 #   apply <slot> <command> [desktop-id] [terminal 0|1]
 #       Makes a default app the system default too:
 #         terminal              Dolphin's "Open terminal here" (kdeglobals)
@@ -32,12 +36,18 @@ declare -A MIMES=(
     [editor]="text/plain"
 )
 
-# How each terminal takes the command to run (the rest use -e). printf, as
-# echo would take "-e" as its own flag
+# Class of the terminals `term --float` opens (a valid GTK app id, for ghostty)
+FLOAT_CLASS="lyne.terminal"
+
+# How each terminal takes the command to run (the rest use -e), with the
+# window class $2 when it has a flag for it. printf, as echo would take "-e"
+# as its own flag
 terminal_args() {
+    local class="${2:-}"
     case "$(basename "$1")" in
-        foot) ;;
-        wezterm) printf '%s\n' "start --" ;;
+        foot) printf '%s\n' "${class:+--app-id=$class}" ;;
+        wezterm) printf '%s\n' "start ${class:+--class $class }--" ;;
+        kitty | alacritty | ghostty) printf '%s\n' "${class:+--class=$class }-e" ;;
         gnome-terminal) printf '%s\n' "--" ;;
         xfce4-terminal | terminator) printf '%s\n' "-x" ;;
         *) printf '%s\n' "-e" ;;
@@ -67,12 +77,16 @@ desktop_file() {
 }
 
 cmd_term() {
-    local terminal
+    local terminal class=""
+    if [[ "${1:-}" == --float ]]; then
+        class="$FLOAT_CLASS"
+        shift
+    fi
     terminal="$(state_value '.apps.terminal.command')"
     terminal="${terminal:-kitty}"
     # The terminal command may carry its own flags ("wezterm --config x")
     read -ra argv <<<"$terminal"
-    read -ra extra <<<"$(terminal_args "${argv[0]}")"
+    read -ra extra <<<"$(terminal_args "${argv[0]}" "$class")"
     exec "${argv[@]}" "${extra[@]}" "$@"
 }
 
@@ -168,7 +182,7 @@ case "${1:-}" in
         cmd_status "$@"
         ;;
     *)
-        echo "usage: $(basename "$0") term <command...> | apply <slot> <command> [desktop-id] [0|1] | apply-all | status <mime...>" >&2
+        echo "usage: $(basename "$0") term [--float] <command...> | apply <slot> <command> [desktop-id] [0|1] | apply-all | status <mime...>" >&2
         exit 1
         ;;
 esac

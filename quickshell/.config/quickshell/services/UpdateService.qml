@@ -46,7 +46,7 @@ Singleton {
     // In the default terminal, so the output (and any sudo prompt from
     // migrations) is visible; it stays open until a key is pressed
     function runUpdate() {
-        Quickshell.execDetached(AppsService.terminalArgv(["bash", "-c", `lyne update --channel ${channel}; echo; read -rsn1 -p "Press any key to close"`]));
+        Quickshell.execDetached(AppsService.floatingTerminalArgv(["bash", "-c", `lyne update --channel ${channel}; echo; read -rsn1 -p "Press any key to close"`]));
     }
 
     function _startupCheck() {

@@ -11,7 +11,8 @@ import Quickshell.Io
 // system.editor for `lyne state`). They reach:
 //   * the Apps keybinds: HyprlandSettingsService writes lyne_apps() to
 //     hypr/local/settings.lua (hypr/conf/keybinds.lua)
-//   * apps run in a terminal (launcher, lyne update): terminalArgv()
+//   * apps run in a terminal (launcher): terminalArgv(); lyne commands
+//     Settings runs (lyne update, sudo installs): floatingTerminalArgv()
 //   * xdg-open and Dolphin: scripts/default-apps.sh sets mimeapps.list and
 //     kdeglobals when a slot changes here
 Singleton {
@@ -172,6 +173,12 @@ Singleton {
     // argv running `argv` in the default terminal
     function terminalArgv(argv): var {
         return [script, "term", ...argv];
+    }
+
+    // The same in a window Hyprland floats in the middle (class
+    // lyne.terminal), so it isn't tiled behind the floating Settings
+    function floatingTerminalArgv(argv): var {
+        return [script, "term", "--float", ...argv];
     }
 
     // Shell command opening a slot's app (terminal ones through the terminal)

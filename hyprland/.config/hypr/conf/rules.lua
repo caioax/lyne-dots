@@ -50,6 +50,27 @@ hl.window_rule({
     center = true,
 })
 
+-- File dialogs from the GTK portal (zenity in the shell's scripts, browsers,
+-- Flatpak apps): one without a parent window would otherwise tile behind
+-- the floating Settings
+hl.window_rule({
+    name  = "portal-file-dialog-float",
+    match = { class = "^(xdg-desktop-portal-gtk)$" },
+
+    float  = true,
+    center = true,
+})
+
+-- Terminals the shell opens for lyne commands (lyne update, sudo installs):
+-- default-apps.sh term --float gives them this class
+hl.window_rule({
+    name  = "lyne-terminal-float",
+    match = { class = "^(lyne\\.terminal)$" },
+
+    float  = true,
+    center = true,
+})
+
 -- KCalc (calculator)
 hl.window_rule({
     name  = "kcalc-float",

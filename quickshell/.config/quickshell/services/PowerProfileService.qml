@@ -141,7 +141,7 @@ Singleton {
         if (installing)
             return;
         installing = true;
-        installProc.command = AppsService.terminalArgv(["bash", "-c", `"$0" install; echo; read -rsn1 -p "Press any key to close"`, root.script]);
+        installProc.command = AppsService.floatingTerminalArgv(["bash", "-c", `"$0" install; echo; read -rsn1 -p "Press any key to close"`, root.script]);
         installProc.running = true;
     }
 
