@@ -343,6 +343,11 @@ run_steps() {
         step "quick settings › $id" ipc quicksettings open "$id"
     done
     step "quick settings closed" ipc quicksettings close
+    # A shortcut closes the popup, then opens its Settings page
+    step "quick settings › shortcut" ev 'QuickSettingsService.open("", QuickSettingsService.focusedScreen()); QuickSettingsService.runShortcut("settings", "keybinds"); "ok"'
+    check "quick settings › shortcut closed it" ev_is "" 'QuickSettingsService.screen'
+    check "quick settings › shortcut opened settings" ev_is true 'SettingsService.visible && SettingsService.currentPage === "keybinds"'
+    step "quick settings › shortcut settings closed" ipc settings close
 
     for id in $(list 'LauncherService.modes.map(m => m.id)'); do
         step "launcher › $id" ev "LauncherService.showMode('$id')"

@@ -23,38 +23,14 @@ Card {
         active: QsWindow.window?.visible ?? false
     }
 
+    // The popup closes first; the service runs the shortcut after. The
+    // wallpaper, theme and keybinds shortcuts are Settings pages
     function runShortcut(action: string) {
         root.closeWindow();
-        switch (action) {
-        case "screenshot":
-            // Wait for the popup to close so it isn't captured
-            screenshotDelay.restart();
-            break;
-        case "clipboard":
-            LauncherService.showMode("clipboard");
-            break;
-        case "wallpaper":
-            SettingsService.open("wallpaper");
-            break;
-        case "theme":
-            SettingsService.open("theme");
-            break;
-        case "keybinds":
-            SettingsService.open("keybinds");
-            break;
-        case "lock":
-            IdleService.lock();
-            break;
-        case "settings":
-            SettingsService.open("");
-            break;
-        }
-    }
-
-    Timer {
-        id: screenshotDelay
-        interval: Config.animDurationLong
-        onTriggered: ShortcutService.screenshotRequested()
+        if (["wallpaper", "theme", "keybinds"].includes(action))
+            QuickSettingsService.runShortcut("settings", action);
+        else
+            QuickSettingsService.runShortcut(action, "");
     }
 
     spacing: Config.padding * 2
@@ -221,10 +197,7 @@ Card {
             icon: "⏻"
             Layout.preferredWidth: root.controlSize
             Layout.preferredHeight: root.controlSize
-            onClicked: {
-                root.closeWindow();
-                PowerService.show();
-            }
+            onClicked: root.runShortcut("power")
         }
     }
 

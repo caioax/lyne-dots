@@ -48,8 +48,8 @@ Item {
                 size: Config.fontSizeIconSmall * 2
                 icon: "\u{f0493}"
                 onClicked: {
-                    SettingsService.open("powerProfiles");
                     root.closeWindow();
+                    QuickSettingsService.runShortcut("settings", "powerProfiles");
                 }
             }
         }

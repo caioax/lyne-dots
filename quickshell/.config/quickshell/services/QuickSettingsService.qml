@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
+import qs.config
 
 // Quick Settings state: which screen it is open on, the page it shows and
 // the toggle tiles. Each bar has its own QuickSettingsWindow that shows
@@ -94,6 +95,52 @@ Singleton {
 
     function focusedScreen(): string {
         return Hyprland.focusedMonitor?.name ?? "";
+    }
+
+    // ========================================================================
+    // SHORTCUTS
+    // ========================================================================
+
+    // Closes the popup, then runs a shortcut (screenshot, clipboard, lock,
+    // power menu, settings with `settingsPage`, "" for its first page) once
+    // the popup is gone: a window created in the same frame (Settings, the
+    // launcher, the power menu) stalls the closing animation for ~100 ms, and the page that asked is
+    // destroyed with the popup, timers and all
+    function runShortcut(action: string, settingsPage: string): void {
+        close();
+        _shortcut = action;
+        _settingsPage = settingsPage;
+        // The screenshot also waits for the popup's scale animation, so it
+        // isn't captured
+        shortcutTimer.interval = action === "screenshot" ? Config.animDurationLong : Config.animDuration;
+        shortcutTimer.restart();
+    }
+
+    property string _shortcut: ""
+    property string _settingsPage: ""
+
+    Timer {
+        id: shortcutTimer
+
+        onTriggered: {
+            switch (root._shortcut) {
+            case "screenshot":
+                ShortcutService.screenshotRequested();
+                break;
+            case "clipboard":
+                LauncherService.showMode("clipboard");
+                break;
+            case "lock":
+                IdleService.lock();
+                break;
+            case "power":
+                PowerService.show();
+                break;
+            case "settings":
+                SettingsService.open(root._settingsPage);
+                break;
+            }
+        }
     }
 
     // ========================================================================
