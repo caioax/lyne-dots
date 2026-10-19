@@ -272,7 +272,11 @@ PanelWindow {
                 visible: count > 0
                 orientation: ListView.Horizontal
                 clip: true
-                boundsBehavior: Flickable.StopAtBounds
+                // Not StopAtBounds: with StrictlyEnforceRange, a flick that
+                // would reach an end gets no target of its own and is snapped
+                // back to the next tile (Qt's ListView), so a quick swipe lost
+                // its momentum. Dragging still stops at the ends
+                boundsBehavior: Flickable.OvershootBounds
                 model: WallpaperPickerService.items
                 cacheBuffer: cellWidth * 4
 
