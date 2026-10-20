@@ -164,9 +164,10 @@ install_yay() {
     rm -rf "$TEMP_DIR"
 }
 
+# jq: the installer's state.json changes and the lyne CLI need it
 step_base() {
-    log_step "Installing GNU Stow and git..."
-    sudo pacman -S --needed --noconfirm stow git
+    log_step "Installing GNU Stow, git and jq..."
+    sudo pacman -S --needed --noconfirm stow git jq
 }
 
 # step_nvidia <multilib 0|1>
@@ -200,9 +201,12 @@ step_gpus() {
     log_info "GPU order: ${order[*]:-automatic} (local/gpus.lua)"
 }
 
+# Only the packages of the categories chosen (stow_packages)
 step_stow() {
     source "$SETUP_DIR/stow.sh"
-    run_stow_main
+    local -a packages
+    mapfile -t packages < <(stow_packages "${CATEGORIES[@]}")
+    run_stow_main "${packages[@]}"
 }
 
 # The lyne-dots logo as a system icon (used by lyne update notifications)
@@ -233,6 +237,13 @@ step_state_aur_helper() {
     log_step "Setting AUR helper in state.json..."
     LYNE_STATE_FILE="$STATE_FILE" lyne_state_set '.system.aurHelper = $helper' --arg helper "$AUR_HELPER"
     log_info "AUR helper set to: $AUR_HELPER"
+
+    # The packages linked, so lyne update and the migrations leave the others
+    # alone
+    local stowed
+    stowed="$(source "$SETUP_DIR/stow.sh" && stow_packages "${CATEGORIES[@]}")"
+    LYNE_STATE_FILE="$STATE_FILE" lyne_state_set '.system.stow = ($pkgs | split("\n"))' --arg pkgs "$stowed"
+    log_info "Linked packages: ${stowed//$'\n'/ }"
 }
 
 step_mimetypes() {
@@ -427,7 +438,7 @@ step_migrations() {
 plan_steps() {
     step_add step_connection "Checking the internet connection" 1 0 1
     step_add step_aur_helper "AUR helper (yay or paru)" 2 0 1
-    step_add step_base "GNU Stow and git" 1 2 1
+    step_add step_base "GNU Stow, git and jq" 1 3 1
 
     local category missing official aur
     for category in "${CATEGORIES[@]}"; do
@@ -563,11 +574,16 @@ q_reboot() {
 
 # Short list of the targets that go to the backup: "hypr, kitty, +2"
 backup_summary() {
-    local -a names=()
+    local -a names=() chosen
     local target
+    read -ra chosen <<<"${ANSWERS[categories]}"
     while IFS= read -r target; do
         [[ -n "$target" ]] && names+=("$(basename "$target")")
-    done < <(source "$SETUP_DIR/stow.sh" && stow_existing_targets)
+    done < <(
+        source "$SETUP_DIR/stow.sh"
+        mapfile -t packages < <(stow_packages "${chosen[@]}")
+        stow_existing_targets "${packages[@]}"
+    )
     ((${#names[@]} == 0)) && return
     local shown="${names[*]:0:3}"
     shown="${shown// /, }"
@@ -914,7 +930,7 @@ stow)
     check_arch
     sudo pacman -S --needed --noconfirm stow
     source "$SETUP_DIR/stow.sh"
-    run_stow_main
+    run_stow_main "${STOW_DIRS[@]}"
     ;;
 setup)
     check_arch

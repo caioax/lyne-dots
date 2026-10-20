@@ -152,17 +152,20 @@ NVIDIA UWSM templates are in `.data/hyprland/uwsm/`:
 
 ## Stow Directories
 
-The `stow.sh` script creates symlinks for:
+The `stow.sh` script links the packages of the categories chosen
+(`stow_packages`); the installer keeps the list in state.json
+(`.system.stow`). What's already at a target goes to
+`~/.lyne-dots-backup/<date>/` first.
 
-| Directory  | Target                |
-| ---------- | --------------------- |
-| hyprland   | ~/.config/hypr        |
-| quickshell | ~/.config/quickshell  |
-| kitty      | ~/.config/kitty       |
-| nvim       | ~/.config/nvim        |
-| zsh        | ~/.zshrc, ~/.p10k.zsh |
-| tmux       | ~/.tmux.conf          |
-| local      | ~/.local/scripts      |
-| fastfetch  | ~/.config/fastfetch   |
-| theming    | ~/.config/gtk-3.0, gtk-4.0, qt5ct, qt6ct |
-| kde        | ~/.config/kdeglobals  |
+| Directory  | Target                                   | Linked with      |
+| ---------- | ---------------------------------------- | ---------------- |
+| hyprland   | ~/.config/hypr, ~/.config/uwsm           | always           |
+| quickshell | ~/.config/quickshell                     | always           |
+| local      | ~/.local/scripts, themes, wallpapers, bin/lyne | always     |
+| kitty      | ~/.config/kitty                          | terminal         |
+| zsh        | ~/.zshrc, ~/.p10k.zsh                    | terminal         |
+| tmux       | ~/.tmux.conf                             | terminal         |
+| fastfetch  | ~/.config/fastfetch                      | terminal         |
+| nvim       | ~/.config/nvim                           | editor           |
+| theming    | ~/.config/gtk-3.0, gtk-4.0, qt5ct, qt6ct | theming          |
+| kde        | ~/.config/kdeglobals                     | theming          |

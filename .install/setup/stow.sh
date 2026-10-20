@@ -10,8 +10,9 @@ DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "$DOTFILES_DIR/.install/lib/log.sh"
 
 # =============================================================================
-# Directories to stow
+# Packages to stow
 # =============================================================================
+# Every package, in the order they're linked
 STOW_DIRS=(
     "hyprland"      # Hyprland config
     "quickshell"    # QuickShell bar
@@ -24,6 +25,34 @@ STOW_DIRS=(
     "kde"           # KDE globals (terminal, fonts, icons)
     "theming"       # Qt5/Qt6/GTK theme configuration
 )
+
+# Linked on every install: the shell itself and the lyne CLI
+STOW_ALWAYS=(hyprland quickshell local)
+
+# The packages that come with an installer category (none for the others)
+stow_category_packages() {
+    case "$1" in
+    terminal) echo "kitty zsh tmux fastfetch" ;;
+    editor) echo "nvim" ;;
+    theming) echo "theming kde" ;;
+    esac
+}
+
+# stow_packages CATEGORY...: the packages to link for those categories, in
+# STOW_DIRS order (one per line)
+stow_packages() {
+    local -a wanted=("${STOW_ALWAYS[@]}")
+    local category dir
+    for category in "$@"; do
+        read -ra dir <<<"$(stow_category_packages "$category")"
+        wanted+=("${dir[@]}")
+    done
+    for dir in "${STOW_DIRS[@]}"; do
+        if [[ " ${wanted[*]} " == *" $dir "* ]]; then
+            echo "$dir"
+        fi
+    done
+}
 
 # =============================================================================
 # Check if stow is installed
@@ -66,6 +95,11 @@ get_stow_targets() {
             ;;
         "local")
             targets+=("$HOME/.local/scripts" "$HOME/.local/wallpapers" "$HOME/.local/themes")
+            # ~/.local/bin is a folder of its own (create_dirs): its files
+            local file
+            for file in "$DOTFILES_DIR/local/.local/bin"/*; do
+                [[ -e "$file" ]] && targets+=("$HOME/.local/bin/$(basename "$file")")
+            done
             ;;
         "kde")
             targets+=("$HOME/.config/kdeglobals")
@@ -98,10 +132,11 @@ is_empty_dir() {
     [[ -d "$1" && ! -L "$1" && -z "$(ls -A "$1")" ]]
 }
 
-# Prints the targets that would be moved to the backup (one per line)
+# stow_existing_targets PACKAGE...: the targets that would be moved to the
+# backup (one per line)
 stow_existing_targets() {
     local dir target targets
-    for dir in "${STOW_DIRS[@]}"; do
+    for dir in "$@"; do
         read -ra targets <<<"$(get_stow_targets "$dir")"
         for target in "${targets[@]}"; do
             if [[ -e "$target" || -L "$target" ]] && ! is_own_link "$target" && ! is_empty_dir "$target"; then
@@ -111,14 +146,14 @@ stow_existing_targets() {
     done
 }
 
-# Moves the user's files out of the way (keeping their path under HOME in
-# the backup folder) and drops our old links
+# backup_existing_targets PACKAGE...: moves the user's files out of the way
+# (keeping their path under HOME in the backup folder) and drops our old links
 backup_existing_targets() {
     log_info "Checking existing targets..."
 
     local BACKUP_DIR="${LYNE_BACKUP_DIR:-$HOME/.lyne-dots-backup/$(date +%Y%m%d-%H%M%S)}"
     local dir target targets moved=0
-    for dir in "${STOW_DIRS[@]}"; do
+    for dir in "$@"; do
         read -ra targets <<<"$(get_stow_targets "$dir")"
         for target in "${targets[@]}"; do
             [[ -e "$target" || -L "$target" ]] || continue
@@ -152,11 +187,12 @@ backup_existing_targets() {
 # =============================================================================
 # Execute stow
 # =============================================================================
+# execute_stow PACKAGE...
 execute_stow() {
     log_info "Running stow to create symlinks..."
 
-    local failed=0
-    for dir in "${STOW_DIRS[@]}"; do
+    local dir failed=0
+    for dir in "$@"; do
         if [[ -d "$DOTFILES_DIR/$dir" ]]; then
             log_step "  Stowing: $dir"
             if ! stow -d "$DOTFILES_DIR" -t "$HOME" -R "$dir" 2>&1; then
@@ -175,6 +211,7 @@ execute_stow() {
 # =============================================================================
 # Main (for direct execution)
 # =============================================================================
+# run_stow_main PACKAGE...: backs up what's in the way and links them
 run_stow_main() {
     echo ""
     echo "=================================================="
@@ -188,15 +225,19 @@ run_stow_main() {
 
     create_dirs
 
-    backup_existing_targets || return 1
-    execute_stow || return 1
+    backup_existing_targets "$@" || return 1
+    execute_stow "$@" || return 1
 
     echo ""
     log_info "Stow completed successfully!"
     echo ""
 }
 
-# Run if called directly
+# Run if called directly: the packages given, or every one
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    run_stow_main "$@"
+    if (($#)); then
+        run_stow_main "$@"
+    else
+        run_stow_main "${STOW_DIRS[@]}"
+    fi
 fi

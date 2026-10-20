@@ -4,7 +4,8 @@
     },
     "system": {
         "editor": "nvim",
-        "aurHelper": "yay"
+        "aurHelper": "yay",
+        "stow": null
     },
     "apps": {
         "terminal": {
