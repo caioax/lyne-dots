@@ -52,6 +52,9 @@ legacy_home() {
     ln -s "$DOTS_DIR/zsh/.zshrc" "$HOME/.zshrc"
     mkdir -p "$HOME/.config/kitty"
     echo mine >"$HOME/.config/kitty/kitty.conf"
+    # stow's link to cpprun, gone from the repo
+    mkdir -p "$HOME/.local/bin"
+    ln -s "$DOTS_DIR/local/.local/bin/cpprun" "$HOME/.local/bin/cpprun"
 }
 
 @test "fresh install: each migration succeeds, and again changes nothing" {
@@ -126,6 +129,8 @@ legacy_home() {
     assert_equal "$(state '.system.stow')" '["quickshell","nvim","zsh"]'
     assert [ -L "$HOME/.zshrc" ]
     assert [ -f "$HOME/.config/kitty/kitty.conf" ]
+    # The dangling cpprun link is gone
+    refute [ -L "$HOME/.local/bin/cpprun" ]
     # Theme on its old default wallpaper moves to the new one
     assert_equal "$(jq -r .wallpaper "$HOME/.local/themes/tokyonight.json")" "themes/tokyonight/lyne-tokyonight-contour.jpg"
 }
@@ -160,6 +165,17 @@ legacy_home() {
     assert_success
     assert_output "   Installing polkit-kde-agent..."
     refute grep -q "^kitty " "$FAKE_PKGS"
+}
+
+@test "040: a cpprun from elsewhere stays" {
+    fake_dots
+    mkdir -p "$HOME/.local/bin" "$HOME/Dev/CppRun"
+    : >"$HOME/Dev/CppRun/cpprun"
+    ln -s "$HOME/Dev/CppRun/cpprun" "$HOME/.local/bin/cpprun"
+    run migrate 040-cpprun-out.sh
+    assert_success
+    assert_output ""
+    assert [ -L "$HOME/.local/bin/cpprun" ]
 }
 
 @test "a migration with nothing to convert says nothing" {

@@ -52,7 +52,7 @@ run_lint() {
     local files
     # Tracked and new (not ignored) scripts
     mapfile -t files < <(git ls-files --cached --others --exclude-standard '*.sh' '*.bats' '*.bash' \
-        local/.local/bin/lyne local/.local/bin/cpprun 'tests/bash/stubs/*')
+        local/.local/bin/lyne 'tests/bash/stubs/*')
     printf 'shellcheck: %d scripts\n' "${#files[@]}"
     shellcheck -x "${files[@]}" && printf '%sclean%s\n' "$C_OK" "$C_OFF"
 }
