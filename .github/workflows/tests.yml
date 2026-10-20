@@ -23,7 +23,7 @@ jobs:
       # state.json writers) isn't in the image; installs get it with
       # base-devel and mkinitcpio
       - name: Packages
-        run: pacman -Syu --noconfirm --needed git diffutils nodejs bats bats-assert bats-support shellcheck jq lua python stow
+        run: pacman -Syu --noconfirm --needed git diffutils nodejs bats bats-assert bats-support shellcheck jq lua python stow matugen
 
       - uses: actions/checkout@v5
 

@@ -53,6 +53,10 @@ run_lint() {
     # Tracked and new (not ignored) scripts
     mapfile -t files < <(git ls-files --cached --others --exclude-standard '*.sh' '*.bats' '*.bash' \
         local/.local/bin/lyne 'tests/bash/stubs/*')
+    # A tracked script deleted but not committed yet is still listed
+    local f existing=()
+    for f in "${files[@]}"; do [[ -f "$f" ]] && existing+=("$f"); done
+    files=("${existing[@]}")
     printf 'shellcheck: %d scripts\n' "${#files[@]}"
     shellcheck -x "${files[@]}" && printf '%sclean%s\n' "$C_OK" "$C_OFF"
 }

@@ -104,6 +104,11 @@ package were installed, `LYNE_DRY_FAIL="git ping"` makes those commands fail.
 ./install.sh --stow-only
 ```
 
+Links again the packages linked before (state.json `.system.stow`, or the
+ones found linked on older installs) plus `hyprland`, `quickshell` and
+`local`. `lyne link <package>` links one more, `lyne unlink <package>` takes
+one out (its old files come back from the backup).
+
 ### Configure Hyprland only
 
 ```bash

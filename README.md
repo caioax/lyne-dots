@@ -189,6 +189,11 @@ A theme sets the colors of:
 | Zen Browser | Toolbars, tabs and menus (`lyne zen enable`) |
 | Wallpaper | The theme's wallpaper (optional) |
 
+Keeping your own kitty or Neovim config (installed without the terminal or editor category)? The shell still writes the colors for them:
+
+- **kitty:** add `include current-theme.conf` to your `~/.config/kitty/kitty.conf`.
+- **Neovim:** copy `nvim/.config/nvim/colors/lyne.lua` and `nvim/.config/nvim/lua/lyne/` into your config and use `colorscheme lyne`; open instances using it follow theme switches.
+
 ## Install
 
 **Requirements:** Arch Linux (or a close derivative), a user with `sudo`, and an internet connection.
@@ -201,11 +206,11 @@ It clones the repo into `~/.lyne-dots` (installing `git` if needed) at the lates
 
 The installer asks everything first:
 
-1. **Packages:** pick categories (core, terminal, editor, apps, utils, fonts, quickshell, theming).
+1. **Packages:** pick categories (core, terminal, editor, apps, utils, fonts, quickshell, theming). The shell's own files (Hyprland, Quickshell, `~/.local/`) are always linked; **terminal** also links the kitty, Zsh, tmux and fastfetch configs, **editor** the Neovim one and **theming** the GTK, Qt and KDE ones. Leave a category out and your configs for it stay as they are.
 2. **Graphics:** the GPUs it found; for NVIDIA, the driver (open or 580xx, optionally 32-bit) and its environment; on hybrid laptops, which GPU renders.
-3. **Reboot** when done, then a review screen.
+3. **Reboot** when done, then a review screen with the packages to link and every file of yours that will be replaced.
 
-After the sudo password (asked once, kept alive), it installs without further questions, with a progress bar and the latest output. Files already in place go to `~/.lyne-dots-backup/<date>/`; the full log is in `~/.cache/lyne/install-<date>.log`.
+After the sudo password (asked once, kept alive), it installs without further questions, with a progress bar and the latest output. Files it replaces go to `~/.lyne-dots-backup/<date>/`; the full log is in `~/.cache/lyne/install-<date>.log`. Changed your mind later? `lyne link nvim` links a package (your files to the backup first) and `lyne unlink nvim` brings yours back.
 
 <details>
 <summary><b>Installer options</b></summary>
@@ -215,7 +220,7 @@ After the sudo password (asked once, kept alive), it installs without further qu
 | `--dry-run` | Change nothing: a throwaway HOME and stand-ins for sudo, pacman, yay... |
 | `--answers FILE` | Unattended: answers as `id=value` lines (`categories=`, `nvidia=`, `gpu_order=`, `reboot=`) |
 | `--packages NAME` | Install one category (`--packages nvidia` installs or fixes the driver) |
-| `--stow-only` | Only link the dotfiles with GNU Stow |
+| `--stow-only` | Only link the dotfiles again: the packages linked before (`lyne link` adds others) |
 | `--setup-only` | Only create the local Hyprland files |
 
 More in [.install/README.md](.install/README.md).
@@ -254,6 +259,8 @@ Switching back to Stable never goes back in time: you stay where you are until t
 | `lyne reload` | Restart Quickshell |
 | `lyne state` | Edit `state.json`; `sync`, `rebuild` |
 | `lyne migrate` | `list`, `run`, `done` for migrations |
+| `lyne link` | Each dotfiles package, linked or not; `lyne link <package>` links one the install left out |
+| `lyne unlink` | Removes a package's links and brings back your files from the backup |
 | `lyne monitors` | Monitor rules from Settings; revert a trial or reset them |
 | `lyne workspaces` | Each monitor's workspace blocks |
 | `lyne keyboard` | Layouts, options and per-keyboard layouts |
@@ -367,7 +374,7 @@ Every bind below can be changed or turned off in Settings › Hyprland › Keybi
 <details>
 <summary><b>Repository layout</b></summary>
 
-Each top-level folder is a [GNU Stow](https://www.gnu.org/software/stow/) package linked into `$HOME`.
+Each top-level folder is a [GNU Stow](https://www.gnu.org/software/stow/) package linked into `$HOME`: `quickshell/`, `hyprland/` and `local/` always, the others with their installer category (`lyne link` shows which are linked). The repo doesn't have to stay at `~/.lyne-dots`: the `lyne` command, the session and the shell follow where it really is.
 
 | Folder | Contents |
 | --- | --- |

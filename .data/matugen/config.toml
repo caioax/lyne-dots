@@ -19,14 +19,16 @@ magenta = { color = "#c162de", blend = true }
 cyan = { color = "#42b3c2", blend = true }
 orange = { color = "#f08d49", blend = true }
 
+# Templates: input paths are relative to this file's real folder (matugen
+# follows the ~/.config/matugen/config.toml link), so the repo can be anywhere
 [templates.quickshell-palette]
-input_path = "~/.lyne-dots/.data/matugen/templates/quickshell-palette.json"
+input_path = "./templates/quickshell-palette.json"
 output_path = "~/.cache/matugen/quickshell-palette.json"
 
 [templates.hyprland-colors]
-input_path = "~/.lyne-dots/.data/matugen/templates/hyprland-colors.json"
+input_path = "./templates/hyprland-colors.json"
 output_path = "~/.cache/matugen/hyprland-colors.json"
 
 [templates.terminal-colors]
-input_path = "~/.lyne-dots/.data/matugen/templates/terminal-colors.json"
+input_path = "./templates/terminal-colors.json"
 output_path = "~/.cache/matugen/terminal-colors.json"

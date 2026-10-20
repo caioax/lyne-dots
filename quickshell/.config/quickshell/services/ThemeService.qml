@@ -435,12 +435,13 @@ Singleton {
 
         const content = lines.join("\n");
 
-        kittyProc.run(["bash", "-c", "cat > " + shellEscape(kittyThemePath) + " << 'THEME_EOF'\n" + content + "THEME_EOF\n" + "pkill -USR1 -x kitty 2>/dev/null; true"]);
+        kittyProc.run(["bash", "-c", "mkdir -p \"$(dirname " + shellEscape(kittyThemePath) + ")\" && cat > " + shellEscape(kittyThemePath) + " << 'THEME_EOF'\n" + content + "THEME_EOF\n" + "pkill -USR1 -x kitty 2>/dev/null; true"]);
     }
 
 
     // Writes the theme for the "lyne" colorscheme and reloads it in every
-    // running Neovim through its server socket
+    // running Neovim using it, through its server socket (a config of the
+    // user's own may not have it)
     function _applyNeovim(pal, terminal) {
         if (!pal || !terminal)
             return;
@@ -451,7 +452,7 @@ Singleton {
         const path = shellEscape(nvimPalettePath);
         const tmp = shellEscape(nvimPalettePath + ".tmp");
 
-        nvimProc.run(["bash", "-c", "mkdir -p \"$(dirname " + path + ")\" && cat > " + tmp + " << 'THEME_EOF'\n" + content + "\nTHEME_EOF\n" + "mv " + tmp + " " + path + " && " + "for sock in /run/user/$(id -u)/nvim.*.0; do " + "  [ -S \"$sock\" ] && nvim --server \"$sock\" --remote-send '<Cmd>colorscheme lyne<CR>' 2>/dev/null & " + "done; wait"]);
+        nvimProc.run(["bash", "-c", "mkdir -p \"$(dirname " + path + ")\" && cat > " + tmp + " << 'THEME_EOF'\n" + content + "\nTHEME_EOF\n" + "mv " + tmp + " " + path + " && " + "for sock in /run/user/$(id -u)/nvim.*.0; do " + "  [ -S \"$sock\" ] && nvim --server \"$sock\" --remote-send '<Cmd>if get(g:, \"colors_name\", \"\") ==# \"lyne\" | colorscheme lyne | endif<CR>' 2>/dev/null & " + "done; wait"]);
     }
 
     function _applyWallpaper(wallpaperFile) {
