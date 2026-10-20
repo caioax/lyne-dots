@@ -268,6 +268,79 @@ execute_stow() {
 }
 
 # =============================================================================
+# Linking and unlinking later (lyne link, lyne unlink)
+# =============================================================================
+# stow_package_group PACKAGE: "always", or the installer category it comes with
+stow_package_group() {
+    local category
+    if [[ " ${STOW_ALWAYS[*]} " == *" $1 "* ]]; then
+        echo always
+        return
+    fi
+    for category in terminal editor theming; do
+        if [[ " $(stow_category_packages "$category") " == *" $1 "* ]]; then
+            echo "$category"
+            return
+        fi
+    done
+}
+
+# stow_link PACKAGE...: what's in the way goes to the backup, then they're
+# linked and recorded
+stow_link() {
+    check_stow || return 1
+    create_dirs
+    backup_existing_targets "$@" || return 1
+    execute_stow "$@" || return 1
+    local -a recorded linked
+    mapfile -t recorded < <(stow_recorded_packages)
+    mapfile -t linked < <(stow_ordered "${recorded[@]}" "$@")
+    stow_record "${linked[@]}"
+}
+
+# stow_backup_of PATH: the newest backup of ~/PATH, if any
+stow_backup_of() {
+    local dir
+    while IFS= read -r dir; do
+        if [[ -e "$dir/$1" || -L "$dir/$1" ]]; then
+            echo "$dir/$1"
+            return
+        fi
+    done < <(find "$HOME/.lyne-dots-backup" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -r)
+}
+
+# stow_unlink PACKAGE...: their links go, the newest backup of each target
+# comes back, and they're no longer recorded
+stow_unlink() {
+    check_stow || return 1
+    local dir target targets backup
+    for dir in "$@"; do
+        log_step "  Unlinking: $dir"
+        if ! stow -d "$DOTFILES_DIR" -t "$HOME" -D "$dir" 2>&1; then
+            log_error "Failed to unlink $dir"
+            return 1
+        fi
+        read -ra targets <<<"$(get_stow_targets "$dir")"
+        for target in "${targets[@]}"; do
+            # A folder stow made for the links is left empty
+            is_empty_dir "$target" && rmdir "$target"
+            [[ -e "$target" || -L "$target" ]] && continue
+            backup="$(stow_backup_of "${target#"$HOME"/}")"
+            [[ -n "$backup" ]] || continue
+            mkdir -p "$(dirname "$target")"
+            mv "$backup" "$target" &&
+                log_step "  Restored ${target/#$HOME/\~} from ${backup/#$HOME/\~}"
+        done
+    done
+    local -a recorded keep=()
+    mapfile -t recorded < <(stow_recorded_packages)
+    for dir in "${recorded[@]}"; do
+        [[ " $* " == *" $dir "* ]] || keep+=("$dir")
+    done
+    stow_record "${keep[@]}"
+}
+
+# =============================================================================
 # Main (for direct execution)
 # =============================================================================
 # run_stow_main PACKAGE...: backs up what's in the way and links them
