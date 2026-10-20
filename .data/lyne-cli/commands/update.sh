@@ -240,8 +240,11 @@ fi
 managed_restore "$old_head"
 
 # Plugins stay where they are when the lock changes: restore moves them to the
-# versions pinned in the repo
-if managed_changed "nvim/.config/nvim/lazy-lock.json" "$old_head" && command -v nvim &>/dev/null; then
+# versions pinned in the repo. Only with our Neovim config: one of the user's
+# own would restore its own lock
+source "$DOTS_DIR/.install/setup/stow.sh"
+if managed_changed "nvim/.config/nvim/lazy-lock.json" "$old_head" && command -v nvim &>/dev/null &&
+    stow_is_linked nvim; then
     echo -e "\e[1;34m:: Restoring Neovim plugins to the pinned versions...\e[0m"
     # A few lines per plugin and task: only kept in a log
     local lazy_log="$HOME/.local/share/lyne/lazy-restore.log"

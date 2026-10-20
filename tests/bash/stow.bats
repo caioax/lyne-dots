@@ -1,6 +1,7 @@
 #!/usr/bin/env bats
 # .install/setup/stow.sh: which packages each installer category links, and
 # the targets of a package list (what goes to the backup)
+# shellcheck disable=SC2030,SC2031 # each @test runs in a subshell of its own
 
 load helpers
 
@@ -85,4 +86,58 @@ in_stow() {
     assert_line "stow -d $REPO -t $HOME -R local"
     refute_line --partial " -R nvim"
     assert_equal "${#lines[@]}" 2
+}
+
+# --- packages linked ---
+
+# Links the way stow makes them: a folder, a file, and a file inside a real
+# folder (~/.local/bin); the user's own kitty folder is no link
+stowed_home() {
+    mkdir -p "$HOME/.config/kitty" "$HOME/.local/bin"
+    echo mine >"$HOME/.config/kitty/kitty.conf"
+    ln -s "$REPO/nvim/.config/nvim" "$HOME/.config/nvim"
+    ln -s "$REPO/zsh/.zshrc" "$HOME/.zshrc"
+    ln -s "$REPO/local/.local/bin/lyne" "$HOME/.local/bin/lyne"
+}
+
+@test "stow_linked_packages: the packages HOME reaches through links" {
+    stowed_home
+    run in_stow 'stow_linked_packages'
+    assert_success
+    assert_output "$(printf '%s\n' nvim zsh local)"
+}
+
+@test "stow_recorded_packages: the record, or what's linked when there is none" {
+    stowed_home
+    export LYNE_STATE_FILE="$BATS_TEST_TMPDIR/state.json"
+    # No state.json, then a null record: what's linked
+    run in_stow 'stow_recorded_packages'
+    assert_output "$(printf '%s\n' nvim zsh local)"
+    echo '{"system": {"stow": null}}' >"$LYNE_STATE_FILE"
+    run in_stow 'stow_recorded_packages'
+    assert_output "$(printf '%s\n' nvim zsh local)"
+    # A record wins, even an empty one
+    echo '{"system": {"stow": ["hyprland", "kitty"]}}' >"$LYNE_STATE_FILE"
+    run in_stow 'stow_recorded_packages'
+    assert_output "$(printf '%s\n' hyprland kitty)"
+    run in_stow 'stow_is_linked kitty'
+    assert_success
+    run in_stow 'stow_is_linked nvim'
+    assert_failure
+    echo '{"system": {"stow": []}}' >"$LYNE_STATE_FILE"
+    run in_stow 'stow_recorded_packages'
+    assert_output ""
+}
+
+@test "stow_record and stow_default_packages: the record plus the shell's" {
+    export LYNE_STATE_FILE="$BATS_TEST_TMPDIR/state.json"
+    echo '{"system": {"stow": null, "editor": "nvim"}}' >"$LYNE_STATE_FILE"
+    run in_stow 'stow_record nvim local'
+    assert_success
+    assert_equal "$(jq -c .system "$LYNE_STATE_FILE")" '{"stow":["nvim","local"],"editor":"nvim"}'
+    run in_stow 'stow_default_packages'
+    assert_output "$(printf '%s\n' hyprland quickshell nvim local)"
+    echo '{"system": {"stow": []}}' >"$LYNE_STATE_FILE"
+    run in_stow 'stow_default_packages'
+    assert_output "$(printf '%s\n' hyprland quickshell local)"
 }

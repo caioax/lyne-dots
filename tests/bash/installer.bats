@@ -134,6 +134,23 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
         '["hyprland","quickshell","kitty","nvim","zsh","tmux","local","fastfetch","kde","theming"]'
 }
 
+@test "--stow-only links again the packages recorded, plus the shell's" {
+    # A state.json of its own: the dry run's stow links nothing, and a real
+    # link would reach the repo's
+    export LYNE_STATE_FILE="$BATS_TEST_TMPDIR/state.json"
+    echo '{"system": {"stow": ["nvim"]}}' >"$LYNE_STATE_FILE"
+    run install --stow-only
+    assert_success
+    local pkg
+    for pkg in hyprland quickshell nvim local; do
+        assert_line --partial "[dry-run] stow -d $REPO -t $DRY -R $pkg"
+    done
+    for pkg in kitty zsh tmux fastfetch kde theming; do
+        refute_line --partial "-R $pkg"
+    done
+    assert_equal "$(jq -c .system.stow "$LYNE_STATE_FILE")" '["hyprland","quickshell","nvim","local"]'
+}
+
 @test "multilib asked for: enabled with a full sync, lib32 driver" {
     hybrid
     answers "categories=core" "nvidia=driver" "multilib=yes" "reboot=no"

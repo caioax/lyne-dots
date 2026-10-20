@@ -8,6 +8,8 @@
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 source "$DOTFILES_DIR/.install/lib/log.sh"
+# lyne_state_set (the packages linked are kept in state.json)
+declare -F lyne_state_set >/dev/null || source "$DOTFILES_DIR/.data/lyne-cli/lib/state.sh"
 
 # =============================================================================
 # Packages to stow
@@ -38,20 +40,77 @@ stow_category_packages() {
     esac
 }
 
-# stow_packages CATEGORY...: the packages to link for those categories, in
-# STOW_DIRS order (one per line)
-stow_packages() {
-    local -a wanted=("${STOW_ALWAYS[@]}")
-    local category dir
-    for category in "$@"; do
-        read -ra dir <<<"$(stow_category_packages "$category")"
-        wanted+=("${dir[@]}")
-    done
+# stow_ordered PACKAGE...: those packages once each, in STOW_DIRS order (one
+# per line); unknown names are left out
+stow_ordered() {
+    local dir
     for dir in "${STOW_DIRS[@]}"; do
-        if [[ " ${wanted[*]} " == *" $dir "* ]]; then
+        if [[ " $* " == *" $dir "* ]]; then
             echo "$dir"
         fi
     done
+}
+
+# stow_packages CATEGORY...: the packages to link for those categories
+stow_packages() {
+    local -a wanted=("${STOW_ALWAYS[@]}") more
+    local category
+    for category in "$@"; do
+        read -ra more <<<"$(stow_category_packages "$category")"
+        wanted+=("${more[@]}")
+    done
+    stow_ordered "${wanted[@]}"
+}
+
+# =============================================================================
+# Packages linked
+# =============================================================================
+# The installer keeps them in state.json (.system.stow), so lyne update, the
+# migrations and lyne link leave the others alone
+
+# The packages HOME reaches through links into the dotfiles today: one of
+# their files is the repo's (one per line)
+stow_linked_packages() {
+    local dir file
+    for dir in "${STOW_DIRS[@]}"; do
+        [[ -d "$DOTFILES_DIR/$dir" ]] || continue
+        while IFS= read -r -d '' file; do
+            if [[ "$(realpath -m "$HOME/${file#"$DOTFILES_DIR/$dir/"}")" == "$(realpath -m "$file")" ]]; then
+                echo "$dir"
+                break
+            fi
+        done < <(find "$DOTFILES_DIR/$dir/" -type f -print0)
+    done
+}
+
+# The packages recorded in state.json; an install from before the record
+# gets the ones linked today (stow_linked_packages)
+stow_recorded_packages() {
+    local list
+    list="$(jq -r '.system.stow | if type == "array" then .[] else "-" end' "$(lyne_state_file)" 2>/dev/null)" ||
+        list="-"
+    if [[ "$list" == "-" ]]; then
+        stow_linked_packages
+    elif [[ -n "$list" ]]; then
+        printf '%s\n' "$list"
+    fi
+}
+
+# stow_is_linked PACKAGE
+stow_is_linked() {
+    stow_recorded_packages | grep -qxF "$1"
+}
+
+# stow_record PACKAGE...: keeps them as the packages linked
+stow_record() {
+    lyne_state_set '.system.stow = $ARGS.positional' --args "$@"
+}
+
+# What --stow-only links again: the packages recorded, and always the shell's
+stow_default_packages() {
+    local -a recorded
+    mapfile -t recorded < <(stow_recorded_packages)
+    stow_ordered "${STOW_ALWAYS[@]}" "${recorded[@]}"
 }
 
 # =============================================================================
@@ -233,11 +292,12 @@ run_stow_main() {
     echo ""
 }
 
-# Run if called directly: the packages given, or every one
+# Run if called directly: the packages given, or the ones linked before
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     if (($#)); then
         run_stow_main "$@"
     else
-        run_stow_main "${STOW_DIRS[@]}"
+        mapfile -t STOW_LIST < <(stow_default_packages)
+        run_stow_main "${STOW_LIST[@]}"
     fi
 fi

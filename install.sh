@@ -888,7 +888,8 @@ usage() {
     echo ""
     echo "Options:"
     echo "  --help, -h        Show this help"
-    echo "  --stow-only       Only run stow (symlinks; existing files go to a backup)"
+    echo "  --stow-only       Only link the dotfiles again: the packages linked before"
+    echo "                    (existing files go to a backup)"
     echo "  --setup-only      Only run Hyprland setup"
     echo "  --packages PKG    Install only the specified category"
     echo "  --answers FILE    Take the answers from FILE (id=value lines) instead of"
@@ -949,7 +950,10 @@ stow)
     check_arch
     sudo pacman -S --needed --noconfirm stow
     source "$SETUP_DIR/stow.sh"
-    run_stow_main "${STOW_DIRS[@]}"
+    # The packages linked before (lyne link adds others)
+    mapfile -t STOW_LIST < <(stow_default_packages)
+    run_stow_main "${STOW_LIST[@]}" || exit 1
+    stow_record "${STOW_LIST[@]}" || true
     ;;
 setup)
     check_arch

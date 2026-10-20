@@ -47,6 +47,11 @@ legacy_home() {
     ln -s card0 "$dri/nvidia-dgpu"
     echo "hl.env(\"AQ_DRM_DEVICES\", \"$dri/card1:$dri/nvidia-dgpu\")" >"$hypr/local/extra_environment.lua"
     jq '.wallpaper = "themes/tokyonight/theme-1.jpg"' "$REPO/.data/themes/tokyonight.json" >"$HOME/.local/themes/tokyonight.json"
+    # Linked by an old install (every package then); the user's own kitty
+    ln -s "$DOTS_DIR/nvim/.config/nvim" "$HOME/.config/nvim"
+    ln -s "$DOTS_DIR/zsh/.zshrc" "$HOME/.zshrc"
+    mkdir -p "$HOME/.config/kitty"
+    echo mine >"$HOME/.config/kitty/kitty.conf"
 }
 
 @test "fresh install: each migration succeeds, and again changes nothing" {
@@ -116,8 +121,23 @@ legacy_home() {
     grep -q '^-- Set in local/gpus.lua now (lyne gpu order): hl.env("AQ_DRM_DEVICES"' "$hypr/local/extra_environment.lua"
     grep -q '"/dev/dri/intel-igpu",' "$hypr/local/gpus.lua"
     assert [ -f "$LYNE_UDEV_DIR/90-lyne-gpus.rules" ]
+    # The packages linked are recorded (hypr is a real folder here), none
+    # unlinked
+    assert_equal "$(state '.system.stow')" '["quickshell","nvim","zsh"]'
+    assert [ -L "$HOME/.zshrc" ]
+    assert [ -f "$HOME/.config/kitty/kitty.conf" ]
     # Theme on its old default wallpaper moves to the new one
     assert_equal "$(jq -r .wallpaper "$HOME/.local/themes/tokyonight.json")" "themes/tokyonight/lyne-tokyonight-contour.jpg"
+}
+
+@test "038: a list already recorded (a new install) stays" {
+    fake_dots
+    ln -s "$DOTS_DIR/zsh/.zshrc" "$HOME/.zshrc"
+    jq '.system.stow = ["hyprland", "quickshell", "local"]' "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+    run migrate 038-record-stowed-packages.sh
+    assert_success
+    assert_output ""
+    assert_equal "$(state '.system.stow')" '["hyprland","quickshell","local"]'
 }
 
 @test "a migration with nothing to convert says nothing" {
