@@ -190,7 +190,7 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     hybrid
     run install --packages terminal
     assert_success
-    assert_line --partial "[dry-run] sudo pacman -S --needed --noconfirm kitty zsh tmux fastfetch"
+    assert_line --partial "[dry-run] sudo pacman -S --needed --noconfirm zsh tmux fastfetch"
     refute_line --partial "hyprland uwsm"
 }
 

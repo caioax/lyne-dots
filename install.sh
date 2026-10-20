@@ -32,8 +32,8 @@ source "$DOTFILES_DIR/.data/lyne-cli/lib/state.sh"
 # nvidia.sh has no packages yet: its environment files are a question of
 # their own, and `--packages nvidia` still installs the list
 CATEGORY_OPTIONS=(
-    "core|core|Hyprland, UWSM, portals (essential)|1"
-    "terminal|terminal|Kitty, Zsh, Tmux, Fastfetch|1"
+    "core|core|Hyprland, UWSM, portals, Kitty (essential)|1"
+    "terminal|terminal|Zsh, Tmux, Fastfetch, the Kitty config|1"
     "editor|editor|Neovim + development tools|1"
     "apps|apps|Dolphin, Zen Browser, Spotify, Chromium, mpv|1"
     "utils|utils|Clipboard, audio, bluetooth, brightness|1"

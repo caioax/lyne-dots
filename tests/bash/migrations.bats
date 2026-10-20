@@ -140,6 +140,28 @@ legacy_home() {
     assert_equal "$(state '.system.stow')" '["hyprland","quickshell","local"]'
 }
 
+@test "039: polkit-kde-agent always, kitty while it's the default terminal" {
+    fake_dots
+    pkgs hyprpolkitagent
+    run migrate 039-core-kitty-polkit.sh
+    assert_success
+    assert_output "   Installing polkit-kde-agent kitty..."
+    grep -q "^kitty " "$FAKE_PKGS" && grep -q "^polkit-kde-agent " "$FAKE_PKGS"
+    # Nothing uninstalled
+    grep -q "^hyprpolkitagent " "$FAKE_PKGS"
+    run migrate 039-core-kitty-polkit.sh
+    assert_output "   polkit-kde-agent kitty already installed, skipping"
+}
+
+@test "039: another default terminal doesn't get kitty" {
+    fake_dots
+    jq '.apps.terminal.command = "foot"' "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+    run migrate 039-core-kitty-polkit.sh
+    assert_success
+    assert_output "   Installing polkit-kde-agent..."
+    refute grep -q "^kitty " "$FAKE_PKGS"
+}
+
 @test "a migration with nothing to convert says nothing" {
     fake_dots
     run migrate 018-special-workspaces-ids.sh

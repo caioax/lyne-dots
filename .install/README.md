@@ -121,8 +121,8 @@ package were installed, `LYNE_DRY_FAIL="git ping"` makes those commands fail.
 
 | Category   | Description                                    |
 | ---------- | ---------------------------------------------- |
-| core       | Hyprland, UWSM, awww, portal (ESSENTIAL)      |
-| terminal   | Kitty, Zsh, Tmux, Fastfetch                    |
+| core       | Hyprland, UWSM, awww, portal, polkit agent, Kitty (ESSENTIAL) |
+| terminal   | Zsh, Tmux, Fastfetch (and the Kitty config)    |
 | editor     | Neovim + development tools                     |
 | apps       | Dolphin, Zen Browser, Spotify, Chromium, mpv   |
 | utils      | Clipboard, audio, bluetooth, brightnessctl     |

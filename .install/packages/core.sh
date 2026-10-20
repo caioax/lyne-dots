@@ -14,8 +14,14 @@ CORE_PACKAGES=(
     "uwsm" # Universal Wayland Session Manager
 
     # Hyprland Utilities
-    "hyprsunset"      # Blue light filter for Hyprland
-    "hyprpolkitagent" # Polkit agent for Hyprland
+    "hyprsunset" # Blue light filter for Hyprland
+
+    # Polkit agent (password prompts; started by hypr/conf/autostart.lua)
+    "polkit-kde-agent"
+
+    # Default terminal (Super+Enter, Settings › System › Apps); its config
+    # comes with the terminal category
+    "kitty"
 
     # Display & Wallpaper
     "awww" # Wallpaper daemon for Wayland

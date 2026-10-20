@@ -6,10 +6,9 @@
 # Packages for terminal, shells and multiplexers
 # =============================================================================
 
+# Kitty itself is in core (the default terminal); its config is linked with
+# this category
 TERMINAL_PACKAGES=(
-    # Terminal Emulator
-    "kitty"                 # GPU-accelerated terminal emulator
-
     # Shell
     "zsh"                   # Z Shell
 
