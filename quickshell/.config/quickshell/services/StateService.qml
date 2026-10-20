@@ -4,12 +4,13 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services
 
 Singleton {
     id: root
 
     readonly property string statePath: Quickshell.env("HOME") + "/.config/quickshell/state.json"
-    readonly property string defaultsPath: Quickshell.env("HOME") + "/.lyne-dots/.data/quickshell/defaults.json"
+    readonly property string defaultsPath: Paths.dots + "/.data/quickshell/defaults.json"
 
     property var state: ({})
     property var defaults: ({})

@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # lyne - Dotfiles management CLI
 
-DOTS_DIR="$HOME/.lyne-dots"
+# The repo this script is in (~/.local/bin/lyne is a link into it), unless
+# LYNE_DOTS says otherwise (the tests' sandboxes)
+DOTS_DIR="${LYNE_DOTS:-$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/../../.." && pwd)}"
 CMD_DIR="$DOTS_DIR/.data/lyne-cli/commands"
 
 # lyne_state_set and lyne_state_replace, for the commands and migrations

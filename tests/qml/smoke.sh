@@ -229,7 +229,7 @@ EOF
             QT_QPA_PLATFORM=wayland QT_QPA_PLATFORMTHEME=qt6ct QT_WAYLAND_DISABLE_WINDOWDECORATION=1 \
             XCURSOR_THEME="$(jq -r .cursor.theme "$SB/cfg/state.json")" XCURSOR_SIZE="$(jq -r .cursor.size "$SB/cfg/state.json")" \
             QT_FORCE_STDERR_LOGGING=1 \
-            LYNE_SDDM_DIR="$SB/sddm" \
+            LYNE_SDDM_DIR="$SB/sddm" LYNE_DOTS="$SB/home/.lyne-dots" \
             /usr/bin/setsid dbus-run-session --config-file="$SB/session.conf" -- qs -p "$SB/cfg/shell.qml"
     ) >"$SB/qs.log" 2>&1 &
     for _ in {1..300}; do

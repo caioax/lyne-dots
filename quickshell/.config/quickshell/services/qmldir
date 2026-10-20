@@ -51,3 +51,4 @@ QueuedProcess 1.0 QueuedProcess.qml
 BinaryCheck 1.0 BinaryCheck.qml
 singleton UpdateService UpdateService.qml
 singleton WhatsNewService WhatsNewService.qml
+singleton Paths Paths.qml

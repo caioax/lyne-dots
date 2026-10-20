@@ -37,6 +37,19 @@ export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 # ------------------------------------------------------------------------------
 export PATH="$HOME/.local/bin:$PATH"
 
+# ------------------------------------------------------------------------------
+# lyne-dots
+# Where the repo really is (this file is a link into it), for the shell and
+# the scripts; ~/.lyne-dots when this file isn't linked
+# ------------------------------------------------------------------------------
+_lyne_env="$(readlink -f "${XDG_CONFIG_HOME:-$HOME/.config}/uwsm/env" 2>/dev/null)"
+case "$_lyne_env" in
+*/hyprland/.config/uwsm/env) LYNE_DOTS="${_lyne_env%/hyprland/.config/uwsm/env}" ;;
+*) LYNE_DOTS="$HOME/.lyne-dots" ;;
+esac
+export LYNE_DOTS
+unset _lyne_env
+
 # Load local global hardware exports
 if [ -f "$HOME/.config/uwsm/env.d/global_hardware.sh" ]; then
     . "$HOME/.config/uwsm/env.d/global_hardware.sh"

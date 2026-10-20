@@ -24,6 +24,8 @@ lyne_setup() {
     # Nor the graphical session: nothing may reach the user's Hyprland
     unset HYPRLAND_INSTANCE_SIGNATURE LYNE_HYPR_LOG WAYLAND_DISPLAY DISPLAY
     export DOTS_DIR="$HOME/.lyne-dots"
+    # The lyne CLI would otherwise follow its own path to the real repo
+    export LYNE_DOTS="$DOTS_DIR"
 
     export PATH="$BATS_TEST_DIRNAME/stubs:$PATH"
     export STUB_LOG="$BATS_TEST_TMPDIR/stub.log"

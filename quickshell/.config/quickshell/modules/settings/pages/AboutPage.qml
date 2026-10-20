@@ -14,7 +14,7 @@ ColumnLayout {
     id: root
 
     readonly property string repoUrl: "https://github.com/caioax/lyne-dots"
-    readonly property string dotsDir: Quickshell.env("HOME") + "/.lyne-dots"
+    readonly property string dotsDir: Paths.dots
     readonly property int heroIconSize: Config.fontSizeIconLarge * 2
 
     // key -> value from infoProc

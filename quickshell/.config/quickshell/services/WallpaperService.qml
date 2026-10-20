@@ -41,7 +41,7 @@ Singleton {
     readonly property string themeWallpaperDir: wallpaperDir + "/themes"
     readonly property string themesConfigDir: Quickshell.env("HOME") + "/.local/themes"
 
-    readonly property string generatorPath: Quickshell.env("HOME") + "/.lyne-dots/.data/wallpapers/generator/generate.py"
+    readonly property string generatorPath: Paths.dots + "/.data/wallpapers/generator/generate.py"
     readonly property var generatorScenes: ["lake", "waves", "contour"]
     // Theme whose lyne-dots wallpapers are being rendered ("" when idle)
     property string generatingFor: ""
