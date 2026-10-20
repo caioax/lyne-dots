@@ -481,7 +481,7 @@ plan_steps() {
 # =============================================================================
 q_categories() {
     ask_multi categories "What should be installed?" \
-        "The dotfiles are always linked; these are the packages that go with them." \
+        "The shell's own files are always linked; terminal, editor and theming also link their configs (the review lists what goes to the backup)." \
         "${CATEGORY_OPTIONS[@]}"
 }
 
@@ -572,29 +572,41 @@ q_reboot() {
         "no|Don't reboot|reboot or log out yourself later"
 }
 
-# Short list of the targets that go to the backup: "hypr, kitty, +2"
-backup_summary() {
-    local -a names=() chosen
-    local target
+# The packages linked for the categories chosen, one per line
+review_stow_packages() {
+    local -a chosen
     read -ra chosen <<<"${ANSWERS[categories]}"
-    while IFS= read -r target; do
-        [[ -n "$target" ]] && names+=("$(basename "$target")")
-    done < <(
-        source "$SETUP_DIR/stow.sh"
-        mapfile -t packages < <(stow_packages "${chosen[@]}")
-        stow_existing_targets "${packages[@]}"
-    )
-    ((${#names[@]} == 0)) && return
-    local shown="${names[*]:0:3}"
-    shown="${shown// /, }"
-    ((${#names[@]} > 3)) && shown+=", +$((${#names[@]} - 3))"
-    printf '%s to %s' "$shown" "${LYNE_BACKUP_DIR/#$HOME/\~}"
+    (source "$SETUP_DIR/stow.sh" && stow_packages "${chosen[@]}")
 }
 
-q_review() {
-    local -a rows=()
+# Every target that goes to the backup, then where to:
+# "~/.zshrc, ~/.config/nvim\nto ~/.lyne-dots-backup/<date>"
+backup_summary() {
+    local -a paths=() packages
+    local target
+    mapfile -t packages < <(review_stow_packages)
+    while IFS= read -r target; do
+        [[ -n "$target" ]] && paths+=("${target/#$HOME/\~}")
+    done < <(source "$SETUP_DIR/stow.sh" && stow_existing_targets "${packages[@]}")
+    ((${#paths[@]} == 0)) && return
+    local shown
+    shown="$(printf '%s, ' "${paths[@]}")"
+    printf '%s\nto %s' "${shown%, }" "${LYNE_BACKUP_DIR/#$HOME/\~}"
+}
+
+# The review screen's rows ("Key|value"), also written to the log
+REVIEW_ROWS=()
+review_rows() {
+    local -a rows=() packages
     local categories=${ANSWERS[categories]}
     rows+=("Packages|${categories:-none, only the dotfiles}")
+    mapfile -t packages < <(review_stow_packages)
+    local links
+    links="$(printf '%s, ' "${packages[@]}")"
+    rows+=("Links|${links%, }")
+    local backup
+    backup="$(backup_summary)"
+    rows+=("Backup|${backup:-nothing to move}")
     rows+=("Graphics|$(gpu_summary)")
     case "${ANSWERS[nvidia]}" in
     driver*)
@@ -612,9 +624,6 @@ q_review() {
         ((GPU_HYBRID)) && gpu_order=${ANSWERS[gpu_order]:-auto}
         rows+=("GPU order|$(_gpu_order_label "$gpu_order") (/dev/dri links by PCI)")
     fi
-    local backup
-    backup="$(backup_summary)"
-    rows+=("Backup|${backup:-nothing to move}")
     if [[ " $categories " == *" terminal "* && "$SHELL" != *zsh* ]]; then
         rows+=("Shell|Zsh becomes the default shell")
     fi
@@ -626,10 +635,14 @@ q_review() {
     local log="${XDG_CACHE_HOME:-$HOME/.cache}/lyne/install-$STAMP.log"
     rows+=("Log|${log/#$HOME/\~}")
     [[ -n "${LYNE_DRY_RUN:-}" ]] && rows+=("Dry run|HOME is ${LYNE_DRY_HOME}")
+    REVIEW_ROWS=("${rows[@]}")
+}
 
+q_review() {
+    review_rows
     ask_review "Ready to install" \
         "Nothing else is asked after this: the sudo password comes next, then everything runs on its own." \
-        "${rows[@]}"
+        "${REVIEW_ROWS[@]}"
 }
 
 QUESTIONS=(q_categories q_graphics q_gpu_order q_reboot q_review)
@@ -840,6 +853,12 @@ main() {
         local key
         for key in "${!ANSWERS[@]}"; do echo "answer $key=${ANSWERS[$key]}"; done
         [[ -n "${LYNE_DRY_RUN:-}" ]] && echo "dry run, HOME=$HOME"
+        echo ""
+        local row
+        review_rows
+        for row in "${REVIEW_ROWS[@]}"; do
+            echo "review ${row%%|*}: ${row#*|}" | sed '2,$s/^/  /'
+        done
         echo ""
         gpu_status
     } >>"$LOG_FILE"

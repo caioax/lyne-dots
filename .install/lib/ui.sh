@@ -120,6 +120,29 @@ ui_title() {
     ui_add "$C_DIM${rule// /$G_RULE}$C_RESET"
 }
 
+# ui_wrap <text> <width>: the text in lines of at most width (one per line),
+# broken between words; its own line breaks stay, a word too long is cut
+ui_wrap() {
+    local width=$2 paragraph line word words
+    while IFS= read -r paragraph || [[ -n "$paragraph" ]]; do
+        line=""
+        read -ra words <<<"$paragraph"
+        for word in "${words[@]}"; do
+            if [[ -z "$line" ]]; then
+                line=$word
+            elif ((${#line} + 1 + ${#word} <= width)); then
+                line+=" $word"
+            else
+                ui_fit "$line" "$width"
+                echo
+                line=$word
+            fi
+        done
+        ui_fit "$line" "$width"
+        echo
+    done <<<"$1"
+}
+
 # Wrapped plain paragraph
 ui_text() {
     local style=${2:-} line="" word words

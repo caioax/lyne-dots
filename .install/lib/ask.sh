@@ -170,17 +170,28 @@ ask_single() {
     done
 }
 
+# _ask_review_rows <"Key|value">...: long values wrap under their key (a
+# value's own line breaks too)
+_ask_review_rows() {
+    local row key value line key_w=11
+    local -a lines
+    for row in "$@"; do
+        key=${row%%|*} value=${row#*|}
+        mapfile -t lines < <(ui_wrap "$value" $((UI_WIDTH - key_w)))
+        ui_add "$C_BOLD$(ui_pad "$key" "$key_w")$C_RESET${lines[0]}"
+        for line in "${lines[@]:1}"; do
+            ui_add "$(ui_pad "" "$key_w")$line"
+        done
+    done
+}
+
 # ask_review <title> <text> <"Key|value">...
 # Summary before installing: enter starts, esc goes back to change something
 ask_review() {
     local title=$1 text=$2
     shift 2
-    local row key value key_w=11
     _ask_header "$title" "$text"
-    for row in "$@"; do
-        key=${row%%|*} value=${row#*|}
-        ui_add "$C_BOLD$(ui_pad "$key" "$key_w")$C_RESET$(ui_fit "$value" $((UI_WIDTH - key_w)))"
-    done
+    _ask_review_rows "$@"
     ui_hint "enter start $G_DOT esc back $G_DOT q quit"
     ui_flush
 

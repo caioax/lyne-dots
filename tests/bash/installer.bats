@@ -105,6 +105,10 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     [ -f "$DRY/.zshrc" ] && [ -f "$DRY/.config/nvim/init.lua" ] && [ -f "$DRY/.config/gtk-3.0/settings.ini" ]
     [ ! -d "$DRY/.lyne-dots-backup" ]
     assert_equal "$(jq -c .system.stow "$DRY/.config/quickshell/state.json")" '["hyprland","quickshell","local"]'
+    # The review (in the log with --answers) said so
+    run log
+    assert_line "review Links: hyprland, quickshell, local"
+    assert_line "review Backup: nothing to move"
 }
 
 @test "every category: every package linked, the user's files to the backup" {
@@ -120,6 +124,10 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
         assert_line --partial "[dry-run] stow -d $REPO -t $DRY -R $pkg"
     done
     [ ! -e "$DRY/.zshrc" ]
+    run log
+    assert_line "review Links: hyprland, quickshell, kitty, nvim, zsh, tmux, local, fastfetch, kde, theming"
+    assert_line "review Backup: ~/.zshrc"
+    assert_line --regexp '^  to ~/\.lyne-dots-backup/[0-9]{8}-[0-9]{6}$'
     run find "$DRY/.lyne-dots-backup" -name .zshrc
     assert_output --partial ".zshrc"
     assert_equal "$(jq -c .system.stow "$DRY/.config/quickshell/state.json")" \
