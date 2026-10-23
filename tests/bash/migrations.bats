@@ -130,6 +130,20 @@ legacy_home() {
     assert_equal "$(jq -r .wallpaper "$HOME/.local/themes/tokyonight.json")" "themes/tokyonight/lyne-tokyonight-contour.jpg"
 }
 
+@test "041: an old lyne-editor.desktop gets the app's name and icon" {
+    fake_dots
+    local share="$BATS_TEST_TMPDIR/share/applications" wrapper="$HOME/.local/share/applications/lyne-editor.desktop"
+    mkdir -p "$share" "$(dirname "$wrapper")"
+    printf '%s\n' '[Desktop Entry]' 'Name=Neovim' 'Icon=nvim' 'Terminal=true' >"$share/nvim.desktop"
+    printf '%s\n' '[Desktop Entry]' 'Name=nvim (lyne editor)' 'Exec=x term nvim %F' 'MimeType=text/plain;' >"$wrapper"
+    jq '.system.editor = "nvim"' "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+    XDG_DATA_DIRS="$BATS_TEST_TMPDIR/share" run migrate 041-default-app-icons.sh
+    assert_success
+    run cat "$wrapper"
+    assert_line "Name=Neovim (lyne editor)"
+    assert_line "Icon=nvim"
+}
+
 @test "038: a list already recorded (a new install) stays" {
     fake_dots
     ln -s "$DOTS_DIR/zsh/.zshrc" "$HOME/.zshrc"

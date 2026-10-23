@@ -15,9 +15,13 @@
 #         browser               links and web pages
 #         editor                plain text files
 #       Apps without a .desktop file, or that run in a terminal (nvim, yazi),
-#       get a hidden lyne-<slot>.desktop that opens them through `term`
+#       get a hidden lyne-<slot>.desktop that opens them through `term`,
+#       named and drawn like the app (the terminal's icon when it has none)
 #   apply-all
 #       apply for every slot with the values of state.json (install, migrations)
+#   refresh
+#       apply again only the slots that have a lyne-<slot>.desktop, so an
+#       older one gets what this version writes (migrations)
 #   status <mime-type>...
 #       Prints "<mime-type> <desktop file>" with what xdg-open uses now
 
@@ -76,6 +80,25 @@ desktop_file() {
     done
 }
 
+# Key of the [Desktop Entry] group of a .desktop file (not a localized one,
+# not an action's)
+desktop_key() {
+    awk -v key="$2" -F= '
+        /^\[/ { group = $0; next }
+        group == "[Desktop Entry]" && $1 == key { sub(/^[^=]*=/, ""); print; exit }
+    ' "$1"
+}
+
+# Icon of the default terminal's .desktop file
+terminal_icon() {
+    local command id file
+    command="$(state_value '.apps.terminal.command')"
+    id="$(state_value '.apps.terminal.desktop')"
+    [[ -z "$id" ]] && id="$(basename "${command:-kitty}")"
+    file="$(desktop_file "${id%% *}")"
+    [[ -n "$file" ]] && desktop_key "$file" Icon
+}
+
 cmd_term() {
     local terminal class=""
     if [[ "${1:-}" == --float ]]; then
@@ -91,21 +114,29 @@ cmd_term() {
 }
 
 # Hidden .desktop file running `command` (in the terminal when asked), so
-# xdg-open can hand it files
+# xdg-open can hand it files. Dolphin's "Open with" lists it: it takes the
+# name and icon of the app's own .desktop file (`file`, if any)
 write_wrapper() {
-    local slot="$1" command="$2" terminal="$3" mimes="$4"
+    local slot="$1" command="$2" terminal="$3" mimes="$4" file="$5"
     local exec="$command"
     [[ "$terminal" == 1 ]] && exec="$SELF term $command"
     local code="%F"
     [[ "$slot" == browser ]] && code="%U"
+    local name="" icon=""
+    if [[ -n "$file" ]]; then
+        name="$(desktop_key "$file" Name)"
+        icon="$(desktop_key "$file" Icon)"
+    fi
+    [[ -z "$icon" && "$terminal" == 1 ]] && icon="$(terminal_icon)"
 
     mkdir -p "$APPS_DIR"
     cat >"$APPS_DIR/lyne-$slot.desktop" <<EOF
 [Desktop Entry]
 Type=Application
-Name=$command (lyne $slot)
+Name=${name:-$command} (lyne $slot)
 Comment=Default $slot chosen in Settings > System > Apps
-Exec=$exec $code
+${icon:+Icon=$icon
+}Exec=$exec $code
 Terminal=false
 NoDisplay=true
 MimeType=${mimes// /;};
@@ -143,7 +174,7 @@ cmd_apply() {
     [[ -z "$mimes" ]] && return 0
     local target="$id.desktop"
     if [[ -z "$file" || "$terminal" == 1 ]]; then
-        write_wrapper "$slot" "$command" "$terminal" "$mimes"
+        write_wrapper "$slot" "$command" "$terminal" "$mimes" "$file"
         target="lyne-$slot.desktop"
     else
         rm -f "$APPS_DIR/lyne-$slot.desktop"
@@ -158,6 +189,16 @@ cmd_apply_all() {
         cmd_apply "$slot" "$(state_value ".apps.$slot.command")" "$(state_value ".apps.$slot.desktop")"
     done
     cmd_apply editor "$(state_value '.system.editor')"
+}
+
+cmd_refresh() {
+    local slot
+    for slot in fileManager browser; do
+        [[ -f "$APPS_DIR/lyne-$slot.desktop" ]] &&
+            cmd_apply "$slot" "$(state_value ".apps.$slot.command")" "$(state_value ".apps.$slot.desktop")"
+    done
+    [[ -f "$APPS_DIR/lyne-editor.desktop" ]] && cmd_apply editor "$(state_value '.system.editor')"
+    return 0
 }
 
 cmd_status() {
@@ -177,12 +218,13 @@ case "${1:-}" in
         cmd_apply "$@"
         ;;
     apply-all) cmd_apply_all ;;
+    refresh) cmd_refresh ;;
     status)
         shift
         cmd_status "$@"
         ;;
     *)
-        echo "usage: $(basename "$0") term [--float] <command...> | apply <slot> <command> [desktop-id] [0|1] | apply-all | status <mime...>" >&2
+        echo "usage: $(basename "$0") term [--float] <command...> | apply <slot> <command> [desktop-id] [0|1] | apply-all | refresh | status <mime...>" >&2
         exit 1
         ;;
 esac
