@@ -405,6 +405,7 @@ run_steps() {
     cable on
     check "network › the tile shows the cable" ev_soon "$(ev 'I18n.tr("Network") + "|" + I18n.tr("Wired")')|true" "$tile"
     step "quick settings › wifi with a cable" ipc quicksettings open wifi
+    check "network › the page reads the cable's details" ev_soon "1000 192.168.1.7" 'NetworkService.wiredDetails.speed + " " + NetworkService.wiredDetails.ip'
     cable off
     check "network › unplugged, the tile is Wi-Fi again" ev_soon "$(ev 'I18n.tr("Wi-Fi") + "|" + I18n.tr("On")')|true" "$tile"
     step "quick settings › wifi without it" ipc quicksettings close

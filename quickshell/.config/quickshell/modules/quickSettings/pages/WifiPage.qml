@@ -6,6 +6,7 @@ import Quickshell
 import qs.config
 import qs.services
 import "../../../components/"
+import "../../../services/network.js" as Net
 
 Item {
     id: root
@@ -17,6 +18,7 @@ Item {
     signal passwordRequested(string ssid)
 
     readonly property var current: NetworkService.activeNetwork
+    readonly property var wired: NetworkService.wired
     readonly property var others: NetworkService.accessPoints.filter(ap => !ap.active)
     readonly property int rowHeight: Config.fontSizeIconSmall * 2 + Config.padding * 2
 
@@ -79,9 +81,17 @@ Item {
         PageHeader {
             id: header
             Layout.bottomMargin: Config.padding
-            icon: NetworkService.systemIcon
-            title: I18n.tr("Wi-Fi")
+            // With a cable the page is the network's: the cable, then Wi-Fi
+            icon: root.wired ? NetworkService.wiredIcon : NetworkService.systemIcon
+            title: root.wired ? I18n.tr("Network") : I18n.tr("Wi-Fi")
             subtitle: {
+                if (root.wired) {
+                    if (!NetworkService.wifiEnabled)
+                        return I18n.tr("Wired · Wi-Fi off");
+                    if (root.current)
+                        return I18n.tr("Wired · Wi-Fi: %1", root.current.ssid || I18n.tr("hidden network"));
+                    return I18n.tr("Wired");
+                }
                 if (!NetworkService.wifiEnabled)
                     return I18n.tr("Off");
                 if (root.current)
@@ -100,6 +110,55 @@ Item {
             QsSwitch {
                 checked: NetworkService.wifiEnabled
                 onToggled: NetworkService.toggleWifi()
+            }
+        }
+
+        // ========== CABLE ==========
+        // Outlined like the connected network; nothing to switch here, the
+        // ⋮ menu copies its IP
+        Rectangle {
+            id: wiredCard
+
+            readonly property string ip: NetworkService.wiredDetails.ip ?? ""
+
+            visible: root.wired !== null
+            Layout.fillWidth: true
+            implicitHeight: wiredRow.implicitHeight + Config.padding * 2
+            radius: Config.radiusLarge
+            color: Config.cardColor
+            border.width: 2
+            border.color: Qt.alpha(Config.accentColor, 0.6)
+
+            DeviceRow {
+                id: wiredRow
+
+                anchors.fill: parent
+                anchors.leftMargin: Config.padding * 2
+                anchors.rightMargin: Config.padding * 2
+                anchors.topMargin: Config.padding
+                anchors.bottomMargin: Config.padding
+                icon: NetworkService.wiredIcon
+                ring: 100
+                title: root.wired?.connection || I18n.tr("Wired")
+                subtitle: {
+                    const parts = [];
+                    const speed = Net.speedLabel(NetworkService.wiredDetails.speed ?? 0);
+                    if (speed !== "")
+                        parts.push(speed);
+                    parts.push(wiredCard.ip !== "" ? wiredCard.ip : I18n.tr("Connected"));
+                    return parts.join(" · ");
+                }
+                menuModel: wiredCard.ip !== "" ? [
+                    {
+                        "text": I18n.tr("Copy IP"),
+                        "icon": "\u{f018f}", // md-content_copy
+                        "action": "copyIp"
+                    }
+                ] : []
+                onMenuAction: action => {
+                    if (action === "copyIp")
+                        Quickshell.execDetached(["wl-copy", "--", wiredCard.ip]);
+                }
             }
         }
 
@@ -145,10 +204,10 @@ Item {
                         return "";
                     const parts = [];
                     if (connectedCard.portal)
-                        parts.push("Login required");
+                        parts.push(I18n.tr("Login required"));
                     if (root.current.band)
                         parts.push(root.current.band);
-                    parts.push(connectedCard.ip !== "" ? connectedCard.ip : "Connected");
+                    parts.push(connectedCard.ip !== "" ? connectedCard.ip : I18n.tr("Connected"));
                     return parts.join(" · ");
                 }
                 trailing: (root.current?.signal ?? 0) + "%"
@@ -157,23 +216,23 @@ Item {
                     const items = [];
                     if (connectedCard.portal)
                         items.push({
-                            text: "Log in",
+                            text: I18n.tr("Log in"),
                             icon: "\u{f059f}", // md-web
                             action: "login"
                         });
                     items.push({
-                        text: "Disconnect",
+                        text: I18n.tr("Disconnect"),
                         icon: "\u{f05aa}", // md-wifi_off
                         action: "disconnect"
                     });
                     if (connectedCard.ip !== "")
                         items.push({
-                            text: "Copy IP",
+                            text: I18n.tr("Copy IP"),
                             icon: "\u{f018f}", // md-content_copy
                             action: "copyIp"
                         });
                     items.push({
-                        text: "Forget",
+                        text: I18n.tr("Forget"),
                         icon: "\u{f01b4}", // md-delete
                         action: "forget",
                         color: Config.errorColor
@@ -203,7 +262,7 @@ Item {
             CardHeader {
                 id: networksHeader
                 icon: "󰖩"
-                title: I18n.tr("Networks")
+                title: root.wired ? I18n.tr("Wi-Fi networks") : I18n.tr("Networks")
                 subtitle: NetworkService.scanning && root.others.length === 0 ? I18n.tr("Scanning…") : I18n.trn("%n available", "%n available", root.others.length)
             }
 
@@ -212,7 +271,7 @@ Item {
 
                 // Whatever the page has left, but always room for a few rows
                 readonly property real maxHeight: {
-                    const used = header.implicitHeight + header.Layout.bottomMargin + main.spacing + (connectedCard.visible ? connectedCard.implicitHeight + main.spacing : 0) + networksCard.padding * 2 + networksHeader.implicitHeight + networksCard.spacing;
+                    const used = header.implicitHeight + header.Layout.bottomMargin + main.spacing + (connectedCard.visible ? connectedCard.implicitHeight + main.spacing : 0) + (wiredCard.visible ? wiredCard.implicitHeight + main.spacing : 0) + networksCard.padding * 2 + networksHeader.implicitHeight + networksCard.spacing;
                     return Math.max(root.rowHeight * 3, root.availableHeight - used);
                 }
 
