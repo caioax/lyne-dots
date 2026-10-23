@@ -182,6 +182,34 @@ echo "tmux \$*" >>"$SB/calls.log"
 exit 0
 EOF
     chmod +x "$SB/bin/tmux"
+    # nmcli: no network, until a step plugs in a cable ($SB/wired) and
+    # raises a NetworkManager event ($SB/nm-event, read by `nmcli monitor`)
+    cat >"$SB/bin/nmcli" <<EOF
+#!/bin/bash
+echo "nmcli \$*" >>"$SB/calls.log"
+case "\$*" in
+    monitor)
+        while sleep 0.2; do
+            [[ -e "$SB/nm-event" ]] && rm -f "$SB/nm-event" && echo "enp3s0: changed"
+        done
+        ;;
+    "-g DEVICE,TYPE,STATE,CONNECTION device")
+        [[ -e "$SB/wired" ]] && echo "enp3s0:ethernet:connected:Wired connection 1"
+        echo "wlan0:wifi:disconnected:"
+        ;;
+    *CAPABILITIES.SPEED*)
+        [[ -e "$SB/wired" ]] && printf '192.168.1.7/24\\n192.168.1.1\\n192.168.1.1\\n1000 Mb/s\\n'
+        ;;
+esac
+exit 0
+EOF
+    chmod +x "$SB/bin/nmcli"
+}
+
+# cable on|off: plugs the stand-in cable in or out (an nmcli event follows)
+cable() {
+    if [[ "$1" == on ]]; then touch "$SB/wired"; else rm -f "$SB/wired"; fi
+    touch "$SB/nm-event"
 }
 
 # saved_before_reboot: calls.log has resurrect's save before systemctl reboot
@@ -321,6 +349,16 @@ check() {
 # ev_is VALUE JS: the shell answers VALUE (for check)
 ev_is() { [[ "$(ev "$2")" == "$1" ]]; }
 
+# ev_soon VALUE JS: ev_is within 8 s (after an event the shell reads again)
+ev_soon() {
+    local _
+    for _ in {1..32}; do
+        ev_is "$1" "$2" && return 0
+        sleep 0.25
+    done
+    return 1
+}
+
 # CursorService quotes a name with quotes in it so sh reads it back as is
 cursor_quote_ok() {
     local quoted
@@ -361,6 +399,15 @@ run_steps() {
         step "quick settings › $id" ipc quicksettings open "$id"
     done
     step "quick settings closed" ipc quicksettings close
+    # With a cable the Wi-Fi tile shows it (and lights up)
+    # (the label and status as the shell's language says them)
+    local tile='const t = QuickSettingsService.allTiles.find(t => t.tileId === "wifi"); [t.label, t.status, t.active].join("|")'
+    cable on
+    check "network › the tile shows the cable" ev_soon "$(ev 'I18n.tr("Network") + "|" + I18n.tr("Wired")')|true" "$tile"
+    step "quick settings › wifi with a cable" ipc quicksettings open wifi
+    cable off
+    check "network › unplugged, the tile is Wi-Fi again" ev_soon "$(ev 'I18n.tr("Wi-Fi") + "|" + I18n.tr("On")')|true" "$tile"
+    step "quick settings › wifi without it" ipc quicksettings close
     # A shortcut closes the popup, then opens its Settings page
     step "quick settings › shortcut" ev 'QuickSettingsService.open("", QuickSettingsService.focusedScreen()); QuickSettingsService.runShortcut("settings", "keybinds"); "ok"'
     check "quick settings › shortcut closed it" ev_is "" 'QuickSettingsService.screen'

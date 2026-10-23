@@ -19,6 +19,7 @@ Singleton {
     // Quick Settings tile and the page show it ahead of the Wi-Fi state
     property var wired: null
     readonly property bool ethernetConnected: wired !== null
+    readonly property string wiredIcon: "󰈀"
     onWiredChanged: {
         if (_viewers > 0)
             fetchDetails();

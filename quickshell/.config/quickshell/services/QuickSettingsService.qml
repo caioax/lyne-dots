@@ -163,10 +163,12 @@ Singleton {
     readonly property list<Tile> allTiles: [
         Tile {
             tileId: "wifi"
-            label: I18n.tr("Wi-Fi")
-            icon: NetworkService.systemIcon
-            status: NetworkService.statusText
-            active: NetworkService.wifiEnabled
+            // With a cable it shows the cable (lit; its name, speed and IP
+            // are on the page), and a click still switches the Wi-Fi radio
+            label: NetworkService.ethernetConnected ? I18n.tr("Network") : I18n.tr("Wi-Fi")
+            icon: NetworkService.ethernetConnected ? NetworkService.wiredIcon : NetworkService.systemIcon
+            status: NetworkService.ethernetConnected ? I18n.tr("Wired") : NetworkService.statusText
+            active: NetworkService.ethernetConnected || NetworkService.wifiEnabled
             page: "wifi"
             toggle: () => NetworkService.toggleWifi()
         },

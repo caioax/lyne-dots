@@ -87,7 +87,7 @@ QtObject {
         if (NetworkService.ethernetConnected)
             return {
                 shown: true,
-                icon: "󰈀",
+                icon: NetworkService.wiredIcon,
                 tone: "normal",
                 alert: false
             };
