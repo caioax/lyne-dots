@@ -52,7 +52,7 @@ return {
 						vim.diagnostic.open_float({
 							scope = "line",
 							border = "rounded",
-							source = "always",
+							source = true,
 							header = "",
 							prefix = "",
 						})
@@ -60,18 +60,14 @@ return {
 
 					-- Default Keybindings
 					map("gd", require("telescope.builtin").lsp_definitions, "Go to Definition")
-					map("gr", require("telescope.builtin").lsp_references, "Go to References")
+					-- grr is Neovim's own key for references (with grn rename,
+					-- gra code action, gri implementation): in Telescope here
+					map("grr", require("telescope.builtin").lsp_references, "Go to References")
 					map("K", vim.lsp.buf.hover, "Hover Documentation")
 					map("<leader>rn", vim.lsp.buf.rename, "Rename Variable")
 					map("<leader>ca", vim.lsp.buf.code_action, "Code Action")
 
-					-- Quick navigation between errors
-					map("[d", function()
-						vim.diagnostic.goto_prev({ float = false })
-					end, "Previous Error")
-					map("]d", function()
-						vim.diagnostic.goto_next({ float = false })
-					end, "Next Error")
+					-- Quick navigation between errors: [d and ]d are Neovim's own
 				end,
 			})
 
@@ -103,6 +99,15 @@ return {
 				},
 			})
 
+			-- Every server gets what nvim-cmp can handle (preselect, commit
+			-- characters...) on top of Neovim's own capabilities
+			vim.lsp.config("*", {
+				capabilities = require("cmp_nvim_lsp").default_capabilities(),
+			})
+
+			-- mason-lspconfig v2 enables every installed server on its own
+			-- (vim.lsp.enable). stylua is installed as a formatter for conform
+			-- and would start as a server on every Lua file too
 			require("mason-lspconfig").setup({
 				ensure_installed = {
 					"lua_ls",
@@ -118,14 +123,8 @@ return {
 					"omnisharp",
 					"intelephense",
 				},
-				automatic_installation = true,
-				handlers = {
-					function(server_name)
-						local capabilities = require("cmp_nvim_lsp").default_capabilities()
-						require("lspconfig")[server_name].setup({
-							capabilities = capabilities,
-						})
-					end,
+				automatic_enable = {
+					exclude = { "stylua" },
 				},
 			})
 		end,

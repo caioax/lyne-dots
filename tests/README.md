@@ -12,7 +12,7 @@ tests/run.sh js lint    # some sections
 | `lint` | shellcheck over every script (settings in `.shellcheckrc`) | `shellcheck` |
 | `qml` | qmllint over the shell; only warnings missing from `tests/qml/lint-baseline.txt` fail | `qt6-declarative` |
 | `smoke` | The whole shell in a nested Hyprland: every window and page opened, no QML errors | a running Hyprland session |
-| `nvim` | Neovim with the repo's config inside tmux with the repo's tmux.conf: Ctrl/Alt + h/j/k/l between splits and panes, smart-splits' health check | `tmux`, `neovim`, the plugins lazy.nvim installed |
+| `nvim` | Neovim with the repo's config inside tmux with the repo's tmux.conf: Ctrl/Alt + h/j/k/l between splits and panes, smart-splits' health check; the config with the LSP on, nothing deprecated | `tmux`, `neovim`, `git`, the plugins lazy.nvim and Mason installed |
 
 A missing tool fails its section with the package to install; nothing is skipped silently.
 
@@ -64,6 +64,8 @@ Commands with effects outside the sandbox (nmcli, rfkill, brightness, systemctl,
 
 ## Neovim and tmux
 
-`tests/nvim/nav.sh` starts a tmux server of its own (its own socket, the repo's `tmux.conf` without TPM, so no plugin runs and continuum never saves over your session) with a shell pane and Neovim with the repo's config, split in two, then types the keys through a client attached in a pty (`send-keys -K` goes through tmux's key tables like typing does). It checks Ctrl + h/j/k/l between Neovim's windows and tmux's panes, copy mode, Alt + l resizing, and `:checkhealth smart-splits` (no errors, the tmux backend in use). Neovim's state and cache go to a temp folder; its data folder is a link to yours for the installed plugins, and no file is opened, so nothing that installs (Mason, Treesitter parsers) starts.
+`tests/nvim/nav.sh` starts a tmux server of its own (its own socket, the repo's `tmux.conf` without TPM, so no plugin runs and continuum never saves over your session) with a shell pane and Neovim with the repo's config, split in two, then types the keys through a client attached in a pty (`send-keys -K` goes through tmux's key tables like typing does). It checks Ctrl + h/j/k/l between Neovim's windows and tmux's panes, copy mode, Alt + l resizing, and `:checkhealth smart-splits` (no errors, the tmux backend in use). It opens no file, so nothing that installs (Mason, Treesitter parsers) starts.
 
-`LYNE_TEST_NVIM=<dir>` and `LYNE_TEST_TMUX_CONF=<file>` run it against copies (to break them on purpose); `NAV_DEBUG=1` prints the health report.
+`tests/nvim/config.sh` opens a Lua file with a diagnostic and a git change (in a throwaway repo) in headless Neovim, waits for lua_ls and gitsigns, and uses the keys that call into Neovim and the plugins (yank, `]d`/`[d`, `]c`/`[c`, format, typing a bracket). Then `:checkhealth vim.deprecated` must be clean (it only lists what was called), no message may mention something deprecated, a list of old names (the plugins' deprecations that don't warn) must be gone from the config, servers must get nvim-cmp's capabilities, stylua must not run as a server, and `grr` must be the references key.
+
+Both use the sandbox in `tests/nvim/lib.sh`: Neovim's state and cache in a temp folder, its data folder a link to yours (the plugins and Mason's servers already installed). `LYNE_TEST_NVIM=<dir>` and `LYNE_TEST_TMUX_CONF=<file>` run them against copies (to break them on purpose); `NAV_DEBUG=1` / `CONFIG_DEBUG=1` print the health report.

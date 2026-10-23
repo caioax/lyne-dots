@@ -5,58 +5,37 @@
 # Neovim with the repo's config on the right, split in two. A client attached
 # through a pty types the keys (send-keys -K goes through the key tables).
 #
-# Isolation: Neovim's state and cache (shada, sessions, logs) go to a temp
-# folder; its data folder is a link to yours, for the plugins lazy.nvim
-# installed. Only the plugins already installed are used: no file is opened,
-# so nothing that installs (Mason, Treesitter parsers on demand) starts.
+# Neovim runs in the sandbox of lib.sh. Only the plugins already installed
+# are used: no file is opened, so nothing that installs (Mason, Treesitter
+# parsers on demand) starts.
 #
 # Usage: tests/nvim/nav.sh   (needs tmux, nvim, python3 and the plugins)
 #   NAV_DEBUG=1                print the checkhealth report
-#   LYNE_TEST_NVIM=<dir>       another copy of nvim/.config/nvim
+#   LYNE_TEST_NVIM=<dir>       another copy of nvim/.config/nvim (lib.sh)
 #   LYNE_TEST_TMUX_CONF=<file> another copy of tmux/.tmux.conf
 
 # shellcheck disable=SC2329  # cleanup runs from the trap, the others from wait_for
 
 set -uo pipefail
 
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-NVIM_DIR="${LYNE_TEST_NVIM:-$REPO/nvim/.config/nvim}"
+# shellcheck source=tests/nvim/lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 TMUX_CONF="${LYNE_TEST_TMUX_CONF:-$REPO/tmux/.tmux.conf}"
-NVIM_DATA="${XDG_DATA_HOME:-$HOME/.local/share}/nvim"
 
-if [[ -t 1 ]]; then
-    C_OK=$'\e[32m' C_FAIL=$'\e[31m' C_OFF=$'\e[0m'
-else
-    C_OK="" C_FAIL="" C_OFF=""
-fi
+need_tools tmux nvim python3
 
-fail_early() {
-    printf '%s%s%s\n' "$C_FAIL" "$1" "$C_OFF"
-    exit 1
-}
-
-for tool in tmux nvim python3; do
-    command -v "$tool" >/dev/null || fail_early "missing $tool"
-done
-[[ -d "$NVIM_DATA/lazy/lazy.nvim" ]] || fail_early "no plugins in $NVIM_DATA/lazy (open nvim once so lazy.nvim installs them)"
-
-# Short path: tmux's socket lives in it
-SB="$(mktemp -d /tmp/lnv.XXXXXX)" || fail_early "no sandbox"
+nvim_sandbox
 SOCK="$SB/tmux.sock"
 CLIENT_PID=""
 
 T() { tmux -S "$SOCK" "$@"; }
 
-# Neovim writes its shada while it quits: the folder goes after it's gone
 cleanup() {
-    local nvim_pid tries=50
+    local nvim_pid
     nvim_pid="$(T display -p -t t:1.2 '#{pane_pid}' 2>/dev/null)"
     [[ -n "$CLIENT_PID" ]] && kill "$CLIENT_PID" 2>/dev/null
     T kill-server 2>/dev/null
-    while [[ -n "$nvim_pid" ]] && kill -0 "$nvim_pid" 2>/dev/null && ((tries-- > 0)); do
-        sleep 0.1
-    done
-    rm -rf "$SB"
+    remove_sandbox "$nvim_pid"
 }
 trap cleanup EXIT
 
@@ -64,17 +43,6 @@ trap cleanup EXIT
 # this session over your last one
 sed -e '/^if "test ! -d ~\/.tmux\/plugins\/tpm"/,+1d' -e "\|^run '~/.tmux/plugins/tpm/tpm'|d" "$TMUX_CONF" >"$SB/tmux.conf"
 grep -q "tpm" <(grep -v '^\s*#' "$SB/tmux.conf" | grep -v '@plugin') && fail_early "tmux.conf still runs TPM after stripping it"
-
-mkdir -p "$SB/config" "$SB/data" "$SB/state" "$SB/cache"
-ln -s "$NVIM_DIR" "$SB/config/nvim"
-ln -s "$NVIM_DATA" "$SB/data/nvim"
-
-cat >"$SB/nvim.sh" <<EOF
-#!/bin/sh
-export XDG_CONFIG_HOME="$SB/config" XDG_DATA_HOME="$SB/data" XDG_STATE_HOME="$SB/state" XDG_CACHE_HOME="$SB/cache"
-exec nvim --listen "$SB/nvim.sock"
-EOF
-chmod +x "$SB/nvim.sh"
 
 # The client: a pty with tmux attached, its output thrown away
 cat >"$SB/client.py" <<'EOF'
@@ -94,30 +62,7 @@ while True:
             break
 EOF
 
-failed=0
-check() {
-    local name="$1" want="$2" got="$3"
-    if [[ "$got" == "$want" ]]; then
-        printf '%s✓%s %s\n' "$C_OK" "$C_OFF" "$name"
-    else
-        printf '%s✗ %s%s (want %s, got %s)\n' "$C_FAIL" "$name" "$C_OFF" "$want" "${got:-nothing}"
-        failed=1
-    fi
-}
-
-# wait_for SECONDS COMMAND...: until the command succeeds
-wait_for() {
-    local tries=$(($1 * 10))
-    shift
-    while ((tries-- > 0)); do
-        "$@" && return 0
-        sleep 0.1
-    done
-    return 1
-}
-
 active() { T display -p -t t '#{pane_index}'; }
-nv() { nvim --headless --server "$SB/nvim.sock" --remote-expr "$1" 2>/dev/null; }
 key() {
     T send-keys -c "$CLIENT" -K "$1"
     sleep 0.6
@@ -131,6 +76,7 @@ pane_is_vim() { [[ "$(T show -p -t t:1.2 -v @pane-is-vim 2>/dev/null)" == 1 ]]; 
 wait_for 20 pane_is_vim
 check "Neovim tells tmux it runs in the pane (@pane-is-vim)" 1 "$(T show -p -t t:1.2 -v @pane-is-vim 2>/dev/null)"
 wait_for 10 test -S "$SB/nvim.sock" || fail_early "Neovim didn't start"
+check "nvim-cmp waits for insert mode (not loaded at startup)" 1 "$(nv 'luaeval("package.loaded.cmp == nil and 1 or 0")')"
 
 python3 "$SB/client.py" "$SOCK" &
 CLIENT_PID=$!

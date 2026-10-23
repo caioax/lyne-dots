@@ -39,7 +39,7 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 	desc = "Flash text on yank",
 	group = vim.api.nvim_create_augroup("highlight_yank", { clear = true }),
 	callback = function()
-		vim.highlight.on_yank({
+		vim.hl.on_yank({
 			higroup = "IncSearch", -- Highlight color (IncSearch inverts colors for high contrast)
 			timeout = 150, -- Effect duration in milliseconds
 		})

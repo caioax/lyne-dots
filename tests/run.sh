@@ -7,7 +7,8 @@
 #   smoke  the whole shell in a nested Hyprland, every window and page
 #          opened, no QML errors (needs a running Hyprland session)
 #   nvim   Neovim inside tmux: Ctrl/Alt + h/j/k/l between Neovim's splits
-#          and tmux's panes (needs tmux and the plugins lazy.nvim installed)
+#          and tmux's panes; the config with the LSP on, nothing deprecated
+#          (needs tmux and the plugins lazy.nvim and Mason installed)
 # No section = all of them. Exits 1 when a section fails or its tool is
 # missing (nothing is skipped silently).
 # shellcheck disable=SC2329  # run_<section> is called as "run_$s"
@@ -74,7 +75,11 @@ run_smoke() {
 run_nvim() {
     need tmux tmux || return 1
     need nvim neovim || return 1
-    tests/nvim/nav.sh
+    need git git || return 1
+    local ok=0
+    tests/nvim/nav.sh || ok=1
+    tests/nvim/config.sh || ok=1
+    return "$ok"
 }
 
 selected=("$@")

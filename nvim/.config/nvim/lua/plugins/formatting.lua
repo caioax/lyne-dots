@@ -8,7 +8,7 @@ return {
         -- Manual format shortcut: Leader + mp
         "<leader>mp",
         function()
-          require("conform").format({ async = true, lsp_fallback = true })
+          require("conform").format({ async = true, lsp_format = "fallback" })
         end,
         mode = "",
         desc = "Format current buffer",
@@ -58,7 +58,7 @@ return {
         -- Configure Format on Save
         format_on_save = {
           -- If no formatter is available (e.g. C++, Rust), use native LSP
-          lsp_fallback = true,
+          lsp_format = "fallback",
           async = false,
           timeout_ms = 500,
         },
