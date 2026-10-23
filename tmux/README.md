@@ -1,95 +1,62 @@
-# Tmux Cheat Sheet
+# tmux
 
-| Core Config  | Value                              |
-| :----------- | :--------------------------------- |
-| **Prefix**   | `Ctrl` + `Space`                   |
-| **Mouse**    | Enabled (Click, Scroll, Resize)    |
-| **Indexes**  | Start at 1 (Windows and Panes)     |
-| **Engine**   | Vi Mode + Smart Splits             |
+The prefix is `C-Space`: press Ctrl + Space, let go, then press the key (`C-Space |` means prefix, then `|`). The mouse clicks, scrolls and resizes; windows and panes count from 1.
 
----
+> **Every key, searchable:** `C-Space ?` (tmux's and Neovim's). This guide: `C-Space T`; the Neovim one: `C-Space N`.
 
-## Navigation & Layout (No Prefix)
+## Move around
 
-Quick actions integrated into the keyboard, no need to press the prefix.
+| Keys | Does |
+| :--- | :--- |
+| `C-h` / `C-j` / `C-k` / `C-l` | Focus the pane on the left / below / above / on the right (inside Neovim, its splits first) |
+| `C-M-h` / `C-M-l` | Previous / next window |
+| `C-Space z` | Zoom the pane (again to bring the others back) |
+| `C-Space w` | Pick a window from a list |
+| `C-Space s` | Pick a session from a list |
 
-| Shortcut                         | Action               | Context                                                          |
-| :------------------------------- | :------------------- | :--------------------------------------------------------------- |
-| **`Ctrl` + `h j k l`**           | **Navigate (Focus)** | Moves between Tmux splits and Neovim windows seamlessly.         |
-| **`Alt` + `h j k l`**            | **Resize**           | Adjusts the size of the current pane (or Neovim split).          |
-| **`Ctrl` + `Shift` + `h j k l`** | **Reorder Splits**   | Swaps the current pane with its neighbor (Swap).                 |
-| **`Ctrl` + `Alt` + `h l`**       | **Switch Tab**       | Navigates to the previous or next Window (Tab).                  |
+## Split and arrange
 
----
+| Keys | Does |
+| :--- | :--- |
+| `C-Space \|` | Split side by side (same folder) |
+| `C-Space -` | Split top and bottom (same folder) |
+| `M-h` / `M-j` / `M-k` / `M-l` | Grow or shrink the pane (inside Neovim, its splits first) |
+| `C-S-h` / `C-S-j` / `C-S-k` / `C-S-l` | Swap places with the pane on that side |
+| `C-Space x` | Close the pane |
 
-## Standard Commands (Requires Prefix)
+## Windows (the tabs on top)
 
-Press `Ctrl`+`Space`, release, then press the key below.
+| Keys | Does |
+| :--- | :--- |
+| `C-Space c` | New window in the same folder |
+| `C-Space 1` | Go to window 1 (any number) |
+| `C-Space ,` | Rename the window (empty: back to the automatic name) |
 
-### Pane Management (Splits)
+## Copy text
 
-|     Key      | Action           | Description                                         |
-| :----------: | :--------------- | :-------------------------------------------------- |
-|    **`\|`**  | Vertical Split   | Splits the screen side by side (keeps directory).    |
-|    **`-`**   | Horizontal Split | Splits the screen top/bottom (keeps directory).      |
-|    **`x`**   | Close            | Closes the current pane (kill-pane).                 |
-|    **`z`**   | Zoom             | Maximizes/Restores the current pane.                 |
-| **`{` / `}`**| Swap             | Swaps panes (alternative to Ctrl+Shift).             |
+| Keys | Does |
+| :--- | :--- |
+| `C-Space [` | Enter copy mode (scroll with the mouse or the Vim keys) |
+| `v` | Start a selection |
+| `y` | Copy the selection and leave |
+| `Escape` | Leave without copying |
 
-### Window Management (Tabs)
+## Sessions
 
-|     Key       | Action  | Description                                            |
-| :-----------: | :------ | :----------------------------------------------------- |
-|    **`c`**    | Create  | New clean tab.                                         |
-| **`1` - `9`** | Go to   | Jumps directly to the tab number.                      |
-|    **`,`**    | Rename  | Changes the tab name in the status bar.                |
-|    **`w`**    | List    | Shows an interactive list of all windows/sessions.     |
+tmux-continuum saves every 15 minutes; tmux keeps running after you close the terminal.
 
-### Popups & Tools
+| Keys | Does |
+| :--- | :--- |
+| `C-Space d` | Detach: leave tmux running in the background (`tmux a` comes back) |
+| `C-Space C-s` / `C-Space C-r` | Save now / restore the last save (tmux-resurrect) |
 
-|  Key    | Tool                                          |
-| :-----: | :-------------------------------------------- |
-| **`N`** | Opens the **Neovim** README (Read-Only Mode). |
-| **`T`** | Opens this **Tmux** README (Read-Only Mode).  |
+## Help and config
 
----
+| Keys | Does |
+| :--- | :--- |
+| `C-Space ?` | Search every shortcut (tmux and Neovim) |
+| `C-Space T` / `C-Space N` | This guide / the Neovim guide |
+| `C-Space r` | Reload `~/.tmux.conf` |
+| `C-Space I` / `C-Space U` | Install / update the plugins (TPM) |
 
-## Session Persistence
-
-Tmux saves everything automatically every 15 min (Continuum).
-
-| Prefix + Key     | Action                                    |
-| :--------------: | :---------------------------------------- |
-| **`Ctrl` + `s`** | **Save** state now (Manual).              |
-| **`Ctrl` + `r`** | **Restore** last save (Manual).           |
-|     **`s`**      | Sessions Menu (Interactive tree).         |
-|     **`d`**      | Detach (Exits Tmux, keeps it running).    |
-
----
-
-## Copy Mode (Vim Style)
-
-1. **`Prefix` + `[`**: Enter the mode.
-2. **`v`**: Visual select (select text).
-3. **`y`**: Yank (copy to system clipboard).
-4. **`q`**: Quit.
-
----
-
-## Plugins (TPM)
-
-|  Prefix + Key     | Action                                         |
-| :---------------: | :--------------------------------------------- |
-| **`I`** (shift+i) | **Install** new plugins listed in the conf.    |
-| **`U`** (shift+u) | **Update** existing plugins.                   |
-|      **`r`**      | **Reload** configuration (`source-file`).      |
-
-### How to add plugins
-
-Edit `~/.tmux.conf` and add to the list:
-
-```tmux
-set -g @plugin 'user/plugin'
-```
-
----
+A plugin: add `set -g @plugin 'user/plugin'` to `~/.tmux.conf`, then `C-Space I`. A key of your own: give it a note (`bind -N "What it does" ...`) and the search lists it.

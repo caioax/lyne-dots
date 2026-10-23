@@ -3,6 +3,7 @@
 # - its pieces in a headless Neovim: tmux's `list-keys -N` parser on a
 #   fixture, and Neovim's maps (modes merged, the LSP and git keys of
 #   config/buffer_keys.lua listed in any buffer, where each map was made)
+# - the guides (prefix + N / T): every key they cite exists in the config
 # - for real: prefix + ? in a tmux server of its own (like nav.sh) opens the
 #   popup, whose Neovim runs in the sandbox (the server's environment points
 #   its XDG folders there) and is reached through its socket: the list has
@@ -11,6 +12,7 @@
 # Usage: tests/nvim/shortcuts.sh   (needs tmux, nvim, python3 and the plugins)
 #   LYNE_TEST_NVIM=<dir>       another copy of nvim/.config/nvim (lib.sh)
 #   LYNE_TEST_TMUX_CONF=<file> another copy of tmux/.tmux.conf
+#   LYNE_TEST_TMUX_GUIDE=<file> another copy of tmux/README.md
 
 # shellcheck disable=SC2329  # cleanup runs from the trap, the others from wait_for
 
@@ -20,6 +22,7 @@ set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TMUX_CONF="${LYNE_TEST_TMUX_CONF:-$REPO/tmux/.tmux.conf}"
+TMUX_GUIDE="${LYNE_TEST_TMUX_GUIDE:-$REPO/tmux/README.md}"
 
 need_tools tmux nvim python3
 
@@ -39,6 +42,18 @@ cleanup() {
     remove_sandbox "${popup_pid:-$NVIM_PID}"
 }
 trap cleanup EXIT
+
+# tmux with the repo's config, its keys for the guides' check
+sed -e '/^if "test ! -d ~\/.tmux\/plugins\/tpm"/,+1d' -e "\|^run '~/.tmux/plugins/tpm/tpm'|d" "$TMUX_CONF" >"$SB/tmux.conf"
+grep -q "tpm" <(grep -v '^\s*#' "$SB/tmux.conf" | grep -v '@plugin') && fail_early "tmux.conf still runs TPM after stripping it"
+mkdir -m 700 "$SB/run"
+T -f "$SB/tmux.conf" new-session -d -s t -x 160 -y 40 "sh" || fail_early "tmux didn't start"
+TMUX_FORMAT='#{key_table}	#{key_string}	#{key_note}'
+{
+    T list-keys -N -F "$TMUX_FORMAT"
+    T list-keys -N -F "$TMUX_FORMAT" -T copy-mode-vi
+} >"$SB/tmux-keys.txt"
+PREFIX="$(T show-options -gv prefix)"
 
 # --- The pieces ---------------------------------------------------------
 
@@ -62,15 +77,35 @@ check "nvim: where a plugin spec's key comes from" "lazy.nvim keys of a plugin s
 check "nvim: where a config map with a function comes from" "lua/config/keymaps.lua" "$(value 'nvim[<leader>yc].from')"
 check "nvim: what a map with a text rhs runs" ":nohlsearch<CR>" "$(value 'nvim[<Esc>].runs')"
 
+# --- The guides (prefix + N / T) ----------------------------------------
+
+# Every key a guide cites exists in the config. Accepted without checking:
+# TPM's and tmux-resurrect's keys (no plugin runs in the test server)
+guide() {
+    nv "luaeval('dofile(_A[1])(_A[2])', ['$HERE/guide_probe.lua', {'readme': '$1', 'kind': '$2', 'tmux': '$SB/tmux-keys.txt', 'prefix': '$PREFIX', 'allowed': ['$PREFIX I', '$PREFIX U', '$PREFIX C-s', '$PREFIX C-r']}])"
+}
+check "the tmux guide cites only keys tmux has" "" "$(guide "$TMUX_GUIDE" tmux)"
+check "the Neovim guide cites only keys Neovim has" "" "$(guide "$NVIM_DIR/README.md" nvim)"
+# The file a popup key opens, with ~ and ${LYNE_DOTS:-...} as the shell would
+# see them here (list-keys shows $ escaped)
+guide_file() {
+    local f
+    f="$(T list-keys -T prefix "$1" | grep -o "[^ \"']*README\.md" | tr -d "\\\\")"
+    f="${f/#\~/$HOME}"
+    f="${f/\$\{LYNE_DOTS:-\$HOME\/.lyne-dots\}/$REPO}"
+    echo "$f"
+}
+for key in N T; do
+    file="$(guide_file "$key")"
+    check "C-Space $key opens a guide that exists" yes "$([[ -f "$file" ]] && echo yes || echo "no (${file:-no README in the bind})")"
+done
+
 kill "$NVIM_PID" 2>/dev/null
 wait "$NVIM_PID" 2>/dev/null
 NVIM_PID=""
 rm -f "$SB/nvim.sock"
 
 # --- The popup ----------------------------------------------------------
-
-sed -e '/^if "test ! -d ~\/.tmux\/plugins\/tpm"/,+1d' -e "\|^run '~/.tmux/plugins/tpm/tpm'|d" "$TMUX_CONF" >"$SB/tmux.conf"
-grep -q "tpm" <(grep -v '^\s*#' "$SB/tmux.conf" | grep -v '@plugin') && fail_early "tmux.conf still runs TPM after stripping it"
 
 cat >"$SB/client.py" <<'EOF'
 import fcntl, os, pty, select, struct, sys, termios
@@ -89,8 +124,6 @@ while True:
             break
 EOF
 
-mkdir -m 700 "$SB/run"
-T -f "$SB/tmux.conf" new-session -d -s t -x 160 -y 40 "sh" || fail_early "tmux didn't start"
 # What the popup's Neovim starts with: the sandbox, and its socket in $SB/run
 for var in XDG_CONFIG_HOME:config XDG_DATA_HOME:data XDG_STATE_HOME:state XDG_CACHE_HOME:cache XDG_RUNTIME_DIR:run; do
     T set-environment -g "${var%%:*}" "$SB/${var#*:}"

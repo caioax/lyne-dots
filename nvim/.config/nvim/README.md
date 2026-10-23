@@ -1,137 +1,82 @@
-# ⚡ Neovim Cheat Sheet
+# Neovim
 
-| Core Config        | Value                     |
-| :----------------- | :------------------------ |
-| **Leader Key**     | `Space`                   |
-| **Plugin Manager** | `lazy.nvim`               |
-| **LSP/Format**     | `Mason` + `Conform`       |
-| **Engine**         | `Smart Splits` + `Snacks` |
+The leader is `Space`: `<leader>ff` means Space, then `f`, then `f`. Plugins come from lazy.nvim, language servers and formatters from Mason.
 
----
+> **Not sure what comes next?** Press Space (or `g`, `]`, `z`) and wait: which-key lists the keys that follow. **Every key, searchable:** `<leader>fk` or `:Shortcuts` (Neovim's and tmux's; `C-Space ?` in tmux). This guide: `C-Space N` in tmux.
 
-## 🧭 Navigation & Windows (Smart Splits)
+## Move around
 
-Seamless integration with Tmux. Does not require Leader.
+| Keys | Does |
+| :--- | :--- |
+| `<C-h>` / `<C-j>` / `<C-k>` / `<C-l>` | Focus the split on the left / below / above / on the right, then tmux's panes |
+| `<M-h>` / `<M-j>` / `<M-k>` / `<M-l>` | Grow or shrink the split |
+| `<leader>e` | File tree (open / close) |
+| `<C-/>` | Floating terminal (open / close) |
 
-| Shortcut               | Action         | Description                                          |
-| :--------------------- | :------------- | :--------------------------------------------------- |
-| **`Ctrl` + `h j k l`** | **Navigate**   | Moves focus between Vim splits and Tmux panes.       |
-| **`Alt` + `h j k l`**  | **Resize**     | Increases/Decreases the size of the current split.   |
+## Find
 
----
+| Keys | Does |
+| :--- | :--- |
+| `<leader>ff` | A file by name |
+| `<leader>fg` | Text in every file |
+| `<leader>fb` | An open buffer |
+| `<leader>fk` | A shortcut |
+| `<leader>"` | A register, to paste it |
 
-## 📋 Clipboard & Copy/Paste
+## Copy and paste
 
-Workflow for Yank and system Clipboard
+`y` and `p` go through the system clipboard. Register 0 keeps the last thing you copied, safe from what you delete since.
 
-| Shortcut            | Action               | Description                                                                |
-| :------------------ | :------------------- | :------------------------------------------------------------------------- |
-| **`y`** / **`p`**   | **Internal (Safe)**  | `p` always pastes the last **Yank** (`0`), ignoring recent deletes.        |
-| **`Space` + `y`**   | Copy to System       | Copies the selection to the **System** clipboard (Ctrl+V works outside).   |
-| **`Space` + `p`**   | Paste from System    | Pastes content from the **System** clipboard.                              |
-| **`Space` + `d`**   | Paste Deleted        | Pastes what was actually deleted/cut (`dd` / `x` etc).                     |
-| **`Space` + `"`**   | **View Registers**   | Opens a visual menu (`Telescope`) with copy history.                       |
-| **`Space` + `y c`** | Export               | Sends a specific register (`0`, `a`...) to the System.                     |
+| Keys | Does |
+| :--- | :--- |
+| `y` / `p` / `P` | Copy / paste after / paste before (system clipboard) |
+| `<leader>y` / `<leader>p` | Copy / paste with the safe register (0) |
+| `<leader>dp` | Paste what you deleted last (`dd`, `x`) |
+| `<leader>yc` | Send a register to the system clipboard |
 
----
+## Code
 
-## ⌨️ Leader Commands (`Space` + Key)
+With a language server (Mason installs them):
 
-### 📂 Files and Search (Telescope)
+| Keys | Does |
+| :--- | :--- |
+| `K` | Documentation of what's under the cursor |
+| `gd` | Go to the definition |
+| `grr` | References |
+| `<leader>rn` | Rename everywhere |
+| `<leader>ca` | Code actions (fixes, imports) |
+| `]d` / `[d` | Next / previous diagnostic |
+| `gl` | The line's diagnostics in a float |
+| `<leader>mp` | Format (also happens on save) |
 
-| Shortcut  | Action     | Description                                    |
-| :-------: | :--------- | :--------------------------------------------- |
-| **`f f`** | Find Files | Searches files by name (ignores gitignore).    |
-| **`f g`** | Live Grep  | Searches for text inside all files.            |
-| **`f b`** | Buffers    | Lists open files in memory.                    |
-|  **`e`**  | Explorer   | Opens/Closes the side tree (`NeoTree`).        |
+The completion menu: `Tab` / `Shift+Tab` move through it, `Enter` picks, `Ctrl+Space` opens it.
 
-### 🛠️ Tools (Snacks.nvim)
+## Git
 
-|      Shortcut     | Action         | Description                                |
-| :--------------: | :------------- | :----------------------------------------- |
-|    **`l g`**     | **LazyGit**    | Opens floating Git graphical interface.    |
-|    **`g l`**     | Git Log        | Commit history of the current file.        |
-|    **`s f`**     | Scratch        | Floating temporary notepad.                |
-|     **`S`**      | Select Scratch | Selects among saved temporary notes.       |
-|    **`u n`**     | Dismiss        | Clears all notifications from the screen.  |
-| **`Ctrl` + `/`** | Terminal       | Opens/Closes quick floating terminal.      |
+| Keys | Does |
+| :--- | :--- |
+| `]c` / `[c` | Next / previous change |
+| `<leader>gp` | Preview the change |
+| `<leader>gb` | Who changed the line (toggle) |
+| `<leader>gd` | Diff of the file |
+| `<leader>lg` | Lazygit |
+| `<leader>gl` | Lazygit's log of the file |
 
-### 💾 Sessions (Persistence)
+## Sessions and notes
 
-Neovim saves sessions automatically.
+Sessions are saved per folder (and git branch) when you quit, once a file was opened.
 
-| Shortcut  | Action       | Description                                  |
-| :-------: | :----------- | :------------------------------------------- |
-| **`q s`** | Restore Dir  | Restores the session of the current folder.  |
-| **`q l`** | Restore Last | Restores the last global session used.       |
-| **`q d`** | Stop         | Stops recording the current session.         |
+| Keys | Does |
+| :--- | :--- |
+| `<leader>qs` | Restore this folder's session |
+| `<leader>ql` | Restore the last session |
+| `<leader>qd` | Don't save this session |
+| `<leader>sf` | Scratch buffer (open / close) |
+| `<leader>S` | Pick a scratch buffer |
 
----
+## Change the config
 
-## 🧠 Code and Intelligence (LSP)
-
-Shortcuts available when a code file is open.
-
-### ⚡ Quick Actions
-
-| Shortcut  | Command     | Description                                          |
-| :-------: | :---------- | :--------------------------------------------------- |
-|  **`K`**  | Hover       | Opens documentation of the function under the cursor.|
-| **`g d`** | Definition  | Jumps to the variable/function definition.           |
-| **`r n`** | Rename      | Renames variable across the entire project.          |
-| **`c a`** | Code Action | Quick fix menu (Fix/Import).                         |
-| **`m p`** | **Format**  | Formats the file (`Conform`: Prettier/Stylua).       |
-
-### 🤖 Autocomplete (CMP)
-
-|        Key           | Action                                                    |
-| :------------------: | :-------------------------------------------------------- |
-| **`Ctrl` + `Space`** | Forces the suggestions menu to appear.                    |
-|      **`Tab`**       | Next suggestion / Jumps to next snippet field.            |
-|     **`Enter`**      | Confirms the selected suggestion.                         |
-
-### 📝 Git (Gitsigns)
-
-| Shortcut  | Action                                                       |
-| :-------: | :----------------------------------------------------------- |
-| **`] c`** | Jumps to the next change (Hunk).                             |
-| **`[ c`** | Jumps to the previous change.                                |
-| **`g p`** | **Preview**: Shows what changed on the current line (popup). |
-| **`g b`** | **Blame**: Shows who edited the current line.                |
-
----
-
-## ⚙️ Maintenance and Installation
-
-### Folder Structure
-
-```text
-~/.config/nvim/
-├── init.lua            # Boot
-├── lazy-lock.json      # Locked versions (Don't touch)
-├── lua/
-│   ├── config/         # Options, Keymaps, Commands
-│   ├── mytheme/        # Your local theme (Palette/Highlights)
-│   └── plugins/        # Modules (LSP, Snacks, CMP, etc)
-```
-
-### How to install...
-
-**1. New Plugins:**
-Create a file at `lua/plugins/name.lua` and paste the `return { ... }` code. `lazy` installs automatically on restart.
-
-**2. New Languages (LSP/Formatters):**
-
-1. Type `:Mason`.
-2. Search with `/` (e.g.: `python`, `gopls`).
-3. Press `i` to install.
-4. **Required:** Add to the `ensure_installed` list in:
-   - `lua/plugins/lsp.lua` (for Servers)
-   - `lua/plugins/formatting.lua` (for Formatters)
-
-**3. Updates:**
-
-- Update Plugins: `:Lazy sync`
-- Update Tools: `:MasonUpdate`
-- Reload Theme: `<Space>rt` (Reload Theme)
+- **Folders:** `lua/config` (options, keys, the shortcut search), `lua/plugins` (one file per plugin), `lua/lyne` (the colorscheme, which follows the shell's theme).
+- **A plugin:** a file in `lua/plugins/` returning its spec; lazy.nvim installs it the next time Neovim starts. `:Lazy` shows updates.
+- **A language:** `:Mason` to install the server or formatter, then add it to `ensure_installed` in `lua/plugins/lsp.lua` (servers) or the formatter to `lua/plugins/formatting.lua`.
+- **A key:** give it a `desc`; which-key and the search show it.

@@ -19,13 +19,17 @@ local MODES = {
 
 local TMUX_FORMAT = "#{key_table}\t#{key_string}\t#{key_note}"
 
--- "<leader>ff" when the leader is Space, "<C-H>" for Ctrl+h
+-- "<leader>ff" when the leader is Space, "<C-H>" for Ctrl+h. keytrans names
+-- Ctrl+j by its byte (<NL>): shown as the key people press
 local function show_lhs(lhs)
 	local leader = vim.g.mapleader or "\\"
+	local keys
 	if lhs:sub(1, #leader) == leader then
-		return "<leader>" .. vim.fn.keytrans(vim.keycode(lhs:sub(#leader + 1)))
+		keys = "<leader>" .. vim.fn.keytrans(vim.keycode(lhs:sub(#leader + 1)))
+	else
+		keys = vim.fn.keytrans(vim.keycode(lhs))
 	end
-	return vim.fn.keytrans(vim.keycode(lhs))
+	return (keys:gsub("<NL>", "<C-J>"))
 end
 
 -- Where a map made with a function was made ("lua/config/keymaps.lua:12"
