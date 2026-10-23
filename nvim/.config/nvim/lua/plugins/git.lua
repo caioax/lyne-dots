@@ -13,40 +13,10 @@ return {
 					topdelete = { text = "" },
 					changedelete = { text = "▎" },
 				},
-				-- Useful Git shortcuts (optional but recommended)
+				-- Git keys (config/buffer_keys.lua: the shortcut search lists them
+				-- too)
 				on_attach = function(bufnr)
-					local gs = package.loaded.gitsigns
-					local function map(mode, l, r, opts)
-						opts = opts or {}
-						opts.buffer = bufnr
-						vim.keymap.set(mode, l, r, opts)
-					end
-
-					-- Navigate between changes (hunk)
-					map("n", "]c", function()
-						if vim.wo.diff then
-							return "]c"
-						end
-						vim.schedule(function()
-							gs.nav_hunk("next")
-						end)
-						return "<Ignore>"
-					end, { expr = true, desc = "Next git change" })
-
-					map("n", "[c", function()
-						if vim.wo.diff then
-							return "[c"
-						end
-						vim.schedule(function()
-							gs.nav_hunk("prev")
-						end)
-						return "<Ignore>"
-					end, { expr = true, desc = "Previous git change" })
-
-					-- Actions
-					map("n", "<leader>gb", gs.toggle_current_line_blame, { desc = "Git Blame (Line)" })
-					map("n", "<leader>gd", gs.diffthis, { desc = "Git Diff" })
-					map("n", "<leader>gp", gs.preview_hunk, { desc = "Preview Change" })
+					require("config.buffer_keys").apply("git", bufnr)
 				end,
 			})
 		end,

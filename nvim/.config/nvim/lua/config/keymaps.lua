@@ -53,3 +53,12 @@ map("n", "<leader>yc", function()
 		print(" Contents of '" .. char .. "' sent to Clipboard!")
 	end
 end, with("Send a register to the system clipboard"))
+
+-- --- SHORTCUTS ---
+-- Every shortcut of Neovim and tmux in one search (tmux: prefix + ?)
+map("n", "<leader>fk", function()
+	require("config.shortcuts").pick()
+end, with("Find a shortcut (Neovim and tmux)"))
+vim.api.nvim_create_user_command("Shortcuts", function()
+	require("config.shortcuts").pick()
+end, { desc = "Find a shortcut (Neovim and tmux)" })

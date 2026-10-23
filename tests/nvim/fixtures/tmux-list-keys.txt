@@ -1,0 +1,7 @@
+prefix	d	Detach the current client
+prefix	|	Split side by side
+prefix	"	Split window vertically
+root	C-h	Focus the pane on the left (Neovim splits first)
+root	M-l	Grow or shrink the pane to the right (Neovim splits first)
+prefix	z	
+copy-mode-vi	v	Start a selection

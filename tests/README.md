@@ -12,7 +12,7 @@ tests/run.sh js lint    # some sections
 | `lint` | shellcheck over every script (settings in `.shellcheckrc`) | `shellcheck` |
 | `qml` | qmllint over the shell; only warnings missing from `tests/qml/lint-baseline.txt` fail | `qt6-declarative` |
 | `smoke` | The whole shell in a nested Hyprland: every window and page opened, no QML errors | a running Hyprland session |
-| `nvim` | Neovim with the repo's config inside tmux with the repo's tmux.conf: Ctrl/Alt + h/j/k/l between splits and panes, smart-splits' health check; the config with the LSP on, nothing deprecated | `tmux`, `neovim`, `git`, the plugins lazy.nvim and Mason installed |
+| `nvim` | Neovim with the repo's config inside tmux with the repo's tmux.conf: Ctrl/Alt + h/j/k/l between splits and panes, smart-splits' health check; the config with the LSP on, nothing deprecated; the shortcut search (prefix + ?) | `tmux`, `neovim`, `git`, the plugins lazy.nvim and Mason installed |
 
 A missing tool fails its section with the package to install; nothing is skipped silently.
 
@@ -68,4 +68,6 @@ Commands with effects outside the sandbox (nmcli, rfkill, brightness, systemctl,
 
 `tests/nvim/config.sh` opens a Lua file with a diagnostic and a git change (in a throwaway repo) in headless Neovim, waits for lua_ls and gitsigns, and uses the keys that call into Neovim and the plugins (yank, `]d`/`[d`, `]c`/`[c`, format, typing a bracket). Then `:checkhealth vim.deprecated` must be clean (it only lists what was called), no message may mention something deprecated, a list of old names (the plugins' deprecations that don't warn) must be gone from the config, servers must get nvim-cmp's capabilities, stylua must not run as a server, `grr` must be the references key, and every map the config makes (global, and the buffer's LSP and git maps) must have a desc (`tests/nvim/no_desc.lua` lists the ones without).
 
-Both use the sandbox in `tests/nvim/lib.sh`: Neovim's state and cache in a temp folder, its data folder a link to yours (the plugins and Mason's servers already installed). `LYNE_TEST_NVIM=<dir>` and `LYNE_TEST_TMUX_CONF=<file>` run them against copies (to break them on purpose); `NAV_DEBUG=1` / `CONFIG_DEBUG=1` print the health report.
+`tests/nvim/shortcuts.sh` covers the shortcut search (`config/shortcuts.lua`): in a headless Neovim, the `list-keys -N` parser on `fixtures/tmux-list-keys.txt` and the Neovim entries (modes merged, the LSP and git keys listed without a server or git, where a map comes from) through `shortcuts_probe.lua`; then for real, prefix + ? in its own tmux server opens the popup, whose Neovim runs in the sandbox (the server's global environment points its XDG folders there, its socket lands in the sandbox's runtime folder) and is asked how the list is doing: focused, both sides listed, typing filters, one Escape closes the popup. The `?` key is sent in the background: the popup command (and send-keys with it) waits for the popup to close.
+
+All three use the sandbox in `tests/nvim/lib.sh`: Neovim's state and cache in a temp folder, its data folder a link to yours (the plugins and Mason's servers already installed). `LYNE_TEST_NVIM=<dir>` and `LYNE_TEST_TMUX_CONF=<file>` run them against copies (to break them on purpose); `NAV_DEBUG=1` / `CONFIG_DEBUG=1` print the health report.

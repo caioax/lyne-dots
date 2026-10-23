@@ -41,33 +41,10 @@ return {
 			-- ========================================================================
 			vim.api.nvim_create_autocmd("LspAttach", {
 				group = vim.api.nvim_create_augroup("UserLspConfig", { clear = true }),
+				-- The keys are in config/buffer_keys.lua (the shortcut search lists
+				-- them too)
 				callback = function(event)
-					local map = function(keys, func, desc)
-						vim.keymap.set("n", keys, func, { buffer = event.buf, desc = "LSP: " .. desc })
-					end
-
-					-- === CUSTOM SHORTCUT ===
-					-- [gl] = Go Line Diagnostic
-					map("gl", function()
-						vim.diagnostic.open_float({
-							scope = "line",
-							border = "rounded",
-							source = true,
-							header = "",
-							prefix = "",
-						})
-					end, "View Line Error (Float)")
-
-					-- Default Keybindings
-					map("gd", require("telescope.builtin").lsp_definitions, "Go to Definition")
-					-- grr is Neovim's own key for references (with grn rename,
-					-- gra code action, gri implementation): in Telescope here
-					map("grr", require("telescope.builtin").lsp_references, "Go to References")
-					map("K", vim.lsp.buf.hover, "Hover Documentation")
-					map("<leader>rn", vim.lsp.buf.rename, "Rename Variable")
-					map("<leader>ca", vim.lsp.buf.code_action, "Code Action")
-
-					-- Quick navigation between errors: [d and ]d are Neovim's own
+					require("config.buffer_keys").apply("lsp", event.buf)
 				end,
 			})
 
