@@ -81,6 +81,9 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     local state="$DRY/.config/quickshell/state.json"
     assert_equal "$(jq -c '[.welcome.pending, .system.aurHelper, .gpus.order]' "$state")" '[true,"yay",["0000:00:02.0","0000:01:00.0"]]'
     grep -q '"/dev/dri/intel-igpu",' "$DRY/.config/hypr/local/gpus.lua"
+    # Theme wallpapers only in their theme's folder, none in the library root
+    assert [ -f "$DRY/.local/wallpapers/themes/tokyonight/lyne-tokyonight-contour.jpg" ]
+    refute compgen -G "$DRY/.local/wallpapers/*.jpg"
 }
 
 @test "only the categories chosen are linked, and the state remembers them" {
@@ -225,3 +228,4 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     run /usr/bin/pgrep -fx "sleep 4747"
     assert_failure
 }
+

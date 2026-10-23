@@ -161,7 +161,6 @@ EOF
         theme="$(basename "$dir")"
         mkdir -p "$home/.local/wallpapers/themes/$theme"
         cp "$dir"lyne-*-contour.jpg "$home/.local/wallpapers/themes/$theme/" 2>/dev/null
-        cp "$dir"lyne-*-contour.jpg "$home/.local/wallpapers/" 2>/dev/null
     done
 
     local t

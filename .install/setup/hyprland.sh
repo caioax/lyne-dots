@@ -217,10 +217,9 @@ setup_wallpapers() {
     if [[ "$file_count" -eq 0 ]]; then
         if [[ -d "$WALLPAPERS_DATA/themes" ]]; then
             # Theme wallpaper folders (themes/{name}/lyne-{name}-{scene}.jpg,
-            # made by .data/wallpapers/generator/generate.py)
+            # made by .data/wallpapers/generator/generate.py). Only there:
+            # the root (the "All" view) is the user's own library
             cp -rn "$WALLPAPERS_DATA/themes" "$WALLPAPERS_DIR/"
-            # Each theme's default (contour) also goes to the root, the "all" view
-            cp -n "$WALLPAPERS_DATA"/themes/*/lyne-*-contour.jpg "$WALLPAPERS_DIR/"
             log_info "  Theme wallpapers copied from .data/wallpapers/"
         else
             log_warn "  Initial wallpapers directory not found: $WALLPAPERS_DATA"
