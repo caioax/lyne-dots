@@ -31,7 +31,7 @@ return {
 							gs.nav_hunk("next")
 						end)
 						return "<Ignore>"
-					end, { expr = true })
+					end, { expr = true, desc = "Next git change" })
 
 					map("n", "[c", function()
 						if vim.wo.diff then
@@ -41,7 +41,7 @@ return {
 							gs.nav_hunk("prev")
 						end)
 						return "<Ignore>"
-					end, { expr = true })
+					end, { expr = true, desc = "Previous git change" })
 
 					-- Actions
 					map("n", "<leader>gb", gs.toggle_current_line_blame, { desc = "Git Blame (Line)" })

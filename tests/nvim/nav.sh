@@ -84,6 +84,17 @@ attached() { [[ -n "$(T list-clients -F '#{client_name}')" ]]; }
 wait_for 5 attached || fail_early "no tmux client"
 CLIENT="$(T list-clients -F '#{client_name}' | head -1)"
 
+# which-key: loaded once Neovim has a UI (VeryLazy, so not in headless
+# tests), and Space shows the groups
+wk_loaded() { [[ "$(nv 'luaeval("package.loaded[\"which-key\"] and 1 or 0")')" == 1 ]]; }
+wait_for 10 wk_loaded
+check "which-key loads with the UI" 1 "$(nv 'luaeval("package.loaded[\"which-key\"] and 1 or 0")')"
+key Space
+popup="$(T capture-pane -p -t t:1.2)"
+[[ -n "${NAV_DEBUG:-}" ]] && printf "%s\n" "$popup"
+check "Space shows the leader groups (Find, Git, Sessions)" 3 "$(grep -cE '\+(Find|Git|Sessions) ' <<<"$popup")"
+key Escape
+
 # Two Neovim windows side by side, the cursor in the right one
 nv 'execute("vsplit | wincmd l")' >/dev/null
 check "Neovim has two windows, the right one focused" "2 2" "$(nv 'winnr("$") . " " . winnr()')"

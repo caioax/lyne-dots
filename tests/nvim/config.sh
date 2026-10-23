@@ -4,8 +4,8 @@
 # the LSP starts, and the keys that call into Neovim and the plugins are used
 # (yank, ]d / [d, ]c / [c, format). Then nothing deprecated may have been
 # called (:checkhealth vim.deprecated), the servers get nvim-cmp's
-# capabilities, stylua runs only as conform's formatter, and grr is the
-# references key.
+# capabilities, stylua runs only as conform's formatter, grr is the
+# references key, and every map has a desc (no_desc.lua).
 #
 # Usage: tests/nvim/config.sh   (needs nvim, git, the plugins and Mason's
 # lua-language-server and stylua)
@@ -18,6 +18,8 @@ set -uo pipefail
 
 # shellcheck source=tests/nvim/lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+REPO_TESTS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 need_tools nvim git
 [[ -x "$NVIM_DATA/mason/bin/lua-language-server" ]] || fail_early "no lua-language-server in Mason (open a Lua file in nvim once)"
@@ -66,6 +68,8 @@ wait_for 15 signed || fail_early "gitsigns didn't attach"
 check "lua_ls gets nvim-cmp's capabilities (preselect)" 1 \
     "$(lua 'vim.tbl_get(vim.lsp.get_clients({ name = "lua_ls" })[1].capabilities, "textDocument", "completion", "completionItem", "preselectSupport") and 1 or 0')"
 check "stylua doesn't run as a server" 0 "$(lua '#vim.lsp.get_clients({ name = "stylua" })')"
+missing="$(nv "luaeval('dofile(_A)', '$REPO_TESTS/no_desc.lua')")"
+check "every map of the config has a desc (which-key, shortcut search)" "" "$missing"
 check "grr opens the references" "LSP: Go to References" "$(nv 'maparg("grr", "n", 0, 1).desc')"
 check "no gr map waiting in front of grn/grr/gra/gri" 0 \
     "$(lua '#vim.tbl_filter(function(m) return m.lhs == "gr" end, vim.api.nvim_buf_get_keymap(0, "n"))')"
