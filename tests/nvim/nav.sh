@@ -44,23 +44,6 @@ trap cleanup EXIT
 sed -e '/^if "test ! -d ~\/.tmux\/plugins\/tpm"/,+1d' -e "\|^run '~/.tmux/plugins/tpm/tpm'|d" "$TMUX_CONF" >"$SB/tmux.conf"
 grep -q "tpm" <(grep -v '^\s*#' "$SB/tmux.conf" | grep -v '@plugin') && fail_early "tmux.conf still runs TPM after stripping it"
 
-# The client: a pty with tmux attached, its output thrown away
-cat >"$SB/client.py" <<'EOF'
-import fcntl, os, pty, select, struct, sys, termios
-pid, fd = pty.fork()
-if pid == 0:
-    os.environ["TERM"] = "xterm-256color"
-    os.execvp("tmux", ["tmux", "-S", sys.argv[1], "attach", "-t", "t"])
-fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 160, 0, 0))
-while True:
-    r, _, _ = select.select([fd], [], [], 1)
-    if r:
-        try:
-            if not os.read(fd, 65536):
-                break
-        except OSError:
-            break
-EOF
 
 active() { T display -p -t t '#{pane_index}'; }
 key() {
@@ -78,11 +61,7 @@ check "Neovim tells tmux it runs in the pane (@pane-is-vim)" 1 "$(T show -p -t t
 wait_for 10 test -S "$SB/nvim.sock" || fail_early "Neovim didn't start"
 check "nvim-cmp waits for insert mode (not loaded at startup)" 1 "$(nv 'luaeval("package.loaded.cmp == nil and 1 or 0")')"
 
-python3 "$SB/client.py" "$SOCK" &
-CLIENT_PID=$!
-attached() { [[ -n "$(T list-clients -F '#{client_name}')" ]]; }
-wait_for 5 attached || fail_early "no tmux client"
-CLIENT="$(T list-clients -F '#{client_name}' | head -1)"
+attach_client t
 
 # which-key: loaded once Neovim has a UI (VeryLazy, so not in headless
 # tests), and Space shows the groups
@@ -97,7 +76,9 @@ key Escape
 
 # Two Neovim windows side by side, the cursor in the right one
 nv 'execute("vsplit | wincmd l")' >/dev/null
-check "Neovim has two windows, the right one focused" "2 2" "$(nv 'winnr("$") . " " . winnr()')"
+# Floating windows (which-key, a notification) don't count
+splits() { nv 'luaeval("#vim.tbl_filter(function(w) return vim.api.nvim_win_get_config(w).relative == \"\" end, vim.api.nvim_tabpage_list_wins(0))")'; }
+check "Neovim has two windows, the right one focused" "2 2" "$(splits) $(nv 'winnr()')"
 
 key C-h
 check "Ctrl+h moves to Neovim's left window first" "1 2" "$(nv 'winnr()') $(active)"

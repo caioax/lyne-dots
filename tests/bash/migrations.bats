@@ -162,6 +162,25 @@ legacy_home() {
     refute grep -q "^kitty " "$FAKE_PKGS"
 }
 
+@test "040: lazygit comes with Neovim (the editor packages)" {
+    fake_dots
+    pkgs neovim
+    run migrate 040-lazygit.sh
+    assert_success
+    assert_output "   Installing lazygit..."
+    grep -q "^lazygit " "$FAKE_PKGS"
+    run migrate 040-lazygit.sh
+    assert_output "   lazygit already installed, skipping"
+}
+
+@test "040: no Neovim, no lazygit" {
+    fake_dots
+    run migrate 040-lazygit.sh
+    assert_success
+    assert_output ""
+    refute grep -q "^lazygit " "$FAKE_PKGS"
+}
+
 @test "a migration with nothing to convert says nothing" {
     fake_dots
     run migrate 018-special-workspaces-ids.sh

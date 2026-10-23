@@ -172,18 +172,9 @@ end
 function M.pick(opts)
 	opts = opts or {}
 	if opts.quit and vim.v.vim_did_enter == 0 then
-		-- Started with `nvim -c`: the dashboard decides on UIEnter, after
-		-- this, whether to open over the first buffer (when the current one
-		-- has no name), and would take the focus from the list. The list
-		-- opens after it, over a named scratch buffer the dashboard leaves be
-		vim.bo.buftype = "nofile"
-		vim.api.nvim_buf_set_name(0, "shortcuts")
-		vim.api.nvim_create_autocmd("UIEnter", {
-			once = true,
-			callback = vim.schedule_wrap(function()
-				M.pick(opts)
-			end),
-		})
+		require("config.popup").start(function()
+			M.pick(opts)
+		end)
 		return
 	end
 	local pickers = require("telescope.pickers")
@@ -231,11 +222,7 @@ function M.pick(opts)
 				-- A search to look something up: one Escape leaves it
 				map("i", "<Esc>", actions.close)
 				if opts.quit then
-					actions.close:enhance({
-						post = function()
-							vim.cmd("qa!")
-						end,
-					})
+					require("config.popup").quit_on_close(actions)
 				end
 				return true
 			end,

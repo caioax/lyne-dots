@@ -107,33 +107,13 @@ rm -f "$SB/nvim.sock"
 
 # --- The popup ----------------------------------------------------------
 
-cat >"$SB/client.py" <<'EOF'
-import fcntl, os, pty, select, struct, sys, termios
-pid, fd = pty.fork()
-if pid == 0:
-    os.environ["TERM"] = "xterm-256color"
-    os.execvp("tmux", ["tmux", "-S", sys.argv[1], "attach", "-t", "t"])
-fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 160, 0, 0))
-while True:
-    r, _, _ = select.select([fd], [], [], 1)
-    if r:
-        try:
-            if not os.read(fd, 65536):
-                break
-        except OSError:
-            break
-EOF
 
 # What the popup's Neovim starts with: the sandbox, and its socket in $SB/run
 for var in XDG_CONFIG_HOME:config XDG_DATA_HOME:data XDG_STATE_HOME:state XDG_CACHE_HOME:cache XDG_RUNTIME_DIR:run; do
     T set-environment -g "${var%%:*}" "$SB/${var#*:}"
 done
 
-python3 "$SB/client.py" "$SOCK" &
-CLIENT_PID=$!
-attached() { [[ -n "$(T list-clients -F '#{client_name}')" ]]; }
-wait_for 5 attached || fail_early "no tmux client"
-CLIENT="$(T list-clients -F '#{client_name}' | head -1)"
+attach_client t
 
 T send-keys -c "$CLIENT" -K C-Space
 # The popup's command waits for the popup to close, and send-keys with it

@@ -11,8 +11,8 @@ The prefix is `C-Space`: press Ctrl + Space, let go, then press the key (`C-Spac
 | `C-h` / `C-j` / `C-k` / `C-l` | Focus the pane on the left / below / above / on the right (inside Neovim, its splits first) |
 | `C-M-h` / `C-M-l` | Previous / next window |
 | `C-Space z` | Zoom the pane (again to bring the others back) |
+| `C-Space P` | Projects and sessions: switch, or start a session in a project folder (`~/Dev`, lyne-dots) |
 | `C-Space w` | Pick a window from a list |
-| `C-Space s` | Pick a session from a list |
 
 ## Split and arrange
 
@@ -23,6 +23,15 @@ The prefix is `C-Space`: press Ctrl + Space, let go, then press the key (`C-Spac
 | `M-h` / `M-j` / `M-k` / `M-l` | Grow or shrink the pane (inside Neovim, its splits first) |
 | `C-S-h` / `C-S-j` / `C-S-k` / `C-S-l` | Swap places with the pane on that side |
 | `C-Space x` | Close the pane |
+
+## Floating
+
+| Keys | Does |
+| :--- | :--- |
+| `C-Space S` | Scratch terminal: shows it, and from inside hides it again (it keeps running) |
+| `C-Space G` | Lazygit in the pane's folder |
+| `C-Space *` | New floating pane (the mouse moves and resizes it) |
+| `C-Space @` | Float the pane, or put a floating one back in the layout |
 
 ## Windows (the tabs on top)
 
@@ -59,4 +68,4 @@ tmux keeps running after you close the terminal. Everything is saved every 15 mi
 | `C-Space r` | Reload `~/.tmux.conf` |
 | `C-Space I` / `C-Space U` | Install / update the plugins (TPM) |
 
-A plugin: add `set -g @plugin 'user/plugin'` to `~/.tmux.conf`, then `C-Space I`. A key of your own: give it a note (`bind -N "What it does" ...`) and the search lists it.
+A plugin: add `set -g @plugin 'user/plugin'` to `~/.tmux.conf`, then `C-Space I`. Project folders other than `~/Dev`: `LYNE_PROJECT_ROOTS` (colon separated) in your environment. A key of your own: give it a note (`bind -N "What it does" ...`) and the search lists it.

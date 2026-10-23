@@ -62,3 +62,8 @@ end, with("Find a shortcut (Neovim and tmux)"))
 vim.api.nvim_create_user_command("Shortcuts", function()
 	require("config.shortcuts").pick()
 end, { desc = "Find a shortcut (Neovim and tmux)" })
+
+-- tmux's sessions and project folders (tmux: prefix + P)
+map("n", "<leader>fP", function()
+	require("config.projects").pick()
+end, with("Find a project or tmux session"))

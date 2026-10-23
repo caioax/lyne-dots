@@ -82,3 +82,33 @@ remove_sandbox() {
     done
     rm -rf "$SB"
 }
+
+# attach_client SESSION: a tmux client of the server at $SOCK in a pty (its
+# output thrown away), like a terminal showing SESSION; keys typed through
+# it (send-keys -c "$CLIENT" -K) go through tmux's key tables. Sets CLIENT
+# (its name) and CLIENT_PID
+attach_client() {
+    [[ -f "$SB/client.py" ]] || cat >"$SB/client.py" <<'EOF'
+import fcntl, os, pty, select, struct, sys, termios
+pid, fd = pty.fork()
+if pid == 0:
+    os.environ["TERM"] = "xterm-256color"
+    os.environ.pop("TMUX", None)
+    os.execvp("tmux", ["tmux", "-S", sys.argv[1], "attach", "-t", sys.argv[2]])
+fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 160, 0, 0))
+while True:
+    r, _, _ = select.select([fd], [], [], 1)
+    if r:
+        try:
+            if not os.read(fd, 65536):
+                break
+        except OSError:
+            break
+EOF
+    python3 "$SB/client.py" "$SOCK" "$1" &
+    CLIENT_PID=$!
+    # shellcheck disable=SC2329  # called by wait_for
+    _attached() { [[ -n "$(tmux -S "$SOCK" list-clients -F '#{client_name}' 2>/dev/null)" ]]; }
+    wait_for 5 _attached || fail_early "no tmux client"
+    CLIENT="$(tmux -S "$SOCK" list-clients -F '#{client_name}' | head -1)"
+}

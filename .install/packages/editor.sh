@@ -20,6 +20,7 @@ EDITOR_PACKAGES=(
     "fd"         # Fast find (for Telescope)
     "ffmpeg"     # Multimedia framework
     "tree-sitter-cli" # Tree-sitter CLI (required by nvim-treesitter to build parsers)
+    "lazygit"    # Git TUI (Neovim's <leader>lg, tmux's prefix + G)
 
     # Node.js (for LSPs)
     "nodejs" # JavaScript runtime

@@ -21,6 +21,7 @@ The leader is `Space`: `<leader>ff` means Space, then `f`, then `f`. Plugins com
 | `<leader>fg` | Text in every file |
 | `<leader>fb` | An open buffer |
 | `<leader>fk` | A shortcut |
+| `<leader>fP` | A project or tmux session (switches tmux to it) |
 | `<leader>"` | A register, to paste it |
 
 ## Copy and paste
