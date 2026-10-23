@@ -52,12 +52,13 @@ The prefix is `C-Space`: press Ctrl + Space, let go, then press the key (`C-Spac
 
 ## Sessions
 
-tmux keeps running after you close the terminal. Everything is saved every 15 minutes and when you log out, reboot or shut down from the shell's power menu; the first tmux after that brings it back, Neovim panes with their folder's session.
+tmux keeps running after you close the terminal. Everything is saved every 15 minutes and when you log out, reboot or shut down from the shell's power menu; the first tmux after that brings it back, Neovim panes with their folder's session. From the shell, `tk` closes everything (it comes back next time) and `tkf` closes it and forgets the save.
 
 | Keys | Does |
 | :--- | :--- |
 | `C-Space d` | Detach: leave tmux running in the background (`tmux a` comes back) |
 | `C-Space C-s` / `C-Space C-r` | Save now / restore the last save (tmux-resurrect) |
+| `C-Space X` | Close every session and forget the save: the next tmux starts empty (asks first) |
 
 ## Help and config
 

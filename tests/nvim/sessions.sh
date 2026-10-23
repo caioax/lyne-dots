@@ -7,6 +7,8 @@
 #   comes back with the folder's session: its two splits. tmux-continuum is
 #   on to restore by itself (it only does when its server is the only one on
 #   the machine, so here resurrect's restore runs the way continuum calls it)
+# - prefix + X and the shell's tkf close everything and forget the save: the
+#   next restore finds nothing
 #
 # Both servers use their own socket and the repo's tmux.conf without TPM;
 # resurrect and continuum (your installed copies) are loaded by hand once
@@ -15,10 +17,11 @@
 # environment: the panes' Neovim runs in the sandbox of lib.sh, its socket
 # in $SB/run.
 #
-# Usage: tests/nvim/sessions.sh   (needs tmux, nvim, the plugins and TPM's
-# tmux-resurrect and tmux-continuum)
+# Usage: tests/nvim/sessions.sh   (needs tmux, nvim, zsh, the plugins and
+# TPM's tmux-resurrect and tmux-continuum)
 #   LYNE_TEST_NVIM=<dir>       another copy of nvim/.config/nvim (lib.sh)
 #   LYNE_TEST_TMUX_CONF=<file> another copy of tmux/.tmux.conf
+#   LYNE_TEST_ZSHRC=<file>     another copy of zsh/.zshrc
 
 # shellcheck disable=SC2329  # cleanup runs from the trap, the others from wait_for
 
@@ -27,9 +30,10 @@ set -uo pipefail
 # shellcheck source=tests/nvim/lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 TMUX_CONF="${LYNE_TEST_TMUX_CONF:-$REPO/tmux/.tmux.conf}"
+ZSHRC="${LYNE_TEST_ZSHRC:-$REPO/zsh/.zshrc}"
 PLUGINS="$HOME/.tmux/plugins"
 
-need_tools tmux nvim
+need_tools tmux nvim zsh python3
 for plugin in tmux-resurrect/resurrect.tmux tmux-continuum/continuum.tmux; do
     [[ -f "$PLUGINS/$plugin" ]] || fail_early "missing $PLUGINS/$plugin (prefix + I installs the plugins)"
 done
@@ -125,5 +129,44 @@ wait_for 15 loaded
 check "Neovim comes back with the folder's session (two splits)" "2 a.txt b.txt" \
     "$(nv 'winnr("$")') $(nv 'join(sort(map(filter(range(1, bufnr("$")), "buflisted(v:val)"), "fnamemodify(bufname(v:val), \":t\")")), " ")')"
 check "in the pane's folder" "$SB/work" "$(T display -p -t t '#{pane_current_path}')"
+
+# --- Closing everything and forgetting the save ---------------------------
+
+saves() { find "$SB/resurrect" -name 'tmux_resurrect_*.txt' | wc -l; }
+kept="$(saves)"
+quit_nvims
+attach_client t
+T send-keys -c "$CLIENT" -K "$(T show-options -gv prefix)"
+# confirm-before waits for the answer, and send-keys with it
+T send-keys -c "$CLIENT" -K X >/dev/null 2>&1 &
+sleep 0.5
+T send-keys -c "$CLIENT" -K y
+server_gone() { ! T list-sessions >/dev/null 2>&1; }
+wait_for 5 server_gone
+check "prefix + X (then y) closes every session" yes "$(server_gone && echo yes || echo no)"
+check "and forgets the save (resurrect's last)" no "$([[ -e "$SB/resurrect/last" || -L "$SB/resurrect/last" ]] && echo yes || echo no)"
+check "the older saves stay on disk" "$kept" "$(saves)"
+start_server boot
+T run-shell "$(T show -gv @resurrect-restore-script-path)"
+sleep 1
+check "the next tmux starts empty" no "$(T has-session -t t 2>/dev/null && echo yes || echo no)"
+T kill-server
+
+# The shell's tkf (zsh/.zshrc) does the same from outside tmux. Its tmux
+# commands go to the default server, so the test gives it one of its own: a
+# TMUX_TMPDIR in the sandbox, checked to hold only this test's session
+tmpdir="$SB/tmpdir"
+mkdir -m 700 "$tmpdir"
+D() { env -u TMUX TMUX_TMPDIR="$tmpdir" tmux "$@"; }
+D -f "$SB/tmux.conf" new-session -d -s forgetme -c "$SB/work" || fail_early "tmux didn't start"
+D set -g @resurrect-dir "$SB/resurrect"
+D run-shell "$PLUGINS/tmux-resurrect/scripts/save.sh quiet"
+[[ "$(D list-sessions -F '#{session_name}')" == forgetme ]] || fail_early "TMUX_TMPDIR didn't give the test a server of its own"
+[[ -L "$SB/resurrect/last" ]] || fail_early "no save to forget"
+tkf="$(sed -n '/^tkf() {/,/^}/p' "$ZSHRC")"
+[[ -n "$tkf" ]] || fail_early "no tkf in zsh/.zshrc"
+env -u TMUX TMUX_TMPDIR="$tmpdir" zsh -fc "$tkf; tkf"
+check "tkf closes every session" no "$(D has-session 2>/dev/null && echo yes || echo no)"
+check "tkf forgets the save" no "$([[ -e "$SB/resurrect/last" || -L "$SB/resurrect/last" ]] && echo yes || echo no)"
 
 exit "$failed"

@@ -71,7 +71,15 @@ if [[ -n $TMUX ]]; then
 fi
 
 # === ALIASES ===
+# tk closes every tmux session; the next tmux brings back the last save
+# (tmux-continuum). tkf also forgets that save, so the next tmux starts empty
 alias tk='tmux kill-server'
+tkf() {
+    local last
+    last="$(bash -c 'source ~/.tmux/plugins/tmux-resurrect/scripts/helpers.sh && last_resurrect_file' 2>/dev/null)"
+    tmux kill-server 2>/dev/null
+    [[ -n "$last" ]] && rm -f "$last"
+}
 all-update() {
     local STATE_FILE="$HOME/.config/quickshell/state.json"
     local AUR_HELPER="yay"
