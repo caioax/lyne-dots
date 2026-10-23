@@ -142,6 +142,7 @@ Warning: services/ThemeService.qml: Type ThemeService not declared as singleton 
 Warning: services/ThemeService.qml: var declaration in block scope is hoisted to function scope
 Warning: services/TimeService.qml: Member "formatDate" not found on type "Qt" [missing-property]
 Warning: services/TimeService.qml: Type TimeService not declared as singleton in qmldir but using pragma Singleton [import]
+Warning: services/TouchpadService.qml: Type TouchpadService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/TrayService.qml: Type TrayService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/UpdateService.qml: Type UpdateService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/WallpaperPickerService.qml: Type WallpaperPickerService not declared as singleton in qmldir but using pragma Singleton [import]

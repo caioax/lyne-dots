@@ -49,23 +49,36 @@ ColumnLayout {
         }
     }
 
+    // Only on machines with a touchpad
     SettingsGroup {
         title: I18n.tr("Touchpad")
+        visible: TouchpadService.available
+
+        ToggleRow {
+            label: I18n.tr("Touchpad")
+            description: I18n.tr("Turn it off to use only a mouse")
+            resettable: false
+            checked: TouchpadService.enabled
+            onToggled: value => TouchpadService.setEnabled(value)
+        }
 
         ToggleRow {
             label: I18n.tr("Natural scrolling")
             description: I18n.tr("Content follows your fingers")
             path: "hyprland.input.touchpad.natural_scroll"
+            enabled: TouchpadService.enabled
         }
 
         ToggleRow {
             label: I18n.tr("Tap to click")
             path: "hyprland.input.touchpad.tap_to_click"
+            enabled: TouchpadService.enabled
         }
 
         ToggleRow {
             label: I18n.tr("Disable while typing")
             path: "hyprland.input.touchpad.disable_while_typing"
+            enabled: TouchpadService.enabled
         }
     }
 }

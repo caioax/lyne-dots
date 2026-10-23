@@ -42,6 +42,7 @@ singleton AppsService AppsService.qml
 singleton MonitorsService MonitorsService.qml
 singleton AutostartService AutostartService.qml
 singleton KeyboardService KeyboardService.qml
+singleton TouchpadService TouchpadService.qml
 singleton GpuService GpuService.qml
 singleton SddmService SddmService.qml
 singleton ZenService ZenService.qml

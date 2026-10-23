@@ -165,6 +165,19 @@ Singleton {
         return "\n-- Mouse cursor\n" + "hl.env(\"XCURSOR_THEME\", " + theme + ", true)\n" + "hl.env(\"XCURSOR_SIZE\", " + size + ", true)\n" + "hl.env(\"HYPRCURSOR_THEME\", " + theme + ")\n" + "hl.env(\"HYPRCURSOR_SIZE\", " + size + ")\n"; // i18n-ignore
     }
 
+    // Touchpads on or off (Settings › Input, TouchpadService). Always written,
+    // `enabled = true` too: Hyprland only changes a device's state while it
+    // has a rule, so taking the rule away would leave the touchpad off
+    readonly property string touchpadLua: {
+        const names = TouchpadService.names;
+        if (names.length === 0)
+            return "";
+        let out = "\n-- Touchpads on or off\n";
+        for (const name of names)
+            out += "hl.device({ name = " + _luaString(name) + ", enabled = " + TouchpadService.enabled + " })\n";
+        return out;
+    }
+
     // Last `hyprctl eval` error, shown by the settings pages
     property string error: ""
 
@@ -201,6 +214,12 @@ Singleton {
     }
 
     onCursorLuaChanged: {
+        if (!StateService.isLoading)
+            bindsDebounce.restart();
+    }
+
+    // Device rules only reach Hyprland through the file (its reload)
+    onTouchpadLuaChanged: {
         if (!StateService.isLoading)
             bindsDebounce.restart();
     }
@@ -249,7 +268,7 @@ Singleton {
         return "{\n" + entries.join("\n") + "\n" + "    ".repeat(depth) + "}";
     }
 
-    readonly property string _fileContent: "-- Managed by Quickshell (Settings > Hyprland). Changes here are overwritten;\n" + "-- edit the values from the settings window or in state.json instead.\n\n" + lua + cursorLua + bindsLua
+    readonly property string _fileContent: "-- Managed by Quickshell (Settings > Hyprland). Changes here are overwritten;\n" + "-- edit the values from the settings window or in state.json instead.\n\n" + lua + cursorLua + touchpadLua + bindsLua
 
     // Live: only the in-memory config, no reload
     function applyLive() {

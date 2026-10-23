@@ -27,6 +27,10 @@
     "keyboard": {
         "devices": []
     },
+    "touchpad": {
+        "enabled": true,
+        "names": []
+    },
     "theme": {
         "name": "tokyonight",
         "mode": "preset",
