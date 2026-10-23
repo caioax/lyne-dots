@@ -172,6 +172,24 @@ EOF
         printf '#!/bin/bash\necho "%s $*" >>"%s/calls.log"\n' "$t" "$SB" >"$SB/bin/$t"
         chmod +x "$SB/bin/$t"
     done
+    # tmux reaches your server through /tmp, not the sandbox: a stand-in
+    # that answers where tmux-resurrect's save script is (the power menu
+    # saves tmux before leaving the session)
+    cat >"$SB/bin/tmux" <<EOF
+#!/bin/bash
+echo "tmux \$*" >>"$SB/calls.log"
+[[ "\$1" == show-options && "\$*" == *@resurrect-save-script-path* ]] && echo "$SB/resurrect-save.sh"
+exit 0
+EOF
+    chmod +x "$SB/bin/tmux"
+}
+
+# saved_before_reboot: calls.log has resurrect's save before systemctl reboot
+saved_before_reboot() {
+    local save reboot
+    save="$(grep -n "^tmux run-shell $SB/resurrect-save.sh quiet" "$SB/calls.log" | head -1 | cut -d: -f1)"
+    reboot="$(grep -n "^systemctl reboot" "$SB/calls.log" | head -1 | cut -d: -f1)"
+    [[ -n "$save" && -n "$reboot" && "$save" -lt "$reboot" ]]
 }
 
 # -----------------------------------------------------------------------------
@@ -359,6 +377,14 @@ run_steps() {
     step "notification popup" ev 'Quickshell.execDetached(["notify-send", "-a", "Smoke", "Smoke test", "A notification body"]); "sent"'
     step "power menu" ipc power open
     step "power menu closed" ipc power close
+    # Leaving the session saves tmux first. A reboot, so only once systemctl
+    # is known to be the stand-in
+    step "power › systemctl probe" ev 'Quickshell.execDetached(["systemctl", "smoke-probe"]); "sent"'
+    check "power › systemctl is the stand-in" grep -q "^systemctl smoke-probe" "$SB/calls.log"
+    if grep -q "^systemctl smoke-probe" "$SB/calls.log"; then
+        step "power › reboot (stand-ins)" ev 'PowerService.execute("reboot"); "asked"'
+        check "power › tmux saved before the reboot" saved_before_reboot
+    fi
     step "wallpaper picker" ipc wallpapers open
     step "wallpaper picker closed" ipc wallpapers close
     for id in volume mic brightness layout tiling; do

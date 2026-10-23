@@ -43,7 +43,7 @@ The prefix is `C-Space`: press Ctrl + Space, let go, then press the key (`C-Spac
 
 ## Sessions
 
-tmux-continuum saves every 15 minutes; tmux keeps running after you close the terminal.
+tmux keeps running after you close the terminal. Everything is saved every 15 minutes and when you log out, reboot or shut down from the shell's power menu; the first tmux after that brings it back, Neovim panes with their folder's session.
 
 | Keys | Does |
 | :--- | :--- |

@@ -64,7 +64,7 @@ The completion menu: `Tab` / `Shift+Tab` move through it, `Enter` picks, `Ctrl+S
 
 ## Sessions and notes
 
-Sessions are saved per folder (and git branch) when you quit, once a file was opened.
+Sessions are saved per folder (and git branch) once a file is open: when you quit, write a file or leave the pane. When tmux brings a pane back, its Neovim reopens with that session.
 
 | Keys | Does |
 | :--- | :--- |

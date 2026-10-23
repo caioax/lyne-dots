@@ -253,7 +253,46 @@ Singleton {
 
     property string _pendingRun: ""
 
+    // Leaving the session: tmux-resurrect saves tmux first (tmux-continuum
+    // only saves every 15 minutes), then the action runs. No tmux server or
+    // no resurrect skips it; a save taking over 5 s doesn't hold it up
+    readonly property var _leaving: ["logout", "reboot", "firmware", "shutdown"]
+    property string _afterSave: ""
+
     function execute(id: string): void {
+        if (_leaving.includes(id)) {
+            if (_afterSave !== "")
+                return;
+            _afterSave = id;
+            tmuxSave.running = true;
+            tmuxSaveTimeout.restart();
+            return;
+        }
+        _execute(id);
+    }
+
+    function _saved(): void {
+        tmuxSaveTimeout.stop();
+        const id = _afterSave;
+        _afterSave = "";
+        if (id !== "")
+            _execute(id);
+    }
+
+    Process {
+        id: tmuxSave
+
+        command: ["bash", "-c", 'save="$(tmux show-options -gqv @resurrect-save-script-path 2>/dev/null)" && [ -n "$save" ] && tmux run-shell "$save quiet"; true']
+        onExited: root._saved()
+    }
+
+    Timer {
+        id: tmuxSaveTimeout
+        interval: 5000
+        onTriggered: root._saved()
+    }
+
+    function _execute(id: string): void {
         // The menu showed the blocking apps and the user went ahead
         const systemctl = args => Quickshell.execDetached(["systemctl"].concat(args, inhibitors.length > 0 ? ["-i"] : []));
         switch (id) {
