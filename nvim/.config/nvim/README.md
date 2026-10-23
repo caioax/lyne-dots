@@ -47,7 +47,7 @@ With a language server (Mason installs them):
 | `<leader>rn` | Rename everywhere |
 | `<leader>ca` | Code actions (fixes, imports) |
 | `]d` / `[d` | Next / previous diagnostic |
-| `gl` | The line's diagnostics in a float |
+| `gl` | The line's diagnostics in a float (the message also shows at the end of the line) |
 | `<leader>mp` | Format (also happens on save) |
 
 The completion menu: `Tab` / `Shift+Tab` move through it, `Enter` picks, `Ctrl+Space` opens it.

@@ -65,6 +65,7 @@ wait_for 30 diagnosed || fail_early "lua_ls reported nothing on the test file"
 signed() { [[ "$(lua 'vim.b.gitsigns_status_dict and 1 or 0')" == 1 ]]; }
 wait_for 15 signed || fail_early "gitsigns didn't attach"
 
+check "diagnostics show their message at the end of the line" 1 "$(lua 'vim.diagnostic.config().virtual_text and 1 or 0')"
 check "lua_ls gets nvim-cmp's capabilities (preselect)" 1 \
     "$(lua 'vim.tbl_get(vim.lsp.get_clients({ name = "lua_ls" })[1].capabilities, "textDocument", "completion", "completionItem", "preselectSupport") and 1 or 0')"
 check "stylua doesn't run as a server" 0 "$(lua '#vim.lsp.get_clients({ name = "stylua" })')"

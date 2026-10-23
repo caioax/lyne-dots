@@ -13,8 +13,11 @@ return {
 			-- 1. VISUAL CONFIGURATION (Diagnostic) - Modern Version (Neovim 0.10+)
 			-- ========================================================================
 			vim.diagnostic.config({
-				-- Inline text: DISABLED (Visual cleanliness)
-				virtual_text = false,
+				-- The message at the end of the line (gl shows it all in a float)
+				virtual_text = {
+					spacing = 4,
+					source = "if_many",
+				},
 
 				-- Error underline: ENABLED
 				underline = true,
