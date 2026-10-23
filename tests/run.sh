@@ -6,6 +6,8 @@
 #   qml    qmllint over the shell, against tests/qml/lint-baseline.txt
 #   smoke  the whole shell in a nested Hyprland, every window and page
 #          opened, no QML errors (needs a running Hyprland session)
+#   nvim   Neovim inside tmux: Ctrl/Alt + h/j/k/l between Neovim's splits
+#          and tmux's panes (needs tmux and the plugins lazy.nvim installed)
 # No section = all of them. Exits 1 when a section fails or its tool is
 # missing (nothing is skipped silently).
 # shellcheck disable=SC2329  # run_<section> is called as "run_$s"
@@ -21,7 +23,7 @@ else
     C_BOLD="" C_DIM="" C_OK="" C_FAIL="" C_OFF=""
 fi
 
-SECTIONS=(js bash lint qml smoke)
+SECTIONS=(js bash lint qml smoke nvim)
 declare -A RESULT
 
 header() { printf '\n%s== %s ==%s\n' "$C_BOLD" "$1" "$C_OFF"; }
@@ -67,6 +69,12 @@ run_qml() {
 
 run_smoke() {
     tests/qml/smoke.sh
+}
+
+run_nvim() {
+    need tmux tmux || return 1
+    need nvim neovim || return 1
+    tests/nvim/nav.sh
 }
 
 selected=("$@")

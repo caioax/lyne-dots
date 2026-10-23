@@ -1,6 +1,12 @@
 return {
-	"mrjones2014/smart-splits.nvim",
+	"smart-splits-nvim/smart-splits.nvim",
+	-- Never lazy: the tmux backend tells tmux this pane runs Neovim (the
+	-- @pane-is-vim option tmux.conf's Ctrl/Alt + h/j/k/l read) when it loads
 	lazy = false,
+	dependencies = {
+		-- Since v3 the multiplexers are plugins of their own
+		{ "smart-splits-nvim/backend-tmux", main = "smart-splits-backend-tmux" },
+	},
 	keys = {
 		-- === NAVIGATION (Ctrl + h/j/k/l) ===
 		{
@@ -64,6 +70,8 @@ return {
 	},
 	config = function()
 		require("smart-splits").setup({
+			-- Inside tmux: past the last split, move to tmux's panes
+			mux = { backend = "smart-splits-backend-tmux" },
 			-- Ignore buffers that should not be resized or navigated
 			ignored_filetypes = {
 				"nofile",

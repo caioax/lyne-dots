@@ -12,10 +12,11 @@ tests/run.sh js lint    # some sections
 | `lint` | shellcheck over every script (settings in `.shellcheckrc`) | `shellcheck` |
 | `qml` | qmllint over the shell; only warnings missing from `tests/qml/lint-baseline.txt` fail | `qt6-declarative` |
 | `smoke` | The whole shell in a nested Hyprland: every window and page opened, no QML errors | a running Hyprland session |
+| `nvim` | Neovim with the repo's config inside tmux with the repo's tmux.conf: Ctrl/Alt + h/j/k/l between splits and panes, smart-splits' health check | `tmux`, `neovim`, the plugins lazy.nvim installed |
 
 A missing tool fails its section with the package to install; nothing is skipped silently.
 
-GitHub Actions (`.github/workflows/tests.yml`) runs `js bash lint` on every push and pull request, in an Arch Linux container as a regular user. `qml` and `smoke` need Quickshell and a Hyprland session, so they run only here.
+GitHub Actions (`.github/workflows/tests.yml`) runs `js bash lint` on every push and pull request, in an Arch Linux container as a regular user. `qml` and `smoke` need Quickshell and a Hyprland session, so they run only here, like `nvim` (the plugins live in your Neovim data folder).
 
 ## JavaScript tests
 
@@ -60,3 +61,9 @@ One file: `bats tests/bash/nvidia.bats`. One test: `bats -f "Kepler" tests/bash/
 `tests/qml/smoke.sh` starts a nested Hyprland through yours, in a hidden special workspace and without focus (nothing shows, nothing moves), and runs the real `shell.qml` in it with a throwaway HOME, runtime dir and session bus. It opens every Settings page, dashboard tab, Quick Settings page and launcher mode, the notifications, power menu, wallpaper picker, OSD, welcome and what's new windows, locks and unlocks, switches themes, all in pt_BR, then searches Settings in both languages and switches the language live (en, pt_BR, en), and fails on any warning or error the shell logs. `tests/qml/allowed.txt` lists the lines the sandbox itself causes (no PipeWire, no portal); a QML error never goes there. A new window or page is opened automatically when it's in `SettingsService.pages`, `DashboardService.allTabs`, `QuickSettingsService.pages` or `LauncherService.modes`; anything else gets a `step` line in `run_steps`.
 
 Commands with effects outside the sandbox (nmcli, rfkill, brightness, systemctl, systemd-inhibit, pkill, kitty, nvim, zenity...) are stand-ins logging to `$SB/calls.log`, the Bluetooth agent is a stand-in (the real one registers on the system bus), and battery rules, update checks and idle are off in its state. It also fails when your `state.json` or the repo changed. `SMOKE_KEEP=1` keeps the sandbox (path printed) with `qs.log`, `hyprland.log` and `calls.log`; `SMOKE_WAIT` sets the pause after each step (0.6 s).
+
+## Neovim and tmux
+
+`tests/nvim/nav.sh` starts a tmux server of its own (its own socket, the repo's `tmux.conf` without TPM, so no plugin runs and continuum never saves over your session) with a shell pane and Neovim with the repo's config, split in two, then types the keys through a client attached in a pty (`send-keys -K` goes through tmux's key tables like typing does). It checks Ctrl + h/j/k/l between Neovim's windows and tmux's panes, copy mode, Alt + l resizing, and `:checkhealth smart-splits` (no errors, the tmux backend in use). Neovim's state and cache go to a temp folder; its data folder is a link to yours for the installed plugins, and no file is opened, so nothing that installs (Mason, Treesitter parsers) starts.
+
+`LYNE_TEST_NVIM=<dir>` and `LYNE_TEST_TMUX_CONF=<file>` run it against copies (to break them on purpose); `NAV_DEBUG=1` prints the health report.
