@@ -1,0 +1,6 @@
+enp3s0:ethernet:connected:Wired connection 2
+tailscale0:tun:connected (externally):tailscale0
+lo:loopback:connected (externally):lo
+wlan0:wifi:disconnected:
+/net/connman/iwd/0:wifi-p2p:disconnected:
+enp0s20f0u1u5c2:ethernet:unavailable:

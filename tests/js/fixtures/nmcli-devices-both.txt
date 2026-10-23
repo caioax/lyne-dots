@@ -1,0 +1,3 @@
+wlan0:wifi:connected:Home\: 5G
+enp0s31f6:ethernet:connected:Wired connection 1
+lo:loopback:connected (externally):lo

@@ -24,6 +24,10 @@ TMUX_CONF="${LYNE_TEST_TMUX_CONF:-$REPO/tmux/.tmux.conf}"
 
 need_tools tmux nvim python3
 
+# Run from inside tmux, the server below would inherit that client's TMUX
+# and prefix + P's popup would never open
+unset TMUX TMUX_PANE
+
 nvim_sandbox
 SOCK="$SB/tmux.sock"
 CLIENT_PID=""

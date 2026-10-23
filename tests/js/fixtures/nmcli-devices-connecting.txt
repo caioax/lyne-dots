@@ -1,0 +1,3 @@
+enp3s0:ethernet:connecting (getting IP configuration):Wired connection 1
+wlan0:wifi:disconnected:
+lo:loopback:connected (externally):lo

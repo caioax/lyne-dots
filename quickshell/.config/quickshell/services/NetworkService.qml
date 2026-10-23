@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "network.js" as Net
 
 Singleton {
     id: root
@@ -14,8 +15,14 @@ Singleton {
     property string wifiInterface: ""
     property string connectingSsid: ""
     property string connectivity: "unknown" // none | portal | limited | full | unknown
-    // An ethernet device is connected (the bar shows it instead of the Wi-Fi state)
-    property bool ethernetConnected: false
+    // The connected cable: { device, connection } or null. The bar, the
+    // Quick Settings tile and the page show it ahead of the Wi-Fi state
+    property var wired: null
+    readonly property bool ethernetConnected: wired !== null
+    onWiredChanged: {
+        if (_viewers > 0)
+            fetchDetails();
+    }
     property bool _portalNotified: false
     readonly property bool scanning: rescanProc.running
     readonly property bool hasCaptivePortal: {
@@ -84,12 +91,16 @@ Singleton {
 
     readonly property var activeNetwork: accessPoints.find(ap => ap.active) ?? null
 
-    // IP / gateway / DNS of the active connection, fetched on demand (Wi-Fi page)
+    // IP / gateway / DNS of the active Wi-Fi connection and of the cable
+    // (plus its speed), fetched on demand (Wi-Fi page)
     property var details: ({})
+    property var wiredDetails: ({})
 
     function fetchDetails() {
         if (wifiInterface !== "" && !detailsProc.running)
             detailsProc.running = true;
+        if (wired !== null && !wiredDetailsProc.running)
+            wiredDetailsProc.running = true;
     }
 
     function openPortalBrowser() {
@@ -275,10 +286,15 @@ Singleton {
     // Wired state, refreshed on every NetworkManager event
     Process {
         id: wiredProc
-        command: ["nmcli", "-g", "TYPE,STATE", "device"]
+        command: ["nmcli", "-g", "DEVICE,TYPE,STATE,CONNECTION", "device"]
         running: true
         stdout: StdioCollector {
-            onStreamFinished: root.ethernetConnected = text.split("\n").some(l => l.startsWith("ethernet:connected"))
+            onStreamFinished: {
+                const found = Net.wiredConnection(text);
+                // Same cable: keep the object, so bindings don't re-run on every event
+                if (JSON.stringify(found) !== JSON.stringify(root.wired))
+                    root.wired = found;
+            }
         }
     }
 
@@ -365,14 +381,15 @@ Singleton {
         id: detailsProc
         command: ["nmcli", "-g", "IP4.ADDRESS,IP4.GATEWAY,IP4.DNS", "dev", "show", root.wifiInterface]
         stdout: StdioCollector {
-            onStreamFinished: {
-                const lines = text.trim().split("\n");
-                root.details = {
-                    "ip": (lines[0] || "").split("/")[0],
-                    "gateway": lines[1] || "",
-                    "dns": (lines[2] || "").split(" | ")[0]
-                };
-            }
+            onStreamFinished: root.details = Net.deviceDetails(text)
+        }
+    }
+
+    Process {
+        id: wiredDetailsProc
+        command: ["nmcli", "-g", "IP4.ADDRESS,IP4.GATEWAY,IP4.DNS,CAPABILITIES.SPEED", "dev", "show", root.wired?.device ?? ""]
+        stdout: StdioCollector {
+            onStreamFinished: root.wiredDetails = Net.deviceDetails(text)
         }
     }
 
