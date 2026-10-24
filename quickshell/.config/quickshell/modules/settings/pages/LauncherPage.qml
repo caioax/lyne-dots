@@ -251,7 +251,7 @@ ColumnLayout {
             id: usageRow
 
             label: I18n.tr("Usage history")
-            description: LauncherService.usage.length === 0 ? I18n.tr("Nothing yet: apps are counted as you open them") : I18n.trn("%n app counted, used to rank the list", "%n apps counted, used to rank the list", LauncherService.usage.length)
+            description: !LauncherService.rankByUsage ? I18n.tr("Paused while Rank by usage is off: nothing is counted") : LauncherService.usage.length === 0 ? I18n.tr("Nothing yet: apps are counted as you open them") : I18n.trn("%n app counted, used to rank the list", "%n apps counted, used to rank the list", LauncherService.usage.length)
 
             ActionButton {
                 enabled: LauncherService.usage.length > 0

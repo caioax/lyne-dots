@@ -633,7 +633,11 @@ Singleton {
         };
     }
 
+    // Only while the list is ranked by it: off, nothing is counted (what was
+    // counted stays, for when it's turned on again)
     function _recordUsage(id: string) {
+        if (!rankByUsage)
+            return;
         const now = Date.now();
         const previous = usage.find(u => u.id === id);
         const updated = {

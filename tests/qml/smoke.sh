@@ -418,6 +418,13 @@ run_steps() {
         step "launcher › $id" ev "LauncherService.showMode('$id')"
     done
     step "launcher closed" ipc launcher close
+    # Usage is only counted while the list is ranked by it
+    local counted='LauncherService.usage.some(u => u.id === "smoke-app")'
+    ev 'StateService.set("launcher.rankByUsage", false); LauncherService._recordUsage("smoke-app"); "ok"' >/dev/null
+    check "launcher › rank by usage off: nothing counted" ev_is false "$counted"
+    ev 'StateService.set("launcher.rankByUsage", true); LauncherService._recordUsage("smoke-app"); "ok"' >/dev/null
+    check "launcher › rank by usage on: counted" ev_is true "$counted"
+    ev 'LauncherService.clearUsage(); "ok"' >/dev/null
 
     step "notifications window" ipc notifications toggleWindow
     step "notifications closed" ipc notifications toggleWindow

@@ -774,6 +774,7 @@
     "Hide apps you never open from the ⋮ menu in the launcher": "Oculte pelo menu ⋮ do lançador os apps que você nunca abre",
     "Usage": "Uso",
     "Usage history": "Histórico de uso",
+    "Paused while Rank by usage is off: nothing is counted": "Pausado enquanto Ordenar pelo uso está desativado: nada é contado",
     "Nothing yet: apps are counted as you open them": "Nada ainda: os apps são contados conforme você os abre",
     "%n app counted, used to rank the list": [
         "%n app contado, usado para ordenar a lista",
