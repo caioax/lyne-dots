@@ -100,14 +100,17 @@ Item {
             }
             onBackClicked: root.backRequested()
 
+            // With a cable the Wi-Fi controls move to the Wi-Fi networks
+            // card, so this switch doesn't read as the whole network's
             RefreshButton {
-                visible: NetworkService.wifiEnabled
+                visible: NetworkService.wifiEnabled && !root.wired
                 size: header.boxSize
                 loading: NetworkService.scanning
                 onClicked: NetworkService.scan()
             }
 
             QsSwitch {
+                visible: !root.wired
                 checked: NetworkService.wifiEnabled
                 onToggled: NetworkService.toggleWifi()
             }
@@ -264,6 +267,19 @@ Item {
                 icon: "󰖩"
                 title: root.wired ? I18n.tr("Wi-Fi networks") : I18n.tr("Networks")
                 subtitle: NetworkService.scanning && root.others.length === 0 ? I18n.tr("Scanning…") : I18n.trn("%n available", "%n available", root.others.length)
+
+                RefreshButton {
+                    visible: root.wired !== null
+                    size: header.boxSize
+                    loading: NetworkService.scanning
+                    onClicked: NetworkService.scan()
+                }
+
+                QsSwitch {
+                    visible: root.wired !== null
+                    checked: NetworkService.wifiEnabled
+                    onToggled: NetworkService.toggleWifi()
+                }
             }
 
             Flickable {
