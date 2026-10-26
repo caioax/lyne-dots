@@ -3,7 +3,8 @@
 # file with a diagnostic and a git change is opened in the sandbox of lib.sh,
 # the LSP starts, and the keys that call into Neovim and the plugins are used
 # (yank, ]d / [d, ]c / [c, format, <leader>ff). lua_ls must know vim
-# (lazydev.nvim). Then nothing deprecated may have been
+# (lazydev.nvim), conform's stylua follows a project's stylua.toml and
+# .styluaignore (4 spaces outside any), and the repo's Lua is formatted. Then nothing deprecated may have been
 # called (:checkhealth vim.deprecated), the servers get nvim-cmp's
 # capabilities, stylua runs only as conform's formatter, grr is the
 # references key, and every map has a desc (no_desc.lua).
@@ -24,6 +25,7 @@ REPO_TESTS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 need_tools nvim git
 [[ -x "$NVIM_DATA/mason/bin/lua-language-server" ]] || fail_early "no lua-language-server in Mason (open a Lua file in nvim once)"
+[[ -x "$NVIM_DATA/mason/bin/stylua" ]] || fail_early "no stylua in Mason (open nvim once)"
 
 nvim_sandbox
 NVIM_PID=""
@@ -51,6 +53,16 @@ for f in lua/plugins/git.lua .github/workflows/ci.yml .data/state node_modules/m
     echo x >"$SB/work/$f"
 done
 echo ignored.txt >"$SB/work/.gitignore"
+# For conform's stylua (in fmt/, which .gitignore keeps out of <leader>ff):
+# Lua outside any stylua.toml (tabs), inside a project whose stylua.toml
+# wants tabs (4 spaces), and a file its .styluaignore lists
+mkdir -p "$SB/work/fmt/style"
+echo fmt/ >>"$SB/work/.gitignore"
+printf 'local t = {\n\tx = 1,\n}\nreturn t\n' >"$SB/work/fmt/loose.lua"
+printf 'indent_type = "Tabs"\n' >"$SB/work/fmt/style/.stylua.toml"
+printf 'local t = {\n    x = 1,\n}\nreturn t\n' >"$SB/work/fmt/style/own.lua"
+echo aligned.lua >"$SB/work/fmt/style/.styluaignore"
+printf 'local t = {\n    x   = 1,\n}\nreturn t\n' >"$SB/work/fmt/style/aligned.lua"
 git -C "$SB/work" init -q
 git -C "$SB/work" add t.lua
 git -C "$SB/work" -c user.name=test -c user.email=test@example.com commit -qm test
@@ -112,6 +124,17 @@ check "checkhealth vim.deprecated: OK" 1 "$(grep -c 'No deprecated functions det
 grep 'WARNING' <<<"$health" | sed 's/^/    /'
 check "no message about something deprecated" 0 "$(grep -ci 'deprecated' <<<"$messages")"
 
+# formatted FILE: its line 2 after conform formats it (what a save does)
+formatted() {
+    nv "execute('edit $SB/work/$1')" >/dev/null
+    lua 'require("conform").format({ async = false })' >/dev/null
+    nv 'getline(2)'
+}
+check "stylua: Lua outside any stylua.toml gets 4 spaces" "    x = 1," "$(formatted fmt/loose.lua)"
+check "stylua: a project's stylua.toml wins (tabs here)" $'\tx = 1,' "$(formatted fmt/style/own.lua)"
+check "stylua: what .styluaignore lists stays as it is" "    x   = 1," "$(formatted fmt/style/aligned.lua)"
+nv "execute('edit $SB/work/t.lua')" >/dev/null
+
 keys '<Space>ff'
 sleep 1
 found="$(lua '(function() local p = require("telescope.actions.state").get_current_picker(vim.api.nvim_get_current_buf()); local r = {}; for e in p.manager:iter() do r[#r + 1] = e.value end; table.sort(r); return table.concat(r, " ") end)()')"
@@ -124,5 +147,10 @@ keys '<Esc><Esc>'
 # that only warn when called
 old="$(grep -rnE 'vim\.loop\.|vim\.highlight\.|diagnostic\.goto_(next|prev)|\.(next|prev)_hunk\(|lsp_fallback|require\("lspconfig"\)\[' "$NVIM_DIR/lua" "$NVIM_DIR/init.lua")"
 check "no deprecated names left in the config" "" "$old"
+
+# The repo's Lua is as stylua leaves it (.stylua.toml, Hyprland's left out
+# by .styluaignore): saving a file rewrites nothing
+unformatted="$(cd "$REPO" && git ls-files '*.lua' | xargs "$NVIM_DATA/mason/bin/stylua" --respect-ignores --check 2>&1 | grep '^Diff in')"
+check "the repo's Lua is formatted (stylua --check)" "" "$unformatted"
 
 exit "$failed"

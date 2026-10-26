@@ -6,13 +6,13 @@
 -- `:colorscheme lyne` in every open instance when the theme changes.
 
 return {
-	{
-		dir = vim.fn.stdpath("config"),
-		name = "lyne-theme",
-		lazy = false,
-		priority = 1000,
-		config = function()
-			vim.cmd.colorscheme("lyne")
-		end,
-	},
+    {
+        dir = vim.fn.stdpath("config"),
+        name = "lyne-theme",
+        lazy = false,
+        priority = 1000,
+        config = function()
+            vim.cmd.colorscheme("lyne")
+        end,
+    },
 }

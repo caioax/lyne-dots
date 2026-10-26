@@ -1,125 +1,125 @@
 return {
-	{
-		"neovim/nvim-lspconfig",
-		event = { "BufReadPre", "BufNewFile" },
-		dependencies = {
-			"mason-org/mason.nvim",
-			"mason-org/mason-lspconfig.nvim",
-			"hrsh7th/cmp-nvim-lsp",
-			"WhoIsSethDaniel/mason-tool-installer.nvim",
-		},
-		config = function()
-			-- ========================================================================
-			-- 1. VISUAL CONFIGURATION (Diagnostic) - Modern Version (Neovim 0.10+)
-			-- ========================================================================
-			vim.diagnostic.config({
-				-- The message at the end of the line (gl shows it all in a float)
-				virtual_text = {
-					spacing = 4,
-					source = "if_many",
-				},
+    {
+        "neovim/nvim-lspconfig",
+        event = { "BufReadPre", "BufNewFile" },
+        dependencies = {
+            "mason-org/mason.nvim",
+            "mason-org/mason-lspconfig.nvim",
+            "hrsh7th/cmp-nvim-lsp",
+            "WhoIsSethDaniel/mason-tool-installer.nvim",
+        },
+        config = function()
+            -- ========================================================================
+            -- 1. VISUAL CONFIGURATION (Diagnostic) - Modern Version (Neovim 0.10+)
+            -- ========================================================================
+            vim.diagnostic.config({
+                -- The message at the end of the line (gl shows it all in a float)
+                virtual_text = {
+                    spacing = 4,
+                    source = "if_many",
+                },
 
-				-- Error underline: ENABLED
-				underline = true,
+                -- Error underline: ENABLED
+                underline = true,
 
-				-- Gutter icons: ENABLED
-				signs = {
-					text = {
-						[vim.diagnostic.severity.ERROR] = "",
-						[vim.diagnostic.severity.WARN] = "",
-						[vim.diagnostic.severity.HINT] = "",
-						[vim.diagnostic.severity.INFO] = "",
-					},
-				},
+                -- Gutter icons: ENABLED
+                signs = {
+                    text = {
+                        [vim.diagnostic.severity.ERROR] = "",
+                        [vim.diagnostic.severity.WARN] = "",
+                        [vim.diagnostic.severity.HINT] = "",
+                        [vim.diagnostic.severity.INFO] = "",
+                    },
+                },
 
-				-- Do not update while typing
-				update_in_insert = false,
+                -- Do not update while typing
+                update_in_insert = false,
 
-				-- Sorting: Severe errors first
-				severity_sort = true,
-			})
+                -- Sorting: Severe errors first
+                severity_sort = true,
+            })
 
-			-- ========================================================================
-			-- 2. GLOBAL KEYBINDINGS DEFINITION (LspAttach)
-			-- ========================================================================
-			vim.api.nvim_create_autocmd("LspAttach", {
-				group = vim.api.nvim_create_augroup("UserLspConfig", { clear = true }),
-				-- The keys are in config/buffer_keys.lua (the shortcut search lists
-				-- them too)
-				callback = function(event)
-					require("config.buffer_keys").apply("lsp", event.buf)
-				end,
-			})
+            -- ========================================================================
+            -- 2. GLOBAL KEYBINDINGS DEFINITION (LspAttach)
+            -- ========================================================================
+            vim.api.nvim_create_autocmd("LspAttach", {
+                group = vim.api.nvim_create_augroup("UserLspConfig", { clear = true }),
+                -- The keys are in config/buffer_keys.lua (the shortcut search lists
+                -- them too)
+                callback = function(event)
+                    require("config.buffer_keys").apply("lsp", event.buf)
+                end,
+            })
 
-			-- ========================================================================
-			-- 3. MASON INITIALIZATION
-			-- ========================================================================
-			require("mason").setup()
+            -- ========================================================================
+            -- 3. MASON INITIALIZATION
+            -- ========================================================================
+            require("mason").setup()
 
-			require("mason-tool-installer").setup({
-				ensure_installed = {
-					"lua_ls",
-					"ts_ls",
-					"html",
-					"cssls",
-					"bashls",
-					"pyright",
-					"jsonls",
-					"yamlls",
-					"stylua",
-					"prettier",
-					"black",
-					"isort",
-					"shfmt",
-					"eslint_d",
-					"clangd",
-					"omnisharp",
-					"intelephense",
-					"php-cs-fixer",
-				},
-			})
+            require("mason-tool-installer").setup({
+                ensure_installed = {
+                    "lua_ls",
+                    "ts_ls",
+                    "html",
+                    "cssls",
+                    "bashls",
+                    "pyright",
+                    "jsonls",
+                    "yamlls",
+                    "stylua",
+                    "prettier",
+                    "black",
+                    "isort",
+                    "shfmt",
+                    "eslint_d",
+                    "clangd",
+                    "omnisharp",
+                    "intelephense",
+                    "php-cs-fixer",
+                },
+            })
 
-			-- Every server gets what nvim-cmp can handle (preselect, commit
-			-- characters...) on top of Neovim's own capabilities
-			vim.lsp.config("*", {
-				capabilities = require("cmp_nvim_lsp").default_capabilities(),
-			})
+            -- Every server gets what nvim-cmp can handle (preselect, commit
+            -- characters...) on top of Neovim's own capabilities
+            vim.lsp.config("*", {
+                capabilities = require("cmp_nvim_lsp").default_capabilities(),
+            })
 
-			-- mason-lspconfig v2 enables every installed server on its own
-			-- (vim.lsp.enable). stylua is installed as a formatter for conform
-			-- and would start as a server on every Lua file too
-			require("mason-lspconfig").setup({
-				ensure_installed = {
-					"lua_ls",
-					"ts_ls",
-					"html",
-					"cssls",
-					"bashls",
-					"pyright",
-					"jsonls",
-					"yamlls",
-					"tailwindcss",
-					"clangd",
-					"omnisharp",
-					"intelephense",
-				},
-				automatic_enable = {
-					exclude = { "stylua" },
-				},
-			})
+            -- mason-lspconfig v2 enables every installed server on its own
+            -- (vim.lsp.enable). stylua is installed as a formatter for conform
+            -- and would start as a server on every Lua file too
+            require("mason-lspconfig").setup({
+                ensure_installed = {
+                    "lua_ls",
+                    "ts_ls",
+                    "html",
+                    "cssls",
+                    "bashls",
+                    "pyright",
+                    "jsonls",
+                    "yamlls",
+                    "tailwindcss",
+                    "clangd",
+                    "omnisharp",
+                    "intelephense",
+                },
+                automatic_enable = {
+                    exclude = { "stylua" },
+                },
+            })
 
-			-- QML: qmlls comes with Qt (qt6-declarative, a dependency of
-			-- Quickshell), not Mason, and Arch names it qmlls6. It finds
-			-- Quickshell's modules through the .qmlls.ini Quickshell fills in
-			-- next to shell.qml (lyne-dots creates the empty file), so that
-			-- folder is the project
-			if vim.fn.executable("qmlls6") == 1 then
-				vim.lsp.config("qmlls", {
-					cmd = { "qmlls6" },
-					root_markers = { ".qmlls.ini", "shell.qml", ".git" },
-				})
-				vim.lsp.enable("qmlls")
-			end
-		end,
-	},
+            -- QML: qmlls comes with Qt (qt6-declarative, a dependency of
+            -- Quickshell), not Mason, and Arch names it qmlls6. It finds
+            -- Quickshell's modules through the .qmlls.ini Quickshell fills in
+            -- next to shell.qml (lyne-dots creates the empty file), so that
+            -- folder is the project
+            if vim.fn.executable("qmlls6") == 1 then
+                vim.lsp.config("qmlls", {
+                    cmd = { "qmlls6" },
+                    root_markers = { ".qmlls.ini", "shell.qml", ".git" },
+                })
+                vim.lsp.enable("qmlls")
+            end
+        end,
+    },
 }

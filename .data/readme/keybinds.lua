@@ -38,7 +38,9 @@ package.preload["conf/binds"] = function()
             table.insert(binds, { id = id, group = group, description = description, keys = keys })
         end,
         export = function() end,
-        lone_modifier = function() return false end,
+        lone_modifier = function()
+            return false
+        end,
     }
 end
 package.preload["conf/workspaces"] = function()
@@ -52,15 +54,31 @@ lyne_specials_fallback()
 
 -- Key names as printed in the README
 local key_names = {
-    ["return"] = "Enter", ["SUPER_L"] = "(tap)", ["slash"] = "/", ["equal"] = "=",
-    ["minus"] = "-", ["comma"] = ",", ["period"] = ".", ["bracketleft"] = "[", ["bracketright"] = "]",
-    ["TAB"] = "Tab", ["Space"] = "Space", ["left"] = "Left",
-    ["right"] = "Right", ["Escape"] = "Esc", ["Print"] = "Print",
-    ["XF86AudioRaiseVolume"] = "Volume Up", ["XF86AudioLowerVolume"] = "Volume Down",
-    ["XF86AudioMute"] = "Mute", ["XF86AudioMicMute"] = "Mic Mute",
-    ["XF86MonBrightnessUp"] = "Brightness Up", ["XF86MonBrightnessDown"] = "Brightness Down",
-    ["XF86AudioNext"] = "Next", ["XF86AudioPrev"] = "Previous",
-    ["XF86AudioPause"] = "Pause", ["XF86AudioPlay"] = "Play",
+    ["return"] = "Enter",
+    ["SUPER_L"] = "(tap)",
+    ["slash"] = "/",
+    ["equal"] = "=",
+    ["minus"] = "-",
+    ["comma"] = ",",
+    ["period"] = ".",
+    ["bracketleft"] = "[",
+    ["bracketright"] = "]",
+    ["TAB"] = "Tab",
+    ["Space"] = "Space",
+    ["left"] = "Left",
+    ["right"] = "Right",
+    ["Escape"] = "Esc",
+    ["Print"] = "Print",
+    ["XF86AudioRaiseVolume"] = "Volume Up",
+    ["XF86AudioLowerVolume"] = "Volume Down",
+    ["XF86AudioMute"] = "Mute",
+    ["XF86AudioMicMute"] = "Mic Mute",
+    ["XF86MonBrightnessUp"] = "Brightness Up",
+    ["XF86MonBrightnessDown"] = "Brightness Down",
+    ["XF86AudioNext"] = "Next",
+    ["XF86AudioPrev"] = "Previous",
+    ["XF86AudioPause"] = "Pause",
+    ["XF86AudioPlay"] = "Play",
 }
 local mod_names = { SUPER = "Super", SHIFT = "Shift", CTRL = "Ctrl", CONTROL = "Ctrl", ALT = "Alt" }
 
@@ -95,7 +113,13 @@ for _, b in ipairs(binds) do
         local row = by_desc[b.group .. "\0" .. key]
         if not row then
             local description = (base and base .. " 1–10") or (dir_base and dir_base) or key
-            row = { group = b.group, description = description, keys = {}, numbered = base ~= nil, directional = dir_base ~= nil }
+            row = {
+                group = b.group,
+                description = description,
+                keys = {},
+                numbered = base ~= nil,
+                directional = dir_base ~= nil,
+            }
             by_desc[b.group .. "\0" .. key] = row
             table.insert(rows, row)
         end

@@ -1,0 +1,3 @@
+# Lua style of the repo (Neovim formats with it on save: conform's stylua)
+indent_type = "Spaces"
+indent_width = 4

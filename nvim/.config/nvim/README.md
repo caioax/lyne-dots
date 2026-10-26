@@ -94,3 +94,4 @@ Sessions are saved per folder (and git branch) once a file is open: when you qui
 - **A language:** `:Mason` to install the server or formatter, then add it to `ensure_installed` in `lua/plugins/lsp.lua` (servers) or the formatter to `lua/plugins/formatting.lua`.
 - **QML (Quickshell):** the server is qmlls from Qt (`qmlls6`), not Mason. It finds Quickshell's modules (`qs.config`, `qs.services`) through the `.qmlls.ini` next to `shell.qml`, which lyne-dots creates empty and Quickshell fills each time it starts. For a Quickshell config of your own: `touch .qmlls.ini` next to its `shell.qml`, start it once, and don't give its folders a `qmldir` (Quickshell writes them; qmlls doesn't see hand-written ones).
 - **A key:** give it a `desc`; which-key and the search show it.
+- **Lua style:** a save formats with stylua and the project's `stylua.toml` (lyne-dots: 4 spaces, Hyprland's hand-aligned Lua left out by `.styluaignore`); Lua outside any project gets 4 spaces.
