@@ -4,6 +4,7 @@
 # so no plugin and no continuum save runs) with a shell pane on the left and
 # Neovim with the repo's config on the right, split in two. A client attached
 # through a pty types the keys (send-keys -K goes through the key tables).
+# The same way: surround's keys (S, ys, cs, ds) next to the remapped y.
 #
 # Neovim runs in the sandbox of lib.sh. Only the plugins already installed
 # are used: no file is opened, so nothing that installs (Mason, Treesitter
@@ -73,6 +74,38 @@ popup="$(T capture-pane -p -t t:1.2)"
 [[ -n "${NAV_DEBUG:-}" ]] && printf "%s\n" "$popup"
 check "Space shows the leader groups (Find, Git, Sessions)" 3 "$(grep -cE '\+(Find|Git|Sessions) ' <<<"$popup")"
 key Escape
+
+# Surround (nvim-surround), typed through tmux with which-key loaded. The
+# system clipboard is a stand-in: y's copies land in g:test_clip, not yours
+cat >"$SB/clip.lua" <<'EOF'
+local function copy(lines)
+    vim.g.test_clip = table.concat(lines, "\n")
+end
+local function paste()
+    return { vim.split(vim.g.test_clip or "", "\n"), "v" }
+end
+vim.g.clipboard = { name = "test", copy = { ["+"] = copy, ["*"] = copy }, paste = { ["+"] = paste, ["*"] = paste } }
+EOF
+nv "execute('luafile $SB/clip.lua')" >/dev/null
+nv 'execute("enew | call setline(1, \"word\")")' >/dev/null
+typed() {
+    T send-keys -c "$CLIENT" -K "$@"
+    sleep 0.6
+}
+line() { nv 'getline(1)'; }
+T send-keys -c "$CLIENT" -K y i w
+sleep 0.3
+check "yiw still copies to the system clipboard, without waiting for ys" "word" "$(nv 'get(g:, "test_clip", "")')"
+typed v i w S '"'
+check 'a selection + S" wraps it in quotes' '"word"' "$(line)"
+typed c s '"' "'"
+check "cs\"' changes the quotes" "'word'" "$(line)"
+typed d s "'"
+check "ds' deletes them" "word" "$(line)"
+typed y s i w ']'
+check "ysiw] wraps the word in brackets" "[word]" "$(line)"
+typed Escape
+nv 'execute("bwipeout!")' >/dev/null
 
 # Two Neovim windows side by side, the cursor in the right one
 nv 'execute("vsplit | wincmd l")' >/dev/null

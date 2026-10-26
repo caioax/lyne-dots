@@ -35,6 +35,17 @@ The leader is `Space`: `<leader>ff` means Space, then `f`, then `f`. Plugins com
 | `<leader>dp` | Paste what you deleted last (`dd`, `x`) |
 | `<leader>yc` | Send a register to the system clipboard |
 
+## Wrap in quotes or brackets
+
+Then type the pair: `"`, `'`, `)`, `]`, `}`, `>`, or `t` for an HTML tag. An opening bracket (`(`, `[`, `{`) adds spaces inside, a closing one doesn't.
+
+| Keys | Does |
+| :--- | :--- |
+| `S` | Wrap the selection (visual mode): `S"` |
+| `ys` | Wrap a motion: `ysiw"` the word, `yss)` the line |
+| `cs` | Change the pair: `cs"'` |
+| `ds` | Delete the pair: `ds"` |
+
 ## Code
 
 With a language server (Mason installs them):
