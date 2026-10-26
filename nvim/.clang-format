@@ -1,0 +1,7 @@
+# C/C++ style for clang-format and clangd (Neovim formats C++ with it on save).
+# ColumnLimit 0: no line length, the line breaks you write are kept
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 0

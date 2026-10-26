@@ -42,7 +42,7 @@ recorded() { jq -c .system.stow "$LYNE_STATE_FILE"; }
     run lyne link
     assert_success
     assert_line --regexp '^  (●|\S) hyprland +always +~/\.config/hypr, ~/\.config/uwsm$'
-    assert_line --regexp '^  ○ nvim +editor +~/\.config/nvim$'
+    assert_line --regexp '^  ○ nvim +editor +~/\.config/nvim, ~/\.clang-format$'
     assert_line --regexp '^  ○ zsh +terminal +~/\.zshrc, ~/\.p10k\.zsh$'
     assert_line --regexp '^  ○ kde +theming +~/\.config/kdeglobals$'
     assert_equal "${#lines[@]}" 10
@@ -76,6 +76,19 @@ recorded() { jq -c .system.stow "$LYNE_STATE_FILE"; }
     refute [ -e "$HOME/.config/nvim" ]
     assert [ -f "$HOME/.lyne-dots-backup/20260101-000000/.zshrc" ]
     assert_equal "$(recorded)" '["hyprland","quickshell","local"]'
+}
+
+@test "nvim: the user's ~/.clang-format to the backup and back on unlink" {
+    echo mine >"$HOME/.clang-format"
+    run lyne link nvim
+    assert_success
+    assert_output --partial "Moved to the backup: ~/.clang-format"
+    [ "$(realpath "$HOME/.clang-format")" == "$(realpath "$DOTS_DIR/nvim/.clang-format")" ]
+    run lyne unlink nvim
+    assert_success
+    assert_output --partial "Restored ~/.clang-format"
+    refute [ -L "$HOME/.clang-format" ]
+    assert_equal "$(cat "$HOME/.clang-format")" mine
 }
 
 @test "refused: unknown packages, the shell's own, one not linked" {

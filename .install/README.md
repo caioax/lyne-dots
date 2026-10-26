@@ -171,6 +171,6 @@ The `stow.sh` script links the packages of the categories chosen
 | zsh        | ~/.zshrc, ~/.p10k.zsh                    | terminal         |
 | tmux       | ~/.tmux.conf                             | terminal         |
 | fastfetch  | ~/.config/fastfetch                      | terminal         |
-| nvim       | ~/.config/nvim                           | editor           |
+| nvim       | ~/.config/nvim, ~/.clang-format          | editor           |
 | theming    | ~/.config/gtk-3.0, gtk-4.0, qt5ct, qt6ct | theming          |
 | kde        | ~/.config/kdeglobals                     | theming          |

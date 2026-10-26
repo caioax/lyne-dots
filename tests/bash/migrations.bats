@@ -195,6 +195,60 @@ legacy_home() {
     refute grep -q "^lazygit " "$FAKE_PKGS"
 }
 
+# real_stow: GNU Stow instead of the logging stand-in, with nvim a copy in
+# $DOTS_DIR (a link into the repo would let stow's links write there)
+real_stow() {
+    local stow
+    stow="$(PATH="${PATH//"$BATS_TEST_DIRNAME/stubs:"/}" command -v stow)" || skip "GNU Stow isn't installed"
+    mkdir -p "$BATS_TEST_TMPDIR/bin"
+    ln -s "$stow" "$BATS_TEST_TMPDIR/bin/stow"
+    export PATH="$BATS_TEST_TMPDIR/bin:$PATH"
+    rm "$DOTS_DIR/nvim"
+    cp -r "$REPO/nvim" "$DOTS_DIR/"
+}
+
+@test "042: where nvim is linked, the user's ~/.clang-format goes to the backup and the repo's is linked" {
+    fake_dots
+    real_stow
+    ln -sr "$DOTS_DIR/nvim/.config/nvim" "$HOME/.config/nvim"
+    echo mine >"$HOME/.clang-format"
+    local backup="$HOME/.lyne-dots-backup/20261026-000000"
+    LYNE_BACKUP_DIR="$backup" run migrate 042-clang-format.sh
+    assert_success
+    assert_line "   Your ~/.clang-format moved to the backup: ~/.lyne-dots-backup/20261026-000000"
+    assert_line "   Linked ~/.clang-format (C/C++ style)"
+    [ "$(realpath "$HOME/.clang-format")" == "$DOTS_DIR/nvim/.clang-format" ]
+    assert_equal "$(cat "$backup/.clang-format")" mine
+    assert [ -L "$HOME/.config/nvim" ]
+    run migrate 042-clang-format.sh
+    assert_success
+    assert_output ""
+}
+
+@test "042: stow refuses (a ~/.config/nvim it doesn't own): the user's file stays, a warning, no failure" {
+    fake_dots
+    real_stow
+    ln -s "$DOTS_DIR/nvim/.config/nvim" "$HOME/.config/nvim"
+    echo mine >"$HOME/.clang-format"
+    local backup="$HOME/.lyne-dots-backup/20261026-000000"
+    LYNE_BACKUP_DIR="$backup" run migrate 042-clang-format.sh
+    assert_success
+    assert_line "   Warning: could not link ~/.clang-format; lyne link nvim tries again"
+    refute [ -L "$HOME/.clang-format" ]
+    assert_equal "$(cat "$HOME/.clang-format")" mine
+    refute [ -e "$backup" ]
+}
+
+@test "042: nvim not linked, nothing linked" {
+    fake_dots
+    real_stow
+    echo mine >"$HOME/.clang-format"
+    run migrate 042-clang-format.sh
+    assert_success
+    assert_output ""
+    refute [ -L "$HOME/.clang-format" ]
+}
+
 @test "a migration with nothing to convert says nothing" {
     fake_dots
     run migrate 018-special-workspaces-ids.sh

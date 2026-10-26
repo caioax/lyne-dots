@@ -149,6 +149,9 @@ get_stow_targets() {
         "zsh")
             targets+=("$HOME/.zshrc" "$HOME/.p10k.zsh")
             ;;
+        "nvim")
+            targets+=("$HOME/.config/nvim" "$HOME/.clang-format")
+            ;;
         "tmux")
             targets+=("$HOME/.tmux.conf")
             ;;
