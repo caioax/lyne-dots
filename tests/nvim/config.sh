@@ -2,7 +2,7 @@
 # Neovim's config working with what Neovim and the plugins expect today: a Lua
 # file with a diagnostic and a git change is opened in the sandbox of lib.sh,
 # the LSP starts, and the keys that call into Neovim and the plugins are used
-# (yank, ]d / [d, ]c / [c, format). Then nothing deprecated may have been
+# (yank, ]d / [d, ]c / [c, format, <leader>ff). Then nothing deprecated may have been
 # called (:checkhealth vim.deprecated), the servers get nvim-cmp's
 # capabilities, stylua runs only as conform's formatter, grr is the
 # references key, and every map has a desc (no_desc.lua).
@@ -43,6 +43,13 @@ function M.value()
 end
 return M
 EOF
+# For <leader>ff: names with "git" in them, hidden folders, and what it must
+# leave out (.git/, node_modules/, what .gitignore lists)
+mkdir -p "$SB/work/lua/plugins" "$SB/work/.github/workflows" "$SB/work/.data" "$SB/work/node_modules/m"
+for f in lua/plugins/git.lua .github/workflows/ci.yml .data/state node_modules/m/i.js ignored.txt; do
+    echo x >"$SB/work/$f"
+done
+echo ignored.txt >"$SB/work/.gitignore"
 git -C "$SB/work" init -q
 git -C "$SB/work" add t.lua
 git -C "$SB/work" -c user.name=test -c user.email=test@example.com commit -qm test
@@ -98,6 +105,13 @@ fi
 check "checkhealth vim.deprecated: OK" 1 "$(grep -c 'No deprecated functions detected' <<<"$health")"
 grep 'WARNING' <<<"$health" | sed 's/^/    /'
 check "no message about something deprecated" 0 "$(grep -ci 'deprecated' <<<"$messages")"
+
+keys '<Space>ff'
+sleep 1
+found="$(lua '(function() local p = require("telescope.actions.state").get_current_picker(vim.api.nvim_get_current_buf()); local r = {}; for e in p.manager:iter() do r[#r + 1] = e.value end; table.sort(r); return table.concat(r, " ") end)()')"
+check "<leader>ff finds hidden files and names with git, not .git/ nor ignored ones" \
+    ".data/state .github/workflows/ci.yml .gitignore lua/plugins/git.lua t.lua" "$found"
+keys '<Esc><Esc>'
 
 # Deprecated in the plugins without vim.deprecate (so no health warning):
 # gitsigns' next_hunk/prev_hunk, conform's lsp_fallback; and Neovim's own

@@ -17,7 +17,7 @@ The leader is `Space`: `<leader>ff` means Space, then `f`, then `f`. Plugins com
 
 | Keys | Does |
 | :--- | :--- |
-| `<leader>ff` | A file by name |
+| `<leader>ff` | A file by name (hidden ones too; not what .gitignore lists) |
 | `<leader>fg` | Text in every file |
 | `<leader>fb` | An open buffer |
 | `<leader>fk` | A shortcut |

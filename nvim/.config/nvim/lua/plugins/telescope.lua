@@ -14,7 +14,9 @@ return {
 		require("telescope").setup({
 			defaults = {
 				path_display = { "tail" }, -- Show only the file name, hide the long path
-				file_ignore_patterns = { "node_modules", ".git" }, -- Ignore heavy folders
+				-- Lua patterns on the path: anchored to whole folder names, so
+				-- git.lua, .github and .gitignore still show
+				file_ignore_patterns = { "^%.git/", "/%.git/", "^node_modules/", "/node_modules/" },
 
 				-- === Side preview configuration ===
 				sorting_strategy = "ascending", -- Make the list start from the top
@@ -27,6 +29,11 @@ return {
 					width = 0.85,
 					height = 0.85,
 				},
+			},
+			pickers = {
+				-- Hidden files too (.github, .data...); what .gitignore lists
+				-- stays out
+				find_files = { hidden = true },
 			},
 		})
 	end,
