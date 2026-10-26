@@ -2,7 +2,8 @@
 # Neovim's config working with what Neovim and the plugins expect today: a Lua
 # file with a diagnostic and a git change is opened in the sandbox of lib.sh,
 # the LSP starts, and the keys that call into Neovim and the plugins are used
-# (yank, ]d / [d, ]c / [c, format, <leader>ff). Then nothing deprecated may have been
+# (yank, ]d / [d, ]c / [c, format, <leader>ff). lua_ls must know vim
+# (lazydev.nvim). Then nothing deprecated may have been
 # called (:checkhealth vim.deprecated), the servers get nvim-cmp's
 # capabilities, stylua runs only as conform's formatter, grr is the
 # references key, and every map has a desc (no_desc.lua).
@@ -34,12 +35,12 @@ cleanup() {
 trap cleanup EXIT
 
 # A git repo with one committed file, then changed: line 3 has a diagnostic
-# (undefined global), line 5 a git hunk
+# (undefined global; vim on it is known, lazydev.nvim), line 5 a git hunk
 mkdir "$SB/work"
 cat >"$SB/work/t.lua" <<'EOF'
 local M = {}
 function M.value()
-    return undefined_value
+    return undefined_value or vim.fn.getcwd()
 end
 return M
 EOF
@@ -72,6 +73,11 @@ wait_for 30 diagnosed || fail_early "lua_ls reported nothing on the test file"
 signed() { [[ "$(lua 'vim.b.gitsigns_status_dict and 1 or 0')" == 1 ]]; }
 wait_for 15 signed || fail_early "gitsigns didn't attach"
 
+# lazydev.nvim hands lua_ls Neovim's types once the file is open
+vim_known() { [[ "$(lua '#vim.tbl_filter(function(d) return d.message:find("vim", 1, true) end, vim.diagnostic.get(0))')" == 0 ]]; }
+wait_for 15 vim_known
+check "lua_ls knows vim (lazydev.nvim), the undefined global is still reported" "0 1" \
+    "$(lua '#vim.tbl_filter(function(d) return d.message:find("vim", 1, true) end, vim.diagnostic.get(0)) .. " " .. #vim.tbl_filter(function(d) return d.message:find("undefined_value", 1, true) end, vim.diagnostic.get(0))')"
 check "diagnostics show their message at the end of the line" 1 "$(lua 'vim.diagnostic.config().virtual_text and 1 or 0')"
 check "lua_ls gets nvim-cmp's capabilities (preselect)" 1 \
     "$(lua 'vim.tbl_get(vim.lsp.get_clients({ name = "lua_ls" })[1].capabilities, "textDocument", "completion", "completionItem", "preselectSupport") and 1 or 0')"

@@ -58,6 +58,9 @@ return {
 					end, { "i", "s" }),
 				}),
 				sources = cmp.config.sources({
+					-- Module names in require() of this config (lazydev.nvim,
+					-- Lua files only); group 0 so lua_ls' own list waits
+					{ name = "lazydev", group_index = 0 },
 					{ name = "nvim_lsp" }, -- High priority: Code intelligence
 					{ name = "luasnip" }, -- Snippets
 					{ name = "buffer" }, -- Words already in the text
