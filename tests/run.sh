@@ -9,7 +9,8 @@
 #   nvim   Neovim inside tmux: Ctrl/Alt + h/j/k/l between Neovim's splits
 #          and tmux's panes; the config with the LSP on, nothing deprecated;
 #          the shortcut search (prefix + ?); sessions saved and restored;
-#          the popups (lazygit, scratch, projects); the color preview
+#          the popups (lazygit, scratch, projects); the color preview;
+#          QML (Treesitter, qmlls finding Quickshell's modules)
 #          (needs tmux and the plugins lazy.nvim and Mason installed)
 # No section = all of them. Exits 1 when a section fails or its tool is
 # missing (nothing is skipped silently).
@@ -85,6 +86,7 @@ run_nvim() {
     tests/nvim/sessions.sh || ok=1
     tests/nvim/popups.sh || ok=1
     tests/nvim/colors.sh || ok=1
+    tests/nvim/qml.sh || ok=1
     return "$ok"
 }
 

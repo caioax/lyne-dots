@@ -108,6 +108,8 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     [ -f "$DRY/.zshrc" ] && [ -f "$DRY/.config/nvim/init.lua" ] && [ -f "$DRY/.config/gtk-3.0/settings.ini" ]
     [ ! -d "$DRY/.lyne-dots-backup" ]
     assert_equal "$(jq -c .system.stow "$DRY/.config/quickshell/state.json")" '["hyprland","quickshell","local"]'
+    # No editor, no QML language server file
+    [ ! -e "$DRY/.config/quickshell/.qmlls.ini" ]
     # The review (in the log with --answers) said so
     run log
     assert_line "review Links: hyprland, quickshell, local"
@@ -135,6 +137,8 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     assert_output --partial ".zshrc"
     assert_equal "$(jq -c .system.stow "$DRY/.config/quickshell/state.json")" \
         '["hyprland","quickshell","kitty","nvim","zsh","tmux","local","fastfetch","kde","theming"]'
+    # Neovim's qmlls: the empty file Quickshell fills
+    [ -f "$DRY/.config/quickshell/.qmlls.ini" ] && [ ! -s "$DRY/.config/quickshell/.qmlls.ini" ]
 }
 
 @test "--stow-only links again the packages recorded, plus the shell's" {

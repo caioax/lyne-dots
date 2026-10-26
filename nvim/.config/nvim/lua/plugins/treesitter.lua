@@ -31,6 +31,7 @@ return {
             "php",
             "ruby",
             "sql",
+            "qmljs", -- QML (Quickshell)
         }
 
         -- Install only the parsers that are actually missing.

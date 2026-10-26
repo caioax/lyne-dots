@@ -249,6 +249,32 @@ real_stow() {
     refute [ -L "$HOME/.clang-format" ]
 }
 
+@test "043: where nvim is linked, an empty .qmlls.ini for Quickshell to fill; one already there stays" {
+    fake_dots
+    rm "$DOTS_DIR/nvim"
+    cp -r "$REPO/nvim" "$DOTS_DIR/"
+    ln -s "$DOTS_DIR/nvim/.config/nvim" "$HOME/.config/nvim"
+    run migrate 043-qmlls-ini.sh
+    assert_success
+    assert_output --partial "Created ~/.config/quickshell/.qmlls.ini"
+    [ -f "$HOME/.config/quickshell/.qmlls.ini" ] && [ ! -s "$HOME/.config/quickshell/.qmlls.ini" ]
+    # Quickshell's link into /run/user, dangling after a reboot: left alone
+    rm "$HOME/.config/quickshell/.qmlls.ini"
+    ln -s /nonexistent/quickshell/vfs/x/.qmlls.ini "$HOME/.config/quickshell/.qmlls.ini"
+    run migrate 043-qmlls-ini.sh
+    assert_success
+    assert_output ""
+    [ "$(readlink "$HOME/.config/quickshell/.qmlls.ini")" == /nonexistent/quickshell/vfs/x/.qmlls.ini ]
+}
+
+@test "043: nvim not linked, no .qmlls.ini" {
+    fake_dots
+    run migrate 043-qmlls-ini.sh
+    assert_success
+    assert_output ""
+    [ ! -e "$HOME/.config/quickshell/.qmlls.ini" ]
+}
+
 @test "a migration with nothing to convert says nothing" {
     fake_dots
     run migrate 018-special-workspaces-ids.sh

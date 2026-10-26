@@ -25,18 +25,36 @@ QMLLINT="${QMLLINT:-/usr/lib/qt6/bin/qmllint}"
     exit 1
 }
 
-# The shell imports its folders as qs.config and qs.services
+# The shell imports its folders as qs.config and qs.services. They have no
+# qmldir: Quickshell writes one for them (src/core/scan.cpp; its qmlls
+# support only sees the ones it writes), and so does this, the same way: the
+# module name, then each QML type, singleton when the file says pragma
+# Singleton. The folders' files are copied next to it (qmllint follows links
+# back to the real folder) and linted from there, so the types see their
+# neighbours as singletons too
 imports="$(mktemp -d)"
 trap 'rm -rf "$imports"' EXIT
-mkdir -p "$imports/qs"
-ln -s "$SHELL_DIR/config" "$imports/qs/config"
-ln -s "$SHELL_DIR/services" "$imports/qs/services"
+for dir in config services; do
+    mkdir -p "$imports/qs/$dir"
+    cp "$SHELL_DIR/$dir"/* "$imports/qs/$dir/"
+    echo "module qs.$dir" >"$imports/qs/$dir/qmldir"
+    for file in "$SHELL_DIR/$dir"/[A-Z]*.qml; do
+        name="$(basename "$file" .qml)"
+        grep -q '^pragma Singleton' "$file" && printf 'singleton ' >>"$imports/qs/$dir/qmldir"
+        echo "$name 1.0 $name.qml" >>"$imports/qs/$dir/qmldir"
+    done
+done
 
 # "file:line:col: message [category]" -> "file: message [category]"
+lint() {
+    find "$@" -name '*.qml' -printf '%P\0' | sort -z | xargs -0 "$QMLLINT" -I "$imports" 2>&1 |
+        sed -nE 's/^(Warning|Info|Error): ([^:]+):[0-9]*:?[0-9]*:? (.*)$/\1: \2: \3/p'
+}
 current="$(
-    cd "$SHELL_DIR" || exit 1
-    find . -name '*.qml' -printf '%P\0' | sort -z | xargs -0 "$QMLLINT" -I "$imports" 2>&1 |
-        sed -nE 's/^(Warning|Info|Error): ([^:]+):[0-9]*:?[0-9]*:? (.*)$/\1: \2: \3/p' | sort -u
+    {
+        (cd "$SHELL_DIR" && lint . -path ./config -prune -o -path ./services -prune -o)
+        (cd "$imports/qs" && lint .)
+    } | sort -u
 )"
 
 if [[ "${1:-}" == --update ]]; then

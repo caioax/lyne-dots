@@ -327,6 +327,20 @@ step_tmux() {
     fi
 }
 
+# Neovim's QML language server (qmlls) finds Quickshell's modules through a
+# .qmlls.ini next to shell.qml: Quickshell fills an empty one in (with a link
+# to the folder it generates) each time it starts. Gitignored, so it's made
+# here
+step_qml_tooling() {
+    local file="$HOME/.config/quickshell/.qmlls.ini"
+    if [[ -e "$file" || -L "$file" ]]; then
+        log_info "QML language server already set up."
+    elif [[ -d "$HOME/.config/quickshell" ]]; then
+        : >"$file" || return 1
+        log_info "QML language server: Quickshell fills ~/.config/quickshell/.qmlls.ini when it starts"
+    fi
+}
+
 step_services() {
     # Bluetooth
     if systemctl list-unit-files | grep -q "bluetooth.service"; then
@@ -469,6 +483,7 @@ plan_steps() {
         step_add step_zsh "Zsh and Oh My Zsh" 2
         step_add step_tmux "Tmux plugin manager"
     fi
+    has_category editor && step_add step_qml_tooling "QML language server (Neovim)"
     has_category utils && step_add step_services "Services (Bluetooth, network, i2c)"
     has_category utils && step_add step_power_profiles "Power profiles (laptops)"
     has_category core && step_add step_wallpaper "Wallpaper"

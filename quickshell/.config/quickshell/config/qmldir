@@ -1,2 +1,0 @@
-module qs.config
-singleton Config Config.qml
