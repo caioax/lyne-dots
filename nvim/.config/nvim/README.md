@@ -60,6 +60,7 @@ With a language server (Mason installs them):
 | `]d` / `[d` | Next / previous diagnostic |
 | `gl` | The line's diagnostics in a float (the message also shows at the end of the line) |
 | `<leader>mp` | Format (also happens on save) |
+| `<leader>uc` | Color preview on / off (colors in the code show their color; in QML 8 digits are #AARRGGBB) |
 
 The completion menu: `Tab` / `Shift+Tab` move through it, `Enter` picks, `Ctrl+Space` opens it.
 
