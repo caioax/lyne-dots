@@ -68,7 +68,8 @@ git -C "$SB/work" add t.lua
 git -C "$SB/work" -c user.name=test -c user.email=test@example.com commit -qm test
 sed -i 's/^return M$/return M -- changed/' "$SB/work/t.lua"
 
-(cd "$SB/work" && exec "$SB/nvim.sh" --headless t.lua) >/dev/null 2>&1 &
+# Outside tmux, as when Neovim opens in a plain terminal
+(cd "$SB/work" && exec env -u TMUX -u TMUX_PANE "$SB/nvim.sh" --headless t.lua) >/dev/null 2>&1 &
 NVIM_PID=$!
 
 lua() { nv "luaeval('$1')"; }
@@ -123,6 +124,9 @@ fi
 check "checkhealth vim.deprecated: OK" 1 "$(grep -c 'No deprecated functions detected' <<<"$health")"
 grep 'WARNING' <<<"$health" | sed 's/^/    /'
 check "no message about something deprecated" 0 "$(grep -ci 'deprecated' <<<"$messages")"
+# Notifications go to snacks.notifier, not :messages
+notified="$(lua 'table.concat(vim.tbl_map(function(n) return n.msg end, Snacks.notifier.get_history()), "\n")')"
+check "outside tmux, smart-splits doesn't warn about its backend" 0 "$(grep -c 'none of the configured backends' <<<"$notified")"
 
 # formatted FILE: its line 2 after conform formats it (what a save does)
 formatted() {

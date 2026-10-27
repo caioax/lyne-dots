@@ -70,8 +70,9 @@ return {
     },
     config = function()
         require("smart-splits").setup({
-            -- Inside tmux: past the last split, move to tmux's panes
-            mux = { backend = "smart-splits-backend-tmux" },
+            -- Inside tmux: past the last split, move to tmux's panes. Outside
+            -- it the keys just move between Neovim's splits, without a warning
+            mux = { backend = "smart-splits-backend-tmux", warn_if_unusable = false },
             -- Ignore buffers that should not be resized or navigated
             ignored_filetypes = {
                 "nofile",
