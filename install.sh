@@ -88,20 +88,31 @@ install_packages() {
     local -n PACKAGES_REF="$ARRAY_NAME" 2>/dev/null || true
     local -n AUR_PACKAGES_REF="$AUR_ARRAY_NAME" 2>/dev/null || true
 
+    # Only what's missing (pacman -T also knows provides: an older install's
+    # qt5ct-kde stands for qt5ct, which --needed alone would try to install
+    # over it, and the conflict would stop the whole transaction)
+    local repo_missing=() aur_missing=()
+    ((${#PACKAGES_REF[@]})) && mapfile -t repo_missing < <(pacman -T "${PACKAGES_REF[@]}")
+    ((${#AUR_PACKAGES_REF[@]})) && mapfile -t aur_missing < <(pacman -T "${AUR_PACKAGES_REF[@]}")
+
     # Install official packages
-    if [[ ${#PACKAGES_REF[@]} -gt 0 ]]; then
+    if [[ ${#repo_missing[@]} -gt 0 ]]; then
         log_step "Installing official packages ($CATEGORY)..."
-        sudo pacman -S --needed --noconfirm "${PACKAGES_REF[@]}" || {
+        sudo pacman -S --needed --noconfirm "${repo_missing[@]}" || {
             log_warn "Some packages may not be available"
         }
     fi
 
-    # Install AUR packages
-    if [[ ${#AUR_PACKAGES_REF[@]} -gt 0 ]]; then
-        log_step "Installing AUR packages ($CATEGORY)..."
-        $AUR_HELPER -S --needed --noconfirm "${AUR_PACKAGES_REF[@]}" || {
-            log_warn "Some AUR packages may not be available"
-        }
+    # Install AUR packages one at a time: the helper stops a batch at the
+    # first build that fails, and the others (even unrelated ones) are left
+    # out with it
+    local pkg failed=()
+    for pkg in "${aur_missing[@]}"; do
+        log_step "Installing $pkg from the AUR ($CATEGORY)..."
+        $AUR_HELPER -S --needed --noconfirm "$pkg" || failed+=("$pkg")
+    done
+    if [[ ${#failed[@]} -gt 0 ]]; then
+        log_warn "Not installed from the AUR: ${failed[*]}; the build output is in the log"
     fi
 }
 

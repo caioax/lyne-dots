@@ -275,6 +275,36 @@ real_stow() {
     [ ! -e "$HOME/.config/quickshell/.qmlls.ini" ]
 }
 
+@test "044: with the theming packages, qt5ct and Bibata when missing" {
+    fake_dots
+    pkgs qt6ct-kde
+    run migrate 044-qt5ct-bibata.sh
+    assert_success
+    assert_line "   Installing qt5ct..."
+    assert_line "   Installing bibata-cursor-theme (AUR)..."
+    grep -q "^qt5ct " "$FAKE_PKGS"
+    grep -qx "yay -S --needed --noconfirm bibata-cursor-theme" "$STUB_LOG"
+}
+
+@test "044: an installed qt5ct-kde stays and Bibata isn't built again" {
+    fake_dots
+    pkgs qt6ct-kde qt5ct-kde bibata-cursor-theme
+    run migrate 044-qt5ct-bibata.sh
+    assert_success
+    assert_output "   qt5ct already installed, skipping
+   bibata-cursor-theme already installed, skipping"
+    refute grep -q "^qt5ct " "$FAKE_PKGS"
+    grep -q "^qt5ct-kde " "$FAKE_PKGS"
+}
+
+@test "044: without the theming packages, nothing" {
+    fake_dots
+    run migrate 044-qt5ct-bibata.sh
+    assert_success
+    assert_output ""
+    refute grep -q "^qt5ct " "$FAKE_PKGS"
+}
+
 @test "a migration with nothing to convert says nothing" {
     fake_dots
     run migrate 018-special-workspaces-ids.sh

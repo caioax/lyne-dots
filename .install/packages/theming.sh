@@ -10,6 +10,12 @@ THEMING_PACKAGES=(
     # GTK Theming
     "nwg-look" # GTK theme configuration for Wayland
 
+    # Qt5 theme configuration: plain qt5ct (qt5ct-kde needs KF5's
+    # qqc2-desktop-style5 and kirigami2, which left the repos and no longer
+    # build from the AUR). Qt5 apps get the style, fonts and icons; the KDE
+    # color scheme is a qt5ct-kde extra
+    "qt5ct" # Qt5 theme configuration
+
     # Themes
     "breeze"        # KDE Breeze theme
     "breeze5"       # Breeze QT5 theme
@@ -34,7 +40,6 @@ THEMING_PACKAGES=(
 # AUR packages
 THEMING_AUR_PACKAGES=(
     # Qt Theming
-    "qt5ct-kde" # Qt5 theme configuration
     "qt6ct-kde" # Qt6 theme configuration
 
     # The default mouse cursor (more in Settings > Cursor)

@@ -350,7 +350,8 @@ _run_draw() {
 # LYNE_DRY_HOME reuses one; LYNE_DRY_DELAY sets the time per fake package;
 # LYNE_DRY_FRESH=1 acts as if no package were installed, LYNE_DRY_INSTALLED=
 # "name=version ..." as if only those were; LYNE_DRY_FAIL="cmd
-# ..." makes those stand-ins fail (tests of the failure paths).
+# ..." makes those stand-ins fail (tests of the failure paths), "cmd:arg"
+# only when called with that argument (yay:bibata-cursor-theme).
 # ---------------------------------------------------------------------------
 run_dry_setup() {
     # Without its stand-ins a dry run would reach the real sudo: any problem
@@ -420,7 +421,13 @@ fake_query() {
     return $rc
 }
 
-if [[ " ${LYNE_DRY_FAIL:-} " == *" $name "* ]]; then
+_dry_fails() {
+    local arg
+    [[ " ${LYNE_DRY_FAIL:-} " == *" $name "* ]] && return 0
+    for arg in "$@"; do [[ " ${LYNE_DRY_FAIL:-} " == *" $name:$arg "* ]] && return 0; done
+    return 1
+}
+if _dry_fails "$@"; then
     echo "[dry-run] $name $* (made to fail)"
     echo "error: $name failed (LYNE_DRY_FAIL)" >&2
     exit 1

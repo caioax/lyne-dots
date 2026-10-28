@@ -65,7 +65,10 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     assert_line --partial "[dry-run] sudo mkinitcpio -P"
     assert_line --partial "[dry-run] stow -d $REPO -t $DRY -R quickshell"
     # The default cursor: its package with theming, applied like Settings does
-    assert_line --regexp '^\[dry-run\] yay -S --needed --noconfirm .*bibata-cursor-theme'
+    assert_line "[dry-run] yay -S --needed --noconfirm bibata-cursor-theme"
+    # Plain qt5ct from the repos (qt5ct-kde's KF5 deps no longer build)
+    assert_line --regexp '^\[dry-run\] sudo pacman -S --needed --noconfirm .* qt5ct '
+    refute_line --partial "qt5ct-kde"
     assert_line "[dry-run] gsettings set org.gnome.desktop.interface cursor-theme Bibata-Modern-Classic"
     assert_line "[dry-run] gsettings set org.gnome.desktop.interface cursor-size 24"
     grep -qx "Inherits=Bibata-Modern-Classic" "$DRY/.icons/default/index.theme"
@@ -191,6 +194,26 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     refute_output --partial "Enjoy your new setup"
     run log
     assert_line --partial "made to fail"
+}
+
+@test "a failing AUR build leaves the category's other AUR packages installed, and names it" {
+    answers "categories=core theming" "nvidia=none" "reboot=no"
+    LYNE_DRY_FAIL=yay:qt6ct-kde run install --answers "$ANSWERS"
+    assert_success
+    assert_line --regexp '^\[warn\] Packages (·|-) theming \(Not installed from the AUR: qt6ct-kde; the build output is in the log\)$'
+    run log
+    assert_line --partial "[dry-run] yay -S --needed --noconfirm qt6ct-kde (made to fail)"
+    assert_line "[dry-run] yay -S --needed --noconfirm bibata-cursor-theme"
+    assert_line "[dry-run] gsettings set org.gnome.desktop.interface cursor-theme Bibata-Modern-Classic"
+}
+
+@test "only missing packages are installed (an older install's qt5ct-kde stands for qt5ct)" {
+    LYNE_DRY_FRESH="" LYNE_DRY_INSTALLED="qt5ct=1.9-2 matugen=4.0-1 qt6ct-kde=0.11-8" run install --packages theming
+    assert_success
+    assert_line --regexp '^\[dry-run\] sudo pacman -S --needed --noconfirm nwg-look breeze '
+    refute_line --regexp 'pacman -S .*(qt5ct|matugen)( |$)'
+    refute_line --partial "yay -S --needed --noconfirm qt6ct-kde"
+    assert_line "[dry-run] yay -S --needed --noconfirm bibata-cursor-theme"
 }
 
 @test "--packages installs one category only" {
