@@ -23,7 +23,8 @@
 # Usage: tests/qml/smoke.sh   (in a Hyprland session)
 #   SMOKE_KEEP=1   keep the sandbox (its path is printed) for a look
 #   SMOKE_WAIT=s   wait after each step (default 0.6)
-#   SMOKE_SHELL / SMOKE_SPECIALS   copies to run instead (a test that it fails)
+#   SMOKE_SHELL / SMOKE_SPECIALS / SMOKE_WORKSPACES
+#                  copies to run instead (a test that they fail)
 # =============================================================================
 
 set -uo pipefail
@@ -31,8 +32,10 @@ set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 # SMOKE_SHELL: another copy of the shell config (a test that it fails)
 SHELL_DIR="${SMOKE_SHELL:-$REPO/quickshell/.config/quickshell}"
-# SMOKE_SPECIALS: another copy of conf/specials.lua (a test that it fails)
+# SMOKE_SPECIALS / SMOKE_WORKSPACES: other copies of conf/specials.lua and
+# conf/workspaces.lua (a test that they fail)
 SPECIALS="${SMOKE_SPECIALS:-$REPO/hyprland/.config/hypr/conf/specials.lua}"
+WORKSPACES="${SMOKE_WORKSPACES:-$REPO/hyprland/.config/hypr/conf/workspaces.lua}"
 ALLOWED="$REPO/tests/qml/allowed.txt"
 WAIT="${SMOKE_WAIT:-0.6}"
 
@@ -61,6 +64,8 @@ LIVE_WL="$WAYLAND_DISPLAY"
 
 LIVE_STATE="$HOME/.config/quickshell/state.json"
 live_state_sum="$(sha1sum "$LIVE_STATE" 2>/dev/null)"
+LIVE_WS_STATE="${XDG_STATE_HOME:-$HOME/.local/state}/lyne/workspace-monitors.lua"
+live_ws_state_sum="$(sha1sum "$LIVE_WS_STATE" 2>/dev/null)"
 repo_status="$(git -C "$REPO" status --porcelain)"
 
 # Short path: the Hyprland sockets under it must stay below 108 characters
@@ -231,8 +236,11 @@ start_nested() {
 hl.monitor({ output = "", mode = "1920x1080", position = "0x0", scale = 1 })
 hl.config({ xwayland = { enabled = false }, animations = { enabled = false } })
 EOF
-    # The repo's special workspaces, with apps that only leave a file
+    # The repo's workspaces per monitor (the lid always open) and special
+    # workspaces, with apps that only leave a file
+    echo "state:      open" >"$SB/lid-state"
     cat >>"$SB/hyprland.lua" <<EOF
+dofile("$WORKSPACES")
 dofile("$SPECIALS")
 lyne_specials({
     { id = "smoke-empty", name = "Smoke empty", command = "touch $SB/launched-smoke-empty", class = "", keys = "", move_keys = "" },
@@ -242,8 +250,8 @@ EOF
     cat >"$SB/nest.sh" <<EOF
 #!/bin/bash
 echo \$\$ >"$SB/nest.pid"
-unset HYPRLAND_INSTANCE_SIGNATURE DISPLAY
-export WAYLAND_DISPLAY="$LIVE_WL" XDG_RUNTIME_DIR="$SB/run" HOME="$SB/home"
+unset HYPRLAND_INSTANCE_SIGNATURE DISPLAY XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME XDG_CACHE_HOME
+export WAYLAND_DISPLAY="$LIVE_WL" XDG_RUNTIME_DIR="$SB/run" HOME="$SB/home" LYNE_LID_STATE_FILE="$SB/lid-state"
 exec Hyprland -c "$SB/hyprland.lua" >"$SB/hyprland.log" 2>&1
 EOF
     chmod +x "$SB/nest.sh"
@@ -399,6 +407,17 @@ busy_special_not_launched() {
     [[ ! -e "$SB/launched-smoke-busy" ]]
 }
 
+# workspace_step DIRECTION OFFSET: the bar's next/previous (mouse wheel, the
+# same as Super + Ctrl + H/L) lands OFFSET away from WS_START
+active_id() { nested activeworkspace -j | jq -r .id; }
+workspace_step() {
+    local monitor want=$((WS_START + $2))
+    monitor="$(nested monitors -j | jq -r '.[0].name')"
+    [[ "$(active_id)" == "$want" ]] && return 0
+    nested dispatch "lyne_workspace_step($1, \"$monitor\")" | grep -qx ok || return 1
+    [[ "$(active_id)" == "$want" ]]
+}
+
 # A list from the shell, as words: list JS
 list() { ev "$1" | tr ',' ' '; }
 
@@ -419,6 +438,10 @@ run_steps() {
     nested dispatch 'hl.dsp.workspace.toggle_special("smoke-empty")' >/dev/null
     nested dispatch "hl.dsp.exec_cmd('/usr/bin/kitty --class smoke-busy -e sleep 60')" >/dev/null
     check "specials › created by a window opens nothing" busy_special_not_launched
+    # special:smoke-busy is still open (kitty): next/previous skip it
+    WS_START="$(active_id)"
+    check "workspaces › next with a special open" workspace_step 1 1
+    check "workspaces › previous with a special open" workspace_step -1 0
     step "language › pt_BR from the state" ev "$(language_is pt_BR)"
     # Settings search: the translated row, found in both languages
     step "search › index" ev 'SettingsService.buildIndex(); "ok"'
@@ -570,6 +593,8 @@ run_steps
 # Nothing outside the sandbox changed
 [[ "$(sha1sum "$LIVE_STATE" 2>/dev/null)" == "$live_state_sum" ]] ||
     FAILURES+=("outside the sandbox: your $LIVE_STATE changed")
+[[ "$(sha1sum "$LIVE_WS_STATE" 2>/dev/null)" == "$live_ws_state_sum" ]] ||
+    FAILURES+=("outside the sandbox: your $LIVE_WS_STATE changed")
 [[ "$(git -C "$REPO" status --porcelain)" == "$repo_status" ]] ||
     FAILURES+=("outside the sandbox: the repo changed:"$'\n'"$(git -C "$REPO" status --porcelain)")
 

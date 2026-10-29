@@ -380,8 +380,9 @@ function M.step_target(direction, monitor)
 
     local occupied, highest = {}, 0
     for _, workspace in ipairs(hl.get_workspaces()) do
-        local position = workspace.id - base
-        if position >= 1 and position <= M.MAX and workspace.windows > 0 then
+        -- Special workspaces have no numbered id (nil since Hyprland 0.57)
+        local position = workspace.id and workspace.id - base
+        if position and position >= 1 and position <= M.MAX and workspace.windows > 0 then
             occupied[position] = true
             highest = math.max(highest, position)
         end
@@ -481,8 +482,9 @@ end
 -- `to` (windows stay where they are)
 local function renumber(from, to)
     for _, workspace in ipairs(hl.get_workspaces()) do
-        local position = workspace.id - from * M.BLOCK
-        if position >= 1 and position <= M.MAX then
+        -- Special workspaces have no numbered id (nil since Hyprland 0.57)
+        local position = workspace.id and workspace.id - from * M.BLOCK
+        if position and position >= 1 and position <= M.MAX then
             hl.dispatch(hl.dsp.workspace.change_id({ workspace = workspace.id, id = to * M.BLOCK + position }))
         end
     end
