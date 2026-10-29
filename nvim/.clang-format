@@ -1,7 +1,10 @@
 # C/C++ style for clang-format and clangd (Neovim formats C++ with it on save).
-# ColumnLimit 0: no line length, the line breaks you write are kept
+# ColumnLimit 120: lines up to 120 columns, longer ones are wrapped. Not 0:
+# with 0 clang-format splits short enums after the first comma.
+# Function bodies stay on their own lines; only empty ones may share one.
 BasedOnStyle: LLVM
 IndentWidth: 4
 TabWidth: 4
 UseTab: Never
-ColumnLimit: 0
+ColumnLimit: 120
+AllowShortFunctionsOnASingleLine: Empty

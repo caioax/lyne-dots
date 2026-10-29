@@ -8,7 +8,8 @@
 # and session bus, then opens every window, Settings page, dashboard tab,
 # Quick Settings page and launcher mode, shows the OSD and a notification,
 # locks and unlocks, switches themes; all of it in pt_BR, then the language
-# switched live (en, pt_BR, en). It fails on any QML error or warning
+# switched live (en, pt_BR, en). The nested Hyprland loads the repo's
+# special workspaces too (an app opens only when one is shown empty). It fails on any QML error or warning
 # the shell logs (tests/qml/allowed.txt lists the expected ones, from the
 # sandbox itself) and when anything outside the sandbox changed.
 #
@@ -22,6 +23,7 @@
 # Usage: tests/qml/smoke.sh   (in a Hyprland session)
 #   SMOKE_KEEP=1   keep the sandbox (its path is printed) for a look
 #   SMOKE_WAIT=s   wait after each step (default 0.6)
+#   SMOKE_SHELL / SMOKE_SPECIALS   copies to run instead (a test that it fails)
 # =============================================================================
 
 set -uo pipefail
@@ -29,6 +31,8 @@ set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 # SMOKE_SHELL: another copy of the shell config (a test that it fails)
 SHELL_DIR="${SMOKE_SHELL:-$REPO/quickshell/.config/quickshell}"
+# SMOKE_SPECIALS: another copy of conf/specials.lua (a test that it fails)
+SPECIALS="${SMOKE_SPECIALS:-$REPO/hyprland/.config/hypr/conf/specials.lua}"
 ALLOWED="$REPO/tests/qml/allowed.txt"
 WAIT="${SMOKE_WAIT:-0.6}"
 
@@ -227,6 +231,14 @@ start_nested() {
 hl.monitor({ output = "", mode = "1920x1080", position = "0x0", scale = 1 })
 hl.config({ xwayland = { enabled = false }, animations = { enabled = false } })
 EOF
+    # The repo's special workspaces, with apps that only leave a file
+    cat >>"$SB/hyprland.lua" <<EOF
+dofile("$SPECIALS")
+lyne_specials({
+    { id = "smoke-empty", name = "Smoke empty", command = "touch $SB/launched-smoke-empty", class = "", keys = "", move_keys = "" },
+    { id = "smoke-busy", name = "Smoke busy", command = "touch $SB/launched-smoke-busy", class = "^(smoke-busy)$", keys = "", move_keys = "" },
+})
+EOF
     cat >"$SB/nest.sh" <<EOF
 #!/bin/bash
 echo \$\$ >"$SB/nest.pid"
@@ -365,6 +377,28 @@ cursor_quote_ok() {
     [[ "$(sh -c "printf %s $quoted")" == "it's a \"test\"" ]]
 }
 
+# hyprctl of the nested Hyprland
+nested() { XDG_RUNTIME_DIR="$SB/run" HYPRLAND_INSTANCE_SIGNATURE="$NEST_SIG" hyprctl "$@"; }
+
+nothing_deprecated() { [[ "$(nested deprecated-config)" == "all good!" ]]; }
+
+# The special a window of CLASS opened in
+window_in() { [[ "$(nested clients -j | jq -r --arg c "$2" '.[] | select(.class == $c) | .workspace.name')" == "$1" ]]; }
+
+# A special created by a window opening in it isn't empty: its app stays
+# closed (a moment after the window, for the event to have come). kitty may
+# take a while to start on a busy machine: up to 10 s
+busy_special_not_launched() {
+    local _
+    for _ in {1..50}; do
+        window_in special:smoke-busy smoke-busy && break
+        sleep 0.2
+    done
+    window_in special:smoke-busy smoke-busy || return 1
+    sleep 0.5
+    [[ ! -e "$SB/launched-smoke-busy" ]]
+}
+
 # A list from the shell, as words: list JS
 list() { ev "$1" | tr ',' ' '; }
 
@@ -379,6 +413,12 @@ language_is() {
 run_steps() {
     local id
     step "start" ev '"ok"'
+    check "specials › nothing deprecated" nothing_deprecated
+    nested dispatch 'hl.dsp.workspace.toggle_special("smoke-empty")' >/dev/null
+    check "specials › shown empty opens the app" test -e "$SB/launched-smoke-empty"
+    nested dispatch 'hl.dsp.workspace.toggle_special("smoke-empty")' >/dev/null
+    nested dispatch "hl.dsp.exec_cmd('/usr/bin/kitty --class smoke-busy -e sleep 60')" >/dev/null
+    check "specials › created by a window opens nothing" busy_special_not_launched
     step "language › pt_BR from the state" ev "$(language_is pt_BR)"
     # Settings search: the translated row, found in both languages
     step "search › index" ev 'SettingsService.buildIndex(); "ok"'

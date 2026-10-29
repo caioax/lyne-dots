@@ -10,7 +10,8 @@
 -- Each special:
 --   id         workspace name (special:<id>) and bind ids special-<id> / move-to-<id>
 --   name       shown in the bar badge and in the bind descriptions
---   command    app opened when the workspace is shown empty ("" = none)
+--   command    app opened when the workspace is shown empty ("" = none;
+--              needs Hyprland 0.57+, see the workspace.created handler)
 --   class      window class regex pinned to the workspace ("" = none), so
 --              single-instance apps reopened from the tray land there too
 --   keys       default toggle keys ("" = none), changed in Settings > Keybinds
@@ -39,13 +40,14 @@ LYNE_SPECIALS_APPLIED = false
 function lyne_specials(list)
     LYNE_SPECIALS_APPLIED = true
     local autostart = {}
+    local launch = {}
 
     for _, spec in ipairs(list) do
         local workspace = "special:" .. spec.id
         local command = spec.command or ""
 
         if command ~= "" then
-            hl.workspace_rule({ workspace = workspace, on_created_empty = command })
+            launch[workspace] = command
         end
         if (spec.class or "") ~= "" then
             hl.window_rule({
@@ -62,6 +64,18 @@ function lyne_specials(list)
         if spec.autostart and command ~= "" then
             table.insert(autostart, { command = command, workspace = workspace })
         end
+    end
+
+    -- The app opens when its workspace is shown empty. Since 0.57 the event
+    -- comes once the workspace is ready: one created by a window opening in
+    -- it (the app reopened from the tray, the autostart) is not empty then
+    if next(launch) then
+        hl.on("workspace.created", function(ws)
+            local command = launch[ws.addressable_name]
+            if command and ws.is_empty then
+                hl.exec_cmd(command, { workspace = ws.addressable_name })
+            end
+        end)
     end
 
     -- Opened straight into the hidden workspace, nothing shows up. Quickshell
