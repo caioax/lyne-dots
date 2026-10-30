@@ -396,7 +396,7 @@ Each top-level folder is a [GNU Stow](https://www.gnu.org/software/stow/) packag
 - **Language**: English or Português (Brasil), in Settings › Profile & Region (Automatic follows your system). Dates and numbers follow it.
 - **Machine-specific Hyprland files** live in `~/.config/hypr/local/` (not tracked). Settings writes `settings.lua`, `monitors.lua` and `gpus.lua` there; any other `.lua` file you add is loaded too.
 - **Themes** are JSON files in `~/.local/themes/`. Create one in Settings › Theme › New theme, or copy a file from `.data/themes/`.
-- **Wallpapers** live in `~/.local/wallpapers/`, with each theme's in `themes/<theme>/`. `.data/wallpapers/generator/generate.py --theme-file <json>` renders the lake, waves and contour wallpapers for any palette.
+- **Wallpapers** live in `~/.local/wallpapers/`, with each theme's in `themes/<theme>/`. `.data/wallpapers/generator/generate.py --theme-file <json>` renders the contour wallpaper for any palette.
 
 </details>
 

@@ -1,8 +1,9 @@
 # 020-lyne-wallpapers.sh - New default theme wallpapers
 #
-# Every preset theme now ships three generated lyne-dots wallpapers in 4K
-# (lake, waves, contour; see .data/wallpapers/generator/generate.py), and the
-# contour one is the theme's wallpaper. The old theme-*.jpg defaults were
+# Every preset theme now ships generated lyne-dots wallpapers in 4K (lake,
+# waves and contour back then, only contour since; see
+# .data/wallpapers/generator/generate.py), and the contour one is the theme's
+# wallpaper. The old theme-*.jpg defaults were
 # removed from the repo; the copies already in ~/.local/wallpapers stay.
 # A theme only switches to the new wallpaper while it still uses its old
 # default: wallpapers the user picked for a theme are kept.

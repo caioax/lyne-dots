@@ -350,21 +350,21 @@ ColumnLayout {
             }
         }
 
-        // lyne-dots scenes rendered in the theme's colors
+        // The lyne-dots contour scene rendered in the theme's colors
         SettingRow {
             id: generateRow
 
-            label: I18n.tr("lyne-dots wallpapers")
+            label: I18n.tr("lyne-dots wallpaper")
             description: {
                 if (root.generating)
-                    return I18n.tr("Rendering the scenes… %1 of %2 ready", WallpaperService.generatedCount, 3);
+                    return I18n.tr("Rendering the contour scene…");
                 if (root.generateError !== "")
                     return root.generateError;
                 if (WallpaperService.generatingFor !== "")
-                    return I18n.tr("Another theme's wallpapers are rendering");
+                    return I18n.tr("Another theme's wallpaper is rendering");
                 if (root.hasLyneWallpapers)
-                    return I18n.tr("Lake, waves and contour in the colors of %1. Render them again after changing its colors", root.displayName);
-                return I18n.tr("Render lake, waves and contour scenes in the colors of %1", root.displayName);
+                    return I18n.tr("The contour scene in the colors of %1. Render it again after changing its colors", root.displayName);
+                return I18n.tr("Render the contour scene in the colors of %1", root.displayName);
             }
             descriptionColor: root.generateError !== "" && !root.generating ? Config.errorColor : Config.subtextColor
 

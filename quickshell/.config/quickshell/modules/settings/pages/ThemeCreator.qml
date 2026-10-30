@@ -96,7 +96,7 @@ ColumnLayout {
     property bool fineTune: false
     property string fineTuneSection: "palette"
     property bool applyAfter: true
-    // Render the lyne-dots scenes after saving: new themes without a picked
+    // Render the lyne-dots wallpaper after saving: new themes without a picked
     // wallpaper, and edits of themes that use one of theirs
     property bool generateWallpapers: editSlug !== "" ? String(editPreview?.wallpaper ?? "").includes("/lyne-") : !(source === "wallpaper" && useWallpaper)
     property bool saving: false
@@ -811,8 +811,8 @@ ColumnLayout {
                 }
 
                 ToggleRow {
-                    label: root.editSlug !== "" ? I18n.tr("Render its lyne-dots wallpapers again") : I18n.tr("Generate lyne-dots wallpapers")
-                    description: root.editSlug === "" && !(root.source === "wallpaper" && root.useWallpaper) ? I18n.tr("Lake, waves and contour scenes in the theme's colors, ready a few seconds after saving; contour becomes its wallpaper") : I18n.tr("Lake, waves and contour scenes in the theme's colors, ready a few seconds after saving")
+                    label: root.editSlug !== "" ? I18n.tr("Render its lyne-dots wallpaper again") : I18n.tr("Generate lyne-dots wallpaper")
+                    description: root.editSlug === "" && !(root.source === "wallpaper" && root.useWallpaper) ? I18n.tr("The contour scene in the theme's colors, ready a few seconds after saving; it becomes its wallpaper") : I18n.tr("The contour scene in the theme's colors, ready a few seconds after saving")
                     checked: root.generateWallpapers
                     onToggled: value => root.generateWallpapers = value
                 }

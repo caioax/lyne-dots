@@ -42,10 +42,8 @@ Singleton {
     readonly property string themesConfigDir: Quickshell.env("HOME") + "/.local/themes"
 
     readonly property string generatorPath: Paths.dots + "/.data/wallpapers/generator/generate.py"
-    readonly property var generatorScenes: ["lake", "waves", "contour"]
-    // Theme whose lyne-dots wallpapers are being rendered ("" when idle)
+    // Theme whose lyne-dots wallpaper is being rendered ("" when idle)
     property string generatingFor: ""
-    property int generatedCount: 0
     // Last error of the generator, per theme
     property var generateErrors: ({})
 
@@ -167,9 +165,9 @@ Singleton {
         return rel ? wallpaperDir + "/" + rel : "";
     }
 
-    // Renders lake, waves and contour in the theme's colors into its folder,
-    // at the size of the largest screen. The contour one becomes the theme's
-    // wallpaper when makeActive, or when the theme has none
+    // Renders the contour scene in the theme's colors into its folder, at the
+    // size of the largest screen. It becomes the theme's wallpaper when
+    // makeActive, or when the theme has none
     function generateThemeWallpapers(themeName: string, makeActive = false) {
         if (generatingFor !== "")
             return;
@@ -185,7 +183,6 @@ Singleton {
         const errors = Object.assign({}, generateErrors);
         delete errors[themeName];
         generateErrors = errors;
-        generatedCount = 0;
         generatingFor = themeName;
         generateProc._makeActive = makeActive;
         generateProc._error = "";
@@ -427,12 +424,6 @@ Singleton {
         property bool _makeActive: false
         property string _error: ""
 
-        stdout: SplitParser {
-            onRead: data => {
-                if (data.trim().endsWith(".jpg"))
-                    root.generatedCount++;
-            }
-        }
         stderr: SplitParser {
             onRead: data => {
                 console.error("[Wallpaper:Generate] " + data);
@@ -444,7 +435,7 @@ Singleton {
             const theme = root.generatingFor;
             const ok = exitCode === 0;
             if (ok) {
-                console.log("[Wallpaper] Generated the lyne-dots wallpapers of", theme);
+                console.log("[Wallpaper] Generated the lyne-dots wallpaper of", theme);
                 const contour = root.themeWallpaperDir + "/" + theme + "/lyne-" + theme + "-contour.jpg";
                 const current = root.themeWallpaperPath(theme);
                 if (_makeActive || current === "")
