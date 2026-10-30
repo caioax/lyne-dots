@@ -21,6 +21,11 @@ Rectangle {
     border.width: framed ? 1 : 0
     border.color: Config.surface1Color
 
+    PanelShadow {
+        visible: root.framed && Config.shadowEnabled
+        radius: root.radius
+    }
+
     // No width animation here: the items (tray drawer, CPU details, window
     // title) already animate their own size, and a second, lagging animation
     // on the island made the items at the far edge wobble

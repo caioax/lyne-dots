@@ -106,6 +106,27 @@ ColumnLayout {
     }
 
     SettingsGroup {
+        title: I18n.tr("Shadows")
+
+        ToggleRow {
+            label: I18n.tr("Panel shadows")
+            description: I18n.tr("A soft shadow under popups, menus, the launcher and notifications. Wider on light themes, where it shows the most")
+            path: "shadow.enabled"
+        }
+
+        SliderRow {
+            visible: Config.shadowEnabled
+            label: I18n.tr("Shadow strength")
+            description: I18n.tr("How dark the shadow is, on top of what the theme sets")
+            path: "shadow.strength"
+            from: 0.5
+            to: 2
+            stepSize: 0.05
+            format: v => Math.round(v * 100) + "%"
+        }
+    }
+
+    SettingsGroup {
         title: I18n.tr("Motion")
 
         SelectRow {

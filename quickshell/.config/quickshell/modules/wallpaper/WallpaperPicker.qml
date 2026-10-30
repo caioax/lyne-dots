@@ -189,6 +189,10 @@ PanelWindow {
             color: Config.backgroundTransparentColor
             border.width: 1
             border.color: Config.surface2Color
+
+            PanelShadow {
+                radius: floatingPanel.radius
+            }
         }
     }
 
@@ -203,6 +207,7 @@ PanelWindow {
         edges: [root.edge]
         radius: Config.radiusLarge + frame.margin
         shown: WallpaperPickerService.visible && root.attached
+        shadow: true
     }
 
     // The content, inside whichever panel is in use

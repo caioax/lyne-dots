@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import "../"
 
 // OSD capsule: icon badge, level bar and percentage
 Rectangle {
@@ -30,6 +31,10 @@ Rectangle {
     color: Config.backgroundTransparentColor
     border.width: 1
     border.color: Config.surface2Color
+
+    PanelShadow {
+        radius: root.radius
+    }
 
     TextMetrics {
         id: percentMetrics

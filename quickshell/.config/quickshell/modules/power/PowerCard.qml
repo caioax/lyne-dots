@@ -19,6 +19,10 @@ Rectangle {
     border.width: 1
     border.color: Config.surface2Color
 
+    PanelShadow {
+        radius: root.radius
+    }
+
     opacity: shown ? 1 : 0
     scale: shown ? 1 : Config.animPopupFromScale
 

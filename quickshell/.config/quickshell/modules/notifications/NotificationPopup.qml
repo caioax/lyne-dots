@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell.Widgets
 import qs.config
+import "../../components/"
 
 // Toast shown at the top right. Click runs the default action, right/middle
 // click dismisses, swiping right sends it to the history.
@@ -25,7 +26,8 @@ Item {
     implicitWidth: Config.notifWidth
     // Grows in and collapses out, so the cards below move smoothly
     implicitHeight: entered && !notif.exiting ? card.height + Config.notifSpacing : 0
-    clip: true
+    // Only while growing in or collapsing out: at rest the shadow spills
+    clip: height < card.height + Config.notifSpacing
 
     Behavior on implicitHeight {
         NumberAnimation {
@@ -52,6 +54,22 @@ Item {
         target: root.notif
         property: "held"
         value: hover.hovered || content.replyFocused || dragArea.drag.active
+    }
+
+    // The card clips its children: its shadow follows it from outside
+    Item {
+        x: card.x
+        y: card.y
+        width: card.width
+        height: card.height
+        opacity: card.opacity
+        transform: Translate {
+            x: root.slide * card.width
+        }
+
+        PanelShadow {
+            radius: card.radius
+        }
     }
 
     ClippingRectangle {

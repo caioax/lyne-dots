@@ -15,6 +15,7 @@ AttachedPanel {
     readonly property var pending: PowerService.pendingAction
 
     edges: [PowerService.side === "left" ? "left" : "right"]
+    shadow: true
     implicitWidth: content.implicitWidth + Config.padding * 4
     implicitHeight: content.implicitHeight + Config.padding * 6
 

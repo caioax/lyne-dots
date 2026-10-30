@@ -21,6 +21,8 @@ Item {
     // Radius of the free corners
     property real radius: Config.radiusLarge
     property real filletSize: Config.radiusLarge
+    // PanelShadow under the panel; the clip leaves room for it
+    property bool shadow: false
 
     default property alias content: body.data
     readonly property alias body: body
@@ -90,7 +92,8 @@ Item {
     Item {
         id: clipper
 
-        readonly property real s: root.filletSize
+        // Room on the free sides: the fillets, or the shadow
+        readonly property real s: root.shadow ? Math.max(root.filletSize, Config.shadowPad) : root.filletSize
 
         x: root._main === "left" ? 0 : -s
         y: root._main === "top" ? 0 : -s
@@ -128,6 +131,12 @@ Item {
 
             Rectangle {
                 id: body
+
+                PanelShadow {
+                    visible: root.shadow && Config.shadowEnabled
+                    radius: root.radius
+                    flush: root.edges
+                }
 
                 anchors.fill: parent
                 color: root.color

@@ -70,8 +70,8 @@ PanelWindow {
 
     readonly property real screenWidth: screen?.width ?? implicitWidth
     // Room around the popup inside the window: the scale animation's
-    // overshoot, or the fillets when attached
-    readonly property real sidePad: attached ? filletSize : screenMargin
+    // overshoot, or the fillets when attached, and the shadow
+    readonly property real sidePad: Math.max(attached ? filletSize : screenMargin, Config.shadowPad)
 
     // Left edge of the popup on the screen. Floating popups keep
     // Config.spacing from the screen sides, the gap the bar islands use;
@@ -114,7 +114,7 @@ PanelWindow {
     }
 
     implicitWidth: popupWidth + sidePad * 2
-    implicitHeight: popupMaxHeight
+    implicitHeight: popupMaxHeight + Config.shadowPad
     color: "transparent"
 
     property bool isClosing: false
@@ -222,6 +222,10 @@ PanelWindow {
         border.width: 1.0
         border.color: Config.surface2Color
 
+        PanelShadow {
+            radius: background.radius
+        }
+
         transformOrigin: {
             if (root.anchored)
                 return root.upward ? Item.Bottom : Item.Top;
@@ -257,6 +261,7 @@ PanelWindow {
         height: frame.height
         edges: root.attachedEdges
         shown: root.showState && root.attached
+        shadow: true
     }
 
     // The content, inside whichever panel is in use

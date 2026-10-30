@@ -45,6 +45,7 @@ Item {
         height: parent.height
         edges: [root.edge]
         shown: root.shown
+        shadow: true
 
         RowLayout {
             anchors.fill: parent

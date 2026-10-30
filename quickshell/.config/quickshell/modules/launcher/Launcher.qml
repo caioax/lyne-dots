@@ -374,6 +374,11 @@ PanelWindow {
             color: Config.backgroundTransparentColor
             border.width: root.grid ? 0 : 1
             border.color: Config.surface2Color
+
+            PanelShadow {
+                visible: Config.shadowEnabled && !root.grid
+                radius: floatingPanel.radius
+            }
         }
     }
 
@@ -388,6 +393,7 @@ PanelWindow {
         edges: root.attachedEdges
         radius: Config.radiusLarge + frame.margin
         shown: LauncherService.visible && root.attached
+        shadow: !root.grid
     }
 
     // The content, inside whichever panel is in use

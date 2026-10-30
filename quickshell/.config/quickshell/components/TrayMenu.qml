@@ -40,9 +40,19 @@ PanelWindow {
     readonly property int minWidth: Config.fontSizeNormal * 16
     readonly property int maxWidth: Config.fontSizeNormal * 26
 
+    // The card's size and its left edge on the screen; the window adds
+    // room for the shadow around it (none on the bar's side)
+    readonly property real cardWidth: Math.max(minWidth, Math.min(maxWidth, column.widest + card.padding * 2))
+    readonly property real cardHeight: column.implicitHeight + card.padding * 2
+    readonly property real cardX: Math.max(Config.spacing, Math.min(screen.width - cardWidth - Config.spacing, anchorX))
+    readonly property real windowLeft: Math.max(0, cardX - Config.shadowPad)
+
     color: "transparent"
-    implicitWidth: Math.max(minWidth, Math.min(maxWidth, column.widest + card.padding * 2))
-    implicitHeight: column.implicitHeight + card.padding * 2
+    implicitWidth: cardWidth + Config.shadowPad * 2
+    implicitHeight: cardHeight + Config.shadowPad
+    mask: Region {
+        item: card
+    }
 
     WlrLayershell.namespace: "qs_modules"
     WlrLayershell.layer: WlrLayer.Overlay
@@ -55,8 +65,8 @@ PanelWindow {
         bottom: Config.barOnBottom
     }
     margins {
-        left: Math.max(Config.spacing, Math.min(root.screen.width - implicitWidth - Config.spacing, root.anchorX))
-        top: Config.barOnBottom ? 0 : Math.min(root.screen.height - implicitHeight - Config.spacing, root.anchorY)
+        left: root.windowLeft
+        top: Config.barOnBottom ? 0 : Math.min(root.screen.height - root.cardHeight - Config.spacing, root.anchorY)
         bottom: Config.barOnBottom ? root.anchorBottom : 0
     }
 
@@ -147,7 +157,10 @@ PanelWindow {
 
         readonly property int padding: Math.round(Config.padding / 2)
 
-        anchors.fill: parent
+        x: root.cardX - root.windowLeft
+        y: Config.barOnBottom ? Config.shadowPad : 0
+        width: root.cardWidth
+        height: root.cardHeight
         radius: Config.radiusLarge
         color: Config.cardColor
         border.width: 1
@@ -171,6 +184,10 @@ PanelWindow {
             NumberAnimation {
                 duration: Config.animDurationShort
             }
+        }
+
+        PanelShadow {
+            radius: card.radius
         }
 
         focus: true

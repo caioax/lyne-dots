@@ -131,6 +131,10 @@
     "opacity": {
         "background": 0.9
     },
+    "shadow": {
+        "enabled": true,
+        "strength": 1
+    },
     "geometry": {
         "radiusSmall": 5,
         "radius": 10,

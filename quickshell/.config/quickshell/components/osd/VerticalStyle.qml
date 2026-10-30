@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import "../"
 
 // OSD capsule standing on a screen side: percentage on top, a level bar
 // that fills upwards and the icon badge at the bottom
@@ -26,6 +27,10 @@ Rectangle {
     color: Config.backgroundTransparentColor
     border.width: 1
     border.color: Config.surface2Color
+
+    PanelShadow {
+        radius: root.radius
+    }
 
     ColumnLayout {
         anchors.fill: parent

@@ -28,8 +28,11 @@ Scope {
             // same as the panels attached to it, so they share one tint
             WlrLayershell.namespace: "qs_attached"
 
+            // Floating bars and islands cast a shadow away from the edge
+            readonly property real shadowRoom: Config.barFloating || Config.barIslands ? Config.shadowPad : 0
+
             // The concave corners hang below the reserved area
-            implicitHeight: Config.barReservedHeight + Config.barCornerSize
+            implicitHeight: Config.barReservedHeight + Config.barCornerSize + shadowRoom
             color: "transparent"
             screen: modelData
 
@@ -50,7 +53,7 @@ Scope {
 
             // Top edge of the bar inside the window: at the bottom of the
             // screen the corners hang above it and the margin goes below
-            readonly property int barY: Config.barOnBottom ? Config.barCornerSize : Config.barMargin
+            readonly property int barY: Config.barOnBottom ? Config.barCornerSize + shadowRoom : Config.barMargin
             // Corners touch the side of the bar facing the screen
             readonly property int cornerY: Config.barOnBottom ? 0 : Config.barHeight
 
@@ -73,7 +76,7 @@ Scope {
                 y: {
                     if (!Config.barOnBottom)
                         return 0;
-                    return bar.shown ? Config.barCornerSize : bar.height - 1;
+                    return bar.shown ? Config.barCornerSize + bar.shadowRoom : bar.height - 1;
                 }
                 width: bar.width
                 height: bar.shown ? Config.barReservedHeight : 1
@@ -127,6 +130,11 @@ Scope {
                         color: Config.backgroundTransparentColor
                         border.width: Config.barFloating ? 1 : 0
                         border.color: Config.surface1Color
+
+                        PanelShadow {
+                            visible: Config.barFloating && Config.shadowEnabled
+                            radius: parent.radius
+                        }
                     }
                 }
 

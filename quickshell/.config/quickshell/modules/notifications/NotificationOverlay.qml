@@ -50,12 +50,16 @@ PanelWindow {
         right: true
     }
 
+    // Room for the cards' shadows: on the left, and on the right as much as
+    // the gap to the screen edge allows
+    readonly property real rightRoom: Math.min(Config.spacing, Config.shadowPad)
+
     margins {
         top: Config.barOnBottom ? Config.spacing : Config.barReservedHeight + Config.spacing
-        right: Config.spacing
+        right: Config.spacing - rightRoom
     }
 
-    implicitWidth: Config.notifWidth
+    implicitWidth: Config.notifWidth + Config.shadowPad + rightRoom
     implicitHeight: screen ? screen.height - Config.barReservedHeight - Config.spacing * 2 : 0
     color: "transparent"
 
@@ -68,7 +72,9 @@ PanelWindow {
         id: list
 
         anchors.left: parent.left
+        anchors.leftMargin: Config.shadowPad
         anchors.right: parent.right
+        anchors.rightMargin: root.rightRoom
         anchors.top: parent.top
         height: Math.min(contentHeight, parent.height)
         interactive: false

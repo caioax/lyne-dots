@@ -74,8 +74,13 @@ Scope {
             // Attached panels share the bar's tint (see AttachedPanel)
             WlrLayershell.namespace: attached ? "qs_attached" : "qs_modules"
 
-            implicitWidth: styleLoader.implicitWidth
-            implicitHeight: styleLoader.implicitHeight
+            // Room for the shadow on every side but the one the OSD sits on
+            function room(side) {
+                return side === edge ? 0 : Config.shadowPad;
+            }
+
+            implicitWidth: styleLoader.implicitWidth + room("left") + room("right")
+            implicitHeight: styleLoader.implicitHeight + room("top") + room("bottom")
             color: "transparent"
 
             // Takes the pointer over the OSD only while interactive
@@ -93,6 +98,10 @@ Scope {
             // The attached style slides out by itself
             AnimatedPopup {
                 anchors.fill: parent
+                anchors.leftMargin: osdWindow.room("left")
+                anchors.rightMargin: osdWindow.room("right")
+                anchors.topMargin: osdWindow.room("top")
+                anchors.bottomMargin: osdWindow.room("bottom")
                 shown: OsdService.shown || osdWindow.attached
                 fromScale: osdWindow.attached ? 1 : Config.animPopupFromScale
                 transformOrigin: ({
