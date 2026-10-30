@@ -105,17 +105,26 @@ PanelWindow {
         left: true
     }
 
-    margins {
-        readonly property real fromBar: root.attached ? root.attachLine : (root.barCovered ? 0 : Config.barReservedHeight) + Config.spacing
+    // Distance from the screen edge on the bar's side
+    readonly property real fromBar: attached ? attachLine : (barCovered ? 0 : Config.barReservedHeight) + Config.spacing
+    // Room for the shadow on the bar's side of a floating popup, over the
+    // gap and the bar; it takes no input, so the bar stays clickable
+    readonly property real barRoom: attached ? 0 : Math.min(Config.shadowPad, fromBar)
 
-        top: root.upward ? 0 : fromBar
-        bottom: root.upward ? fromBar : 0
+    margins {
+        top: root.upward ? 0 : root.fromBar - root.barRoom
+        bottom: root.upward ? root.fromBar - root.barRoom : 0
         left: root.windowLeft
     }
 
     implicitWidth: popupWidth + sidePad * 2
-    implicitHeight: popupMaxHeight + Config.shadowPad
+    implicitHeight: popupMaxHeight + Config.shadowPad + barRoom
     color: "transparent"
+    mask: Region {
+        y: root.upward ? 0 : root.barRoom
+        width: root.width
+        height: root.height - root.barRoom
+    }
 
     property bool isClosing: false
     property bool isOpening: false
@@ -194,7 +203,7 @@ PanelWindow {
         id: frame
 
         x: root.bodyX - root.windowLeft
-        y: root.upward ? parent.height - height : 0
+        y: root.upward ? parent.height - height - root.barRoom : root.barRoom
         width: root.popupWidth
         height: Math.min(root.popupMaxHeight, root.contentImplicitHeight + root.contentMargin * 2)
 
@@ -219,8 +228,6 @@ PanelWindow {
         height: frame.height
         color: Config.backgroundTransparentColor
         radius: Config.radiusLarge
-        border.width: 1.0
-        border.color: Config.surface2Color
 
         PanelShadow {
             radius: background.radius

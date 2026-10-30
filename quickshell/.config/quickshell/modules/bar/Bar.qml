@@ -28,8 +28,8 @@ Scope {
             // same as the panels attached to it, so they share one tint
             WlrLayershell.namespace: "qs_attached"
 
-            // Floating bars and islands cast a shadow away from the edge
-            readonly property real shadowRoom: Config.barFloating || Config.barIslands ? Config.shadowPad : 0
+            // Room for the bar's shadow, cast away from the screen edge
+            readonly property real shadowRoom: Config.shadowPad
 
             // The concave corners hang below the reserved area
             implicitHeight: Config.barReservedHeight + Config.barCornerSize + shadowRoom
@@ -96,6 +96,43 @@ Scope {
                     }
                 }
 
+                // A docked bar's shadow follows the bar and its corners; the
+                // bar is pushed past the screen edges, so only the side
+                // facing the windows shows
+                ShapeShadow {
+                    id: dockedShadow
+
+                    readonly property real past: Config.shadowPad
+
+                    anchors.fill: parent
+                    visible: !Config.barFloating && !Config.barIslands && Config.shadowEnabled
+
+                    Rectangle {
+                        x: -dockedShadow.past
+                        y: Config.barOnBottom ? bar.barY : -dockedShadow.past
+                        width: parent.width + dockedShadow.past * 2
+                        height: Config.barHeight + dockedShadow.past
+                        color: dockedShadow.shapeColor
+                    }
+
+                    ConcaveCorner {
+                        x: 0
+                        y: bar.cornerY
+                        size: Config.barCornerSize
+                        flipped: Config.barOnBottom
+                        color: dockedShadow.shapeColor
+                    }
+
+                    ConcaveCorner {
+                        x: parent.width - width
+                        y: bar.cornerY
+                        size: Config.barCornerSize
+                        flipped: Config.barOnBottom
+                        color: dockedShadow.shapeColor
+                        mirrored: true
+                    }
+                }
+
                 ConcaveCorner {
                     x: 0
                     y: bar.cornerY
@@ -128,8 +165,6 @@ Scope {
                         visible: !Config.barIslands
                         radius: Config.barFloating ? Config.radiusLarge : 0
                         color: Config.backgroundTransparentColor
-                        border.width: Config.barFloating ? 1 : 0
-                        border.color: Config.surface1Color
 
                         PanelShadow {
                             visible: Config.barFloating && Config.shadowEnabled

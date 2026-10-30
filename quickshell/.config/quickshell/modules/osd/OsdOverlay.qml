@@ -64,19 +64,20 @@ Scope {
             anchors.bottom: edge === "bottom"
             anchors.left: edge === "left"
             anchors.right: edge === "right"
-            margins.top: edge === "top" ? edgeMargin : 0
-            margins.bottom: edge === "bottom" ? edgeMargin : 0
-            margins.left: edge === "left" ? edgeMargin : 0
-            margins.right: edge === "right" ? edgeMargin : 0
+            margins.top: edge === "top" ? edgeMargin - room("top") : 0
+            margins.bottom: edge === "bottom" ? edgeMargin - room("bottom") : 0
+            margins.left: edge === "left" ? edgeMargin - room("left") : 0
+            margins.right: edge === "right" ? edgeMargin - room("right") : 0
             exclusionMode: ExclusionMode.Ignore
 
             WlrLayershell.layer: WlrLayer.Overlay
             // Attached panels share the bar's tint (see AttachedPanel)
             WlrLayershell.namespace: attached ? "qs_attached" : "qs_modules"
 
-            // Room for the shadow on every side but the one the OSD sits on
+            // Room for the shadow; on the side the OSD sits on, only what
+            // its distance from the edge allows (none when attached)
             function room(side) {
-                return side === edge ? 0 : Config.shadowPad;
+                return side === edge ? Math.min(Config.shadowPad, edgeMargin) : Config.shadowPad;
             }
 
             implicitWidth: styleLoader.implicitWidth + room("left") + room("right")

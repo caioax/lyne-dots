@@ -41,15 +41,17 @@ PanelWindow {
     readonly property int maxWidth: Config.fontSizeNormal * 26
 
     // The card's size and its left edge on the screen; the window adds
-    // room for the shadow around it (none on the bar's side)
+    // room for the shadow around it
     readonly property real cardWidth: Math.max(minWidth, Math.min(maxWidth, column.widest + card.padding * 2))
     readonly property real cardHeight: column.implicitHeight + card.padding * 2
     readonly property real cardX: Math.max(Config.spacing, Math.min(screen.width - cardWidth - Config.spacing, anchorX))
     readonly property real windowLeft: Math.max(0, cardX - Config.shadowPad)
+    // Room on the bar's side, as far as the gap to the screen edge allows
+    readonly property real barRoom: Math.min(Config.shadowPad, Config.barOnBottom ? anchorBottom : anchorY)
 
     color: "transparent"
     implicitWidth: cardWidth + Config.shadowPad * 2
-    implicitHeight: cardHeight + Config.shadowPad
+    implicitHeight: cardHeight + Config.shadowPad + barRoom
     mask: Region {
         item: card
     }
@@ -66,8 +68,8 @@ PanelWindow {
     }
     margins {
         left: root.windowLeft
-        top: Config.barOnBottom ? 0 : Math.min(root.screen.height - root.cardHeight - Config.spacing, root.anchorY)
-        bottom: Config.barOnBottom ? root.anchorBottom : 0
+        top: Config.barOnBottom ? 0 : Math.min(root.screen.height - root.cardHeight - Config.spacing, root.anchorY) - root.barRoom
+        bottom: Config.barOnBottom ? root.anchorBottom - root.barRoom : 0
     }
 
     // Drives the open/close animation; the window stays mapped until the
@@ -158,13 +160,11 @@ PanelWindow {
         readonly property int padding: Math.round(Config.padding / 2)
 
         x: root.cardX - root.windowLeft
-        y: Config.barOnBottom ? Config.shadowPad : 0
+        y: Config.barOnBottom ? Config.shadowPad : root.barRoom
         width: root.cardWidth
         height: root.cardHeight
         radius: Config.radiusLarge
         color: Config.cardColor
-        border.width: 1
-        border.color: Config.surface2Color
         enabled: root.shown
 
         // Grows out of the tray icon: from its top-left corner under a top

@@ -114,6 +114,43 @@ Item {
             height: root.height
             opacity: Math.min(1, root._progress * 2)
 
+            // Shadow of the body and its fillets together, so it follows
+            // the curves; the body is pushed past the flush sides, where the
+            // clip hides it
+            ShapeShadow {
+                id: shapeShadow
+
+                readonly property real past: Config.shadowPad + root.radius
+
+                anchors.fill: parent
+                visible: root.shadow && Config.shadowEnabled
+                reach: past + clipper.s
+
+                Rectangle {
+                    x: root._left ? -shapeShadow.past : 0
+                    y: root._top ? -shapeShadow.past : 0
+                    width: root.width + (root._left ? shapeShadow.past : 0) + (root._right ? shapeShadow.past : 0)
+                    height: root.height + (root._top ? shapeShadow.past : 0) + (root._bottom ? shapeShadow.past : 0)
+                    radius: root.radius
+                    color: shapeShadow.shapeColor
+                }
+
+                Repeater {
+                    model: root._fillets
+
+                    ConcaveCorner {
+                        required property var modelData
+
+                        x: modelData.x
+                        y: modelData.y
+                        size: root.filletSize
+                        color: shapeShadow.shapeColor
+                        mirrored: modelData.mirrored
+                        flipped: modelData.flipped
+                    }
+                }
+            }
+
             Repeater {
                 model: root._fillets
 
@@ -131,12 +168,6 @@ Item {
 
             Rectangle {
                 id: body
-
-                PanelShadow {
-                    visible: root.shadow && Config.shadowEnabled
-                    radius: root.radius
-                    flush: root.edges
-                }
 
                 anchors.fill: parent
                 color: root.color

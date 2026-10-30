@@ -18,8 +18,6 @@ Rectangle {
     implicitHeight: Config.barIslandHeight
     radius: height / 2
     color: framed ? Config.backgroundTransparentColor : "transparent"
-    border.width: framed ? 1 : 0
-    border.color: Config.surface1Color
 
     PanelShadow {
         visible: root.framed && Config.shadowEnabled

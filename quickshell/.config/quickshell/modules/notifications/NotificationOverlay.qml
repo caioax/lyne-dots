@@ -50,17 +50,19 @@ PanelWindow {
         right: true
     }
 
-    // Room for the cards' shadows: on the left, and on the right as much as
-    // the gap to the screen edge allows
+    // Room for the cards' shadows: on the left, and above and on the right
+    // as much as the gap to the screen edge (and the bar) allows
+    readonly property real fromTop: Config.barOnBottom ? Config.spacing : Config.barReservedHeight + Config.spacing
+    readonly property real topRoom: Math.min(fromTop, Config.shadowPad)
     readonly property real rightRoom: Math.min(Config.spacing, Config.shadowPad)
 
     margins {
-        top: Config.barOnBottom ? Config.spacing : Config.barReservedHeight + Config.spacing
-        right: Config.spacing - rightRoom
+        top: root.fromTop - root.topRoom
+        right: Config.spacing - root.rightRoom
     }
 
     implicitWidth: Config.notifWidth + Config.shadowPad + rightRoom
-    implicitHeight: screen ? screen.height - Config.barReservedHeight - Config.spacing * 2 : 0
+    implicitHeight: screen ? screen.height - Config.barReservedHeight - Config.spacing * 2 + topRoom : 0
     color: "transparent"
 
     // Only the cards take input; the rest of the column clicks through
@@ -76,7 +78,8 @@ PanelWindow {
         anchors.right: parent.right
         anchors.rightMargin: root.rightRoom
         anchors.top: parent.top
-        height: Math.min(contentHeight, parent.height)
+        anchors.topMargin: root.topRoom
+        height: Math.min(contentHeight, parent.height - root.topRoom)
         interactive: false
 
         model: ScriptModel {

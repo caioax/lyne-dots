@@ -79,8 +79,9 @@ Item {
         height: content.implicitHeight + Config.padding * 4
         radius: Config.radiusLarge
         color: Config.backgroundTransparentColor
-        border.width: 1
-        border.color: root.notif.isCritical ? Config.errorColor : hover.hovered ? Config.surface2Color : Config.surface1Color
+        // Only a critical notification has a border, in the error color
+        border.width: root.notif.isCritical ? 1 : 0
+        border.color: Config.errorColor
         opacity: 1 - Math.min(1, Math.abs(x) / width + root.slide)
         transform: Translate {
             x: root.slide * card.width
@@ -91,13 +92,6 @@ Item {
             NumberAnimation {
                 duration: Config.animDuration
                 easing.type: Easing.OutQuad
-            }
-        }
-
-        Behavior on border.color {
-            enabled: !Config.themeTransitioning
-            ColorAnimation {
-                duration: Config.animDurationShort
             }
         }
 

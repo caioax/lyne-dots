@@ -29,8 +29,6 @@ Rectangle {
     implicitHeight: Config.fontSizeIcon + Config.padding * 4
     radius: height / 2
     color: Config.backgroundTransparentColor
-    border.width: 1
-    border.color: Config.surface2Color
 
     PanelShadow {
         radius: root.radius

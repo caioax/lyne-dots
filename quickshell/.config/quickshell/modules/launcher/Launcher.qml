@@ -372,8 +372,6 @@ PanelWindow {
             // Concentric with the rows inside the margin
             radius: root.grid ? 0 : Config.radiusLarge
             color: Config.backgroundTransparentColor
-            border.width: root.grid ? 0 : 1
-            border.color: Config.surface2Color
 
             PanelShadow {
                 visible: Config.shadowEnabled && !root.grid

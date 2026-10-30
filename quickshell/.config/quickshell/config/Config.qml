@@ -205,15 +205,16 @@ Singleton {
     readonly property int spacing: getState("geometry.spacing", 8)
     readonly property int padding: getState("geometry.padding", 6)
 
-    // Panel shadows (PanelShadow): the shell draws them, Hyprland only
-    // shadows windows. Wide and soft on light backgrounds, shorter and denser
-    // on dark ones; the alpha stays under the blur's ignore_alpha (0.45) so
-    // the shadow never gets blurred
+    // Panel shadows (PanelShadow, ShapeShadow): the shell draws them,
+    // Hyprland only shadows windows. Wide and soft on light backgrounds,
+    // shorter and denser on dark ones; the alpha stays under the blur's
+    // ignore_alpha (0.45) so the shadow never gets blurred
     readonly property bool shadowEnabled: getState("shadow.enabled", true)
     readonly property real shadowStrength: getState("shadow.strength", 1)
     readonly property bool lightBackground: backgroundColor.hslLightness > 0.5
     readonly property real shadowBlur: lightBackground ? 28 : 20
-    readonly property real shadowOffset: lightBackground ? 8 : 4
+    // Barely shifted down: an even halo on every side
+    readonly property real shadowOffset: lightBackground ? 2 : 1
     readonly property color shadowColor: Qt.rgba(0, 0, 0, Math.min(0.44, (lightBackground ? 0.22 : 0.4) * shadowStrength))
     // Room a window leaves around a panel for its shadow
     readonly property real shadowPad: shadowEnabled ? shadowBlur + shadowOffset : 0
