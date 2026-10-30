@@ -148,7 +148,7 @@ _lyne_notify() {
     notify-send -a "Lyne" -i lyne-dots "$@"
 }
 
-# The managed files (lazy-lock.json, kdeglobals...) aren't the user's work:
+# The managed files (lazy-lock.json) aren't the user's work:
 # put aside so they don't count as changes, and back after the pull
 if ! managed_save; then
     managed_restore HEAD
@@ -238,6 +238,12 @@ else
 fi
 
 managed_restore "$old_head"
+
+# The config files each machine keeps (out of git): back from their defaults
+# when one went missing (a checkout of a commit that still had them in git
+# takes them away again)
+source "$DOTS_DIR/.data/lyne-cli/lib/config-defaults.sh"
+config_defaults_seed "$DOTS_DIR" | sed 's/^created /   Created from its default: /'
 
 # Plugins stay where they are when the lock changes: restore moves them to the
 # versions pinned in the repo. Only with our Neovim config: one of the user's

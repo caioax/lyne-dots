@@ -119,20 +119,19 @@ resolve() { in_lyne channel -- "channel_resolve ${1:-stable}; echo \"\$CH_FOLLOW
 # --- managed files ---
 
 managed_repo() {
-    mkdir -p "$WORK/nvim/.config/nvim" "$WORK/kde/.config"
+    mkdir -p "$WORK/nvim/.config/nvim"
     echo '{"lazy": "v1"}' >"$WORK/nvim/.config/nvim/lazy-lock.json"
-    echo '[General]' >"$WORK/kde/.config/kdeglobals"
     publish base
     user_clone
 }
 
 LOCK=nvim/.config/nvim/lazy-lock.json
 KDE=kde/.config/kdeglobals
+QT=theming/.config/qt6ct/qt6ct.conf
 
 @test "managed files don't count as uncommitted changes" {
     managed_repo
     echo '{"lazy": "mine"}' >"$DOTS_DIR/$LOCK"
-    echo 'TerminalApplication=foot' >>"$DOTS_DIR/$KDE"
     run in_lyne managed-files -- 'git -C "$DOTS_DIR" status --porcelain -- . "${MANAGED_EXCLUDES[@]}"'
     assert_output ""
     echo x >"$DOTS_DIR/history"
@@ -140,9 +139,11 @@ KDE=kde/.config/kdeglobals
     assert_output " M history"
 }
 
-# Saves, pulls origin/main (fast-forward) and restores, like lyne update
+# update [MANAGED_FILES_LIB]: saves, pulls origin/main (fast-forward) and
+# restores, like lyne update (with the installed version's managed-files.sh)
 update() {
-    in_lyne managed-files -- '
+    MANAGED_LIB="${1:-$LIB/managed-files.sh}" in_lyne -- '
+        source "$MANAGED_LIB"
         old=$(git -C "$DOTS_DIR" rev-parse HEAD)
         managed_save || exit 1
         git -C "$DOTS_DIR" status --porcelain
@@ -153,30 +154,60 @@ update() {
 @test "update: the user's copies come back when the update doesn't touch them" {
     managed_repo
     echo '{"lazy": "mine"}' >"$DOTS_DIR/$LOCK"
-    echo 'TerminalApplication=foot' >>"$DOTS_DIR/$KDE"
     publish unrelated
     run update
     assert_success
     # Nothing left in the tree while pulling
     refute_output --partial " M "
     assert_equal "$(cat "$DOTS_DIR/$LOCK")" '{"lazy": "mine"}'
-    assert_equal "$(tail -1 "$DOTS_DIR/$KDE")" 'TerminalApplication=foot'
     assert_equal "$(tail -1 "$DOTS_DIR/history")" unrelated
 }
 
-@test "update: a new lazy-lock wins (the user's goes to the backup); kdeglobals always stays" {
+@test "update: a new lazy-lock wins (the user's goes to the backup)" {
     managed_repo
     echo '{"lazy": "mine"}' >"$DOTS_DIR/$LOCK"
-    echo 'TerminalApplication=foot' >>"$DOTS_DIR/$KDE"
     echo '{"lazy": "v2"}' >"$WORK/$LOCK"
-    echo '[Icons]' >>"$WORK/$KDE"
     publish "new pins"
     run update
     assert_success
     assert_output --partial "$LOCK: the update brings a new version, yours is in $HOME/.local/share/lyne/backup/lazy-lock.json."
     assert_equal "$(cat "$DOTS_DIR/$LOCK")" '{"lazy": "v2"}'
     assert_equal "$(cat "$HOME"/.local/share/lyne/backup/lazy-lock.json.*)" '{"lazy": "mine"}'
-    assert_equal "$(tail -1 "$DOTS_DIR/$KDE")" 'TerminalApplication=foot'
+}
+
+# The config files leave git (config-defaults.sh): the version installed
+# before (kdeglobals and qt6ct.conf managed, :local) runs that update
+@test "update out of git: the user's changed files stay, the others come back from their defaults; nothing in git status" {
+    mkdir -p "$WORK/kde/.config" "$WORK/theming/.config/qt6ct"
+    printf '[Icons]\nTheme=Tela-blue-dark\n' >"$WORK/$KDE"
+    printf '[Appearance]\nicon_theme=Tela-blue-dark\n' >"$WORK/$QT"
+    managed_repo
+    local old="$BATS_TEST_TMPDIR/managed-files-old.sh"
+    sed 's|^\(    "nvim/.config/nvim/lazy-lock.json:repo"\)$|\1\n    "kde/.config/kdeglobals:local"\n    "theming/.config/qt6ct/qt6ct.conf:local"|' \
+        "$LIB/managed-files.sh" >"$old"
+    grep -q '"theming/.config/qt6ct/qt6ct.conf:local"' "$old"
+    # The user picked another icon theme (Settings › Icons)
+    printf '[Icons]\nTheme=Papirus-Dark\n' >"$DOTS_DIR/$KDE"
+    # The commit that takes them out of git
+    mkdir -p "$WORK/.data/config-defaults/kde/.config" "$WORK/.data/config-defaults/theming/.config/qt6ct"
+    cp "$WORK/$KDE" "$WORK/.data/config-defaults/$KDE"
+    cp "$WORK/$QT" "$WORK/.data/config-defaults/$QT"
+    printf '%s\n' "$KDE" "$QT" >"$WORK/.gitignore"
+    git -C "$WORK" rm -q --cached "$KDE" "$QT"
+    publish "out of git"
+    run update "$old"
+    assert_success
+    assert_equal "$(tail -1 "$DOTS_DIR/$KDE")" 'Theme=Papirus-Dark'
+    refute [ -e "$DOTS_DIR/$QT" ]
+    # What lyne update (and migration 046) does next
+    run in_lyne config-defaults -- "CONFIG_DEFAULT_FILES=($KDE $QT); config_defaults_seed"
+    assert_output "created $QT"
+    cmp "$WORK/$QT" "$DOTS_DIR/$QT"
+    assert_equal "$(tail -1 "$DOTS_DIR/$KDE")" 'Theme=Papirus-Dark'
+    # Another choice later: still nothing for git
+    printf '[Appearance]\nicon_theme=breeze-dark\n' >"$DOTS_DIR/$QT"
+    run git -C "$DOTS_DIR" status --porcelain
+    assert_output ""
 }
 
 @test "update: unchanged managed files aren't copied around" {

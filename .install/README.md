@@ -174,3 +174,9 @@ The `stow.sh` script links the packages of the categories chosen
 | nvim       | ~/.config/nvim, ~/.clang-format          | editor           |
 | theming    | ~/.config/gtk-3.0, gtk-4.0, qt5ct, qt6ct | theming          |
 | kde        | ~/.config/kdeglobals                     | theming          |
+
+`kdeglobals`, `qt6ct.conf`, `qt5ct.conf` and the GTK `settings.ini` are
+each machine's own (the icon theme, the default terminal, qt6ct's and KDE's
+settings write there): they're out of git, and `stow.sh` makes a missing one
+from `.data/config-defaults/` before linking (also `lyne update` and
+migration 046). A new default reaches existing installs through a migration.

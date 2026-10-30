@@ -22,6 +22,10 @@ setup() {
     for pkg in hyprland kitty nvim zsh tmux fastfetch kde theming; do
         cp -r "$REPO/$pkg" "$DOTS_DIR/"
     done
+    # Without this machine's config files kept out of git, like a new clone
+    local ignored
+    while IFS= read -r ignored; do rm -f "$DOTS_DIR/$ignored"; done < <(
+        cd "$REPO" && git ls-files --others --ignored --exclude-standard -- kde theming)
     # The big ones as stand-ins
     mkdir -p "$DOTS_DIR/quickshell/.config/quickshell" "$DOTS_DIR/local/.local/bin"
     : >"$DOTS_DIR/quickshell/.config/quickshell/shell.qml"
@@ -76,6 +80,22 @@ recorded() { jq -c .system.stow "$LYNE_STATE_FILE"; }
     refute [ -e "$HOME/.config/nvim" ]
     assert [ -f "$HOME/.lyne-dots-backup/20260101-000000/.zshrc" ]
     assert_equal "$(recorded)" '["hyprland","quickshell","local"]'
+}
+
+@test "theming and kde: the config files kept out of git come from their defaults, one already there stays" {
+    echo mine >"$DOTS_DIR/theming/.config/gtk-3.0/settings.ini"
+    run lyne link theming kde
+    assert_success
+    assert_output --partial "Created kde/.config/kdeglobals from its default"
+    refute_output --partial "Created theming/.config/gtk-3.0/settings.ini"
+    local path
+    for path in kde/.config/kdeglobals theming/.config/qt6ct/qt6ct.conf theming/.config/qt5ct/qt5ct.conf theming/.config/gtk-4.0/settings.ini; do
+        cmp "$REPO/.data/config-defaults/$path" "$DOTS_DIR/$path"
+    done
+    assert_equal "$(cat "$HOME/.config/gtk-3.0/settings.ini")" mine
+    # Reached through the links
+    cmp "$REPO/.data/config-defaults/kde/.config/kdeglobals" "$HOME/.config/kdeglobals"
+    cmp "$REPO/.data/config-defaults/theming/.config/qt6ct/qt6ct.conf" "$HOME/.config/qt6ct/qt6ct.conf"
 }
 
 @test "nvim: the user's ~/.clang-format to the backup and back on unlink" {

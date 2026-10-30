@@ -116,7 +116,8 @@ fx_gpu() {
 # fake_dots [MIGRATIONS_DIR]: $DOTS_DIR as the repo seen through per-item
 # links, except what tests write to: the shell config folder is a real one
 # with its own state.json (from defaults.json, linked from
-# ~/.config/quickshell like an install does), and .data/lyne-cli/migrations
+# ~/.config/quickshell like an install does), kde and theming are copies
+# without the files kept out of git, and .data/lyne-cli/migrations
 # can point elsewhere (LYNE_TEST_MIGRATIONS for a copy). Writing through a link would change the repo: tests
 # that use this call `repo_unchanged` in teardown.
 fake_dots() {
@@ -125,6 +126,13 @@ fake_dots() {
     for item in "$REPO"/* "$REPO"/.[!.]*; do
         case "${item##*/}" in
         .git | .data | quickshell) ;;
+        # Copies without the config files kept out of git (this machine's),
+        # as a fresh clone has them; migrations make those
+        kde | theming)
+            cp -r "$item" "$DOTS_DIR/"
+            (cd "$REPO" && git ls-files --others --ignored --exclude-standard -- "${item##*/}") |
+                while IFS= read -r ignored; do rm -f "$DOTS_DIR/$ignored"; done
+            ;;
         *) ln -s "$item" "$DOTS_DIR/" ;;
         esac
     done

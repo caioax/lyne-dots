@@ -131,6 +131,17 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     for pkg in hyprland quickshell kitty nvim zsh tmux local fastfetch kde theming; do
         assert_line --partial "[dry-run] stow -d $REPO -t $DRY -R $pkg"
     done
+    # The config files kept out of git: made before the links (only said in
+    # a dry run), unless this checkout has them already
+    local path
+    for path in kde/.config/kdeglobals theming/.config/qt6ct/qt6ct.conf theming/.config/qt5ct/qt5ct.conf \
+        theming/.config/gtk-3.0/settings.ini theming/.config/gtk-4.0/settings.ini; do
+        if [[ -e "$REPO/$path" ]]; then
+            refute_line "[dry-run] create $path from .data/config-defaults"
+        else
+            assert_line "[dry-run] create $path from .data/config-defaults"
+        fi
+    done
     [ ! -e "$DRY/.zshrc" ]
     run log
     assert_line "review Links: hyprland, quickshell, kitty, nvim, zsh, tmux, local, fastfetch, kde, theming"

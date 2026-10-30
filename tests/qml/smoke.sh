@@ -164,6 +164,17 @@ EOF
     # What stow links on an install and the shell writes to: copies here
     local pkg
     for pkg in theming kde kitty; do cp -r "$REPO/$pkg/.config/." "$home/.config/"; done
+    # The config files each machine keeps for itself (out of git) as a new
+    # install makes them: from the repo's defaults, not this machine's
+    for pkg in theming kde; do cp -r "$REPO/.data/config-defaults/$pkg/.config/." "$home/.config/"; done
+    # The default icon theme, whether or not this machine has it: Tela-blue
+    # and its variants as index.theme only (icons come from breeze)
+    local tela
+    for tela in Tela-blue Tela-blue-dark Tela-blue-light; do
+        mkdir -p "$home/.local/share/icons/$tela"
+        printf '[Icon Theme]\nName=%s\nInherits=breeze,hicolor\nDirectories=48/apps\n\n[48/apps]\nSize=48\n' "$tela" \
+            >"$home/.local/share/icons/$tela/index.theme"
+    done
     mkdir -p "$home/.config/hypr/local"
     local dir theme
     for dir in "$REPO"/.data/wallpapers/themes/*/; do
@@ -290,7 +301,7 @@ EOF
         exec env -i HOME="$SB/home" USER="$USER" LANG="${LANG:-en_US.UTF-8}" TERM=xterm \
             PATH="$SB/bin:/usr/bin:$REPO/local/.local/bin" XDG_RUNTIME_DIR="$SB/run" \
             WAYLAND_DISPLAY="$NEST_WL" HYPRLAND_INSTANCE_SIGNATURE="$NEST_SIG" \
-            XDG_CURRENT_DESKTOP=Hyprland XDG_DATA_DIRS="/usr/local/share:/usr/share:$HOME/.local/share" \
+            XDG_CURRENT_DESKTOP=Hyprland XDG_DATA_DIRS="/usr/local/share:/usr/share:$SB/home/.local/share" \
             QT_QPA_PLATFORM=wayland QT_QPA_PLATFORMTHEME=qt6ct QT_WAYLAND_DISABLE_WINDOWDECORATION=1 \
             XCURSOR_THEME="$(jq -r .cursor.theme "$SB/cfg/state.json")" XCURSOR_SIZE="$(jq -r .cursor.size "$SB/cfg/state.json")" \
             QT_FORCE_STDERR_LOGGING=1 \

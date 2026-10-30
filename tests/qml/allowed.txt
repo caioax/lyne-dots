@@ -7,3 +7,6 @@ qt\.qpa\.wayland\.textinput: .*(Trying to (enable|disable))
 # The sandbox has no PipeWire and no desktop portal
 quickshell\.service\.pipewire\.loop: Failed to connect pipewire context
 Failed to register with host portal
+# Its icon themes are index.theme stand-ins over breeze and hicolor: icons
+# only a full theme (Tela) ships aren't found
+Could not load icon "[^"]+" at size QSize\([0-9]+, [0-9]+\) from request

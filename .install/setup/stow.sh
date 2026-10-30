@@ -10,6 +10,8 @@ DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "$DOTFILES_DIR/.install/lib/log.sh"
 # lyne_state_set (the packages linked are kept in state.json)
 declare -F lyne_state_set >/dev/null || source "$DOTFILES_DIR/.data/lyne-cli/lib/state.sh"
+# config_defaults_seed (the config files kept out of git)
+source "$DOTFILES_DIR/.data/lyne-cli/lib/config-defaults.sh"
 
 # =============================================================================
 # Packages to stow
@@ -252,6 +254,20 @@ backup_existing_targets() {
 # execute_stow PACKAGE...
 execute_stow() {
     log_info "Running stow to create symlinks..."
+
+    # The config files each machine keeps for itself (out of git): from the
+    # repo's defaults when missing, so the links have them to reach
+    local path
+    if [[ -n "${LYNE_DRY_RUN:-}" ]]; then
+        for path in "${CONFIG_DEFAULT_FILES[@]}"; do
+            [[ -e "$DOTFILES_DIR/$path" || -L "$DOTFILES_DIR/$path" ]] ||
+                echo "[dry-run] create $path from .data/config-defaults"
+        done
+    else
+        while IFS= read -r path; do
+            log_step "  Created ${path#created } from its default"
+        done < <(config_defaults_seed "$DOTFILES_DIR")
+    fi
 
     local dir failed=0
     for dir in "$@"; do

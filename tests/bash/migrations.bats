@@ -126,6 +126,8 @@ legacy_home() {
     assert_equal "$(state '.system.stow')" '["quickshell","nvim","zsh"]'
     assert [ -L "$HOME/.zshrc" ]
     assert [ -f "$HOME/.config/kitty/kitty.conf" ]
+    # The config files kept out of git, from their defaults
+    cmp "$REPO/.data/config-defaults/theming/.config/qt6ct/qt6ct.conf" "$DOTS_DIR/theming/.config/qt6ct/qt6ct.conf"
     # Theme on its old default wallpaper moves to the new one
     assert_equal "$(jq -r .wallpaper "$HOME/.local/themes/tokyonight.json")" "themes/tokyonight/lyne-tokyonight-contour.jpg"
 }
@@ -321,6 +323,23 @@ real_stow() {
     assert_success
     assert_output ""
     [ "$(jq -r .name "$HOME/.local/themes/mono.json")" == Mine ]
+}
+
+@test "046: the config files out of git come back from their defaults; the ones the update kept stay" {
+    fake_dots
+    # Kept through the update (the user's icon theme); the others deleted
+    echo "icon_theme=Papirus-Dark" >"$DOTS_DIR/theming/.config/qt6ct/qt6ct.conf"
+    run migrate 046-config-files-out-of-git.sh
+    assert_success
+    assert_output "   Created from its default: kde/.config/kdeglobals
+   Created from its default: theming/.config/qt5ct/qt5ct.conf
+   Created from its default: theming/.config/gtk-3.0/settings.ini
+   Created from its default: theming/.config/gtk-4.0/settings.ini"
+    assert_equal "$(cat "$DOTS_DIR/theming/.config/qt6ct/qt6ct.conf")" "icon_theme=Papirus-Dark"
+    cmp "$REPO/.data/config-defaults/kde/.config/kdeglobals" "$DOTS_DIR/kde/.config/kdeglobals"
+    run migrate 046-config-files-out-of-git.sh
+    assert_success
+    assert_output ""
 }
 
 @test "a migration with nothing to convert says nothing" {
