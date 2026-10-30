@@ -264,8 +264,13 @@ def brand(img, c, cx, cy, H, glow=True):
 def palette(path):
     d = json.load(open(path))
     c = {k: hexrgb(v) for k, v in d["palette"].items() if isinstance(v, str) and v.startswith("#")}
+    # A grey accent (Mono) keeps the scenes grey: the terminal tints only
+    # bring their lightness
+    grey = float(np.hypot(*oklab(c["accent"])[1:])) < 0.01
     for k in ("color3", "color5", "color6", "color16"):
         c[k] = hexrgb(d["terminal"][k])
+        if grey:
+            c[k] = shade(c[k], sat=0)
     c["light"] = lum(c["background"]) > lum(c["text"])
     c["dot"] = c["accent"]
     c["line"] = logo_line_color(c["accent"])

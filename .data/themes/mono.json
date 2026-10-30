@@ -1,0 +1,63 @@
+{
+  "name": "Mono",
+  "palette": {
+    "background": "#101010",
+    "surface0": "#191919",
+    "surface1": "#202020",
+    "surface2": "#333333",
+    "surface3": "#4d4d4d",
+    "text": "#e4e4e4",
+    "textReverse": "#101010",
+    "subtext": "#b7b7b7",
+    "subtextReverse": "#4d4d4d",
+    "accent": "#e8e8e8",
+    "success": "#96bd96",
+    "warning": "#d3bb8a",
+    "error": "#e09d97",
+    "muted": "#636363",
+    "greyBlue": "#2e2e2e",
+    "blueDark": "#0a0a0a"
+  },
+  "opacity": {
+    "background": 0.9
+  },
+  "hyprland": {
+    "activeBorder": "d0d0d0ff",
+    "inactiveBorder": "3a3a3aaa",
+    "shadowColor": "000000ee"
+  },
+  "terminal": {
+    "background": "#101010",
+    "foreground": "#e4e4e4",
+    "selectionBackground": "#333333",
+    "selectionForeground": "#e4e4e4",
+    "urlColor": "#7db7ba",
+    "cursor": "#e4e4e4",
+    "cursorTextColor": "#101010",
+    "activeTabBackground": "#e8e8e8",
+    "activeTabForeground": "#101010",
+    "inactiveTabBackground": "#202020",
+    "inactiveTabForeground": "#636363",
+    "activeBorderColor": "#e8e8e8",
+    "inactiveBorderColor": "#202020",
+    "color0": "#1f1f1f",
+    "color1": "#ce9d98",
+    "color2": "#94b594",
+    "color3": "#bca880",
+    "color4": "#8faed0",
+    "color5": "#bc9fc3",
+    "color6": "#7db7ba",
+    "color7": "#b7b7b7",
+    "color8": "#5d5d5d",
+    "color9": "#ecb4af",
+    "color10": "#aad0aa",
+    "color11": "#d8c193",
+    "color12": "#a4c8ee",
+    "color13": "#d8b7df",
+    "color14": "#90d2d5",
+    "color15": "#e4e4e4",
+    "color16": "#c9a187",
+    "color17": "#ba817c"
+  },
+  "wallpaper": "themes/mono/lyne-mono-contour.jpg"
+}

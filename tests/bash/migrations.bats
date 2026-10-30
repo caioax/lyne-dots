@@ -305,6 +305,24 @@ real_stow() {
     refute grep -q "^qt5ct " "$FAKE_PKGS"
 }
 
+@test "045: the Mono themes and their wallpapers; an edited theme stays" {
+    fake_dots
+    run migrate 045-mono-themes.sh
+    assert_success
+    assert_output "   Added the Mono and Mono Light themes"
+    cmp "$REPO/.data/themes/mono.json" "$HOME/.local/themes/mono.json"
+    [ "$(jq -r .darkPair "$HOME/.local/themes/mono-light.json")" == mono ]
+    for scene in contour lake waves; do
+        [ -f "$HOME/.local/wallpapers/themes/mono-light/lyne-mono-light-$scene.jpg" ]
+    done
+    [ -f "$HOME/.local/wallpapers/lyne-mono-contour.jpg" ]
+    echo '{"name": "Mine"}' > "$HOME/.local/themes/mono.json"
+    run migrate 045-mono-themes.sh
+    assert_success
+    assert_output ""
+    [ "$(jq -r .name "$HOME/.local/themes/mono.json")" == Mine ]
+}
+
 @test "a migration with nothing to convert says nothing" {
     fake_dots
     run migrate 018-special-workspaces-ids.sh
