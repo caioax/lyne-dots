@@ -56,6 +56,11 @@ return {
             -- ========================================================================
             require("mason").setup()
 
+            -- C#: Roslyn (the server VS Code uses) through nvim-lspconfig's
+            -- roslyn_ls. Mason installs it with dotnet, so it is only asked
+            -- for where .NET is installed, or the install fails on every start
+            local has_dotnet = vim.fn.executable("dotnet") == 1
+
             require("mason-tool-installer").setup({
                 ensure_installed = {
                     "lua_ls",
@@ -73,9 +78,10 @@ return {
                     "shfmt",
                     "eslint_d",
                     "clangd",
-                    "omnisharp",
                     "intelephense",
                     "php-cs-fixer",
+                    -- last: a nil in the middle would cut the list short
+                    has_dotnet and "roslyn-language-server" or nil,
                 },
             })
 
@@ -83,6 +89,14 @@ return {
             -- characters...) on top of Neovim's own capabilities
             vim.lsp.config("*", {
                 capabilities = require("cmp_nvim_lsp").default_capabilities(),
+            })
+
+            -- lspconfig's roslyn_ls checks the version with a bare --version,
+            -- which roslyn-language-server 5.12 answers only next to --stdio, so
+            -- it warned "projects won't be loaded" on every start although they
+            -- load (--autoLoadProjects is passed either way)
+            vim.lsp.config("roslyn_ls", {
+                before_init = function() end,
             })
 
             -- mason-lspconfig v2 enables every installed server on its own
@@ -100,11 +114,13 @@ return {
                     "yamlls",
                     "tailwindcss",
                     "clangd",
-                    "omnisharp",
                     "intelephense",
+                    has_dotnet and "roslyn_ls" or nil, -- last, as above
                 },
+                -- OmniSharp was the C# server before Roslyn: where Mason still
+                -- has it, it must not start next to roslyn_ls
                 automatic_enable = {
-                    exclude = { "stylua" },
+                    exclude = { "stylua", "omnisharp" },
                 },
             })
 
