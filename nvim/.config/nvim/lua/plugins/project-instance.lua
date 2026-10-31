@@ -6,5 +6,7 @@ return {
     name = "project-instance.nvim",
     main = "project_instance",
     lazy = false,
+    -- First of the plugins: a Neovim that hands its files over quits there
+    priority = 10000,
     opts = {},
 }

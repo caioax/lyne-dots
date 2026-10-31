@@ -5,6 +5,11 @@
 -- (or the current one): the nearest folder upwards holding project.godot, a
 -- *.sln or .git, else the file's own folder.
 --
+-- A Neovim opened in a project that already has a live one hands its files
+-- (and a +N line) to it, switches tmux to that one's pane and quits, before
+-- reading any file (no swap file warnings). From outside tmux, or another
+-- tmux server, the files still go there and that Neovim says so.
+--
 -- Neovims that never take a project's socket (state.skipped says why):
 --   solo      LYNE_NVIM_SOLO=1 (tmux's popups set it)
 --   headless  no UI (scripts, Mason, tests); LYNE_NVIM_INSTANCE=1 overrides
@@ -17,7 +22,7 @@ local M = {}
 
 -- What this Neovim is: root, socket, pane ($TMUX_PANE), tmux ($TMUX), owner
 -- (it listens on the socket) or other (a live Neovim already does), or
--- skipped (the reason)
+-- skipped (the reason); forwarded when it handed its files over
 M.state = {}
 
 local uv = vim.uv
@@ -159,6 +164,97 @@ function M.info()
     return vim.tbl_extend("force", vim.deepcopy(M.state), { pid = vim.fn.getpid() })
 end
 
+-- Called on the project's Neovim (through its socket): opens FILES (absolute
+-- paths; none just brings it up) in a normal window, POS = { line, col } (1
+-- based, both optional) on the first one. Returns info()
+function M.open(files, pos)
+    -- Out of a floating window (Telescope, a popup), and back to normal mode
+    -- (insert, visual, the command line, a terminal)
+    if vim.api.nvim_win_get_config(0).relative ~= "" then
+        for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+            if vim.api.nvim_win_get_config(win).relative == "" then
+                vim.api.nvim_set_current_win(win)
+                break
+            end
+        end
+    end
+    if vim.api.nvim_get_mode().mode ~= "n" then
+        vim.api.nvim_input("<C-\\><C-N>")
+    end
+    if files and #files > 0 then
+        vim.cmd("drop " .. table.concat(vim.tbl_map(vim.fn.fnameescape, files), " "))
+        if pos and pos.line then
+            local line = math.max(1, math.min(pos.line, vim.api.nvim_buf_line_count(0)))
+            vim.api.nvim_win_set_cursor(0, { line, math.max(0, (pos.col or 1) - 1) })
+            vim.cmd("normal! zz")
+        end
+    end
+    return M.info()
+end
+
+-- The files given to this Neovim (absolute; folders left out) and a +N line
+local function given()
+    local files = {}
+    for _, file in ipairs(vim.fn.argv()) do
+        local path = absolute(file)
+        if vim.fn.isdirectory(path) == 0 then
+            table.insert(files, path)
+        end
+    end
+    local pos
+    for i = 2, #vim.v.argv do
+        local arg = vim.v.argv[i]
+        if arg == "--" then
+            break
+        end
+        local line = arg:match("^%+(%d+)$")
+        if line then
+            pos = { line = tonumber(line) }
+        end
+    end
+    return files, pos
+end
+
+-- tmux's socket from a $TMUX value (socket,pid,session)
+local function tmux_socket(value)
+    return value and value:match("^([^,]+)")
+end
+
+-- Hands this Neovim's files to the live one on SOCKET and switches tmux to
+-- its pane. False when it can't be reached (this one opens them itself)
+function M.forward(socket)
+    local ok, chan = pcall(vim.fn.sockconnect, "pipe", socket, { rpc = true })
+    if not ok or chan == 0 then
+        return false
+    end
+    local files, pos = given()
+    local sent, info =
+        pcall(vim.rpcrequest, chan, "nvim_exec_lua", "return require('project_instance').open(...)", { files, pos })
+    if not sent or type(info) ~= "table" then
+        vim.fn.chanclose(chan)
+        return false
+    end
+    local here = tmux_socket(vim.env.TMUX)
+    local jumped = false
+    if info.pane and here and here == tmux_socket(info.tmux) then
+        -- A pane target also makes its window and pane the current ones
+        jumped = vim.system({ "tmux", "switch-client", "-t", info.pane }):wait().code == 0
+    end
+    if not jumped then
+        local what = #files == 1 and vim.fs.basename(files[1]) or (#files .. " files")
+        pcall(
+            vim.rpcrequest,
+            chan,
+            "nvim_exec_lua",
+            "vim.notify(...)",
+            { #files > 0 and ("Opened " .. what .. " from another terminal") or "Asked for from another terminal" }
+        )
+    end
+    vim.fn.chanclose(chan)
+    M.state.forwarded = true
+    return true
+end
+
 function M.setup()
     vim.api.nvim_create_user_command("ProjectInstance", function()
         vim.print(M.info())
@@ -175,6 +271,9 @@ function M.setup()
     M.state = { root = root, socket = socket, pane = vim.env.TMUX_PANE, tmux = vim.env.TMUX }
     if M.alive(socket) then
         M.state.owner, M.state.other = false, true
+        if M.forward(socket) then
+            vim.cmd("qall!")
+        end
         return
     end
     vim.fn.mkdir(vim.fs.dirname(socket), "p", tonumber("700", 8))
