@@ -219,8 +219,9 @@ function M.pick(opts)
                 actions.select_default:replace(function()
                     actions.close(prompt_bufnr)
                 end)
-                -- A search to look something up: one Escape leaves it
-                map("i", "<Esc>", actions.close)
+                -- Escape goes to normal mode (j / k move, the preview
+                -- follows); a second Escape, or q, closes the search
+                map("n", "q", actions.close)
                 if opts.quit then
                     require("config.popup").quit_on_close(actions)
                 end

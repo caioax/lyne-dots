@@ -7,7 +7,8 @@
 # - for real: prefix + ? in a tmux server of its own (like nav.sh) opens the
 #   popup, whose Neovim runs in the sandbox (the server's environment points
 #   its XDG folders there) and is reached through its socket: the list has
-#   both sides, typing filters it, Escape closes the list and the popup.
+#   both sides, typing filters it, Escape goes to normal mode (j moves),
+#   a second Escape closes the list and the popup.
 #
 # Usage: tests/nvim/shortcuts.sh   (needs tmux, nvim, python3 and the plugins)
 #   LYNE_TEST_NVIM=<dir>       another copy of nvim/.config/nvim (lib.sh)
@@ -147,8 +148,15 @@ wait_for 5 first_is_split
 check "typing \"Split side\" finds tmux's prefix + |" "C-Space |" "$(selected)"
 
 T send-keys -c "$CLIENT" -K Escape
+sleep 0.5
+check "Escape: normal mode, the search stays" "n open" "$(pv 'mode()') $([[ -S "$POPUP" ]] && echo open || echo closed)"
+before="$(selected)"
+T send-keys -c "$CLIENT" -K j
+sleep 0.5
+check "j moves to the next entry" 1 "$([[ -n "$(selected)" && "$(selected)" != "$before" ]] && echo 1)"
+T send-keys -c "$CLIENT" -K Escape
 gone() { [[ ! -S "$POPUP" ]]; }
 wait_for 5 gone
-check "one Escape closes the list and the popup" closed "$([[ -S "$POPUP" ]] && echo open || echo closed)"
+check "a second Escape closes the list and the popup" closed "$([[ -S "$POPUP" ]] && echo open || echo closed)"
 
 exit "$failed"
