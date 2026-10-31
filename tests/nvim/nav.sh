@@ -145,14 +145,26 @@ check "checkhealth smart-splits: the tmux backend is in use" 1 "$(grep -c 'smart
 [[ "$errors" != 0 ]] && grep 'ERROR' <<<"$health" | sed 's/^/    /'
 
 # Ctrl+/ reaches Neovim as Ctrl+_ (0x1f, what terminals send): it opens the
-# floating terminal, and from inside it hides it again
+# terminal split below, and from inside it hides it again
 T select-pane -t t:1.2
 terms() { nv 'luaeval("#vim.tbl_filter(function(w) return vim.bo[vim.api.nvim_win_get_buf(w)].buftype == \"terminal\" end, vim.api.nvim_list_wins())")'; }
 feed_client t '\x1f'
 _term_open() { [[ "$(terms)" == 1 ]]; }
 wait_for 5 _term_open
-check "Ctrl+/ (sent as Ctrl+_) opens the floating terminal" 1 "$(terms)"
+check "Ctrl+/ (sent as Ctrl+_) opens the terminal split" 1 "$(terms)"
 check "the terminal takes the typing (terminal mode)" t "$(nv 'mode()')"
+# From inside it, Ctrl+k / Ctrl+j move between it and the split above
+# (through tmux's binds: the pane runs Neovim)
+in_term() { nv 'luaeval("vim.bo.buftype == \"terminal\" and 1 or 0")'; }
+feed_client t '\x0b'
+_left_term() { [[ "$(in_term)" == 0 ]]; }
+wait_for 5 _left_term
+check "Ctrl+k from inside the terminal goes to the split above" 0 "$(in_term)"
+check "the terminal stays open" 1 "$(terms)"
+feed_client t '\x0a'
+_back_term() { [[ "$(in_term)" == 1 && "$(nv 'mode()')" == t ]]; }
+wait_for 5 _back_term
+check "Ctrl+j goes back into it, ready to type" "1 t" "$(in_term) $(nv 'mode()')"
 feed_client t '\x1f'
 _term_hidden() { [[ "$(terms)" == 0 ]]; }
 wait_for 5 _term_hidden

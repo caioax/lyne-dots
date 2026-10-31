@@ -1,3 +1,17 @@
+-- Ctrl+h/j/k/l inside a terminal split (it takes the typing): to the split
+-- on that side, then tmux's panes, as everywhere else (smart-splits.nvim).
+-- A floating one (lazygit) keeps the key for its program
+local function term_nav(dir, key)
+    return function(self)
+        if self:is_floating() then
+            return key
+        end
+        vim.schedule(function()
+            require("smart-splits")["move_cursor_" .. dir]()
+        end)
+    end
+end
+
 return {
     "folke/snacks.nvim",
     dependencies = { "echasnovski/mini.icons" },
@@ -15,7 +29,41 @@ return {
         words = { enabled = true },
         lazygit = { enabled = true },
         scratch = { enabled = true },
-        terminal = { enabled = true },
+        terminal = {
+            enabled = true,
+            win = {
+                keys = {
+                    nav_h = {
+                        "<C-h>",
+                        term_nav("left", "<C-h>"),
+                        desc = "Focus the split on the left",
+                        expr = true,
+                        mode = "t",
+                    },
+                    nav_j = {
+                        "<C-j>",
+                        term_nav("down", "<C-j>"),
+                        desc = "Focus the split below",
+                        expr = true,
+                        mode = "t",
+                    },
+                    nav_k = {
+                        "<C-k>",
+                        term_nav("up", "<C-k>"),
+                        desc = "Focus the split above",
+                        expr = true,
+                        mode = "t",
+                    },
+                    nav_l = {
+                        "<C-l>",
+                        term_nav("right", "<C-l>"),
+                        desc = "Focus the split on the right",
+                        expr = true,
+                        mode = "t",
+                    },
+                },
+            },
+        },
 
         -- DASHBOARD CONFIGURATION
         dashboard = {

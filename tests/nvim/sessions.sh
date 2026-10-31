@@ -168,4 +168,11 @@ env -u TMUX TMUX_TMPDIR="$tmpdir" zsh -fc "$tkf; tkf"
 check "tkf closes every session" no "$(D has-session 2>/dev/null && echo yes || echo no)"
 check "tkf forgets the save" no "$([[ -e "$SB/resurrect/last" || -L "$SB/resurrect/last" ]] && echo yes || echo no)"
 
+# An interactive zsh starts with status 0: `exit` as the first command must
+# end it cleanly (Neovim's terminal reports a non-zero exit as an error)
+mkdir -p "$SB/zdot"
+ln -sf "$ZSHRC" "$SB/zdot/.zshrc"
+env -u TMUX ZDOTDIR="$SB/zdot" zsh -i -c exit </dev/null >/dev/null 2>&1
+check "zsh: exit as the first command ends with 0" 0 "$?"
+
 exit "$failed"

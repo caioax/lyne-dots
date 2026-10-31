@@ -11,7 +11,7 @@ The leader is `Space`: `<leader>ff` means Space, then `f`, then `f`. Plugins com
 | `<C-h>` / `<C-j>` / `<C-k>` / `<C-l>` | Focus the split on the left / below / above / on the right, then tmux's panes |
 | `<M-h>` / `<M-j>` / `<M-k>` / `<M-l>` | Grow or shrink the split |
 | `<leader>e` | File tree (open / close) |
-| `<C-/>` | Floating terminal (open / close) |
+| `<C-/>` | Terminal in a split below (open / hide, also from inside it; `<C-h>`… leave it) |
 
 ## Open files and splits
 

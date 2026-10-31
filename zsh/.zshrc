@@ -120,5 +120,8 @@ all-update() {
 }
 
 export NVM_DIR="$HOME/.config/nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+# if, not &&: without nvm a false test would be the shell's last status, so
+# `exit` as the first command would end it with 1 (Neovim's terminal reports
+# that as an error)
+if [[ -s "$NVM_DIR/nvm.sh" ]]; then . "$NVM_DIR/nvm.sh"; fi
+if [[ -s "$NVM_DIR/bash_completion" ]]; then . "$NVM_DIR/bash_completion"; fi
