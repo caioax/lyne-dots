@@ -144,6 +144,20 @@ check "checkhealth smart-splits: no errors" 0 "$errors"
 check "checkhealth smart-splits: the tmux backend is in use" 1 "$(grep -c 'smart-splits-backend-tmux: in use' <<<"$health")"
 [[ "$errors" != 0 ]] && grep 'ERROR' <<<"$health" | sed 's/^/    /'
 
+# Ctrl+/ reaches Neovim as Ctrl+_ (0x1f, what terminals send): it opens the
+# floating terminal, and from inside it hides it again
+T select-pane -t t:1.2
+terms() { nv 'luaeval("#vim.tbl_filter(function(w) return vim.bo[vim.api.nvim_win_get_buf(w)].buftype == \"terminal\" end, vim.api.nvim_list_wins())")'; }
+feed_client t '\x1f'
+_term_open() { [[ "$(terms)" == 1 ]]; }
+wait_for 5 _term_open
+check "Ctrl+/ (sent as Ctrl+_) opens the floating terminal" 1 "$(terms)"
+check "the terminal takes the typing (terminal mode)" t "$(nv 'mode()')"
+feed_client t '\x1f'
+_term_hidden() { [[ "$(terms)" == 0 ]]; }
+wait_for 5 _term_hidden
+check "Ctrl+/ from inside the terminal hides it" 0 "$(terms)"
+
 # kitty sends Ctrl+Shift+h/j/k/l and Ctrl+Alt+Shift+h/l as CSI u
 # (kitty.conf), which tmux reads apart from Ctrl+h/l: the bytes kitty.conf
 # sends, fed to tmux like a terminal does

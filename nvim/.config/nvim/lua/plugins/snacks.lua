@@ -179,12 +179,23 @@ return {
             end,
             desc = "Dismiss All Notifications",
         },
+        -- Also from inside it (terminal mode) to hide it again. Terminals send
+        -- Ctrl+/ as Ctrl+_ (the same byte, 0x1f): that's the key Neovim gets
         {
             "<c-/>",
             function()
                 Snacks.terminal()
             end,
+            mode = { "n", "t" },
             desc = "Toggle Terminal",
+        },
+        {
+            "<c-_>",
+            function()
+                Snacks.terminal()
+            end,
+            mode = { "n", "t" },
+            desc = "Toggle Terminal (Ctrl+/ as terminals send it)",
         },
     },
 }
