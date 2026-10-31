@@ -8,7 +8,8 @@
 # - prefix + P lists the sessions (not the scratch one) and the project
 #   folders (fake ones: LYNE_PROJECT_ROOTS and LYNE_DOTS point into the
 #   sandbox); a folder starts its session there and switches to it, a
-#   session switches back. Its Neovim runs in the sandbox of lib.sh
+#   session switches back; Escape goes to normal mode (j / k move), a
+#   second one closes it. Its Neovim runs in the sandbox of lib.sh
 #
 # Usage: tests/nvim/popups.sh   (needs tmux, nvim, python3 and the plugins)
 #   LYNE_TEST_NVIM=<dir>       another copy of nvim/.config/nvim (lib.sh)
@@ -142,5 +143,22 @@ wait_for 5 listed
 type_keys w o r k Enter
 wait_for 5 popup_gone
 check "a session switches back to it, no new session" "t 3" "$(session) $(T list-sessions | wc -l)"
+
+# Escape goes to normal mode, where j / k move through the list; a second
+# Escape closes it
+key "$CLIENT" P
+wait_for 15 popup_up && wait_for 15 prompt
+wait_for 5 listed
+selected() { pv 'luaeval("require(\"telescope.actions.state\").get_selected_entry().value.name")'; }
+first="$(selected)"
+type_keys Escape
+check "Escape: normal mode, the list stays" "n open" "$(pv 'mode()') $(popup_up && echo open)"
+type_keys j
+check "j moves to another entry" 1 "$([[ "$(selected)" != "$first" && -n "$(selected)" ]] && echo 1)"
+type_keys k
+check "k moves back" "$first" "$(selected)"
+type_keys Escape
+wait_for 5 popup_gone
+check "a second Escape closes the popup" yes "$(popup_gone && echo yes || echo no)"
 
 exit "$failed"

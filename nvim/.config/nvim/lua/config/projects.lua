@@ -146,8 +146,9 @@ function M.pick(opts)
                     end
                     actions.close(prompt_bufnr)
                 end)
-                -- A list to jump somewhere: one Escape leaves it
-                map("i", "<Esc>", actions.close)
+                -- Escape goes to normal mode (j / k move, Enter picks); a
+                -- second Escape, or q, closes the list
+                map("n", "q", actions.close)
                 if opts.quit then
                     require("config.popup").quit_on_close(actions)
                 end

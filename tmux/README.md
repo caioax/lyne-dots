@@ -2,6 +2,8 @@
 
 The prefix is `C-Space`: press Ctrl + Space, let go, then press the key (`C-Space |` means prefix, then `|`). The mouse clicks, scrolls and resizes; windows and panes count from 1.
 
+A **session** is a whole workspace with a name (one per project, its name on the left of the bar); it holds **windows**, the tabs on top; a window holds **panes**, its splits.
+
 > **Every key, searchable:** `C-Space ?` (tmux's and Neovim's). This guide: `C-Space T`; the Neovim one: `C-Space N`.
 
 ## Move around
@@ -11,8 +13,8 @@ The prefix is `C-Space`: press Ctrl + Space, let go, then press the key (`C-Spac
 | `C-h` / `C-j` / `C-k` / `C-l` | Focus the pane on the left / below / above / on the right (inside Neovim, its splits first) |
 | `C-M-h` / `C-M-l` | Previous / next window |
 | `C-Space z` | Zoom the pane (again to bring the others back) |
-| `C-Space P` | Projects and sessions: switch, or start a session in a project folder (`~/Dev`, lyne-dots) |
-| `C-Space w` | Pick a window from a list |
+| `C-Space P` | Projects and sessions: switch, or start a session in a project folder (`~/Dev`, lyne-dots); Escape then `j` / `k` to move, Escape again to close |
+| `C-Space w` | Pick a window from a list (every session's) |
 
 ## Split and arrange
 
@@ -40,6 +42,7 @@ The prefix is `C-Space`: press Ctrl + Space, let go, then press the key (`C-Spac
 | `C-Space c` | New window in the same folder |
 | `C-Space 1` | Go to window 1 (any number) |
 | `C-Space ,` | Rename the window (empty: back to the automatic name) |
+| `C-Space &` | Close the window (asks first) |
 | `C-M-S-h` / `C-M-S-l` | Move the window one place left / right (Ctrl+Alt+Shift, like Super+Ctrl+Shift+H/L for workspaces) |
 
 ## Copy text
@@ -57,7 +60,11 @@ tmux keeps running after you close the terminal. Everything is saved every 15 mi
 
 | Keys | Does |
 | :--- | :--- |
-| `C-Space d` | Detach: leave tmux running in the background (`tmux a` comes back) |
+| `C-Space s` | Every session in a list: Enter goes there, `x` closes the one selected (asks first), `t` marks several and `X` closes the marked ones, `→` shows its windows, `q` leaves |
+| `C-Space (` / `C-Space )` | Previous / next session |
+| `C-Space L` | Back to the session you were in last |
+| `C-Space $` | Rename the session |
+| `C-Space d` | Detach: leave tmux running in the background (`tmux` in the project's folder, or `tmux a`, comes back) |
 | `C-Space C-s` / `C-Space C-r` | Save now / restore the last save (tmux-resurrect) |
 | `C-Space X` | Close every session and forget the save: the next tmux starts empty (asks first) |
 
