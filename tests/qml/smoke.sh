@@ -163,7 +163,10 @@ EOF
     cp "$REPO"/.data/themes/*.json "$home/.local/themes/"
     # What stow links on an install and the shell writes to: copies here
     local pkg
-    for pkg in theming kde kitty; do cp -r "$REPO/$pkg/.config/." "$home/.config/"; done
+    # (a fresh clone has no kde/: its only file is kept out of git)
+    for pkg in theming kde kitty; do
+        [[ -d "$REPO/$pkg/.config" ]] && cp -r "$REPO/$pkg/.config/." "$home/.config/"
+    done
     # The config files each machine keeps for itself (out of git) as a new
     # install makes them: from the repo's defaults, not this machine's
     for pkg in theming kde; do cp -r "$REPO/.data/config-defaults/$pkg/.config/." "$home/.config/"; done

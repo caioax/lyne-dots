@@ -328,6 +328,7 @@ real_stow() {
 @test "046: the config files out of git come back from their defaults; the ones the update kept stay" {
     fake_dots
     # Kept through the update (the user's icon theme); the others deleted
+    mkdir -p "$DOTS_DIR/theming/.config/qt6ct"
     echo "icon_theme=Papirus-Dark" >"$DOTS_DIR/theming/.config/qt6ct/qt6ct.conf"
     run migrate 046-config-files-out-of-git.sh
     assert_success

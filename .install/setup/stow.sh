@@ -98,6 +98,12 @@ stow_recorded_packages() {
     fi
 }
 
+# stow_package_exists PACKAGE: in the repo, or made by config_defaults_seed
+# (kde only holds kdeglobals, kept out of git: a fresh clone has no kde/)
+stow_package_exists() {
+    [[ -d "$DOTFILES_DIR/$1" || -d "$DOTFILES_DIR/.data/config-defaults/$1" ]]
+}
+
 # stow_is_linked PACKAGE
 stow_is_linked() {
     stow_recorded_packages | grep -qxF "$1"
@@ -271,7 +277,7 @@ execute_stow() {
 
     local dir failed=0
     for dir in "$@"; do
-        if [[ -d "$DOTFILES_DIR/$dir" ]]; then
+        if stow_package_exists "$dir"; then
             log_step "  Stowing: $dir"
             if ! stow -d "$DOTFILES_DIR" -t "$HOME" -R "$dir" 2>&1; then
                 log_error "Failed to stow $dir (check for conflicts and try again)"

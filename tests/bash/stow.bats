@@ -35,8 +35,8 @@ in_stow() {
     assert_success
 }
 
-@test "stow_packages: every package named exists in the repo" {
-    run in_stow 'for p in "${STOW_DIRS[@]}" "${STOW_ALWAYS[@]}" $(stow_category_packages terminal) $(stow_category_packages editor) $(stow_category_packages theming); do [[ -d "$DOTFILES_DIR/$p" ]] || echo "missing: $p"; done'
+@test "stow_packages: every package named exists in the repo (or comes from the config defaults)" {
+    run in_stow 'for p in "${STOW_DIRS[@]}" "${STOW_ALWAYS[@]}" $(stow_category_packages terminal) $(stow_category_packages editor) $(stow_category_packages theming); do stow_package_exists "$p" || echo "missing: $p"; done'
     assert_success
     assert_output ""
 }

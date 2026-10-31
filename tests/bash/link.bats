@@ -19,8 +19,9 @@ setup() {
     ln -s "${LYNE_TEST_INSTALL:-$REPO/.install}" "$DOTS_DIR/.install"
     ln -s "$REPO/.data" "$DOTS_DIR/"
     local pkg
+    # kde may be missing: its only file is kept out of git
     for pkg in hyprland kitty nvim zsh tmux fastfetch kde theming; do
-        cp -r "$REPO/$pkg" "$DOTS_DIR/"
+        [[ -d "$REPO/$pkg" ]] && cp -r "$REPO/$pkg" "$DOTS_DIR/"
     done
     # Without this machine's config files kept out of git, like a new clone
     local ignored
