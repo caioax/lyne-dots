@@ -46,7 +46,6 @@ trap cleanup EXIT
 # tmux with the repo's config, its keys for the guides' check
 sed -e '/^if "test ! -d ~\/.tmux\/plugins\/tpm"/,+1d' -e "\|^run '~/.tmux/plugins/tpm/tpm'|d" "$TMUX_CONF" >"$SB/tmux.conf"
 grep -q "tpm" <(grep -v '^\s*#' "$SB/tmux.conf" | grep -v '@plugin') && fail_early "tmux.conf still runs TPM after stripping it"
-mkdir -m 700 "$SB/run"
 T -f "$SB/tmux.conf" new-session -d -s t -x 160 -y 40 "sh" || fail_early "tmux didn't start"
 TMUX_FORMAT='#{key_table}	#{key_string}	#{key_note}'
 {

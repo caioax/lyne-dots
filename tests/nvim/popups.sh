@@ -45,7 +45,6 @@ grep -q "tpm" <(grep -v '^\s*#' "$SB/tmux.conf" | grep -v '@plugin') && fail_ear
 
 # Stand-ins first in the panes' and popups' PATH
 mkdir -p "$SB/bin" "$SB/work" "$SB/projects/alpha" "$SB/projects/beta.app" "$SB/.lyne-dots"
-mkdir -m 700 "$SB/run"
 cat >"$SB/bin/lazygit" <<EOF
 #!/bin/sh
 pwd >"$SB/lazygit.cwd"

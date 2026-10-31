@@ -55,16 +55,18 @@ wait_for() {
 }
 
 # A short temp folder ($SB; tmux's socket may live in it) with the config,
-# data, state and cache folders, and $SB/nvim.sh: Neovim in them, listening
+# data, state, cache and runtime folders (the projects' sockets go to
+# $SB/run/lyne-nvim), and $SB/nvim.sh: Neovim in them, listening
 # on $SB/nvim.sock (arguments are passed on)
 nvim_sandbox() {
     SB="$(mktemp -d /tmp/lnv.XXXXXX)" || fail_early "no sandbox"
     mkdir -p "$SB/config" "$SB/data" "$SB/state" "$SB/cache"
+    mkdir -m 700 "$SB/run"
     ln -s "$NVIM_DIR" "$SB/config/nvim"
     ln -s "$NVIM_DATA" "$SB/data/nvim"
     cat >"$SB/nvim.sh" <<EOF
 #!/bin/sh
-export XDG_CONFIG_HOME="$SB/config" XDG_DATA_HOME="$SB/data" XDG_STATE_HOME="$SB/state" XDG_CACHE_HOME="$SB/cache"
+export XDG_CONFIG_HOME="$SB/config" XDG_DATA_HOME="$SB/data" XDG_STATE_HOME="$SB/state" XDG_CACHE_HOME="$SB/cache" XDG_RUNTIME_DIR="$SB/run"
 exec nvim --listen "$SB/nvim.sock" "\$@"
 EOF
     chmod +x "$SB/nvim.sh"

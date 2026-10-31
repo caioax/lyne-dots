@@ -64,7 +64,6 @@ trap cleanup EXIT
 sed -e '/^if "test ! -d ~\/.tmux\/plugins\/tpm"/,+1d' -e "\|^run '~/.tmux/plugins/tpm/tpm'|d" "$TMUX_CONF" >"$SB/tmux.conf"
 grep -q "tpm" <(grep -v '^\s*#' "$SB/tmux.conf" | grep -v '@plugin') && fail_early "tmux.conf still runs TPM after stripping it"
 
-mkdir -m 700 "$SB/run"
 mkdir "$SB/work" "$SB/resurrect"
 echo "first file" >"$SB/work/a.txt"
 echo "second file" >"$SB/work/b.txt"
