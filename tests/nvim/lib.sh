@@ -114,3 +114,32 @@ EOF
     wait_for 5 _attached || fail_early "no tmux client"
     CLIENT="$(tmux -S "$SOCK" list-clients -F '#{client_name}' | head -1)"
 }
+
+# feed_client SESSION TEXT: what a terminal sends for a key (TEXT with
+# kitty.conf's send_text escapes, \x1b...), typed through a second client of
+# the server at $SOCK attached to SESSION, which then leaves
+feed_client() {
+    [[ -f "$SB/feed.py" ]] || cat >"$SB/feed.py" <<'EOF'
+import fcntl, os, pty, select, struct, sys, termios, time
+pid, fd = pty.fork()
+if pid == 0:
+    os.environ["TERM"] = "xterm-kitty"
+    os.environ.pop("TMUX", None)
+    os.execvp("tmux", ["tmux", "-S", sys.argv[1], "attach", "-t", sys.argv[2]])
+fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 160, 0, 0))
+def drain(seconds):
+    end = time.time() + seconds
+    while time.time() < end:
+        r, _, _ = select.select([fd], [], [], 0.1)
+        if r:
+            try:
+                os.read(fd, 65536)
+            except OSError:
+                return
+drain(1)
+os.write(fd, sys.argv[3].encode().decode("unicode_escape").encode("latin-1"))
+drain(0.5)
+os.kill(pid, 9)
+EOF
+    python3 "$SB/feed.py" "$SOCK" "$1" "$2"
+}

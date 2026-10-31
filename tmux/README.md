@@ -40,6 +40,7 @@ The prefix is `C-Space`: press Ctrl + Space, let go, then press the key (`C-Spac
 | `C-Space c` | New window in the same folder |
 | `C-Space 1` | Go to window 1 (any number) |
 | `C-Space ,` | Rename the window (empty: back to the automatic name) |
+| `C-M-S-h` / `C-M-S-l` | Move the window one place left / right (Ctrl+Alt+Shift, like Super+Ctrl+Shift+H/L for workspaces) |
 
 ## Copy text
 

@@ -14,6 +14,7 @@
 #   NAV_DEBUG=1                print the checkhealth report
 #   LYNE_TEST_NVIM=<dir>       another copy of nvim/.config/nvim (lib.sh)
 #   LYNE_TEST_TMUX_CONF=<file> another copy of tmux/.tmux.conf
+#   LYNE_TEST_KITTY_CONF=<file> another copy of kitty/.config/kitty/kitty.conf
 
 # shellcheck disable=SC2329  # cleanup runs from the trap, the others from wait_for
 
@@ -142,5 +143,36 @@ errors="$(grep -c 'ERROR' <<<"$health")"
 check "checkhealth smart-splits: no errors" 0 "$errors"
 check "checkhealth smart-splits: the tmux backend is in use" 1 "$(grep -c 'smart-splits-backend-tmux: in use' <<<"$health")"
 [[ "$errors" != 0 ]] && grep 'ERROR' <<<"$health" | sed 's/^/    /'
+
+# kitty sends Ctrl+Shift+h/j/k/l and Ctrl+Alt+Shift+h/l as CSI u
+# (kitty.conf), which tmux reads apart from Ctrl+h/l: the bytes kitty.conf
+# sends, fed to tmux like a terminal does
+KITTY_CONF="${LYNE_TEST_KITTY_CONF:-$REPO/kitty/.config/kitty/kitty.conf}"
+sends() { sed -n "s/^map $1 send_text all //p" "$KITTY_CONF"; }
+check "kitty sends Ctrl+Alt+Shift+h and l" 2 "$( { sends ctrl+alt+shift+h; sends ctrl+alt+shift+l; } | grep -c .)"
+T new-window -t t: -n B sh
+T new-window -t t: -n C sh
+T select-window -t t:B
+order() { T list-windows -t t -F '#{window_name}#{?window_active,*,}' | tr '\n' ' '; }
+T rename-window -t "t:$(T list-windows -t t -F '#{window_index}' | head -1)" A
+check "windows before" "A B* C " "$(order)"
+feed_client t "$(sends ctrl+alt+shift+h)"
+check "Ctrl+Alt+Shift+h moves the window left, still focused" "B* A C " "$(order)"
+feed_client t "$(sends ctrl+alt+shift+h)"
+check "at the left end it stays" "B* A C " "$(order)"
+feed_client t "$(sends ctrl+alt+shift+l)"
+feed_client t "$(sends ctrl+alt+shift+l)"
+check "Ctrl+Alt+Shift+l twice moves it to the right end" "A C B* " "$(order)"
+feed_client t "$(sends ctrl+alt+shift+l)"
+check "at the right end it stays" "A C B* " "$(order)"
+feed_client t '\x1b\x08'
+check "plain Ctrl+Alt+h still goes to the previous window" "A C* B " "$(order)"
+# Ctrl+Shift+l swaps the pane with the one on its right (window A: the
+# shell and Neovim side by side)
+T select-window -t t:A
+T select-pane -t t:A.1
+left="$(T display -p -t t:A.1 '#{pane_id}')"
+feed_client t "$(sends ctrl+shift+l)"
+check "Ctrl+Shift+l swaps the pane with the one on the right" "$left" "$(T display -p -t t:A.2 '#{pane_id}')"
 
 exit "$failed"
