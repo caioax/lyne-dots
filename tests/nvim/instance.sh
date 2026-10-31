@@ -16,6 +16,7 @@
 #
 # Usage: tests/nvim/instance.sh   (needs nvim and the plugins)
 #   LYNE_TEST_NVIM=<dir>   another copy of nvim/.config/nvim (lib.sh)
+#   LYNE_TEST_ZSHRC=<file> another copy of zsh/.zshrc (its tmux function)
 
 # shellcheck disable=SC2329  # cleanup runs from the trap, the others from wait_for
 
@@ -250,6 +251,23 @@ check "client back in the other session" "$far" "$(client_pane)"
 typed "$far"
 check "tmux: no file, the client still goes to the first" "$owner" "$(client_pane)"
 
+# The files handed over show as tabs on top (bufferline.nvim), Shift+L goes
+# to the next one, <leader>| splits side by side
+tabs() { T capture-pane -p -t "$owner" | head -1; }
+_tabs() { [[ "$(tabs)" == *f1.txt* && "$(tabs)" == *f2.txt* ]]; }
+wait_for 10 _tabs
+check "tabs: both files on the top line" 1 "$(_tabs && echo 1)"
+before="$(nv 'expand("%:t")')"
+T send-keys -t "$owner" Escape L
+sleep 0.5
+check "tabs: Shift+L goes to the other file" 1 "$([[ "$(nv 'expand("%:t")')" != "$before" ]] && echo 1)"
+T send-keys -t "$owner" Space '|'
+sleep 0.5
+check "<leader>| splits side by side" 2 "$(nv 'luaeval("#vim.tbl_filter(function(w) return vim.api.nvim_win_get_config(w).relative == \"\" end, vim.api.nvim_tabpage_list_wins(0))")')"
+T send-keys -t "$owner" Space w q
+sleep 0.5
+check "<leader>wq closes the split" 1 "$(nv 'luaeval("#vim.tbl_filter(function(w) return vim.api.nvim_win_get_config(w).relative == \"\" end, vim.api.nvim_tabpage_list_wins(0))")')"
+
 # Never handed over: -R stays open in its pane
 T send-keys -t "$other" "$SB/plain.sh -R f2.txt" Enter
 sleep 2
@@ -264,6 +282,28 @@ kill "$CLIENT_PID" 2>/dev/null
 popups="$(grep -E '^bind .*display-popup.*nvim' "$REPO/tmux/.tmux.conf")"
 check "tmux's Neovim popups found" 1 "$([[ -n "$popups" ]] && echo 1)"
 check "every Neovim popup sets LYNE_NVIM_SOLO=1" "" "$(grep -v -- '-e LYNE_NVIM_SOLO=1' <<<"$popups")"
+
+# The shell's tmux (zsh/.zshrc) with no arguments in a project: that
+# project's session; anywhere else, with arguments or inside tmux, plain
+# tmux. A stand-in tmux logs what it gets
+ZSHRC="${LYNE_TEST_ZSHRC:-$REPO/zsh/.zshrc}"
+tmux_fn="$(sed -n '/^tmux() {/,/^}/p' "$ZSHRC")"
+check "zshrc has its tmux function" 1 "$([[ -n "$tmux_fn" ]] && echo 1)"
+mkdir -p "$SB/fakebin"
+printf '#!/bin/sh\necho "ARGS:$*" >>"%s"\n' "$SB/tmux-args.log" >"$SB/fakebin/tmux"
+chmod +x "$SB/fakebin/tmux"
+shell_tmux() {
+    local dir="$1"
+    shift
+    : >"$SB/tmux-args.log"
+    (cd "$dir" && env -u TMUX PATH="$SB/fakebin:$PATH" LYNE_DOTS="$REPO" XDG_RUNTIME_DIR="$SB/run" \
+        TMPDIR="$SB/tmpdir" zsh -fc "$tmux_fn; tmux $*")
+    cat "$SB/tmux-args.log"
+}
+check "tmux in a project's subfolder: its session" "ARGS:new-session -A -s game -c $P" "$(shell_tmux "$P/scripts")"
+check "tmux outside any project: plain" "ARGS:" "$(shell_tmux "$SB/work/plain/sub")"
+check "tmux with arguments: as given" "ARGS:ls" "$(shell_tmux "$P" ls)"
+check "tmux inside tmux: as given" "ARGS:" "$(cd "$P" && : >"$SB/tmux-args.log" && env TMUX=x PATH="$SB/fakebin:$PATH" LYNE_DOTS="$REPO" zsh -fc "$tmux_fn; tmux" && cat "$SB/tmux-args.log")"
 
 # The session name is config/projects.lua's
 names='{"/a/game", "/a/.lyne-dots", "/a/my.app:v2", "/a/...", "/"}'

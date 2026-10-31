@@ -8,6 +8,8 @@ return {
     opts = {
         preset = "modern",
         spec = {
+            { "<leader>b", group = "Open files (tabs)" },
+            { "<leader>w", group = "Splits" },
             { "<leader>f", group = "Find" },
             { "<leader>g", group = "Git" },
             { "<leader>l", group = "Lazygit" },

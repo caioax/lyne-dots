@@ -46,7 +46,8 @@ trap cleanup EXIT
 # tmux with the repo's config, its keys for the guides' check
 sed -e '/^if "test ! -d ~\/.tmux\/plugins\/tpm"/,+1d' -e "\|^run '~/.tmux/plugins/tpm/tpm'|d" "$TMUX_CONF" >"$SB/tmux.conf"
 grep -q "tpm" <(grep -v '^\s*#' "$SB/tmux.conf" | grep -v '@plugin') && fail_early "tmux.conf still runs TPM after stripping it"
-T -f "$SB/tmux.conf" new-session -d -s t -x 160 -y 40 "sh" || fail_early "tmux didn't start"
+# Not from this shell's pane: the server would hand its $TMUX_PANE to the popups
+env -u TMUX -u TMUX_PANE tmux -S "$SOCK" -f "$SB/tmux.conf" new-session -d -s t -x 160 -y 40 "sh" || fail_early "tmux didn't start"
 TMUX_FORMAT='#{key_table}	#{key_string}	#{key_note}'
 {
     T list-keys -N -F "$TMUX_FORMAT"
@@ -124,6 +125,12 @@ pv() { nvim --headless --server "$POPUP" --remote-expr "$1" 2>/dev/null; }
 prompt() { [[ "$(pv '&filetype')" == TelescopePrompt ]]; }
 wait_for 15 prompt
 check "prefix + ? opens the search, typing goes to its prompt" TelescopePrompt "$(pv '&filetype')"
+# A popup has $TMUX but no $TMUX_PANE: smart-splits without its tmux
+# backend (it would warn that the pane can't be marked)
+check "popup: smart-splits without the tmux backend" none \
+    "$(pv 'luaeval("require(\"smart-splits.config\").mux.backend or \"none\"")')"
+check "popup: no smart-splits warning" 0 \
+    "$(pv 'luaeval("#vim.tbl_filter(function(n) return tostring(n.msg):find(\"TMUX_PANE\") ~= nil end, require(\"snacks\").notifier.get_history()) + (vim.fn.execute(\"messages\"):find(\"TMUX_PANE\") and 1 or 0)")')"
 
 count() { pv 'luaeval("require(\"telescope.actions.state\").get_current_picker(vim.api.nvim_get_current_buf()).manager:num_results()")'; }
 listed() { [[ "$(count)" -gt 100 ]]; }

@@ -13,6 +13,21 @@ The leader is `Space`: `<leader>ff` means Space, then `f`, then `f`. Plugins com
 | `<leader>e` | File tree (open / close) |
 | `<C-/>` | Floating terminal (open / close) |
 
+## Open files and splits
+
+Every open file is a tab on top (once there are two). Shift+H / Shift+L take the place of Vim's H / L (top / bottom of the screen; `<C-u>` / `<C-d>` scroll). To open a file in a split: `<C-v>` (side by side) or `<C-x>` (top and bottom) instead of Enter in a Telescope list, `s` / `S` in the file tree.
+
+| Keys | Does |
+| :--- | :--- |
+| `H` / `L` | Previous / next open file (Shift+H / Shift+L) |
+| `<leader>bb` | Pick an open file by the letter on its tab |
+| `<leader>bd` | Close the file (the split stays, with another file) |
+| `<leader>bo` | Close the other files |
+| `<leader>bh` / `<leader>bl` | Move the tab left / right |
+| `<leader>\|` / `<leader>-` | Split side by side / top and bottom (like tmux's) |
+| `<leader>wq` / `<leader>wo` | Close the split / the other splits |
+| `<leader>w=` | Make the splits the same size |
+
 ## Find
 
 | Keys | Does |

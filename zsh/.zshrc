@@ -80,6 +80,21 @@ tkf() {
     tmux kill-server 2>/dev/null
     [[ -n "$last" ]] && rm -f "$last"
 }
+# tmux with no arguments, outside tmux, in a project (the nearest folder
+# with project.godot, a *.sln or .git): that project's session, made in its
+# folder when there's none, named as prefix + P names it. Anywhere else, or
+# with arguments, tmux as it is
+tmux() {
+    if (( $# == 0 )) && [[ -z $TMUX ]] && (( $+commands[nvim] )); then
+        local cli="${LYNE_DOTS:-$HOME/.lyne-dots}/nvim/.config/nvim/local-plugins/project-instance.nvim/lua/project_instance/cli.lua"
+        local root session socket alive found
+        if [[ -f $cli ]] && IFS=$'\t' read -r root session socket alive found < <(nvim --clean --headless -l "$cli" locate 2>/dev/null) && [[ $found == 1 ]]; then
+            command tmux new-session -A -s "$session" -c "$root"
+            return
+        fi
+    fi
+    command tmux "$@"
+}
 all-update() {
     local STATE_FILE="$HOME/.config/quickshell/state.json"
     local AUR_HELPER="yay"

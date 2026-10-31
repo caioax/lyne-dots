@@ -125,7 +125,7 @@ _nvim_open() {
     local locate=(locate)
     [[ -n "$project" ]] && locate+=(--project "$project")
     locate+=("$file")
-    IFS=$'\t' read -r root session socket alive < <(_nvim_cli "${locate[@]}")
+    IFS=$'\t' read -r root session socket alive _ < <(_nvim_cli "${locate[@]}")
     [[ -n "$socket" ]] || { _nvim_fail "the project of $file wasn't found"; return 1; }
 
     if [[ "$alive" == 1 ]]; then
@@ -139,7 +139,7 @@ _nvim_open() {
         tmux new-session -d -s "$session" -c "$root" || { _nvim_fail "tmux didn't start"; return 1; }
         created=1
         _nvim_wait_restore
-        IFS=$'\t' read -r _ _ _ alive < <(_nvim_cli "${locate[@]}")
+        IFS=$'\t' read -r _ _ _ alive _ < <(_nvim_cli "${locate[@]}")
         if [[ "$alive" == 1 ]]; then
             _nvim_send "$socket" "$file" "$line" "$col" && return 0
         fi
@@ -164,7 +164,7 @@ _nvim_open() {
 
     local tries=$((wait_nvim * 5))
     while ((tries-- > 0)); do
-        IFS=$'\t' read -r _ _ _ alive < <(_nvim_cli "${locate[@]}")
+        IFS=$'\t' read -r _ _ _ alive _ < <(_nvim_cli "${locate[@]}")
         [[ "$alive" == 1 ]] && break
         sleep 0.2
     done

@@ -2,8 +2,9 @@
 --   nvim --clean --headless -l .../project_instance/cli.lua <command> ...
 --
 --   locate [--project DIR] [FILE]
---       root, session name, socket and 1/0 (a live Neovim on it), tab
---       separated: the project of DIR, else FILE's (else the current folder)
+--       root, session name, socket, 1/0 (a live Neovim on it) and 1/0 (a
+--       project: --project, or a marker found), tab separated: the project
+--       of DIR, else FILE's (else the current folder's)
 --   send SOCKET [FILE [LINE [COL]]]
 --       opens FILE in the Neovim on SOCKET (just brings it up without one);
 --       prints its tmux pane, $TMUX and pid, tab separated. Exit 1 when
@@ -52,9 +53,14 @@ if command == "locate" then
             i = i + 1
         end
     end
-    local root = project and vim.fs.normalize(vim.fn.fnamemodify(project, ":p")) or pi.root(file)
+    local root, found
+    if project then
+        root, found = vim.fs.normalize(vim.fn.fnamemodify(project, ":p")), true
+    else
+        root, found = pi.root(file)
+    end
     local socket = pi.socket(root)
-    out(root, pi.session_name(root), socket, pi.alive(socket) and "1" or "0")
+    out(root, pi.session_name(root), socket, pi.alive(socket) and "1" or "0", found and "1" or "0")
 elseif command == "send" then
     local socket, file, line, col = args[2], args[3], tonumber(args[4] or ""), tonumber(args[5] or "")
     if not socket then

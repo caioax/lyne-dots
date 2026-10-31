@@ -15,6 +15,15 @@ map("n", "<Esc>", ":nohlsearch<CR>", with("Clear search highlight"))
 map("v", "J", ":m '>+1<CR>gv=gv", with("Move selected lines down"))
 map("v", "K", ":m '<-2<CR>gv=gv", with("Move selected lines up"))
 
+-- --- SPLITS ---
+-- The same keys as tmux's prefix + | and -; Ctrl/Alt + h/j/k/l move between
+-- and resize them (smart-splits.nvim)
+map("n", "<leader>|", "<cmd>vsplit<cr>", with("Split this window side by side"))
+map("n", "<leader>-", "<cmd>split<cr>", with("Split this window top and bottom"))
+map("n", "<leader>wq", "<cmd>close<cr>", with("Close the split"))
+map("n", "<leader>wo", "<cmd>only<cr>", with("Close the other splits"))
+map("n", "<leader>w=", "<C-w>=", with("Make the splits the same size"))
+
 -- --- CLIPBOARD & REGISTERS ---
 
 -- 1. SYSTEM (Top Priority)

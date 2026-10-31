@@ -110,7 +110,8 @@ local function has_marker(dir)
 end
 
 -- The project folder of PATH (a file, which may not exist yet, or a folder;
--- the current folder when nil)
+-- the current folder when nil), and whether a marker made it one (false: the
+-- starting folder, no project around)
 function M.root(path)
     path = absolute(path or vim.fn.getcwd())
     local start = vim.fn.isdirectory(path) == 1 and path or vim.fs.dirname(path)
@@ -119,14 +120,14 @@ function M.root(path)
         start = vim.fs.dirname(start)
     end
     if has_marker(start) then
-        return start
+        return start, true
     end
     for dir in vim.fs.parents(start) do
         if has_marker(dir) then
-            return dir
+            return dir, true
         end
     end
-    return start
+    return start, false
 end
 
 -- A folder's tmux session name, the same as config/projects.lua's: its name
