@@ -165,6 +165,14 @@ feed_client t '\x0a'
 _back_term() { [[ "$(in_term)" == 1 && "$(nv 'mode()')" == t ]]; }
 wait_for 5 _back_term
 check "Ctrl+j goes back into it, ready to type" "1 t" "$(in_term) $(nv 'mode()')"
+# Alt+k from inside it resizes it (tmux's M-k goes to Neovim in this pane)
+term_height() { nv 'winheight(0)'; }
+before="$(term_height)"
+feed_client t '\x1bk'
+_resized() { [[ "$(term_height)" != "$before" ]]; }
+wait_for 5 _resized
+check "Alt+k from inside the terminal resizes it" 1 "$([[ "$(term_height)" != "$before" ]] && echo 1)"
+check "and it keeps the typing" "1 t" "$(in_term) $(nv 'mode()')"
 feed_client t '\x1f'
 _term_hidden() { [[ "$(terms)" == 0 ]]; }
 wait_for 5 _term_hidden

@@ -1,14 +1,30 @@
--- Ctrl+h/j/k/l inside a terminal split (it takes the typing): to the split
--- on that side, then tmux's panes, as everywhere else (smart-splits.nvim).
--- A floating one (lazygit) keeps the key for its program
-local function term_nav(dir, key)
-    return function(self)
-        if self:is_floating() then
-            return key
-        end
-        vim.schedule(function()
-            require("smart-splits")["move_cursor_" .. dir]()
-        end)
+-- Inside a terminal split (it takes the typing) the split keys work as
+-- everywhere else (smart-splits.nvim): Ctrl+h/j/k/l move to the split on that
+-- side, then tmux's panes; Alt+h/j/k/l resize. A floating one (lazygit) keeps
+-- the keys for its program
+local terminal_keys = {}
+for _, k in ipairs({
+    { "h", "left", "Focus the split on the left", "Grow or shrink the split to the left" },
+    { "j", "down", "Focus the split below", "Grow or shrink the split downwards" },
+    { "k", "up", "Focus the split above", "Grow or shrink the split upwards" },
+    { "l", "right", "Focus the split on the right", "Grow or shrink the split to the right" },
+}) do
+    for _, kind in ipairs({ { "C", "move_cursor_", k[3], "nav_" }, { "M", "resize_", k[4], "resize_" } }) do
+        local key = "<" .. kind[1] .. "-" .. k[1] .. ">"
+        terminal_keys[kind[4] .. k[1]] = {
+            key,
+            function(self)
+                if self:is_floating() then
+                    return key
+                end
+                vim.schedule(function()
+                    require("smart-splits")[kind[2] .. k[2]]()
+                end)
+            end,
+            desc = kind[3],
+            expr = true,
+            mode = "t",
+        }
     end
 end
 
@@ -31,38 +47,7 @@ return {
         scratch = { enabled = true },
         terminal = {
             enabled = true,
-            win = {
-                keys = {
-                    nav_h = {
-                        "<C-h>",
-                        term_nav("left", "<C-h>"),
-                        desc = "Focus the split on the left",
-                        expr = true,
-                        mode = "t",
-                    },
-                    nav_j = {
-                        "<C-j>",
-                        term_nav("down", "<C-j>"),
-                        desc = "Focus the split below",
-                        expr = true,
-                        mode = "t",
-                    },
-                    nav_k = {
-                        "<C-k>",
-                        term_nav("up", "<C-k>"),
-                        desc = "Focus the split above",
-                        expr = true,
-                        mode = "t",
-                    },
-                    nav_l = {
-                        "<C-l>",
-                        term_nav("right", "<C-l>"),
-                        desc = "Focus the split on the right",
-                        expr = true,
-                        mode = "t",
-                    },
-                },
-            },
+            win = { keys = terminal_keys },
         },
 
         -- DASHBOARD CONFIGURATION
