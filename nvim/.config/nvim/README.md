@@ -87,6 +87,14 @@ Sessions are saved per folder (and git branch) once a file is open: when you qui
 | `<leader>sf` | Scratch buffer (open / close) |
 | `<leader>S` | Pick a scratch buffer |
 
+## One Neovim per project
+
+The first Neovim opened in a project is that project's: the project is the nearest folder with `project.godot`, a `*.sln` or `.git` (else the file's folder). Another `nvim` there, with files or without, hands them to it and quits; in tmux you land on its pane, whatever window or session it's in. `:ProjectInstance` shows which one this is. `nvim -R`, `nvim -d`, text from a pipe, git's files (commit messages) and temp files (`crontab -e`, the shell's `Ctrl+V`) always get a Neovim of their own, and so does `LYNE_NVIM_SOLO=1 nvim` and the tmux popups.
+
+From outside: `lyne nvim open [--project <folder>] <file> [line [column]]` opens the file there and shows it (tmux's pane, the terminal's window). With no Neovim in the project it starts one in the project's tmux session, starting tmux (and what tmux-continuum brings back) or a terminal when needed. `lyne nvim list` shows the ones running.
+
+**Godot (C#):** Editor Settings › Dotnet › Editor: External Editor `Custom`, Custom Exec Path `lyne`, Custom Exec Path Args `nvim open --project {project} {file} {line} {col}`. Text Editor › External stays off (that's for GDScript).
+
 ## Change the config
 
 - **Folders:** `lua/config` (options, keys, the shortcut search), `lua/plugins` (one file per plugin), `lua/lyne` (the colorscheme, which follows the shell's theme).

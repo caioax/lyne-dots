@@ -52,7 +52,7 @@ The prefix is `C-Space`: press Ctrl + Space, let go, then press the key (`C-Spac
 
 ## Sessions
 
-tmux keeps running after you close the terminal. Everything is saved every 15 minutes and when you log out, reboot or shut down from the shell's power menu; the first tmux after that brings it back, Neovim panes with their folder's session. From the shell, `tk` closes everything (it comes back next time) and `tkf` closes it and forgets the save.
+tmux keeps running after you close the terminal. Everything is saved every 15 minutes and when you log out, reboot or shut down from the shell's power menu; the first tmux after that brings it back, Neovim panes with their folder's session. From the shell, `tk` closes everything (it comes back next time) and `tkf` closes it and forgets the save. Each project has one Neovim: an `nvim` typed in another window of the project takes you to its pane (`lyne nvim open` does it from outside, as Godot does; the Neovim guide has more).
 
 | Keys | Does |
 | :--- | :--- |
