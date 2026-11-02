@@ -74,7 +74,9 @@ ColumnLayout {
 
         SelectRow {
             label: I18n.tr("Renders the desktop")
-            description: GpuService.renderer === "igpu" ? I18n.tr("Uses less power: recommended for laptops") : GpuService.renderer === "dgpu" ? I18n.tr("Faster with a monitor plugged into it. Without one at login, %1 renders instead", GpuService.igpu?.brand ?? I18n.tr("the integrated GPU")) : I18n.tr("Hyprland picks: the GPU of the built-in screen")
+            // gpus.lua put another GPU first at login: say why here, where
+            // the choice is, or the choice looks ignored
+            description: GpuService.gaveWay ? I18n.tr("%1 renders now: no monitor was plugged into %2 at login. %2 renders again at the next login with one", GpuService.gpuAt(GpuService.running[0])?.brand ?? "", GpuService.gpuAt(GpuService.savedOrder[0])?.brand ?? "") : GpuService.renderer === "igpu" ? I18n.tr("Uses less power: recommended for laptops") : GpuService.renderer === "dgpu" ? I18n.tr("Faster with a monitor plugged into it. Without one at login, %1 renders instead", GpuService.igpu?.brand ?? I18n.tr("the integrated GPU")) : I18n.tr("Hyprland picks: the GPU of the built-in screen")
             segmentWidth: Config.fontSizeNormal * 8
             value: GpuService.renderer
             options: [
@@ -272,7 +274,7 @@ ColumnLayout {
     // The saved order against the running one, with a way to apply it now
     component NextLoginRow: SettingRow {
         label: I18n.tr("Next login")
-        description: GpuService.pending ? I18n.tr("%1. Now: %2", GpuService.orderLabel(GpuService.savedOrder), GpuService.orderLabel(GpuService.runningExplicit ? GpuService.running : [])) : GpuService.gaveWay ? I18n.tr("%1. Now %2 renders: no monitor was plugged into %3 at login", GpuService.orderLabel(GpuService.savedOrder), GpuService.gpuAt(GpuService.running[0])?.brand ?? "", GpuService.gpuAt(GpuService.savedOrder[0])?.brand ?? "") : GpuService.orderLabel(GpuService.savedOrder)
+        description: GpuService.pending ? I18n.tr("%1. Now: %2", GpuService.orderLabel(GpuService.savedOrder), GpuService.orderLabel(GpuService.runningExplicit ? GpuService.running : [])) : GpuService.orderLabel(GpuService.savedOrder)
         descriptionColor: GpuService.pending ? Config.warningColor : Config.subtextColor
 
         // md-logout
