@@ -70,20 +70,17 @@ if [[ -n $TMUX ]]; then
     chpwd_functions+=(_tmux_status_refresh)
 fi
 
-# === ALIASES ===
-# tk closes every tmux session; the next tmux brings back the last save
-# (tmux-continuum). tkf also forgets that save, so the next tmux starts empty
-alias tk='tmux kill-server'
-tkf() {
-    local last
-    last="$(bash -c 'source ~/.tmux/plugins/tmux-resurrect/scripts/helpers.sh && last_resurrect_file' 2>/dev/null)"
-    tmux kill-server 2>/dev/null
-    [[ -n "$last" ]] && rm -f "$last"
-}
-# tmux with no arguments, outside tmux, in a project (the nearest folder
-# with project.godot, a *.sln or .git): that project's session, made in its
-# folder when there's none, named as prefix + P names it. Anywhere else, or
-# with arguments, tmux as it is
+# === TMUX: the tm commands ===
+# tm      the project's session, or main anywhere else (plain tmux does too)
+# tmn     a new session, named           tmq  close a session (this one)
+# tmk     close every session; the next tm brings back the last save
+#         (tmux-continuum)               tmkf the same, and forget that save
+#
+# tmux with no arguments, outside tmux: in a project (the nearest folder
+# with project.godot, a *.sln or .git) that project's session, made in its
+# folder when there's none, named as prefix + P names it; anywhere else the
+# session main (made in ~), so plain tmux never makes numbered sessions. With
+# arguments, or inside tmux, tmux as it is
 tmux() {
     if (( $# == 0 )) && [[ -z $TMUX ]] && (( $+commands[nvim] )); then
         local cli="${LYNE_DOTS:-$HOME/.lyne-dots}/nvim/.config/nvim/local-plugins/project-instance.nvim/lua/project_instance/cli.lua"
@@ -93,8 +90,52 @@ tmux() {
             return
         fi
     fi
+    if (( $# == 0 )) && [[ -z $TMUX ]]; then
+        command tmux new-session -A -s main -c ~
+        return
+    fi
     command tmux "$@"
 }
+tm() { tmux "$@"; }
+# tmn <name> [folder]: a new session on purpose (prefix + C does it inside
+# tmux), in the folder or the current one; one with that name already there
+# is just entered. The name is required: no numbered sessions
+tmn() {
+    if [[ -z $1 ]]; then
+        print -u2 "usage: tmn <name> [folder]"
+        return 1
+    fi
+    # tmux turns "." and ":" into "_" itself; =name must find it after
+    local name="${1//[.:]/_}" dir="${2:-$PWD}"
+    if [[ -z $TMUX ]]; then
+        command tmux new-session -A -s "$name" -c "$dir"
+        return
+    fi
+    command tmux has-session -t "=$name" 2>/dev/null ||
+        command tmux new-session -d -s "$name" -c "$dir" || return
+    command tmux switch-client -t "=$name"
+}
+# tmq [name]: close a session, this one with no name (the terminal goes to
+# the one used last, tmux.conf's detach-on-destroy off)
+tmq() {
+    if [[ -n $1 ]]; then
+        command tmux kill-session -t "=${1//[.:]/_}"
+    elif [[ -n $TMUX ]]; then
+        command tmux kill-session
+    else
+        print -u2 "usage: tmq [name]   (no name: the session you're in, inside tmux)"
+        return 1
+    fi
+}
+tmk() { command tmux kill-server; }
+tmkf() {
+    local last
+    last="$(bash -c 'source ~/.tmux/plugins/tmux-resurrect/scripts/helpers.sh && last_resurrect_file' 2>/dev/null)"
+    command tmux kill-server 2>/dev/null
+    [[ -n "$last" ]] && rm -f "$last"
+}
+
+# === UPDATES ===
 all-update() {
     local STATE_FILE="$HOME/.config/quickshell/state.json"
     local AUR_HELPER="yay"

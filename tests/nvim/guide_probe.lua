@@ -1,7 +1,7 @@
 -- Keys a guide (tmux/README.md, nvim/.config/nvim/README.md) cites that the
 -- config doesn't have, one per line. The keys are the backquoted ones in
--- the first cell of each table row, written like the shortcut search shows
--- them; case only counts outside <...> (<C-h> is <C-H>, Q isn't q). Run
+-- the first cell of each table row (not in a table of shell commands, its
+-- header "Command"), written like the shortcut search shows them; case only counts outside <...> (<C-h> is <C-H>, Q isn't q). Run
 -- inside the sandbox's Neovim:
 -- luaeval('dofile(_A[1])(_A[2])', ['<this file>', {readme, kind, tmux, prefix, allowed}])
 -- kind "nvim" checks against Neovim's maps, "tmux" against the tmux keys in
@@ -28,9 +28,17 @@ return function(args)
     end
 
     local missing, cited = {}, 0
+    -- A table whose header starts with "Command" lists shell commands, not keys
+    local in_table, commands = false, false
     for line in table.concat(vim.fn.readfile(args.readme), "\n"):gmatch("[^\n]+") do
+        if not line:match("^|") then
+            in_table = false
+        elseif not in_table then
+            in_table = true
+            commands = line:match("^|%s*Command%s*|") ~= nil
+        end
         -- Table rows, not the separator; an escaped pipe belongs to the cell
-        if line:match("^|") and not line:match("^|%s*:?%-") then
+        if line:match("^|") and not commands and not line:match("^|%s*:?%-") then
             local row = line:gsub("\\|", "\1")
             local first = row:match("^|([^|]*)|") or ""
             for key in first:gmatch("`([^`]+)`") do

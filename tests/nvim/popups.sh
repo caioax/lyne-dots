@@ -4,12 +4,17 @@
 # - prefix + G runs lazygit in the pane's folder (a stand-in that logs it)
 # - prefix + S shows the scratch terminal (the session "scratch", no status
 #   bar, in the pane's folder); the same key from inside hides it, and
-#   showing it again brings back the same terminal
+#   showing it again brings back the same terminal; exit in it closes the
+#   popup (no other session shown inside)
 # - prefix + P lists the sessions (not the scratch one) and the project
 #   folders (fake ones: LYNE_PROJECT_ROOTS and LYNE_DOTS point into the
 #   sandbox); a folder starts its session there and switches to it, a
 #   session switches back; Escape goes to normal mode (j / k move), a
 #   second one closes it. Its Neovim runs in the sandbox of lib.sh
+# - prefix + C asks a name and starts that session in the pane's folder,
+#   switching to it; a name already there switches, an empty one makes
+#   nothing (no numbered sessions); closing the client's session takes it
+#   to the one used last (detach-on-destroy off)
 #
 # Usage: tests/nvim/popups.sh   (needs tmux, nvim, python3 and the plugins)
 #   LYNE_TEST_NVIM=<dir>       another copy of nvim/.config/nvim (lib.sh)
@@ -106,6 +111,17 @@ check "prefix + S again shows the same terminal" "$first_pane kept" \
 key "$(inner)" S
 wait_for 5 hidden
 
+# exit in it ends the scratch session and closes the popup; it never shows
+# another session (detach-on-destroy is off for the others)
+key "$CLIENT" S
+wait_for 5 shown
+T send-keys -t scratch 'exit' Enter
+scratch_gone() { ! T has-session -t =scratch 2>/dev/null; }
+wait_for 5 scratch_gone
+sleep 0.5
+check "exit in the scratch terminal closes the popup, no other session in it" "1 t" \
+    "$(T list-clients | wc -l) $(T display -p -c "$CLIENT" '#{client_session}')"
+
 # --- prefix + P: projects and sessions ------------------------------------
 
 popup_sock() { compgen -G "$SB/run/nvim.*.0" | head -1; }
@@ -142,7 +158,7 @@ wait_for 5 listed
 # t is the session in the folder "work"
 type_keys w o r k Enter
 wait_for 5 popup_gone
-check "a session switches back to it, no new session" "t 3" "$(session) $(T list-sessions | wc -l)"
+check "a session switches back to it, no new session" "t 2" "$(session) $(T list-sessions | wc -l)"
 
 # Escape goes to normal mode, where j / k move through the list; a second
 # Escape closes it
@@ -160,5 +176,38 @@ check "k moves back" "$first" "$(selected)"
 type_keys Escape
 wait_for 5 popup_gone
 check "a second Escape closes the popup" yes "$(popup_gone && echo yes || echo no)"
+
+# --- prefix + C: a new session, named -------------------------------------
+
+# prefix + C asks the name in the status line; NAME typed, then Enter (the
+# key waits for the prompt to close, like a popup's)
+new_session() {
+    key "$CLIENT" C
+    local i
+    for ((i = 0; i < ${#1}; i++)); do T send-keys -c "$CLIENT" -K "${1:i:1}"; done
+    T send-keys -c "$CLIENT" -K Enter
+    sleep 0.6
+}
+count() { T list-sessions | wc -l; }
+before="$(count)"
+
+new_session ""
+check "prefix + C with no name makes nothing" "t $before" "$(session) $(count)"
+
+T send-keys -t t "cd $SB/projects/alpha" Enter
+sleep 0.5
+new_session notes
+check "prefix + C makes the named session and switches to it" "notes $((before + 1))" "$(session) $(count)"
+check "it starts in the pane's folder" "$SB/projects/alpha" "$(T display -p -t =notes: '#{pane_current_path}')"
+
+T switch-client -c "$CLIENT" -t =t
+new_session notes
+check "a name already there switches to it, no new session" "notes $((before + 1))" "$(session) $(count)"
+
+# Closing the session the client is in (the shell's tmq, x in prefix + s)
+# takes it to the one used last, not out of tmux
+T kill-session -t =notes
+sleep 0.5
+check "closing its session takes the client to the one used last" "t $before" "$(session) $(count)"
 
 exit "$failed"

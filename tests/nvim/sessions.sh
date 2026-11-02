@@ -7,7 +7,7 @@
 #   comes back with the folder's session: its two splits. tmux-continuum is
 #   on to restore by itself (it only does when its server is the only one on
 #   the machine, so here resurrect's restore runs the way continuum calls it)
-# - prefix + X and the shell's tkf close everything and forget the save: the
+# - prefix + X and the shell's tmkf close everything and forget the save: the
 #   next restore finds nothing
 #
 # Both servers use their own socket and the repo's tmux.conf without TPM;
@@ -114,13 +114,15 @@ sleep 0.5
 
 # continuum restores on its own only when its server is the only one on the
 # machine (yours runs): checked that it's on, then resurrect's restore runs
-# the way continuum would call it
-start_server boot continuum
+# the way continuum would call it. The server starts with main, as the
+# shell's tmux does outside a project
+start_server main continuum
 check "tmux-continuum restores by itself" on "$(T show -gv @continuum-restore)"
 T run-shell "$(T show -gv @resurrect-restore-script-path)"
 restored() { T has-session -t t 2>/dev/null; }
 wait_for 20 restored
 check "tmux-resurrect restores the saved session" yes "$(restored && echo yes || echo no)"
+check "main, the session the server started with, stays next to it" "main t" "$(T list-sessions -F '#S' | sort | tr '\n' ' ' | sed 's/ $//')"
 wait_for 30 nvim_up
 check "the pane runs Neovim again" yes "$(nvim_up && echo yes || echo no)"
 loaded() { [[ "$(nv 'winnr("$")')" == 2 ]]; }
@@ -151,7 +153,7 @@ sleep 1
 check "the next tmux starts empty" no "$(T has-session -t t 2>/dev/null && echo yes || echo no)"
 T kill-server
 
-# The shell's tkf (zsh/.zshrc) does the same from outside tmux. Its tmux
+# The shell's tmkf (zsh/.zshrc) does the same from outside tmux. Its tmux
 # commands go to the default server, so the test gives it one of its own: a
 # TMUX_TMPDIR in the sandbox, checked to hold only this test's session
 tmpdir="$SB/tmpdir"
@@ -162,11 +164,11 @@ D set -g @resurrect-dir "$SB/resurrect"
 D run-shell "$PLUGINS/tmux-resurrect/scripts/save.sh quiet"
 [[ "$(D list-sessions -F '#{session_name}')" == forgetme ]] || fail_early "TMUX_TMPDIR didn't give the test a server of its own"
 [[ -L "$SB/resurrect/last" ]] || fail_early "no save to forget"
-tkf="$(sed -n '/^tkf() {/,/^}/p' "$ZSHRC")"
-[[ -n "$tkf" ]] || fail_early "no tkf in zsh/.zshrc"
-env -u TMUX TMUX_TMPDIR="$tmpdir" zsh -fc "$tkf; tkf"
-check "tkf closes every session" no "$(D has-session 2>/dev/null && echo yes || echo no)"
-check "tkf forgets the save" no "$([[ -e "$SB/resurrect/last" || -L "$SB/resurrect/last" ]] && echo yes || echo no)"
+tmkf="$(sed -n '/^tmkf() {/,/^}/p' "$ZSHRC")"
+[[ -n "$tmkf" ]] || fail_early "no tmkf in zsh/.zshrc"
+env -u TMUX TMUX_TMPDIR="$tmpdir" zsh -fc "$tmkf; tmkf"
+check "tmkf closes every session" no "$(D has-session 2>/dev/null && echo yes || echo no)"
+check "tmkf forgets the save" no "$([[ -e "$SB/resurrect/last" || -L "$SB/resurrect/last" ]] && echo yes || echo no)"
 
 # An interactive zsh starts with status 0: `exit` as the first command must
 # end it cleanly (Neovim's terminal reports a non-zero exit as an error)

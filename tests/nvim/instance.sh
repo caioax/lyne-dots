@@ -301,9 +301,51 @@ shell_tmux() {
     cat "$SB/tmux-args.log"
 }
 check "tmux in a project's subfolder: its session" "ARGS:new-session -A -s game -c $P" "$(shell_tmux "$P/scripts")"
-check "tmux outside any project: plain" "ARGS:" "$(shell_tmux "$SB/work/plain/sub")"
+check "tmux outside any project: the session main" "ARGS:new-session -A -s main -c $HOME" "$(shell_tmux "$SB/work/plain/sub")"
 check "tmux with arguments: as given" "ARGS:ls" "$(shell_tmux "$P" ls)"
 check "tmux inside tmux: as given" "ARGS:" "$(cd "$P" && : >"$SB/tmux-args.log" && env TMUX=x PATH="$SB/fakebin:$PATH" LYNE_DOTS="$REPO" zsh -fc "$tmux_fn; tmux" && cat "$SB/tmux-args.log")"
+
+# tmn: a new session on purpose, named
+tmn_fn="$(sed -n '/^tmn() {/,/^}/p' "$ZSHRC")"
+check "zshrc has its tmn function" 1 "$([[ -n "$tmn_fn" ]] && echo 1)"
+shell_tmn() {
+    local inside="$1"
+    shift
+    : >"$SB/tmux-args.log"
+    (cd "$P" && env -u TMUX ${inside:+TMUX=x} PATH="$SB/${bin:-fakebin}:$PATH" zsh -fc "$tmn_fn; tmn $*" 2>/dev/null)
+    cat "$SB/tmux-args.log"
+}
+check "tmn with no name: nothing" "" "$(shell_tmn "")"
+check "tmn with no name: fails" 1 "$(cd "$P" && env -u TMUX PATH="$SB/fakebin:$PATH" zsh -fc "$tmn_fn; tmn" 2>/dev/null; echo $?)"
+check "tmn name: that session here" "ARGS:new-session -A -s notes -c $P" "$(shell_tmn "" notes)"
+check "tmn name folder: there, dots made _" "ARGS:new-session -A -s my_app -c /tmp" "$(shell_tmn "" my.app /tmp)"
+check "tmn inside tmux: switches to it (the stand-in has it)" \
+    "ARGS:has-session -t =notes ARGS:switch-client -t =notes" "$(shell_tmn 1 notes | tr '\n' ' ' | sed 's/ $//')"
+# A stand-in without the session: tmn makes it first
+mkdir -p "$SB/fakebin-none"
+printf '#!/bin/sh\necho "ARGS:$*" >>"%s"\ncase "$1" in has-session) exit 1 ;; esac\n' "$SB/tmux-args.log" >"$SB/fakebin-none/tmux"
+chmod +x "$SB/fakebin-none/tmux"
+check "tmn inside tmux: makes it, then switches" \
+    "ARGS:has-session -t =notes ARGS:new-session -d -s notes -c $P ARGS:switch-client -t =notes" \
+    "$(bin=fakebin-none shell_tmn 1 notes | tr '\n' ' ' | sed 's/ $//')"
+
+# tmq closes a session: the one you're in with no name (inside tmux only)
+tmq_fn="$(sed -n '/^tmq() {/,/^}/p' "$ZSHRC")"
+check "zshrc has its tmq function" 1 "$([[ -n "$tmq_fn" ]] && echo 1)"
+shell_tmq() {
+    local inside="$1"
+    shift
+    : >"$SB/tmux-args.log"
+    (env -u TMUX ${inside:+TMUX=x} PATH="$SB/fakebin:$PATH" zsh -fc "$tmq_fn; tmq $*" 2>/dev/null)
+    echo "$? $(cat "$SB/tmux-args.log")"
+}
+check "tmq inside tmux: this session" "0 ARGS:kill-session" "$(shell_tmq 1)"
+check "tmq name: that one, dots made _" "0 ARGS:kill-session -t =my_app" "$(shell_tmq "" my.app)"
+check "tmq outside tmux, no name: fails, nothing closed" "1 " "$(shell_tmq "")"
+# tm is the shell's tmux
+tm_fn="$(grep '^tm() ' "$ZSHRC")"
+check "tm outside any project: the session main" "ARGS:new-session -A -s main -c $HOME" \
+    "$(: >"$SB/tmux-args.log"; cd "$SB/work/plain/sub" && env -u TMUX PATH="$SB/fakebin:$PATH" LYNE_DOTS="$REPO" XDG_RUNTIME_DIR="$SB/run" TMPDIR="$SB/tmpdir" zsh -fc "$tmux_fn; $tm_fn; tm"; cat "$SB/tmux-args.log")"
 
 # The session name is config/projects.lua's
 names='{"/a/game", "/a/.lyne-dots", "/a/my.app:v2", "/a/...", "/"}'
