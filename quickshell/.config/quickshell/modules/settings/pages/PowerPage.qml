@@ -86,12 +86,6 @@ ColumnLayout {
     SettingsGroup {
         title: I18n.tr("Actions")
 
-        ToggleRow {
-            label: I18n.tr("Reversed order")
-            description: I18n.tr("Shut down comes first and is selected when the menu opens, instead of lock")
-            path: "power.reversed"
-        }
-
         Repeater {
             model: PowerService.allActions
 

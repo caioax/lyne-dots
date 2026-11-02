@@ -18,49 +18,17 @@ Singleton {
     // picks the color: "accent", "warning" (ends the session) or "error"
     readonly property var allActions: [
         {
-            id: "lock",
-            label: I18n.tr("Lock"),
-            name: I18n.tr("Lock screen"),
-            comment: I18n.tr("Lock the session"),
-            glyph: "\u{f033e}",
-            key: "L",
-            tone: "accent",
-            keywords: ["lock"]
-        },
-        {
-            id: "suspend",
-            label: I18n.tr("Suspend"),
-            name: I18n.tr("Suspend"),
-            comment: I18n.tr("Sleep, keeping the session in memory"),
-            glyph: "\u{f0904}",
-            key: "S",
-            tone: "accent",
-            keywords: ["sleep"],
-            capability: "CanSuspend"
-        },
-        {
-            id: "hibernate",
-            label: I18n.tr("Hibernate"),
-            name: I18n.tr("Hibernate"),
-            comment: I18n.tr("Save the session to disk and power off"),
-            glyph: "\u{f0717}",
-            key: "H",
-            tone: "accent",
-            keywords: ["sleep", "disk"],
-            capability: "CanHibernate",
-            optional: true
-        },
-        {
-            id: "logout",
-            label: I18n.tr("Log out"),
-            name: I18n.tr("Log out"),
-            comment: I18n.tr("End the Hyprland session"),
-            glyph: "\u{f0343}",
-            key: "E",
-            tone: "warning",
-            keywords: ["exit", "sign out"],
+            id: "shutdown",
+            label: I18n.tr("Shut down"),
+            name: I18n.tr("Shut down"),
+            comment: I18n.tr("Power off the computer"),
+            glyph: "\u{f0425}",
+            key: "P",
+            tone: "error",
+            keywords: ["power off", "poweroff"],
             destructive: true,
-            progress: I18n.tr("Logging out")
+            progress: I18n.tr("Shutting down"),
+            capability: "CanPowerOff"
         },
         {
             id: "reboot",
@@ -90,17 +58,49 @@ Singleton {
             optional: true
         },
         {
-            id: "shutdown",
-            label: I18n.tr("Shut down"),
-            name: I18n.tr("Shut down"),
-            comment: I18n.tr("Power off the computer"),
-            glyph: "\u{f0425}",
-            key: "P",
-            tone: "error",
-            keywords: ["power off", "poweroff"],
+            id: "logout",
+            label: I18n.tr("Log out"),
+            name: I18n.tr("Log out"),
+            comment: I18n.tr("End the Hyprland session"),
+            glyph: "\u{f0343}",
+            key: "E",
+            tone: "warning",
+            keywords: ["exit", "sign out"],
             destructive: true,
-            progress: I18n.tr("Shutting down"),
-            capability: "CanPowerOff"
+            progress: I18n.tr("Logging out")
+        },
+        {
+            id: "suspend",
+            label: I18n.tr("Suspend"),
+            name: I18n.tr("Suspend"),
+            comment: I18n.tr("Sleep, keeping the session in memory"),
+            glyph: "\u{f0904}",
+            key: "S",
+            tone: "accent",
+            keywords: ["sleep"],
+            capability: "CanSuspend"
+        },
+        {
+            id: "hibernate",
+            label: I18n.tr("Hibernate"),
+            name: I18n.tr("Hibernate"),
+            comment: I18n.tr("Save the session to disk and power off"),
+            glyph: "\u{f0717}",
+            key: "H",
+            tone: "accent",
+            keywords: ["sleep", "disk"],
+            capability: "CanHibernate",
+            optional: true
+        },
+        {
+            id: "lock",
+            label: I18n.tr("Lock"),
+            name: I18n.tr("Lock screen"),
+            comment: I18n.tr("Lock the session"),
+            glyph: "\u{f033e}",
+            key: "L",
+            tone: "accent",
+            keywords: ["lock"]
         }
     ]
 
@@ -115,16 +115,13 @@ Singleton {
         // "inhibited": an app blocks it for now (the menu warns about it)
         return ["yes", "challenge", "inhibited"].includes(answer);
     })
-    // Shut down first instead of lock (Settings › Power)
-    readonly property bool reversed: StateService.get("power.reversed", false)
     // What the menu shows
     readonly property var actions: {
         const shown = availableActions.filter(a => !hiddenActions.includes(a.id));
-        const list = shown.length > 0 ? shown : availableActions.slice(0, 1);
-        return reversed ? [...list].reverse() : list;
+        return shown.length > 0 ? shown : availableActions.slice(0, 1);
     }
 
-    readonly property string style: StateService.get("power.style", "card")
+    readonly property string style: StateService.get("power.style", "farewell")
     readonly property string side: StateService.get("power.side", "right")
     readonly property int countdownSeconds: StateService.get("power.countdown", 5)
 
@@ -138,7 +135,7 @@ Singleton {
     property bool open: false
     // Monitor showing the menu (the others are only dimmed)
     property string screen: ""
-    property string selectedId: "lock"
+    property string selectedId: "shutdown"
 
     // Countdown: the action waiting and the time left, in ms
     property string pendingId: ""
@@ -171,7 +168,7 @@ Singleton {
 
     function show(): void {
         cancel();
-        // The first one: lock, or shut down in the reversed order
+        // The first one: shut down (or the first one shown)
         selectedId = actions[0].id;
         screen = Hyprland.focusedMonitor?.name ?? "";
         refresh();

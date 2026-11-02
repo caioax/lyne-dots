@@ -507,6 +507,9 @@ run_steps() {
     step "notifications closed" ipc notifications toggleWindow
     step "notification popup" ev 'Quickshell.execDetached(["notify-send", "-a", "Smoke", "Smoke test", "A notification body"]); "sent"'
     step "power menu" ipc power open
+    check "power › Farewell by default" ev_is "farewell" 'PowerService.style'
+    check "power › fixed order, shut down to lock" ev_is "shutdown,reboot,firmware,logout,suspend,hibernate,lock" 'PowerService.allActions.map(a => a.id).join(",")'
+    check "power › the first shown action is selected" ev_is "true" 'PowerService.selectedId === PowerService.actions[0].id'
     step "power menu closed" ipc power close
     # Leaving the session saves tmux first. A reboot, so only once systemctl
     # is known to be the stand-in

@@ -12,7 +12,6 @@ Warning: components/QsPopupWindow.qml: Member "screen" not found on type "QObjec
 Warning: components/QsPopupWindow.qml: Member "width" not found on type "QuickshellScreenInfo" [missing-property]
 Warning: components/QsPopupWindow.qml: Redundant optional chaining for lookup on non-voidable and non-nullable type QuickshellScreenInfo [redundant-optional-chaining]
 Warning: components/QsPopupWindow.qml: Type PanelWindow is not creatable. [uncreatable-type]
-Warning: components/QsPopupWindow.qml: Unqualified access [unqualified]
 Warning: components/QsTabBar.qml: Member "contentWidth" not found on type "QQuickItem" [missing-property]
 Warning: components/QsTextField.qml: Id for object TextInput shadows property "input". Rename one or the other. [id-shadows-member]
 Warning: components/QsTextField.qml: Note: Id defined here [id-shadows-member]
