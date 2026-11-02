@@ -205,7 +205,7 @@ Singleton {
     // The file dialog would open under the picker: close it first
     function addWallpapers() {
         hide();
-        WallpaperService.addWallpapers();
+        WallpaperService.addWallpapers(false);
     }
 
     function openSettings() {

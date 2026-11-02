@@ -262,8 +262,6 @@ ColumnLayout {
         title: I18n.tr("Current")
 
         SettingRow {
-            id: currentRow
-
             label: WallpaperService.currentWallpaper !== "" ? root.displayName(WallpaperService.currentWallpaper) : I18n.tr("No wallpaper")
             description: {
                 if (ThemeService.isAutoMode)
@@ -288,22 +286,6 @@ ColumnLayout {
                     sourceSize: Config.wallpaperThumbSize
                     asynchronous: true
                 }
-            }
-
-            // md-shuffle_variant
-            ActionButton {
-                icon: "\u{f049f}"
-                text: I18n.tr("Random")
-                baseColor: currentRow.controlColor
-                onClicked: WallpaperService.setRandomWallpaper()
-            }
-
-            // md-image_plus
-            ActionButton {
-                icon: "\u{f087c}"
-                text: I18n.tr("Add")
-                baseColor: currentRow.controlColor
-                onClicked: WallpaperService.addWallpapers()
             }
         }
 
@@ -436,7 +418,7 @@ ColumnLayout {
                 anchors.margins: Config.padding * 2
                 spacing: Config.spacing + Config.padding
 
-                // Tabs + search
+                // Tabs + what changes the library, then the search
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: Config.spacing
@@ -458,13 +440,38 @@ ColumnLayout {
                         onSelected: index => root.category = ["all", "favorites"][index]
                     }
 
-                    QsSearchField {
-                        id: search
-
+                    Item {
                         Layout.fillWidth: true
-                        placeholder: I18n.tr("Search")
-                        onTextChanged: root.query = text
                     }
+
+                    // md-shuffle_variant
+                    ActionButton {
+                        icon: "\u{f049f}"
+                        text: I18n.tr("Random")
+                        onClicked: WallpaperService.setRandomWallpaper()
+                    }
+
+                    // md-image_plus
+                    ActionButton {
+                        icon: "\u{f087c}"
+                        text: I18n.tr("Add")
+                        onClicked: WallpaperService.addWallpapers(false)
+                    }
+
+                    // md-folder_plus
+                    ActionButton {
+                        icon: "\u{f0257}"
+                        text: I18n.tr("Add folder")
+                        onClicked: WallpaperService.addWallpapers(true)
+                    }
+                }
+
+                QsSearchField {
+                    id: search
+
+                    Layout.fillWidth: true
+                    placeholder: I18n.tr("Search")
+                    onTextChanged: root.query = text
                 }
 
 

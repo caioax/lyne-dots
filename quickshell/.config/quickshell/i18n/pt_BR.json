@@ -1222,8 +1222,6 @@
     "Stays when switching theme": "Fica ao trocar de tema",
     "Wallpaper of %1 · switching theme brings the new theme's": "Papel de parede de %1 · trocar de tema traz o do novo tema",
     "Switching theme replaces it with the theme's wallpaper": "Trocar de tema o substitui pelo papel de parede do tema",
-    "Random": "Aleatório",
-    "Add": "Adicionar",
     "Also make it the wallpaper of %1?": "Torná-lo também o papel de parede de %1?",
     "Otherwise it stays until you switch theme, and %1 keeps its own": "Senão ele fica até você trocar de tema, e %1 mantém o dele",
     "Only now": "Só agora",
@@ -1237,6 +1235,9 @@
     "A carousel of the library: type to filter, Enter applies, Escape closes": "Um carrossel da biblioteca: digite para filtrar, Enter aplica, Escape fecha",
     "Screen edge the picker opens against (past the bar, when it's there)": "Borda da tela onde o seletor abre (depois da barra, quando ela está lá)",
     "Library": "Biblioteca",
+    "Random": "Aleatório",
+    "Add": "Adicionar",
+    "Add folder": "Adicionar pasta",
     "%n selected · Ctrl+A selects all": [
         "%n selecionado · Ctrl+A seleciona todos",
         "%n selecionados · Ctrl+A seleciona todos"
@@ -1569,6 +1570,18 @@
     "New release. Update from here or Settings › About": "Nova versão. Atualize por aqui ou em Configurações › Sobre",
     "Latest channel, up to %1. Update from here or Settings › About": "Canal Mais recente, até %1. Atualize por aqui ou em Configurações › Sobre",
     "Details": "Detalhes",
+    "%n wallpaper added": [
+        "%n papel de parede adicionado",
+        "%n papéis de parede adicionados"
+    ],
+    "Already in the library": "Já está na biblioteca",
+    "Nothing new in that folder": "Nada novo nessa pasta",
+    "No images in that folder": "Nenhuma imagem nessa pasta",
+    "%n already in the library was skipped": [
+        "%n já estava na biblioteca e foi ignorado",
+        "%n já estavam na biblioteca e foram ignorados"
+    ],
+    "Add a folder of wallpapers": "Adicionar uma pasta de papéis de parede",
     "Install zenity to add wallpapers": "Instale o zenity para adicionar papéis de parede",
     "Missing Python modules: run lyne update (python-numpy, python-pillow)": "Faltam módulos Python: rode lyne update (python-numpy, python-pillow)",
     "rsvg-convert not found: run lyne update (librsvg)": "rsvg-convert não encontrado: rode lyne update (librsvg)",

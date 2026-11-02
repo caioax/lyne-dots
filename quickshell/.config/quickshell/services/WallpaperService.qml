@@ -52,6 +52,9 @@ Singleton {
     signal wallpapersAdded(var paths)
     // Copied by the running Add, announced after the next listing
     property var _added: []
+    // Images the running Add found already in the library
+    property int _skipped: 0
+    readonly property string _addScript: Qt.resolvedUrl("../scripts/wallpapers-add.sh").toString().replace("file://", "")
 
     // Available transitions in awww
     readonly property var transitions: ["wipe", "wave", "grow", "center", "outer", "any"]
@@ -249,10 +252,27 @@ Singleton {
         deleteWallpaperProc.running = true;
     }
 
-    // Add
-    function addWallpapers() {
-        if (!addWallpapersProc.running)
-            addWallpapersProc.running = true;
+    // Add: images (folder false) or every image in a folder and its
+    // subfolders (folder true), picked in a dialog
+    function addWallpapers(folder: bool) {
+        if (addWallpapersProc.running)
+            return;
+        addWallpapersProc.folder = folder === true;
+        addWallpapersProc.running = true;
+    }
+
+    // After a folder: how many came in; after images: only when none did
+    function _notifyAdded(folder: bool) {
+        const added = _added.length;
+        if (!folder && (added > 0 || _skipped === 0))
+            return;
+        let title = I18n.trn("%n wallpaper added", "%n wallpapers added", added);
+        if (!folder)
+            title = I18n.tr("Already in the library");
+        else if (added === 0)
+            title = _skipped > 0 ? I18n.tr("Nothing new in that folder") : I18n.tr("No images in that folder");
+        const body = folder && _skipped > 0 ? I18n.trn("%n already in the library was skipped", "%n already in the library were skipped", _skipped) : "";
+        Quickshell.execDetached(["notify-send", "-a", "Settings", "-i", "preferences-desktop-wallpaper", title, body]);
     }
 
     function refreshWallpapers() {
@@ -345,35 +365,45 @@ Singleton {
 
     Process {
         id: addWallpapersProc
-        onStarted: root._added = []
-        // The dialog's texts come translated as $1..$4
+
+        property bool folder: false
+
+        onStarted: {
+            root._added = [];
+            root._skipped = 0;
+        }
+        // The dialog's texts come translated as $3..$7; zenity prints one
+        // path per line, handed to the script as its arguments
         command: ["bash", "-c", `
-            if command -v zenity >/dev/null; then
-                files=$(zenity --file-selection --multiple --separator=$'\\n' --title="$1" --filename="$HOME/" --file-filter="$2 | *.png *.jpg *.jpeg *.webp *.gif")
-            else
-                notify-send "$3" "$4"
-                files=""
-            fi
-            if [ -n "$files" ]; then
-                mkdir -p "${root.wallpaperDir}"
-                echo "$files" | while read -r file; do
-                    if [ -f "$file" ]; then
-                        dest="${root.wallpaperDir}/$(basename "$file")"
-                        cp "$file" "$dest" && echo "added:$dest"
-                    fi
-                done
-                echo "done"
-            else
+            if ! command -v zenity >/dev/null; then
+                notify-send "$6" "$7"
                 echo "cancelled"
+                exit 0
             fi
-        `, "bash", I18n.tr("Add wallpapers"), I18n.tr("Images"), I18n.tr("Wallpaper"), I18n.tr("Install zenity to add wallpapers")]
+            if [ "$2" = folder ]; then
+                picked=$(zenity --file-selection --directory --title="$4" --filename="$HOME/")
+            else
+                picked=$(zenity --file-selection --multiple --separator=$'\\n' --title="$3" --filename="$HOME/" --file-filter="$5 | *.png *.jpg *.jpeg *.webp *.gif")
+            fi
+            if [ -z "$picked" ]; then
+                echo "cancelled"
+                exit 0
+            fi
+            mapfile -t paths <<<"$picked"
+            "$1" "${root.wallpaperDir}" "\${paths[@]}"
+            echo "done"
+        `, "bash", root._addScript, folder ? "folder" : "files", I18n.tr("Add wallpapers"), I18n.tr("Add a folder of wallpapers"), I18n.tr("Images"), I18n.tr("Wallpaper"), I18n.tr("Install zenity to add wallpapers")]
         stdout: SplitParser {
             onRead: data => {
                 const result = data.trim();
-                if (result.startsWith("added:"))
+                if (result.startsWith("added:")) {
                     root._added = [...root._added, result.slice(6)];
-                else if (result === "done")
+                } else if (result.startsWith("skipped:")) {
+                    root._skipped++;
+                } else if (result === "done") {
+                    root._notifyAdded(addWallpapersProc.folder);
                     root.refreshWallpapers();
+                }
             }
         }
     }
