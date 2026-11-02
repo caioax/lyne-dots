@@ -44,8 +44,12 @@ Singleton {
     // The GPUs that go dark at the next login with monitors plugged in
     readonly property var darkened: savedOrder.length === 0 ? [] : linked.filter(g => !savedOrder.includes(g.pci) && connected(g).length > 0)
 
+    // The GPU saved first had no monitor at login, so gpus.lua put one with a
+    // monitor first (a laptop on its dedicated GPU, away from the external
+    // monitor): the next login does the same, nothing is pending
+    readonly property bool gaveWay: loaded && savedOrder.length > 0 && runningExplicit && running.length > 0 && running[0] !== savedOrder[0] && connected(gpuAt(savedOrder[0])).length === 0
     // The next login differs from now. Automatic = no explicit list
-    readonly property bool pending: loaded && running.length > 0 && (savedOrder.length === 0 ? runningExplicit : (!runningExplicit || savedOrder.join(" ") !== running.join(" ")))
+    readonly property bool pending: loaded && running.length > 0 && !gaveWay && (savedOrder.length === 0 ? runningExplicit : (!runningExplicit || savedOrder.join(" ") !== running.join(" ")))
     // All links present, as the rules were written
     readonly property bool linksReady: rules === "ok" && linked.every(g => g.present)
 

@@ -119,7 +119,7 @@ legacy_home() {
     # GPU order from the hand-written AQ_DRM_DEVICES, its line commented out
     assert_equal "$(state '.gpus.order')" '["0000:00:02.0","0000:01:00.0"]'
     grep -q '^-- Set in local/gpus.lua now (lyne gpu order): hl.env("AQ_DRM_DEVICES"' "$hypr/local/extra_environment.lua"
-    grep -q '"/dev/dri/intel-igpu",' "$hypr/local/gpus.lua"
+    grep -q 'path = "/dev/dri/intel-igpu"' "$hypr/local/gpus.lua"
     assert [ -f "$LYNE_UDEV_DIR/90-lyne-gpus.rules" ]
     # The packages linked are recorded (hypr is a real folder here), none
     # unlinked
@@ -130,6 +130,47 @@ legacy_home() {
     cmp "$REPO/.data/config-defaults/theming/.config/qt6ct/qt6ct.conf" "$DOTS_DIR/theming/.config/qt6ct/qt6ct.conf"
     # Theme on its old default wallpaper moves to the new one
     assert_equal "$(jq -r .wallpaper "$HOME/.local/themes/tokyonight.json")" "themes/tokyonight/lyne-tokyonight-contour.jpg"
+}
+
+@test "047: hybrid gpus.lua written again, the session-wide NVIDIA variables commented out" {
+    fake_dots
+    local hypr="$HOME/.config/hypr" uwsm="$HOME/.config/uwsm/env.d"
+    mkdir -p "$hypr/local" "$uwsm"
+    cp "$REPO/.data/hyprland/templates/extra_environment_nvidia.lua" "$hypr/local/extra_environment.lua"
+    echo 'hl.env("MY_VAR", "1")' >>"$hypr/local/extra_environment.lua"
+    cp "$REPO/.data/hyprland/uwsm/global_hardware.sh" "$uwsm/global_hardware.sh"
+    echo 'export AQ_FORCE_LINEAR_BLIT=0' >>"$uwsm/global_hardware.sh"
+    jq '.gpus.order = ["0000:01:00.0", "0000:00:02.0"]' "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+    echo '-- old gpus.lua' >"$hypr/local/gpus.lua"
+    run migrate 047-hybrid-gpu-env.sh
+    assert_success
+    assert_output --partial "GPU order kept"
+    grep -q 'skip_non_kms_dmabuf_formats = false' "$hypr/local/gpus.lua"
+    grep -q 'lyne_gpus_file = "0000:01:00.0 0000:00:02.0"' "$hypr/local/gpus.lua"
+    assert_equal "$(state '.gpus.order')" '["0000:01:00.0","0000:00:02.0"]'
+    refute grep -qE '^hl\.env\("(LIBVA_DRIVER_NAME|__GLX_VENDOR_LIBRARY_NAME|NVD_BACKEND)"' "$hypr/local/extra_environment.lua"
+    assert_equal "$(grep -c '^-- Set in local/gpus.lua now, only when NVIDIA renders: hl.env' "$hypr/local/extra_environment.lua")" 3
+    grep -qx 'hl.env("MY_VAR", "1")' "$hypr/local/extra_environment.lua"
+    refute grep -qE '^export (LIBVA|__GLX|NVD)' "$uwsm/global_hardware.sh"
+    grep -qx 'export AQ_FORCE_LINEAR_BLIT=0' "$uwsm/global_hardware.sh"
+    # Again: nothing changes
+    local before
+    before="$(cat "$hypr/local/extra_environment.lua" "$uwsm/global_hardware.sh" "$hypr/local/gpus.lua")"
+    run migrate 047-hybrid-gpu-env.sh
+    assert_success
+    assert_equal "$(cat "$hypr/local/extra_environment.lua" "$uwsm/global_hardware.sh" "$hypr/local/gpus.lua")" "$before"
+}
+
+@test "047: one GPU leaves the files alone" {
+    fake_dots
+    rm -rf "$SYS"
+    fx_gpu "$SYS" 0000:01:00.0 10de:1f9d driver=nvidia card=card0 outputs="DP-1:connected"
+    mkdir -p "$HOME/.config/hypr/local"
+    cp "$REPO/.data/hyprland/templates/extra_environment_nvidia.lua" "$HOME/.config/hypr/local/extra_environment.lua"
+    run migrate 047-hybrid-gpu-env.sh
+    assert_success
+    assert_output --partial "One GPU"
+    cmp "$REPO/.data/hyprland/templates/extra_environment_nvidia.lua" "$HOME/.config/hypr/local/extra_environment.lua"
 }
 
 @test "041: an old lyne-editor.desktop gets the app's name and icon" {

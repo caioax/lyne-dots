@@ -83,10 +83,25 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     # The first login opens the welcome screen; settings from the answers
     local state="$DRY/.config/quickshell/state.json"
     assert_equal "$(jq -c '[.welcome.pending, .system.aurHelper, .gpus.order]' "$state")" '[true,"yay",["0000:00:02.0","0000:01:00.0"]]'
-    grep -q '"/dev/dri/intel-igpu",' "$DRY/.config/hypr/local/gpus.lua"
+    grep -q 'path = "/dev/dri/intel-igpu"' "$DRY/.config/hypr/local/gpus.lua"
+    # Hybrid: no NVIDIA variables for the whole session (gpus.lua sets them
+    # only when NVIDIA renders)
+    refute grep -qE '^[[:space:]]*hl\.env\("(LIBVA_DRIVER_NAME|__GLX_VENDOR_LIBRARY_NAME)"' "$DRY/.config/hypr/local/extra_environment.lua"
+    refute grep -q '^export' "$DRY/.config/uwsm/env.d/global_hardware.sh"
     # Theme wallpapers only in their theme's folder, none in the library root
     assert [ -f "$DRY/.local/wallpapers/themes/tokyonight/lyne-tokyonight-contour.jpg" ]
     refute compgen -G "$DRY/.local/wallpapers/*.jpg"
+}
+
+@test "hybrid laptop without a GPU order answer: automatic, nothing asked" {
+    hybrid
+    answers "categories=core quickshell" "reboot=no"
+    run install --answers "$ANSWERS"
+    assert_success
+    assert_line "[ok] GPU links and order"
+    assert_equal "$(jq -c '.gpus.order' "$DRY/.config/quickshell/state.json")" '[]'
+    grep -q 'lyne_gpus_file = "automatic"' "$DRY/.config/hypr/local/gpus.lua"
+    refute_output --partial "Which GPU renders"
 }
 
 @test "only the categories chosen are linked, and the state remembers them" {

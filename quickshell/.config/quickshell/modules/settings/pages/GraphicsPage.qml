@@ -74,7 +74,7 @@ ColumnLayout {
 
         SelectRow {
             label: I18n.tr("Renders the desktop")
-            description: GpuService.renderer === "igpu" ? I18n.tr("Uses less power: recommended for laptops") : GpuService.renderer === "dgpu" ? I18n.tr("Faster, and monitors plugged into it need no copy between GPUs") : I18n.tr("Hyprland picks: the GPU of the built-in screen")
+            description: GpuService.renderer === "igpu" ? I18n.tr("Uses less power: recommended for laptops") : GpuService.renderer === "dgpu" ? I18n.tr("Faster with a monitor plugged into it. Without one at login, %1 renders instead", GpuService.igpu?.brand ?? I18n.tr("the integrated GPU")) : I18n.tr("Hyprland picks: the GPU of the built-in screen")
             segmentWidth: Config.fontSizeNormal * 8
             value: GpuService.renderer
             options: [
@@ -106,6 +106,14 @@ ColumnLayout {
             description: GpuService.renderer === "auto" ? I18n.tr("Automatic uses every GPU") : checked ? I18n.tr("Monitors plugged into the %1 GPU keep working", other?.brand ?? I18n.tr("other")) : GpuService.darkened.length > 0 ? I18n.tr("%1 is plugged into the %2 GPU and goes dark", GpuService.connected(GpuService.darkened[0]).join(", "), GpuService.darkened[0].brand) : I18n.tr("Only one GPU: monitors plugged into the %1 one stay dark", other?.brand ?? I18n.tr("other"))
             descriptionColor: GpuService.darkened.length > 0 ? Config.warningColor : Config.subtextColor
             onToggled: value => GpuService.setPreset(GpuService.renderer, value)
+        }
+
+        // Apps follow the GPU that renders (gpus.lua sets the NVIDIA
+        // variables only when NVIDIA renders): prime-run for the others
+        SettingRow {
+            visible: GpuService.hybrid && GpuService.nvidia !== null && GpuService.renderer !== "dgpu"
+            label: I18n.tr("Apps on %1", GpuService.dgpu?.brand ?? "NVIDIA")
+            description: I18n.tr("Apps run on the GPU that renders. prime-run <app> starts one on %1 (Steam: prime-run %command%)", GpuService.dgpu?.brand ?? "NVIDIA")
         }
 
         NextLoginRow {}
@@ -264,7 +272,7 @@ ColumnLayout {
     // The saved order against the running one, with a way to apply it now
     component NextLoginRow: SettingRow {
         label: I18n.tr("Next login")
-        description: GpuService.pending ? I18n.tr("%1. Now: %2", GpuService.orderLabel(GpuService.savedOrder), GpuService.orderLabel(GpuService.runningExplicit ? GpuService.running : [])) : GpuService.orderLabel(GpuService.savedOrder)
+        description: GpuService.pending ? I18n.tr("%1. Now: %2", GpuService.orderLabel(GpuService.savedOrder), GpuService.orderLabel(GpuService.runningExplicit ? GpuService.running : [])) : GpuService.gaveWay ? I18n.tr("%1. Now %2 renders: no monitor was plugged into %3 at login", GpuService.orderLabel(GpuService.savedOrder), GpuService.gpuAt(GpuService.running[0])?.brand ?? "", GpuService.gpuAt(GpuService.savedOrder[0])?.brand ?? "") : GpuService.orderLabel(GpuService.savedOrder)
         descriptionColor: GpuService.pending ? Config.warningColor : Config.subtextColor
 
         // md-logout

@@ -13,7 +13,12 @@
 #                                         AQ_DRM_DEVICES when Hyprland starts
 # GPUs left out of the order aren't used at all (monitors plugged into them
 # stay dark). Without AQ_DRM_DEVICES Aquamarine puts the GPU with the
-# built-in screen first.
+# built-in screen first. At login a first GPU without a monitor gives way
+# to the first one with a monitor (a laptop rendering on its dedicated GPU,
+# away from the external monitor); on hybrid machines the NVIDIA variables
+# are set only when NVIDIA renders, and a dedicated GPU first turns off
+# Hyprland 0.57's quirks:skip_non_kms_dmabuf_formats (apps can't draw
+# otherwise when the screens are on the other GPU).
 #
 #   gpu_links                  GPU_LINK[i]: the /dev/dri name of each GPU
 #   gpu_multi                  0 when there are 2+ real GPUs
@@ -188,11 +193,24 @@ gpu_order_from_aq() {
     done
 }
 
+# One Lua table row per GPU: { path = "/dev/dri/nvidia-dgpu", nvidia = true },
+_gpu_lua_row() {
+    local i=$1 extra=""
+    [[ "${GPU_VENDOR[i]}" == nvidia ]] && extra=", nvidia = true"
+    printf '    { path = "/dev/dri/%s"%s }, -- %s %s\n' "${GPU_LINK[i]}" "$extra" "${GPU_BRAND[i]}" "${GPU_NAME[i]}"
+}
+
 gpu_lua_content() {
-    local pci i paths=() label
+    local pci i label rows=() spare=()
+    local -A listed=()
     for pci in "$@"; do
         i="$(_gpu_index_of_pci "$pci")" || continue
-        paths+=("\"/dev/dri/${GPU_LINK[i]}\", -- ${GPU_BRAND[i]} ${GPU_NAME[i]}")
+        listed[$pci]=1
+        rows+=("$(_gpu_lua_row "$i")")
+    done
+    # The other GPUs: a way out when no GPU in the order has a monitor
+    for ((i = 0; i < GPU_COUNT; i++)); do
+        [[ -n "${GPU_LINK[i]}" && -z "${listed[${GPU_PCI[i]}]:-}" ]] && spare+=("$(_gpu_lua_row "$i")")
     done
     label="${*:-automatic}"
     cat <<EOF
@@ -201,35 +219,112 @@ gpu_lua_content() {
 -- aren't used (monitors plugged into them stay dark). The paths come from
 -- /etc/udev/rules.d/90-lyne-gpus.rules.
 EOF
-    if ((${#paths[@]} == 0)); then
+    if ((${#rows[@]} == 0)); then
         printf '\n-- Automatic: Aquamarine picks (the GPU with the built-in screen first)\n'
-    else
-        printf '\nlocal order = {\n'
-        printf '    %s\n' "${paths[@]}"
-        cat <<'EOF'
-}
+        if ((GPU_HYBRID)); then
+            printf -- '-- The NVIDIA variables (LIBVA_DRIVER_NAME, __GLX_VENDOR_LIBRARY_NAME) stay\n'
+            printf -- '-- unset: apps run on the integrated GPU, prime-run <app> starts one on\n'
+            printf -- '-- the dedicated GPU\n'
+        fi
+        printf '\nlyne_gpus_file = "%s"\n' "$label"
+        return 0
+    fi
+    local first hybrid=false dedicated_first=false
+    first="$(_gpu_index_of_pci "$1")"
+    ((GPU_HYBRID)) && hybrid=true
+    [[ "${GPU_KIND[first]}" == dedicated ]] && ((GPU_HYBRID)) && dedicated_first=true
+    printf '\nlocal order = {\n'
+    printf '%s\n' "${rows[@]}"
+    printf '}\n\nlocal spare = {\n'
+    ((${#spare[@]})) && printf '%s\n' "${spare[@]}"
+    printf '}\n\nlocal hybrid = %s\n' "$hybrid"
+    cat <<'EOF'
 
--- Only the ones present now: a GPU turned off in the firmware or a missing
--- udev rule would otherwise leave Aquamarine without any GPU. (popen: the
--- status of os.execute is lost, Hyprland reaps its children)
-local present = order
-local probe = io.popen("for d in " .. table.concat(order, " ") .. "; do [ -e \"$d\" ] && echo \"$d\"; done")
-if probe then
-    local found = {}
-    for line in probe:read("a"):gmatch("[^\n]+") do
-        found[line] = true
+-- A reload: Hyprland picked its GPUs at login and keeps them, so the
+-- choice below runs once per session
+local list = {}
+local current = os.getenv("AQ_DRM_DEVICES")
+if current and current ~= "" then
+    for path in current:gmatch("[^:]+") do
+        list[#list + 1] = path
     end
-    probe:close()
-    present = {}
-    for _, path in ipairs(order) do
-        if found[path] then
-            present[#present + 1] = path
+else
+    -- Which GPUs are present, and which have a monitor plugged in: a GPU
+    -- turned off in the firmware or a missing udev rule would otherwise
+    -- leave Aquamarine without any GPU. (popen: the status of os.execute is
+    -- lost, Hyprland reaps its children)
+    local paths = {}
+    for _, gpu in ipairs(order) do
+        paths[#paths + 1] = gpu.path
+    end
+    for _, gpu in ipairs(spare) do
+        paths[#paths + 1] = gpu.path
+    end
+    local found
+    local probe = io.popen("for d in " .. table.concat(paths, " ") .. "; do [ -e \"$d\" ] || continue; c=$(readlink -f \"$d\"); c=${c##*/}; s=0; "
+        .. "for f in /sys/class/drm/\"$c\"-*/status; do [ \"$(cat \"$f\" 2>/dev/null)\" = connected ] && s=1; done; echo \"$d $s\"; done")
+    if probe then
+        found = {}
+        for path, monitor in probe:read("a"):gmatch("(%S+) (%d)") do
+            found[path] = monitor == "1"
+        end
+        probe:close()
+    end
+    for _, gpu in ipairs(order) do
+        if not found or found[gpu.path] ~= nil then
+            list[#list + 1] = gpu.path
+        end
+    end
+    -- The first GPU renders, but one without a monitor (the dedicated GPU
+    -- of a laptop away from its external monitor) can't show the frames it
+    -- renders: the first GPU with a monitor takes its place, from the order
+    -- or else from the other GPUs
+    if found and #list > 0 and not found[list[1]] then
+        local pick
+        for i, path in ipairs(list) do
+            if found[path] then
+                pick = i
+                break
+            end
+        end
+        if pick then
+            table.insert(list, 1, table.remove(list, pick))
+        else
+            for _, gpu in ipairs(spare) do
+                if found[gpu.path] then
+                    table.insert(list, 1, gpu.path)
+                    break
+                end
+            end
         end
     end
 end
-if #present > 0 then
-    hl.env("AQ_DRM_DEVICES", table.concat(present, ":"))
+if #list > 0 then
+    hl.env("AQ_DRM_DEVICES", table.concat(list, ":"))
 end
+
+-- On a hybrid machine apps follow the GPU that renders: the NVIDIA
+-- variables only when NVIDIA renders (prime-run <app> otherwise)
+if hybrid and #list > 0 then
+    for _, group in ipairs({ order, spare }) do
+        for _, gpu in ipairs(group) do
+            if gpu.path == list[1] and gpu.nvidia then
+                hl.env("LIBVA_DRIVER_NAME", "nvidia")
+                hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+                hl.env("NVD_BACKEND", "direct")
+            end
+        end
+    end
+end
+EOF
+    if [[ "$dedicated_first" == true ]]; then
+        cat <<'EOF'
+
+-- The dedicated GPU renders while the screens may be on the other one
+-- (the built-in screen, or a monitor unplugged mid-session): Hyprland 0.57
+-- then offers apps only the formats both GPUs share, and they can't draw.
+-- Off, as before 0.57 (harmless when the integrated GPU renders)
+hl.config({ quirks = { skip_non_kms_dmabuf_formats = false } })
 EOF
     fi
     printf '\nlyne_gpus_file = "%s"\n' "$label"

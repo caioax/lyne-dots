@@ -535,6 +535,7 @@ _nvidia_driver_pkg() {
 }
 
 q_graphics() {
+    # shellcheck disable=SC2034 # ASK_EXTRA is read by the ask_* functions this calls
     local ASK_EXTRA=_graphics_rows setup options=()
     setup="$(gpu_setup_label)"
     case "$NV_ACTION" in
@@ -560,23 +561,6 @@ q_graphics() {
         ;;
     esac
     ask_single nvidia "Graphics" "${setup^}." "${options[@]}"
-}
-
-# Hybrid machines: which GPU renders Hyprland (gpu-order.sh). Same screen
-# title and GPU list as the question before
-q_gpu_order() {
-    ((GPU_HYBRID)) && gpu_multi || return 3
-    # shellcheck disable=SC2034 # ASK_EXTRA is read by the ask_* functions this calls
-    local ASK_EXTRA=_graphics_rows _GRAPHICS_ASK="Which GPU renders the desktop?"
-    local igpu dgpu i
-    for ((i = 0; i < GPU_COUNT; i++)); do
-        [[ "${GPU_KIND[i]}" == integrated && -z "${igpu:-}" ]] && igpu=${GPU_BRAND[i]}
-        [[ "${GPU_KIND[i]}" == dedicated && -z "${dgpu:-}" ]] && dgpu=${GPU_BRAND[i]}
-    done
-    ask_single gpu_order "Graphics" "Both GPUs stay in use: the other one drives the monitors plugged into it. Change it later with lyne gpu order." \
-        "igpu|$igpu (integrated)|uses less power, recommended for laptops|1" \
-        "dgpu|$dgpu (dedicated)|faster, and no copy for monitors on it" \
-        "auto|Automatic|Hyprland picks: the GPU of the built-in screen"
 }
 
 # "Intel renders, then NVIDIA"
@@ -646,9 +630,7 @@ review_rows() {
     *) rows+=("NVIDIA|no") ;;
     esac
     if gpu_multi; then
-        local gpu_order=auto
-        ((GPU_HYBRID)) && gpu_order=${ANSWERS[gpu_order]:-auto}
-        rows+=("GPU order|$(_gpu_order_label "$gpu_order") (/dev/dri links by PCI)")
+        rows+=("GPU order|$(_gpu_order_label "${ANSWERS[gpu_order]:-auto}") (/dev/dri links by PCI)")
     fi
     if [[ " $categories " == *" terminal "* && "$SHELL" != *zsh* ]]; then
         rows+=("Shell|Zsh becomes the default shell")
@@ -671,7 +653,7 @@ q_review() {
         "${REVIEW_ROWS[@]}"
 }
 
-QUESTIONS=(q_categories q_graphics q_gpu_order q_reboot q_review)
+QUESTIONS=(q_categories q_graphics q_reboot q_review)
 
 # Answers not in an --answers file
 answer_defaults() {
@@ -697,11 +679,11 @@ answer_defaults() {
     if [[ "${ANSWERS[nvidia]}" == driver && "${ANSWERS[multilib]:-}" == yes ]]; then
         ANSWERS[nvidia]="driver+multilib"
     fi
-    # GPU order (hybrid machines): integrated first unless answered
-    if [[ ! -v "ANSWERS[gpu_order]" ]]; then
-        ANSWERS[gpu_order]=auto
-        ((GPU_HYBRID)) && ANSWERS[gpu_order]=igpu
-    fi
+    # GPU order: automatic (the GPU with the built-in screen renders) unless
+    # an answers file sets one. Not asked: NVIDIA first on a laptop leaves it
+    # without a desktop away from the external monitor (Hyprland 0.57);
+    # Settings › Graphics and lyne gpu order change it later
+    [[ -v "ANSWERS[gpu_order]" ]] || ANSWERS[gpu_order]=auto
     # Only a GPU with a driver can get one
     if [[ "${ANSWERS[nvidia]}" == driver* ]]; then
         case "$NV_ACTION" in

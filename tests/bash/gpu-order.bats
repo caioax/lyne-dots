@@ -125,38 +125,112 @@ EOF
     assert_output "0000:01:00.0 0000:00:02.0"
 }
 
-# Runs gpus.lua in Lua with hl.env recorded and io.popen answering $2 (the
-# paths present; "nil" = popen fails)
+# Runs gpus.lua in Lua with hl.env and hl.config recorded and io.popen
+# answering $2 ("<path> <1 = monitor plugged in|0>" lines for the GPUs
+# present; "nil" = popen fails). $3 is the AQ_DRM_DEVICES Hyprland already
+# has (a reload)
 run_lua() {
     local popen='io.popen = function() return { read = function() return os.getenv("PRESENT") end, close = function() end } end'
     [[ "$2" == nil ]] && popen='io.popen = function() return nil end'
-    PRESENT="$2" lua - <<EOF
-hl = { env = function(k, v) print(k .. "=" .. v) end }
+    env -u AQ_DRM_DEVICES PRESENT="$2" ${3:+AQ_DRM_DEVICES="$3"} lua - <<EOF
+hl = {
+    env = function(k, v) print(k .. "=" .. v) end,
+    config = function(t) print("skip_non_kms=" .. tostring(t.quirks.skip_non_kms_dmabuf_formats)) end,
+}
 $popen
 $1
 print("file=" .. lyne_gpus_file)
 EOF
 }
 
+NV=/dev/dri/nvidia-dgpu
+IG=/dev/dri/intel-igpu
+
 @test "gpus.lua: automatic sets nothing; an order sets the GPUs present" {
     command -v lua >/dev/null || skip "lua not installed"
     hybrid
     run order 'gpu_lua_content'
-    run run_lua "$output" ""
+    local auto="$output"
+    assert_output --partial "prime-run"
+    run run_lua "$auto" ""
     assert_output "file=automatic"
-    run order 'gpu_lua_content 0000:01:00.0 0000:00:02.0'
+    run order 'gpu_lua_content 0000:00:02.0 0000:01:00.0'
     local lua="$output"
-    run run_lua "$lua" $'/dev/dri/nvidia-dgpu\n/dev/dri/intel-igpu\n'
-    assert_line "AQ_DRM_DEVICES=/dev/dri/nvidia-dgpu:/dev/dri/intel-igpu"
-    assert_line "file=0000:01:00.0 0000:00:02.0"
+    run run_lua "$lua" "$IG 1"$'\n'"$NV 1"
+    assert_output "AQ_DRM_DEVICES=$IG:$NV"$'\n'"file=0000:00:02.0 0000:01:00.0"
     # A missing link is dropped; none present leaves AQ unset
-    run run_lua "$lua" $'/dev/dri/intel-igpu\n'
-    assert_line "AQ_DRM_DEVICES=/dev/dri/intel-igpu"
+    run run_lua "$lua" "$IG 1"
+    assert_line "AQ_DRM_DEVICES=$IG"
     run run_lua "$lua" ""
     refute_output --partial AQ_DRM_DEVICES
     # popen unavailable: the whole order
     run run_lua "$lua" nil
-    assert_line "AQ_DRM_DEVICES=/dev/dri/nvidia-dgpu:/dev/dri/intel-igpu"
+    assert_line "AQ_DRM_DEVICES=$IG:$NV"
+}
+
+@test "gpus.lua: NVIDIA first renders with a monitor on it, with its variables and the quirk off" {
+    command -v lua >/dev/null || skip "lua not installed"
+    hybrid
+    run order 'gpu_lua_content 0000:01:00.0 0000:00:02.0'
+    local lua="$output"
+    run run_lua "$lua" "$NV 1"$'\n'"$IG 1"
+    assert_line "AQ_DRM_DEVICES=$NV:$IG"
+    assert_line "LIBVA_DRIVER_NAME=nvidia"
+    assert_line "__GLX_VENDOR_LIBRARY_NAME=nvidia"
+    assert_line "skip_non_kms=false"
+}
+
+@test "gpus.lua: NVIDIA first without a monitor on it gives way to the integrated GPU" {
+    command -v lua >/dev/null || skip "lua not installed"
+    hybrid
+    run order 'gpu_lua_content 0000:01:00.0 0000:00:02.0'
+    run run_lua "$output" "$NV 0"$'\n'"$IG 1"
+    assert_line "AQ_DRM_DEVICES=$IG:$NV"
+    refute_output --partial LIBVA_DRIVER_NAME
+    refute_output --partial __GLX_VENDOR_LIBRARY_NAME
+    # Still off: the HDMI can be plugged in mid-session
+    assert_line "skip_non_kms=false"
+    # Only NVIDIA in the order: the integrated GPU comes from the rest
+    run order 'gpu_lua_content 0000:01:00.0'
+    local only="$output"
+    run run_lua "$only" "$NV 0"$'\n'"$IG 1"
+    assert_line "AQ_DRM_DEVICES=$IG:$NV"
+    run run_lua "$only" "$NV 1"$'\n'"$IG 1"
+    assert_line "AQ_DRM_DEVICES=$NV"
+    # No GPU with a monitor at all: the order as it is
+    run run_lua "$only" "$NV 0"$'\n'"$IG 0"
+    assert_line "AQ_DRM_DEVICES=$NV"
+}
+
+@test "gpus.lua: a reload keeps the GPUs Hyprland started with" {
+    command -v lua >/dev/null || skip "lua not installed"
+    hybrid
+    run order 'gpu_lua_content 0000:01:00.0 0000:00:02.0'
+    # Started on the integrated GPU (no monitor on NVIDIA then); the HDMI
+    # plugged in since doesn't move it, nor turn the NVIDIA variables on
+    run run_lua "$output" "$NV 1"$'\n'"$IG 1" "$IG:$NV"
+    assert_line "AQ_DRM_DEVICES=$IG:$NV"
+    refute_output --partial LIBVA_DRIVER_NAME
+}
+
+@test "gpus.lua: integrated first and non-hybrid machines keep the quirk and the variables alone" {
+    command -v lua >/dev/null || skip "lua not installed"
+    hybrid
+    run order 'gpu_lua_content 0000:00:02.0 0000:01:00.0'
+    run run_lua "$output" "$IG 1"$'\n'"$NV 1"
+    refute_output --partial skip_non_kms
+    refute_output --partial LIBVA_DRIVER_NAME
+    # Two dedicated GPUs: extra_environment.lua keeps setting the variables
+    rm -rf "$SYS"
+    fx_gpu "$SYS" 0000:01:00.0 10de:1f9d driver=nvidia card=card0 outputs="DP-1:connected"
+    fx_gpu "$SYS" 0000:02:00.0 1002:73ff driver=amdgpu card=card1 outputs="DP-2:connected"
+    run order 'gpu_lua_content 0000:01:00.0 0000:02:00.0'
+    assert_line "local hybrid = false"
+    local lua="$output"
+    run run_lua "$lua" "/dev/dri/nvidia-dgpu 1"$'\n'"/dev/dri/amd-dgpu 1"
+    assert_line "AQ_DRM_DEVICES=/dev/dri/nvidia-dgpu:/dev/dri/amd-dgpu"
+    refute_output --partial LIBVA_DRIVER_NAME
+    refute_output --partial skip_non_kms
 }
 
 @test "gpu_order_write: gpus.lua written whole, state.json gets the order" {

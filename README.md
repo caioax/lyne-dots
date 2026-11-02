@@ -207,7 +207,7 @@ It clones the repo into `~/.lyne-dots` (installing `git` if needed) at the lates
 The installer asks everything first:
 
 1. **Packages:** pick categories (core, terminal, editor, apps, utils, fonts, quickshell, theming). The shell's own files (Hyprland, Quickshell, `~/.local/`) are always linked; **terminal** also links the kitty, Zsh, tmux and fastfetch configs, **editor** the Neovim one and **theming** the GTK, Qt and KDE ones. Leave a category out and your configs for it stay as they are.
-2. **Graphics:** the GPUs it found; for NVIDIA, the driver (open or 580xx, optionally 32-bit) and its environment; on hybrid laptops, which GPU renders.
+2. **Graphics:** the GPUs it found; for NVIDIA, the driver (open or 580xx, optionally 32-bit) and its environment. Which GPU renders stays automatic (Settings › Graphics changes it).
 3. **Reboot** when done, then a review screen with the packages to link and every file of yours that will be replaced.
 
 After the sudo password (asked once, kept alive), it installs without further questions, with a progress bar and the latest output. Files it replaces go to `~/.lyne-dots-backup/<date>/`; the full log is in `~/.cache/lyne/install-<date>.log`. Changed your mind later? `lyne link nvim` links a package (your files to the backup first) and `lyne unlink nvim` brings yours back.

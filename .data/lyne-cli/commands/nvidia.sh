@@ -58,7 +58,11 @@ case "$subcmd" in
 
         sudo -v || return 1
         nvidia_apply || return 1
-        if ! grep -qs 'LIBVA_DRIVER_NAME' "$HOME/.config/hypr/local/extra_environment.lua"; then
+        if ((GPU_HYBRID)); then
+            echo ""
+            echo "Hybrid machine: Hyprland sets the NVIDIA variables itself, only when"
+            echo "NVIDIA renders (lyne gpu order). prime-run <app> starts one app on NVIDIA."
+        elif ! grep -qs 'LIBVA_DRIVER_NAME' "$HOME/.config/hypr/local/extra_environment.lua"; then
             echo ""
             echo "Hyprland doesn't have the NVIDIA variables yet: copy"
             echo "  $DOTS_DIR/.data/hyprland/templates/extra_environment_nvidia.lua"

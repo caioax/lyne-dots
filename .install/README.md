@@ -53,7 +53,6 @@ Files already where the dotfiles are linked are moved to
 ```bash
 cat > answers <<EOF
 categories=core terminal utils fonts quickshell theming
-gpu_order=igpu
 reboot=no
 EOF
 ./install.sh --answers answers
@@ -61,6 +60,7 @@ EOF
 
 `nvidia=driver|env|none` (and `multilib=yes` for the 32-bit driver) can be
 added; without it, the NVIDIA driver is installed when the GPU found has one.
+`gpu_order=igpu|dgpu|auto` sets the GPU order (automatic without it).
 `lyne gpu` lists the GPUs (`.data/lyne-cli/lib/gpus.sh`, reading sysfs and
 pci.ids only).
 
@@ -71,9 +71,21 @@ address in `/etc/udev/rules.d/90-lyne-gpus.rules` (`/dev/dri/intel-igpu`,
 `nvidia-dgpu`...). The order Hyprland uses them in (`AQ_DRM_DEVICES`: the
 first renders, GPUs left out aren't used) is kept in state.json
 (`gpus.order`) and written to `~/.config/hypr/local/gpus.lua`, which only
-sets the GPUs present when Hyprland starts. The installer asks for it on
-hybrid machines; `lyne gpu order igpu|dgpu|auto|only-igpu|only-dgpu` changes
-it (next login) and `lyne gpu links` rewrites the rules.
+sets the GPUs present when Hyprland starts. The installer leaves it on
+automatic (the GPU with the built-in screen renders): on a laptop the
+dedicated GPU first leaves it without a desktop away from its external
+monitor. Settings › Graphics or `lyne gpu order igpu|dgpu|auto|only-igpu|only-dgpu`
+change it (next login) and `lyne gpu links` rewrites the rules.
+
+On hybrid machines `gpus.lua` also:
+- puts the first GPU with a monitor plugged in first when the one chosen has
+  none at login (the dedicated GPU away from the external monitor);
+- sets the NVIDIA variables (`LIBVA_DRIVER_NAME`, `__GLX_VENDOR_LIBRARY_NAME`,
+  `NVD_BACKEND`) only when NVIDIA renders; otherwise apps run on the
+  integrated GPU and `prime-run <app>` starts one on NVIDIA;
+- with the dedicated GPU first, turns off `quirks:skip_non_kms_dmabuf_formats`
+  (on by default since Hyprland 0.57): with the screens on the other GPU, apps
+  are offered only formats they can't draw with.
 
 ### NVIDIA driver
 
