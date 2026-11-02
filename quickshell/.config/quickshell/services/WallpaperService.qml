@@ -48,6 +48,10 @@ Singleton {
     property var generateErrors: ({})
 
     signal themeWallpapersGenerated(string themeName, bool ok)
+    // Files Add copied into the library, once the list shows them
+    signal wallpapersAdded(var paths)
+    // Copied by the running Add, announced after the next listing
+    property var _added: []
 
     // Available transitions in awww
     readonly property var transitions: ["wipe", "wave", "grow", "center", "outer", "any"]
@@ -275,7 +279,13 @@ Singleton {
             }
         }
         onStarted: listWallpapersProc._buffer = []
-        onExited: root.wallpapers = listWallpapersProc._buffer
+        onExited: {
+            root.wallpapers = listWallpapersProc._buffer;
+            const added = root._added.filter(p => root.wallpapers.includes(p));
+            root._added = [];
+            if (added.length > 0)
+                root.wallpapersAdded(added);
+        }
     }
 
     QueuedProcess {
@@ -335,6 +345,7 @@ Singleton {
 
     Process {
         id: addWallpapersProc
+        onStarted: root._added = []
         // The dialog's texts come translated as $1..$4
         command: ["bash", "-c", `
             if command -v zenity >/dev/null; then
@@ -347,7 +358,8 @@ Singleton {
                 mkdir -p "${root.wallpaperDir}"
                 echo "$files" | while read -r file; do
                     if [ -f "$file" ]; then
-                        cp "$file" "${root.wallpaperDir}/"
+                        dest="${root.wallpaperDir}/$(basename "$file")"
+                        cp "$file" "$dest" && echo "added:$dest"
                     fi
                 done
                 echo "done"
@@ -358,7 +370,9 @@ Singleton {
         stdout: SplitParser {
             onRead: data => {
                 const result = data.trim();
-                if (result === "done")
+                if (result.startsWith("added:"))
+                    root._added = [...root._added, result.slice(6)];
+                else if (result === "done")
                     root.refreshWallpapers();
             }
         }

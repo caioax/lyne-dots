@@ -466,6 +466,20 @@ run_steps() {
     done
     step "settings closed" ipc settings close
 
+    # Add on the Wallpaper page: zenity picks a file, the service copies it
+    # and announces it once listed, the page scrolls to it and marks it New
+    mkdir -p "$SB/pick"
+    local pick=("$SB"/home/.local/wallpapers/themes/*/*.jpg)
+    cp "${pick[0]}" "$SB/pick/smoke-new.jpg"
+    printf '#!/bin/bash\necho "zenity $*" >>"%s/calls.log"\n[[ "$*" == *--file-selection* ]] && echo "%s/pick/smoke-new.jpg"\n' \
+        "$SB" "$SB" >"$SB/bin/zenity"
+    step "wallpaper › page" ev "SettingsService.open('wallpaper')"
+    step "wallpaper › add" ev 'WallpaperService.wallpapersAdded.connect(p => Quickshell.execDetached(["sh", "-c", "printf %s \"$1\" >\"$2\"", "sh", p.join(","), "'"$SB"'/added"])); WallpaperService.addWallpapers(); "ok"'
+    check "wallpaper › the new one is announced" grep -qx "$SB/home/.local/wallpapers/smoke-new.jpg" "$SB/added"
+    step "wallpaper › the page shows it" ev 'WallpaperService.wallpapers.some(w => w.endsWith("/smoke-new.jpg")) ? "ok" : "ERROR not listed"'
+    step "wallpaper › delete it" ev 'WallpaperService.deleteWallpapers(WallpaperService.wallpapers.filter(w => w.endsWith("/smoke-new.jpg"))); "ok"'
+    step "wallpaper › page closed" ipc settings close
+
     for id in $(list 'DashboardService.allTabs.map(t => t.id)'); do
         step "dashboard › $id" ipc dashboard open "$id"
     done

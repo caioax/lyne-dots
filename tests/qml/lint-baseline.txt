@@ -145,7 +145,6 @@ Warning: services/TouchpadService.qml: Type TouchpadService not declared as sing
 Warning: services/TrayService.qml: Type TrayService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/UpdateService.qml: Type UpdateService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/WallpaperPickerService.qml: Type WallpaperPickerService not declared as singleton in qmldir but using pragma Singleton [import]
-Warning: services/WallpaperService.qml: Unqualified access [unqualified]
 Warning: services/WeatherService.qml: Type WeatherService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/WelcomeService.qml: Type WelcomeService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/WhatsNewService.qml: Type WhatsNewService not declared as singleton in qmldir but using pragma Singleton [import]

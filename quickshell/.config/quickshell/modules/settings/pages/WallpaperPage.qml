@@ -6,6 +6,7 @@ import qs.config
 import qs.services
 import "../rows/"
 import "../../../components/"
+import "../../../services/listSync.js" as ListSync
 
 // Wallpaper library: apply, favorite, add, delete. The wallpaper each theme
 // brings is picked in the theme's detail view (Theme page); picking one here
@@ -24,6 +25,10 @@ ColumnLayout {
     property string offerPath: ""
     // The picker's shortcut is being recorded
     property bool recording: false
+    // Added while the page is open: marked "New" until it closes
+    property var newPaths: []
+    // First of the last ones added, scrolled to once the grid shows it
+    property string _scrollTarget: ""
 
     readonly property bool selecting: selection.length > 0
     readonly property string themeName: ThemeService.currentThemeName
@@ -117,14 +122,56 @@ ColumnLayout {
         return false;
     }
 
+    // The grid's rows follow `shown` change by change, so deleting or
+    // filtering keeps the other tiles (and the page height, and so the
+    // scroll) instead of building them all again
+    onShownChanged: ListSync.apply(tilesModel, "path", shown)
+
     onCategoryChanged: clearSelection()
     // Switching theme (or unlinking) makes the question moot
     onThemeNameChanged: offerPath = ""
     onThemeLinkedChanged: offerPath = ""
 
-    Component.onCompleted: WallpaperService.refreshWallpapers()
+    Component.onCompleted: {
+        ListSync.apply(tilesModel, "path", shown);
+        WallpaperService.refreshWallpapers();
+    }
     // Never leave Hyprland in the capture submap
     Component.onDestruction: stopRecording()
+
+    ListModel {
+        id: tilesModel
+    }
+
+    // New ones show even when the tab or the search would hide them
+    Connections {
+        target: WallpaperService
+
+        function onWallpapersAdded(paths) {
+            root.newPaths = [...root.newPaths, ...paths];
+            root.category = "all";
+            if (!paths.some(p => root.shown.includes(p)))
+                search.text = "";
+            root._scrollTarget = paths[0];
+            scrollTimer.restart();
+        }
+    }
+
+    Timer {
+        id: scrollTimer
+
+        // Lets the grid lay the new tiles out before measuring
+        interval: Config.animDuration
+        onTriggered: {
+            for (let i = 0; i < tilesModel.count; i++) {
+                if (tilesModel.get(i).path === root._scrollTarget) {
+                    SettingsService.scrollToItem(tiles.itemAt(i));
+                    break;
+                }
+            }
+            root._scrollTarget = "";
+        }
+    }
 
     Connections {
         target: KeybindsService
@@ -475,20 +522,24 @@ ColumnLayout {
                     rowSpacing: Config.spacing
 
                     Repeater {
-                        model: root.shown
+                        id: tiles
 
+                        model: tilesModel
+
+                        // `path` comes from the model's role
                         WallpaperTile {
-                            required property string modelData
+                            id: tile
 
                             Layout.fillWidth: true
                             Layout.preferredWidth: grid.cellWidth
-                            path: modelData
-                            current: modelData === WallpaperService.currentWallpaper
-                            selected: root.selection.includes(modelData)
+                            current: path === WallpaperService.currentWallpaper
+                            selected: root.selection.includes(path)
                             selecting: root.selecting
-                            onActivated: root.activate(modelData)
-                            onSelectToggled: root.toggleSelected(modelData)
-                            onMenuRequested: anchor => menu.openAt(anchor, modelData)
+                            isNew: root.newPaths.includes(path)
+                            badge: isNew ? I18n.tr("New") : ""
+                            onActivated: root.activate(tile.path)
+                            onSelectToggled: root.toggleSelected(tile.path)
+                            onMenuRequested: anchor => menu.openAt(anchor, tile.path)
                         }
                     }
 

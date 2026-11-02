@@ -25,6 +25,8 @@ Item {
     property bool showMenu: true
     // The name under the thumbnail (the picker shows it once, below)
     property bool showName: true
+    // Just added: an accent outline pulses a few times when it turns on
+    property bool isNew: false
 
     readonly property bool favorite: WallpaperService.isFavorite(path)
     readonly property bool hovered: tileHover.hovered
@@ -194,6 +196,49 @@ Item {
         color: "transparent"
         border.width: root.current || root.highlighted ? 2 : 0
         border.color: root.current ? Config.accentColor : Config.surface3Color
+    }
+
+    // Pulse of a new wallpaper
+    Rectangle {
+        id: pulse
+
+        anchors.fill: thumb
+        radius: Config.radiusLarge
+        color: Qt.alpha(Config.accentColor, 0)
+        border.width: 2
+        border.color: Config.accentColor
+        opacity: 0
+
+        SequentialAnimation {
+            id: pulseAnim
+
+            loops: 3
+
+            NumberAnimation {
+                target: pulse
+                property: "opacity"
+                to: 1
+                duration: Config.animDurationLong
+                easing.type: Easing.OutCubic
+            }
+
+            NumberAnimation {
+                target: pulse
+                property: "opacity"
+                to: 0
+                duration: Config.animDurationLong
+                easing.type: Easing.InCubic
+            }
+        }
+    }
+
+    onIsNewChanged: {
+        if (isNew)
+            pulseAnim.restart();
+    }
+    Component.onCompleted: {
+        if (isNew)
+            pulseAnim.restart();
     }
 
     Rectangle {

@@ -1241,6 +1241,7 @@
         "%n selecionado · Ctrl+A seleciona todos",
         "%n selecionados · Ctrl+A seleciona todos"
     ],
+    "New": "Novo",
     "No wallpapers match “%1”": "Nenhum papel de parede corresponde a “%1”",
     "No favorites yet: use ⋮ › Add to favorites": "Nenhum favorito ainda: use ⋮ › Adicionar aos favoritos",
     "No wallpapers in ~/.local/wallpapers: use Add": "Nenhum papel de parede em ~/.local/wallpapers: use Adicionar",

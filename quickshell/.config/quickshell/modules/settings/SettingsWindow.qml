@@ -210,6 +210,17 @@ FloatingWindow {
             revealTimer.restart();
         }
 
+        // Centers it in the view when it is (partly) out of it
+        function onScrollToItemRequested(item) {
+            if (!item || !root.pageLoader.item)
+                return;
+            const y = item.mapToItem(root.pageLoader, 0, 0).y;
+            if (y >= flick.contentY && y + item.height <= flick.contentY + flick.height)
+                return;
+            scrollAnim.to = Math.max(0, Math.min(flick.contentHeight - flick.height, y - (flick.height - item.height) / 2));
+            scrollAnim.restart();
+        }
+
         function onCurrentPageChanged() {
             root.showPage();
         }

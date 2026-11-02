@@ -263,6 +263,12 @@ Singleton {
     property var pendingReveal: null
 
     signal revealRequested
+    // A page asks the window to scroll until `item` (inside the page) shows
+    signal scrollToItemRequested(var item)
+
+    function scrollToItem(item: var) {
+        scrollToItemRequested(item);
+    }
 
     readonly property var rowTypes: ["SettingRow", "ToggleRow", "SliderRow", "StepperRow", "SelectRow", "TextFieldRow", "InfoRow", "TemplatePicker", "ColorEditRow", "NavKeysPicker", "BarTemplatePicker", "TilingPicker", "LanguageRow"]
     // Groups: SettingsGroup and the shared ones built on it
