@@ -62,12 +62,17 @@ PanelWindow {
         else
             WindowManagerService.registerClose("Launcher");
     }
-    // Created already open, so the change handler doesn't run for it
+    // Created already open, so the change handler doesn't run for it.
+    // On screen until destroyed, exit animation included
     Component.onCompleted: {
+        WindowManagerService.popupMapped("Launcher");
         if (holdsBar)
             WindowManagerService.registerOpen("Launcher");
     }
-    Component.onDestruction: WindowManagerService.registerClose("Launcher")
+    Component.onDestruction: {
+        WindowManagerService.registerClose("Launcher");
+        WindowManagerService.popupUnmapped("Launcher");
+    }
 
     // Upside down (Settings › Launcher › Search bar, or hanging from the
     // bottom edge in auto): search at the bottom, the list growing upward

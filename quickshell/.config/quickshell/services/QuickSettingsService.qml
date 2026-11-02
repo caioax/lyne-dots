@@ -103,43 +103,32 @@ Singleton {
 
     // Closes the popup, then runs a shortcut (screenshot, clipboard, lock,
     // power menu, settings with `settingsPage`, "" for its first page) once
-    // the popup is gone: a window created in the same frame (Settings, the
-    // launcher, the power menu) stalls the closing animation for ~100 ms, and the page that asked is
-    // destroyed with the popup, timers and all
+    // the popup is gone (WindowManagerService.openAfterClose). The page that
+    // asked is destroyed with the popup, so this runs from the service
     function runShortcut(action: string, settingsPage: string): void {
         close();
-        _shortcut = action;
-        _settingsPage = settingsPage;
         // The screenshot also waits for the popup's scale animation, so it
         // isn't captured
-        shortcutTimer.interval = action === "screenshot" ? Config.animDurationLong : Config.animDuration;
-        shortcutTimer.restart();
+        WindowManagerService.openAfterClose("", () => root._run(action, settingsPage), action === "screenshot" ? Config.animDurationLong : 0);
     }
 
-    property string _shortcut: ""
-    property string _settingsPage: ""
-
-    Timer {
-        id: shortcutTimer
-
-        onTriggered: {
-            switch (root._shortcut) {
-            case "screenshot":
-                ShortcutService.screenshotRequested();
-                break;
-            case "clipboard":
-                LauncherService.showMode("clipboard");
-                break;
-            case "lock":
-                IdleService.lock();
-                break;
-            case "power":
-                PowerService.show();
-                break;
-            case "settings":
-                SettingsService.open(root._settingsPage);
-                break;
-            }
+    function _run(action: string, settingsPage: string): void {
+        switch (action) {
+        case "screenshot":
+            ShortcutService.screenshotRequested();
+            break;
+        case "clipboard":
+            LauncherService.showMode("clipboard");
+            break;
+        case "lock":
+            IdleService.lock();
+            break;
+        case "power":
+            PowerService.show();
+            break;
+        case "settings":
+            SettingsService.open(settingsPage);
+            break;
         }
     }
 

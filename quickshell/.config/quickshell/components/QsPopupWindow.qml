@@ -159,7 +159,8 @@ PanelWindow {
 
     Timer {
         id: closeTimer
-        interval: Config.animDuration
+        // A little longer than the exit animation, so it ends hidden
+        interval: WindowManagerService.closeDuration
         onTriggered: {
             root.closing();
             root.visible = false;
@@ -178,17 +179,36 @@ PanelWindow {
         }
     }
 
+    // Name in WindowManagerService's list of popups on screen
+    readonly property string popupName: moduleName !== "" ? moduleName : "Popup"
+
     onVisibleChanged: {
         if (visible) {
             closeTimer.stop();
             isClosing = false;
             isOpening = true;
+            WindowManagerService.popupMapped(popupName);
             if (moduleName !== "")
                 WindowManagerService.registerOpen(moduleName);
         } else {
             isOpening = false;
+            WindowManagerService.popupUnmapped(popupName);
             if (moduleName !== "")
                 WindowManagerService.registerClose(moduleName);
+        }
+    }
+    Component.onDestruction: {
+        if (visible)
+            WindowManagerService.popupUnmapped(popupName);
+    }
+
+    // A shortcut opening something else closes this popup first
+    Connections {
+        target: WindowManagerService
+
+        function onCloseRequested(except: string): void {
+            if (except !== root.moduleName)
+                root.closeWindow();
         }
     }
 

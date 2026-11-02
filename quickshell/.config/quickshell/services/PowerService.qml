@@ -133,6 +133,18 @@ Singleton {
     // turns false first when closing
     property bool visible: false
     property bool open: false
+    // On screen until the exit animation ends (WindowManagerService)
+    onVisibleChanged: visible ? WindowManagerService.popupMapped("Power") : WindowManagerService.popupUnmapped("Power")
+
+    // A shortcut opening something else closes this first
+    Connections {
+        target: WindowManagerService
+
+        function onCloseRequested(except: string): void {
+            if (except !== "Power")
+                root.hide();
+        }
+    }
     // Monitor showing the menu (the others are only dimmed)
     property string screen: ""
     property string selectedId: "shutdown"

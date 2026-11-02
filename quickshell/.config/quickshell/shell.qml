@@ -157,11 +157,15 @@ ShellRoot {
     // Launcher and wallpaper picker (SUPER+B): kept for their exit animation
     KeepAliveLoader {
         shown: LauncherService.visible
+        // Gone with its exit animation, so a shortcut waiting for it opens soon
+        exitDuration: WindowManagerService.closeDuration
         sourceComponent: Launcher {}
     }
 
     KeepAliveLoader {
         shown: WallpaperPickerService.visible
+        // Gone with its exit animation, so a shortcut waiting for it opens soon
+        exitDuration: WindowManagerService.closeDuration
         sourceComponent: WallpaperPicker {}
     }
 
@@ -243,9 +247,7 @@ ShellRoot {
         name: "power_menu"
         description: "Power menu" // i18n-ignore
 
-        onPressed: {
-            PowerService.toggle();
-        }
+        onPressed: WindowManagerService.openAfterClose("Power", () => PowerService.toggle(), 0)
     }
 
     // Shortcut: Launcher (tapping Super by default). Pressed again while
@@ -254,7 +256,7 @@ ShellRoot {
         name: "app_launcher"
         description: "App Launcher" // i18n-ignore
 
-        onPressed: LauncherService.toggle()
+        onPressed: WindowManagerService.openAfterClose("Launcher", () => LauncherService.toggle(), 0)
     }
 
     // Shortcut: Volume Up
@@ -329,7 +331,7 @@ ShellRoot {
         name: "wallpaper_picker"
         description: "Wallpaper picker" // i18n-ignore
 
-        onPressed: WallpaperPickerService.toggle()
+        onPressed: WindowManagerService.openAfterClose("WallpaperPicker", () => WallpaperPickerService.toggle(), 0)
     }
 
     // Shortcut: Clipboard History
@@ -337,7 +339,7 @@ ShellRoot {
         name: "clipboard_history"
         description: "Clipboard history" // i18n-ignore
 
-        onPressed: LauncherService.toggleMode("clipboard")
+        onPressed: WindowManagerService.openAfterClose("Launcher", () => LauncherService.toggleMode("clipboard"), 0)
     }
 
     // Shortcut: Settings
@@ -345,7 +347,12 @@ ShellRoot {
         name: "settings"
         description: "Settings" // i18n-ignore
 
-        onPressed: SettingsService.toggle()
+        onPressed: {
+            if (SettingsService.visible)
+                SettingsService.close();
+            else
+                WindowManagerService.openAfterClose("", () => SettingsService.open(""), 0);
+        }
     }
 
     // Shortcut: next window layout (dwindle → master → scrolling)
@@ -361,7 +368,7 @@ ShellRoot {
         name: "keybinds_help"
         description: "Keybinds settings" // i18n-ignore
 
-        onPressed: SettingsService.open("keybinds")
+        onPressed: WindowManagerService.openAfterClose("", () => SettingsService.open("keybinds"), 0)
     }
 
     // Shortcuts: Dashboard on the current tab, or on one of them (no keys by
@@ -370,34 +377,49 @@ ShellRoot {
         name: "dashboard"
         description: "Dashboard" // i18n-ignore
 
-        onPressed: DashboardService.toggle("", DashboardService.focusedScreen())
+        onPressed: {
+            const screen = DashboardService.focusedScreen();
+            WindowManagerService.openAfterClose("Dashboard", () => DashboardService.toggle("", screen), 0);
+        }
     }
 
     GlobalShortcut {
         name: "dashboard_overview"
         description: "Dashboard tab: overview" // i18n-ignore
 
-        onPressed: DashboardService.toggle("overview", DashboardService.focusedScreen())
+        onPressed: {
+            const screen = DashboardService.focusedScreen();
+            WindowManagerService.openAfterClose("Dashboard", () => DashboardService.toggle("overview", screen), 0);
+        }
     }
 
     GlobalShortcut {
         name: "dashboard_media"
         description: "Dashboard tab: media" // i18n-ignore
 
-        onPressed: DashboardService.toggle("media", DashboardService.focusedScreen())
+        onPressed: {
+            const screen = DashboardService.focusedScreen();
+            WindowManagerService.openAfterClose("Dashboard", () => DashboardService.toggle("media", screen), 0);
+        }
     }
 
     GlobalShortcut {
         name: "dashboard_system"
         description: "Dashboard tab: system" // i18n-ignore
 
-        onPressed: DashboardService.toggle("system", DashboardService.focusedScreen())
+        onPressed: {
+            const screen = DashboardService.focusedScreen();
+            WindowManagerService.openAfterClose("Dashboard", () => DashboardService.toggle("system", screen), 0);
+        }
     }
 
     GlobalShortcut {
         name: "dashboard_weather"
         description: "Dashboard tab: weather" // i18n-ignore
 
-        onPressed: DashboardService.toggle("weather", DashboardService.focusedScreen())
+        onPressed: {
+            const screen = DashboardService.focusedScreen();
+            WindowManagerService.openAfterClose("Dashboard", () => DashboardService.toggle("weather", screen), 0);
+        }
     }
 }

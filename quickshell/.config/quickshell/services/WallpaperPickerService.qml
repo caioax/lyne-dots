@@ -18,6 +18,17 @@ Singleton {
     // ========================================================================
 
     property bool visible: false
+
+    // A shortcut opening something else closes this first
+    Connections {
+        target: WindowManagerService
+
+        function onCloseRequested(except: string): void {
+            if (except !== "WallpaperPicker")
+                root.hide();
+        }
+    }
+
     // Screen edge it opens against: "bottom" or "top" (Settings › Wallpaper)
     readonly property string position: StateService.get("wallpaper.pickerPosition", "bottom")
     property string query: ""

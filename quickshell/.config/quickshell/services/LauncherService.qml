@@ -101,6 +101,16 @@ Singleton {
     // a moment after closing for its exit animation): built, they are the
     // shell's largest service (~35 MB) and followed every app and state
     // change with the launcher closed
+    // A shortcut opening something else closes this first
+    Connections {
+        target: WindowManagerService
+
+        function onCloseRequested(except: string): void {
+            if (except !== "Launcher")
+                root.hide();
+        }
+    }
+
     property bool indexed: false
     onVisibleChanged: {
         if (visible) {

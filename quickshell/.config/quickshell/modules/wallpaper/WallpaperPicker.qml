@@ -50,12 +50,17 @@ PanelWindow {
         else
             WindowManagerService.registerClose("WallpaperPicker");
     }
-    // Created already open, so the change handler doesn't run for it
+    // Created already open, so the change handler doesn't run for it.
+    // On screen until destroyed, exit animation included
     Component.onCompleted: {
+        WindowManagerService.popupMapped("WallpaperPicker");
         if (holdsBar)
             WindowManagerService.registerOpen("WallpaperPicker");
     }
-    Component.onDestruction: WindowManagerService.registerClose("WallpaperPicker")
+    Component.onDestruction: {
+        WindowManagerService.registerClose("WallpaperPicker");
+        WindowManagerService.popupUnmapped("WallpaperPicker");
+    }
 
     visible: true
 

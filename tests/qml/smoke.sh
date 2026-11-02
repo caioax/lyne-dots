@@ -488,13 +488,23 @@ run_steps() {
     # A shortcut closes the popup, then opens its Settings page
     step "quick settings › shortcut" ev 'QuickSettingsService.open("", QuickSettingsService.focusedScreen()); QuickSettingsService.runShortcut("settings", "keybinds"); "ok"'
     check "quick settings › shortcut closed it" ev_is "" 'QuickSettingsService.screen'
-    check "quick settings › shortcut opened settings" ev_is true 'SettingsService.visible && SettingsService.currentPage === "keybinds"'
+    check "quick settings › shortcut opened settings" ev_soon true 'SettingsService.visible && SettingsService.currentPage === "keybinds"'
     step "quick settings › shortcut settings closed" ipc settings close
 
     for id in $(list 'LauncherService.modes.map(m => m.id)'); do
         step "launcher › $id" ev "LauncherService.showMode('$id')"
     done
     step "launcher closed" ipc launcher close
+    # A shortcut with another popup open closes it first and opens once it
+    # is gone, so its exit animation isn't stalled by the new window
+    step "popups › dashboard open" ipc dashboard open ""
+    check "popups › the dashboard is on screen" ev_soon true 'WindowManagerService.othersMapped("Launcher")'
+    check "popups › the launcher waits" ev_is "false" 'WindowManagerService.openAfterClose("Launcher", () => LauncherService.toggle(), 0); LauncherService.visible'
+    check "popups › the dashboard closes" ev_is "" 'DashboardService.screen'
+    check "popups › then the launcher opens" ev_soon true 'LauncherService.visible && !WindowManagerService.othersMapped("Launcher")'
+    # Its own shortcut closes it at once (opened in the same call: here the
+    # launcher may lose its focus grab and close by itself)
+    check "popups › the shortcut again closes it at once" ev_is false 'LauncherService.show(); WindowManagerService.openAfterClose("Launcher", () => LauncherService.toggle(), 0); LauncherService.visible'
     # Usage is only counted while the list is ranked by it
     local counted='LauncherService.usage.some(u => u.id === "smoke-app")'
     ev 'StateService.set("launcher.rankByUsage", false); LauncherService._recordUsage("smoke-app"); "ok"' >/dev/null
