@@ -2,7 +2,7 @@
 # One Neovim per project (local-plugins/project-instance.nvim): the first
 # Neovim opened in a project listens on that project's socket in
 # $XDG_RUNTIME_DIR/lyne-nvim (the sandbox's), found from the first file (the
-# nearest folder with project.godot, a *.sln or .git, else the file's
+# nearest folder with project.godot, a *.sln, .git or .root, else the file's
 # folder) or the current folder. One started there later hands its files
 # (and a +N line) to the first and quits; in tmux the client lands on the
 # first's pane, whatever window or session it was in, out of a floating
@@ -88,6 +88,9 @@ P="$SB/work/game"
 mkdir -p "$P/scripts/enemy" "$SB/work/plain/sub" "$SB/work/repo/.git" "$SB/work/repo/src" "$SB/work/sln" "$SB/tmpdir"
 touch "$P/project.godot" "$P/Game.sln" "$P/scripts/enemy/Enemy.txt" "$SB/work/sln/App.sln" "$SB/work/repo/src/x.lua"
 touch "$SB/work/repo/.git/COMMIT_EDITMSG"
+# .root: an empty file making a folder without git a project, also inside a repo
+mkdir -p "$SB/work/notes/a/b" "$SB/work/lib-repo/.git" "$SB/work/lib-repo/vendor/lib/src"
+touch "$SB/work/notes/.root" "$SB/work/lib-repo/vendor/lib/.root"
 # Same folder name elsewhere: its own socket
 mkdir -p "$SB/other/game" && touch "$SB/other/game/project.godot"
 
@@ -138,6 +141,10 @@ start c "$SB/work/repo/src"
 check "root: .git" "$SB/work/repo" "$(state c root)"
 start d "$SB/work" "$SB/work/sln/New.txt"
 check "root: a *.sln (file not created yet)" "$SB/work/sln" "$(state d root)"
+start m "$SB" "$SB/work/notes/a/new/n.txt"
+check "root: .root (file not created yet)" "$SB/work/notes" "$(state m root)"
+start m2 "$SB/work/lib-repo/vendor/lib/src"
+check "root: a .root inside a git repo wins" "$SB/work/lib-repo/vendor/lib" "$(state m2 root)"
 start e "$SB/work/plain/sub"
 check "root: no marker, the current folder" "$SB/work/plain/sub" "$(state e root)"
 start f "$SB" "$SB/work/plain/new/dir/n.txt"
@@ -301,6 +308,7 @@ shell_tmux() {
     cat "$SB/tmux-args.log"
 }
 check "tmux in a project's subfolder: its session" "ARGS:new-session -A -s game -c $P" "$(shell_tmux "$P/scripts")"
+check "tmux in a .root folder's subfolder: its session" "ARGS:new-session -A -s notes -c $SB/work/notes" "$(shell_tmux "$SB/work/notes/a/b")"
 check "tmux outside any project: the session main" "ARGS:new-session -A -s main -c $HOME" "$(shell_tmux "$SB/work/plain/sub")"
 check "tmux with arguments: as given" "ARGS:ls" "$(shell_tmux "$P" ls)"
 check "tmux inside tmux: as given" "ARGS:" "$(cd "$P" && : >"$SB/tmux-args.log" && env TMUX=x PATH="$SB/fakebin:$PATH" LYNE_DOTS="$REPO" zsh -fc "$tmux_fn; tmux" && cat "$SB/tmux-args.log")"

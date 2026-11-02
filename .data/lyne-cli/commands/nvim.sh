@@ -20,7 +20,7 @@ _nvim_usage() {
     echo "          none; when tmux isn't running, after tmux-continuum brings back"
     echo "          the last save), and a terminal opens when none shows tmux."
     echo "          The project is --project, else the nearest folder of the file"
-    echo "          with project.godot, a *.sln or .git. A line below 1 means none."
+    echo "          with project.godot, a *.sln, .git or .root. A line below 1 means none."
     echo "          For Godot (Editor Settings > Dotnet > Editor, Custom):"
     echo "            exec path  lyne"
     echo "            arguments  nvim open --project {project} {file} {line} {col}"

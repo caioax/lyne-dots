@@ -104,7 +104,7 @@ Sessions are saved per folder (and git branch) once a file is open: when you qui
 
 ## One Neovim per project
 
-The first Neovim opened in a project is that project's: the project is the nearest folder with `project.godot`, a `*.sln` or `.git` (else the file's folder). Another `nvim` there, with files or without, hands them to it and quits; in tmux you land on its pane, whatever window or session it's in. `:ProjectInstance` shows which one this is. `nvim -R`, `nvim -d`, text from a pipe, git's files (commit messages) and temp files (`crontab -e`, the shell's `Ctrl+V`) always get a Neovim of their own, and so does `LYNE_NVIM_SOLO=1 nvim` and the tmux popups.
+The first Neovim opened in a project is that project's: the project is the nearest folder with `project.godot`, a `*.sln`, `.git` or `.root` (else the file's folder); `touch .root` makes a folder without git a project. Another `nvim` there, with files or without, hands them to it and quits; in tmux you land on its pane, whatever window or session it's in. `:ProjectInstance` shows which one this is. `nvim -R`, `nvim -d`, text from a pipe, git's files (commit messages) and temp files (`crontab -e`, the shell's `Ctrl+V`) always get a Neovim of their own, and so does `LYNE_NVIM_SOLO=1 nvim` and the tmux popups.
 
 From outside: `lyne nvim open [--project <folder>] <file> [line [column]]` opens the file there and shows it (tmux's pane, the terminal's window). With no Neovim in the project it starts one in the project's tmux session, starting tmux (and what tmux-continuum brings back) or a terminal when needed. `lyne nvim list` shows the ones running.
 

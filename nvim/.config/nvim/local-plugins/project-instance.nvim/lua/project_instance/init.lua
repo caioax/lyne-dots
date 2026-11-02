@@ -3,7 +3,8 @@
 -- whoever wants to open a file of that project (another Neovim, lyne nvim
 -- open, Godot) finds it there. The folder comes from the first file given
 -- (or the current one): the nearest folder upwards holding project.godot, a
--- *.sln or .git, else the file's own folder.
+-- *.sln, .git or .root (an empty file that makes a folder without git a
+-- project), else the file's own folder.
 --
 -- A Neovim opened in a project that already has a live one hands its files
 -- (and a +N line) to it, switches tmux to that one's pane and quits, before
@@ -95,7 +96,7 @@ function M.skip_reason()
 end
 
 local function has_marker(dir)
-    if uv.fs_stat(dir .. "/project.godot") or uv.fs_stat(dir .. "/.git") then
+    if uv.fs_stat(dir .. "/project.godot") or uv.fs_stat(dir .. "/.git") or uv.fs_stat(dir .. "/.root") then
         return true
     end
     local ok, iter = pcall(vim.fs.dir, dir)

@@ -77,10 +77,10 @@ fi
 #         (tmux-continuum)               tmkf the same, and forget that save
 #
 # tmux with no arguments, outside tmux: in a project (the nearest folder
-# with project.godot, a *.sln or .git) that project's session, made in its
-# folder when there's none, named as prefix + P names it; anywhere else the
-# session main (made in ~), so plain tmux never makes numbered sessions. With
-# arguments, or inside tmux, tmux as it is
+# with project.godot, a *.sln, .git or .root) that project's session, made
+# in its folder when there's none, named as prefix + P names it; anywhere
+# else the session main (made in ~), so plain tmux never makes numbered
+# sessions. With arguments, or inside tmux, tmux as it is
 tmux() {
     if (( $# == 0 )) && [[ -z $TMUX ]] && (( $+commands[nvim] )); then
         local cli="${LYNE_DOTS:-$HOME/.lyne-dots}/nvim/.config/nvim/local-plugins/project-instance.nvim/lua/project_instance/cli.lua"
