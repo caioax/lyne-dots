@@ -458,7 +458,7 @@ Singleton {
     function _applyWallpaper(wallpaperFile) {
         if (!wallpaperFile || !WallpaperService.dynamicWallpaper)
             return;
-        WallpaperService.setWallpaper(wallpaperDir + "/" + wallpaperFile, "grow");
+        WallpaperService.setWallpaper(wallpaperDir + "/" + wallpaperFile);
     }
 
     function _applyGtkThemeSwitch() {

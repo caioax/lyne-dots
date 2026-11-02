@@ -490,6 +490,11 @@ EOF
     step "wallpaper › add a folder" ev 'WallpaperService.addWallpapers(true); "ok"'
     check "wallpaper › the folder's images, subfolders too" grep -qx "$SB/home/.local/wallpapers/smoke-folder-a.jpg,$SB/home/.local/wallpapers/smoke-folder-b.jpg" "$SB/added"
     step "wallpaper › delete them" ev 'WallpaperService.deleteWallpapers(WallpaperService.wallpapers.filter(w => w.includes("/smoke-folder-"))); "ok"'
+    # Applying one uses the transition chosen on the page (as its rows do:
+    # the state and the service's own property)
+    step "wallpaper › transition wipe, fast" ev 'StateService.set("wallpaper.transition", "wipe"); StateService.set("wallpaper.transitionSpeed", "fast"); WallpaperService.transition = "wipe"; WallpaperService.transitionSpeed = "fast"; WallpaperService.setWallpaper("'"${pick[0]}"'"); "ok"'
+    check "wallpaper › awww got that transition" grep -q -- "^awww img ${pick[0]} --transition-type wipe --transition-duration 0.6 " "$SB/calls.log"
+    step "wallpaper › transition reset" ev 'StateService.reset("wallpaper.transition"); StateService.reset("wallpaper.transitionSpeed"); WallpaperService.transition = "fade"; WallpaperService.transitionSpeed = "normal"; "ok"'
     step "wallpaper › page closed" ipc settings close
 
     for id in $(list 'DashboardService.allTabs.map(t => t.id)'); do

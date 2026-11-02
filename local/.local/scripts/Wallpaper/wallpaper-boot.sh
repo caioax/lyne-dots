@@ -28,10 +28,7 @@ fi
 # Already on screen (restored from the cache): nothing to do
 [[ "$(realpath "$WALLPAPER" 2>/dev/null)" == "$(awww query 2>/dev/null | sed -n 's/.*image: //p' | head -n 1)" ]] && exit 0
 
+# Same transition as a change from the shell (Settings › Wallpaper)
 if [[ -n "$WALLPAPER" && -f "$WALLPAPER" ]]; then
-    awww img "$WALLPAPER" \
-        --transition-type grow \
-        --transition-duration 1 \
-        --transition-fps 60 \
-        --transition-step 90
+    "$HOME/.config/quickshell/scripts/wallpaper-set.sh" "$WALLPAPER"
 fi

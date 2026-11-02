@@ -344,6 +344,71 @@ ColumnLayout {
         }
     }
 
+    // ================= TRANSITION =================
+    SettingsGroup {
+        title: I18n.tr("Transition")
+
+        SelectRow {
+            label: I18n.tr("Effect")
+            description: I18n.tr("How a new wallpaper replaces the one on screen, also when switching theme and at login")
+            path: "wallpaper.transition"
+            segmentWidth: Config.fontSizeNormal * 4.5
+            value: WallpaperService.transition
+            options: [
+                {
+                    label: I18n.tr("None"),
+                    value: "none"
+                },
+                {
+                    label: I18n.tr("Fade"),
+                    value: "fade"
+                },
+                {
+                    label: I18n.tr("Grow"),
+                    value: "grow"
+                },
+                {
+                    label: I18n.tr("Wipe"),
+                    value: "wipe"
+                },
+                {
+                    label: I18n.tr("Wave"),
+                    value: "wave"
+                },
+                {
+                    label: I18n.tr("Random"),
+                    value: "random"
+                }
+            ]
+            onSelected: value => WallpaperService.transition = value
+            onResetRequested: WallpaperService.transition = StateService.get(path, "fade")
+        }
+
+        SelectRow {
+            visible: WallpaperService.transition !== "none"
+            label: I18n.tr("Speed")
+            description: I18n.tr("How long the transition takes")
+            path: "wallpaper.transitionSpeed"
+            value: WallpaperService.transitionSpeed
+            options: [
+                {
+                    label: I18n.tr("Fast"),
+                    value: "fast"
+                },
+                {
+                    label: I18n.tr("Normal"),
+                    value: "normal"
+                },
+                {
+                    label: I18n.tr("Slow"),
+                    value: "slow"
+                }
+            ]
+            onSelected: value => WallpaperService.transitionSpeed = value
+            onResetRequested: WallpaperService.transitionSpeed = StateService.get(path, "normal")
+        }
+    }
+
     // ================= PICKER =================
     SettingsGroup {
         title: I18n.tr("Picker")

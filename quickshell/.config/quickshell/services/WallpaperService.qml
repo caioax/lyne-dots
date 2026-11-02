@@ -56,8 +56,12 @@ Singleton {
     property int _skipped: 0
     readonly property string _addScript: Qt.resolvedUrl("../scripts/wallpapers-add.sh").toString().replace("file://", "")
 
-    // Available transitions in awww
-    readonly property var transitions: ["wipe", "wave", "grow", "center", "outer", "any"]
+    readonly property string _setScript: Qt.resolvedUrl("../scripts/wallpaper-set.sh").toString().replace("file://", "")
+    // Transition of every wallpaper change (Settings › Wallpaper): none, fade,
+    // grow, wipe, wave or random, and fast, normal or slow. Its rows store
+    // them in the state and set these
+    property string transition: getState("wallpaper.transition", "fade")
+    property string transitionSpeed: getState("wallpaper.transitionSpeed", "normal")
 
     // ========================================================================
     // INITIALIZATION
@@ -76,6 +80,8 @@ Singleton {
                 return;
             root.currentWallpaper = root.expandHome(getState("wallpaper.current", ""));
             root.favorites = getState("wallpaper.favorites", []);
+            root.transition = getState("wallpaper.transition", "fade");
+            root.transitionSpeed = getState("wallpaper.transitionSpeed", "normal");
             // What awww shows wins over the saved path
             root.getCurrentWallpaper();
         }
@@ -198,13 +204,10 @@ Singleton {
         generateProc.running = true;
     }
 
-    // Apply wallpaper. A missing file is skipped and leaves the current one.
-    // transition: an awww transition type, random when empty
-    function setWallpaper(path: string, transition = "") {
-        const type = transition || transitions[Math.floor(Math.random() * transitions.length)];
-        const duration = transition ? "1" : (Math.random() * 1.5 + 0.5).toFixed(1);
-
-        setWallpaperProc.run(["sh", "-c", "[ -f \"$1\" ] || { echo \"not found: $1\" >&2; exit 3; }; " + "awww img \"$1\" --transition-type \"$2\" --transition-duration \"$3\" --transition-fps 60 --transition-step 90", "sh", path, type, duration], path);
+    // Apply wallpaper, with the transition set in Settings (wallpaper-set.sh).
+    // A missing file is skipped and leaves the current one.
+    function setWallpaper(path: string) {
+        setWallpaperProc.run([_setScript, path, transition, transitionSpeed], path);
     }
 
     function _wallpaperApplied(path: string) {
@@ -433,7 +436,7 @@ Singleton {
                         root.setActiveThemeWallpaper(dest, themeName);
                     if (root._applyWhenCopied[dest]) {
                         delete root._applyWhenCopied[dest];
-                        root.setWallpaper(dest, "grow");
+                        root.setWallpaper(dest);
                     }
                     if (root.themeWallpapersFor === themeName)
                         root.refreshThemeWallpapers(themeName);

@@ -41,7 +41,9 @@
         "dynamic": true,
         "favorites": [],
         "pickerPosition": "bottom",
-        "pickerFilter": "all"
+        "pickerFilter": "all",
+        "transition": "fade",
+        "transitionSpeed": "normal"
     },
     "nightLight": {
         "enabled": false,
