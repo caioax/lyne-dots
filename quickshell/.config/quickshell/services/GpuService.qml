@@ -24,6 +24,9 @@ Singleton {
     readonly property var gpus: data.gpus ?? []
     readonly property bool multi: data.multi ?? false
     readonly property bool hybrid: data.hybrid ?? false
+    // A hybrid laptop (gpus.sh gpu_hybrid_laptop): the built-in screen
+    // connected. Only there gpus.lua sends apps to the GPU that renders
+    readonly property bool laptop: hybrid && (data.internal ?? -1) >= 0 && connected(gpus[data.internal]).some(n => /^(eDP|LVDS|DSI)-/.test(n))
     readonly property var nvidia: data.nvidia ?? null
     readonly property string rules: data.rules ?? "none"
     readonly property var duplicates: data.duplicates ?? []

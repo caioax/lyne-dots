@@ -225,12 +225,41 @@ IG=/dev/dri/intel-igpu
     fx_gpu "$SYS" 0000:01:00.0 10de:1f9d driver=nvidia card=card0 outputs="DP-1:connected"
     fx_gpu "$SYS" 0000:02:00.0 1002:73ff driver=amdgpu card=card1 outputs="DP-2:connected"
     run order 'gpu_lua_content 0000:01:00.0 0000:02:00.0'
-    assert_line "local hybrid = false"
+    assert_line "local laptop = false"
     local lua="$output"
     run run_lua "$lua" "/dev/dri/nvidia-dgpu 1"$'\n'"/dev/dri/amd-dgpu 1"
     assert_line "AQ_DRM_DEVICES=/dev/dri/nvidia-dgpu:/dev/dri/amd-dgpu"
     refute_output --partial LIBVA_DRIVER_NAME
     refute_output --partial skip_non_kms
+}
+
+@test "gpus.lua: a hybrid desktop renders where it was told, with the quirk off and its own variables" {
+    command -v lua >/dev/null || skip "lua not installed"
+    # Monitor on the board (Intel), NVIDIA renders on purpose; no built-in
+    # screen (a board's eDP that's never connected doesn't count)
+    fx_gpu "$SYS" 0000:01:00.0 10de:1f9d driver=nvidia card=card0 outputs="HDMI-A-1:disconnected"
+    fx_gpu "$SYS" 0000:00:02.0 8086:3e9b driver=i915 card=card1 outputs="eDP-1:disconnected DP-1:connected"
+    run order 'gpu_hybrid_laptop || echo desktop'
+    assert_output desktop
+    run order 'gpu_lua_content 0000:01:00.0 0000:00:02.0'
+    assert_line "local laptop = false"
+    run run_lua "$output" "$NV 0"$'\n'"$IG 1"
+    assert_line "AQ_DRM_DEVICES=$NV:$IG"
+    assert_line "skip_non_kms=false"
+    refute_output --partial LIBVA_DRIVER_NAME
+    run order 'gpu_lua_content'
+    refute_output --partial prime-run
+}
+
+@test "gpus.lua: automatic on a laptop with the built-in screen on NVIDIA sets its variables" {
+    command -v lua >/dev/null || skip "lua not installed"
+    fx_gpu "$SYS" 0000:01:00.0 10de:1f9d driver=nvidia card=card0 outputs="eDP-1:connected"
+    fx_gpu "$SYS" 0000:00:02.0 8086:3e9b driver=i915 card=card1 outputs="DP-1:disconnected"
+    run order 'gpu_lua_content'
+    run run_lua "$output" ""
+    assert_line "LIBVA_DRIVER_NAME=nvidia"
+    assert_line "__GLX_VENDOR_LIBRARY_NAME=nvidia"
+    refute_output --partial AQ_DRM_DEVICES
 }
 
 @test "gpu_order_write: gpus.lua written whole, state.json gets the order" {

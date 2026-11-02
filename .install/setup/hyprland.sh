@@ -145,17 +145,17 @@ setup_nvidia() {
     echo ""
     log_info "Configuring environment for NVIDIA..."
 
-    # Hybrid machines: local/gpus.lua sets the NVIDIA variables, only when
+    # Hybrid laptops: local/gpus.lua sets the NVIDIA variables, only when
     # NVIDIA renders (set for the whole session they'd send every app to it)
     source "$DOTFILES_DIR/.data/lyne-cli/lib/gpus.sh"
     gpu_detect
-    if ((GPU_HYBRID)); then
+    if gpu_hybrid_laptop; then
         copy_template \
             "$TEMPLATES_DIR/extra_environment_nvidia_hybrid.lua" \
             "$HYPR_LOCAL_DIR/extra_environment.lua" \
             "local/extra_environment.lua (NVIDIA variables in local/gpus.lua)"
         if [[ ! -f "$UWSM_ENV_DIR/global_hardware.sh" ]]; then
-            printf '#!/bin/bash\n# Hybrid machine: the NVIDIA variables are set in\n# ~/.config/hypr/local/gpus.lua, only when NVIDIA renders\n' >"$UWSM_ENV_DIR/global_hardware.sh"
+            printf '#!/bin/bash\n# Hybrid laptop: the NVIDIA variables are set in\n# ~/.config/hypr/local/gpus.lua, only when NVIDIA renders\n' >"$UWSM_ENV_DIR/global_hardware.sh"
             log_info "  Created: uwsm/global_hardware.sh (hybrid: no global NVIDIA variables)"
         fi
     else

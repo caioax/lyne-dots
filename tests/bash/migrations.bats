@@ -161,6 +161,19 @@ legacy_home() {
     assert_equal "$(cat "$hypr/local/extra_environment.lua" "$uwsm/global_hardware.sh" "$hypr/local/gpus.lua")" "$before"
 }
 
+@test "047: a hybrid desktop keeps its NVIDIA variables" {
+    fake_dots
+    rm -rf "$SYS"
+    fx_gpu "$SYS" 0000:01:00.0 10de:1f9d driver=nvidia card=card0 outputs="DP-1:connected"
+    fx_gpu "$SYS" 0000:00:02.0 8086:3e9b driver=i915 card=card1 outputs="HDMI-A-1:disconnected"
+    mkdir -p "$HOME/.config/hypr/local"
+    cp "$REPO/.data/hyprland/templates/extra_environment_nvidia.lua" "$HOME/.config/hypr/local/extra_environment.lua"
+    run migrate 047-hybrid-gpu-env.sh
+    assert_success
+    cmp "$REPO/.data/hyprland/templates/extra_environment_nvidia.lua" "$HOME/.config/hypr/local/extra_environment.lua"
+    grep -q 'local laptop = false\|Automatic' "$HOME/.config/hypr/local/gpus.lua"
+}
+
 @test "047: one GPU leaves the files alone" {
     fake_dots
     rm -rf "$SYS"

@@ -110,10 +110,10 @@ ColumnLayout {
             onToggled: value => GpuService.setPreset(GpuService.renderer, value)
         }
 
-        // Apps follow the GPU that renders (gpus.lua sets the NVIDIA
-        // variables only when NVIDIA renders): prime-run for the others
+        // Laptops: apps follow the GPU that renders (gpus.lua sets the
+        // NVIDIA variables only when NVIDIA renders): prime-run for the others
         SettingRow {
-            visible: GpuService.hybrid && GpuService.nvidia !== null && GpuService.renderer !== "dgpu"
+            visible: GpuService.laptop && GpuService.nvidia !== null && GpuService.renderer !== "dgpu"
             label: I18n.tr("Apps on %1", GpuService.dgpu?.brand ?? "NVIDIA")
             description: I18n.tr("Apps run on the GPU that renders. prime-run <app> starts one on %1 (Steam: prime-run %command%)", GpuService.dgpu?.brand ?? "NVIDIA")
         }

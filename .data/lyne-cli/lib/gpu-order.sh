@@ -13,10 +13,11 @@
 #                                         AQ_DRM_DEVICES when Hyprland starts
 # GPUs left out of the order aren't used at all (monitors plugged into them
 # stay dark). Without AQ_DRM_DEVICES Aquamarine puts the GPU with the
-# built-in screen first. At login a first GPU without a monitor gives way
-# to the first one with a monitor (a laptop rendering on its dedicated GPU,
-# away from the external monitor); on hybrid machines the NVIDIA variables
-# are set only when NVIDIA renders, and a dedicated GPU first turns off
+# built-in screen first. On hybrid laptops (gpu_hybrid_laptop) a first GPU
+# without a monitor at login gives way to the first one with a monitor (the
+# dedicated GPU away from the external monitor) and the NVIDIA variables
+# are set only when NVIDIA renders. On any hybrid machine a dedicated GPU
+# first turns off
 # Hyprland 0.57's quirks:skip_non_kms_dmabuf_formats (apps can't draw
 # otherwise when the screens are on the other GPU).
 #
@@ -221,23 +222,29 @@ gpu_lua_content() {
 EOF
     if ((${#rows[@]} == 0)); then
         printf '\n-- Automatic: Aquamarine picks (the GPU with the built-in screen first)\n'
-        if ((GPU_HYBRID)); then
-            printf -- '-- The NVIDIA variables (LIBVA_DRIVER_NAME, __GLX_VENDOR_LIBRARY_NAME) stay\n'
-            printf -- '-- unset: apps run on the integrated GPU, prime-run <app> starts one on\n'
-            printf -- '-- the dedicated GPU\n'
+        if gpu_hybrid_laptop; then
+            if [[ "${GPU_VENDOR[GPU_INTERNAL]}" == nvidia ]]; then
+                # The built-in screen's GPU renders: here NVIDIA
+                printf '\n-- The built-in screen is on NVIDIA, which renders: its variables\n'
+                printf 'hl.env("LIBVA_DRIVER_NAME", "nvidia")\nhl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")\nhl.env("NVD_BACKEND", "direct")\n'
+            else
+                printf -- '-- The NVIDIA variables (LIBVA_DRIVER_NAME, __GLX_VENDOR_LIBRARY_NAME) stay\n'
+                printf -- '-- unset: apps run on the integrated GPU, prime-run <app> starts one on\n'
+                printf -- '-- the dedicated GPU\n'
+            fi
         fi
         printf '\nlyne_gpus_file = "%s"\n' "$label"
         return 0
     fi
-    local first hybrid=false dedicated_first=false
+    local first laptop=false dedicated_first=false
     first="$(_gpu_index_of_pci "$1")"
-    ((GPU_HYBRID)) && hybrid=true
+    gpu_hybrid_laptop && laptop=true
     [[ "${GPU_KIND[first]}" == dedicated ]] && ((GPU_HYBRID)) && dedicated_first=true
     printf '\nlocal order = {\n'
     printf '%s\n' "${rows[@]}"
     printf '}\n\nlocal spare = {\n'
     ((${#spare[@]})) && printf '%s\n' "${spare[@]}"
-    printf '}\n\nlocal hybrid = %s\n' "$hybrid"
+    printf '}\n\nlocal laptop = %s\n' "$laptop"
     cat <<'EOF'
 
 -- A reload: Hyprland picked its GPUs at login and keeps them, so the
@@ -275,11 +282,11 @@ else
             list[#list + 1] = gpu.path
         end
     end
-    -- The first GPU renders, but one without a monitor (the dedicated GPU
-    -- of a laptop away from its external monitor) can't show the frames it
-    -- renders: the first GPU with a monitor takes its place, from the order
-    -- or else from the other GPUs
-    if found and #list > 0 and not found[list[1]] then
+    -- The first GPU renders, but on a laptop one without a monitor (the
+    -- dedicated GPU away from the external monitor) only renders for the
+    -- built-in screen on the other GPU: the first GPU with a monitor takes
+    -- its place, from the order or else from the other GPUs
+    if laptop and found and #list > 0 and not found[list[1]] then
         local pick
         for i, path in ipairs(list) do
             if found[path] then
@@ -303,9 +310,9 @@ if #list > 0 then
     hl.env("AQ_DRM_DEVICES", table.concat(list, ":"))
 end
 
--- On a hybrid machine apps follow the GPU that renders: the NVIDIA
+-- On a hybrid laptop apps follow the GPU that renders: the NVIDIA
 -- variables only when NVIDIA renders (prime-run <app> otherwise)
-if hybrid and #list > 0 then
+if laptop and #list > 0 then
     for _, group in ipairs({ order, spare }) do
         for _, gpu in ipairs(group) do
             if gpu.path == list[1] and gpu.nvidia then

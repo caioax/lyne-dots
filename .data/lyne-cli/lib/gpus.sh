@@ -215,6 +215,15 @@ gpu_detect() {
     return 0
 }
 
+# 0 on a hybrid laptop: an integrated and a dedicated GPU and a built-in
+# screen connected (some desktop boards list an eDP that never is). Only
+# there gpus.lua (gpu-order.sh) moves the first GPU when it has no monitor and sets the
+# NVIDIA variables itself: a desktop may render on a GPU without monitors on
+# purpose, and keeps its variables in local/extra_environment.lua
+gpu_hybrid_laptop() {
+    ((GPU_HYBRID && GPU_INTERNAL >= 0)) && [[ " ${GPU_OUTPUTS[GPU_INTERNAL]}" =~ \ (eDP|LVDS|DSI)-[^\ :]*:connected ]]
+}
+
 # "integrated", "dedicated, Turing"
 gpu_kind_label() {
     local i=$1 label=${GPU_KIND[$1]}
