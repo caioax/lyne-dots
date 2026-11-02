@@ -95,6 +95,7 @@ function M.skip_reason()
     return nil
 end
 
+-- Whether DIR holds a project marker (config/projects.lua uses it too)
 local function has_marker(dir)
     if uv.fs_stat(dir .. "/project.godot") or uv.fs_stat(dir .. "/.git") or uv.fs_stat(dir .. "/.root") then
         return true
@@ -109,6 +110,8 @@ local function has_marker(dir)
     end
     return false
 end
+
+M.has_marker = has_marker
 
 -- The project folder of PATH (a file, which may not exist yet, or a folder;
 -- the current folder when nil), and whether a marker made it one (false: the

@@ -8,9 +8,12 @@
 #   popup (no other session shown inside)
 # - prefix + P lists the sessions (not the scratch one) and the project
 #   folders (fake ones: LYNE_PROJECT_ROOTS and LYNE_DOTS point into the
-#   sandbox); a folder starts its session there and switches to it, a
+#   sandbox; a folder that isn't a project lists the projects inside it, three
+#   levels down at most, not in node_modules nor in a project); a folder starts its session there and switches to it, a
 #   session switches back; Escape goes to normal mode (j / k move), a
-#   second one closes it. Its Neovim runs in the sandbox of lib.sh
+#   second one closes it. Ctrl+d (dd in normal mode) hides a folder, saved in
+#   Neovim's state folder, Ctrl+h (H) shows the hidden ones and dd brings one
+#   back; dd on a session closes it after a y (n keeps it). Its Neovim runs in the sandbox of lib.sh
 # - prefix + C asks a name and starts that session in the pane's folder,
 #   switching to it; a name already there switches, an empty one makes
 #   nothing (no numbered sessions); closing the client's session takes it
@@ -51,6 +54,12 @@ grep -q "tpm" <(grep -v '^\s*#' "$SB/tmux.conf" | grep -v '@plugin') && fail_ear
 
 # Stand-ins first in the panes' and popups' PATH
 mkdir -p "$SB/bin" "$SB/work" "$SB/projects/alpha" "$SB/projects/beta.app" "$SB/.lyne-dots"
+# A project with one inside it, and a group of projects: one, sub/two (3
+# levels down), sub/deep/far (4: too deep) and one in node_modules
+G="$SB/projects/group"
+mkdir -p "$SB/projects/game/.git" "$SB/projects/game/inner/.git" "$G/one/.git" "$G/sub/two" \
+    "$G/sub/deep/far/.git" "$G/node_modules/pkg/.git"
+touch "$G/sub/two/.root"
 cat >"$SB/bin/lazygit" <<EOF
 #!/bin/sh
 pwd >"$SB/lazygit.cwd"
@@ -142,9 +151,12 @@ type_keys() {
 key "$CLIENT" P
 wait_for 15 popup_up && wait_for 15 prompt
 check "prefix + P opens the list" TelescopePrompt "$(pv '&filetype')"
-listed() { [[ "$(results)" == 4 ]]; }
+listed() { [[ "$(results)" == 7 ]]; }
 wait_for 5 listed
-check "it lists the session t and the folders alpha, beta.app, lyne-dots (not scratch)" 4 "$(results)"
+check "it lists the session t and the folders alpha, beta.app, game, one, two, lyne-dots (not scratch)" 7 "$(results)"
+check "folders: a group gives its projects, a project not its inner ones" \
+    "alpha beta.app game group/one group/sub/two .lyne-dots" \
+    "$(pv 'luaeval("table.concat(vim.tbl_map(function(d) return (d:gsub(\"^'"$SB"'/projects/\", \"\"):gsub(\"^'"$SB"'/\", \"\")) end, require(\"config.projects\").folders()), \" \")")')"
 
 type_keys b e t a Enter
 wait_for 5 popup_gone
@@ -166,6 +178,8 @@ key "$CLIENT" P
 wait_for 15 popup_up && wait_for 15 prompt
 wait_for 5 listed
 selected() { pv 'luaeval("require(\"telescope.actions.state\").get_selected_entry().value.name")'; }
+selected_kind() { pv 'luaeval("require(\"telescope.actions.state\").get_selected_entry().value.kind")'; }
+_not_hidden() { [[ "$(cat "$HIDDEN" 2>/dev/null)" == "[]" ]]; }
 first="$(selected)"
 type_keys Escape
 check "Escape: normal mode, the list stays" "n open" "$(pv 'mode()') $(popup_up && echo open)"
@@ -176,6 +190,49 @@ check "k moves back" "$first" "$(selected)"
 type_keys Escape
 wait_for 5 popup_gone
 check "a second Escape closes the popup" yes "$(popup_gone && echo yes || echo no)"
+
+# Hiding a folder, showing the hidden ones, bringing one back; closing a
+# session after a y/n
+HIDDEN="$SB/state/nvim/lyne-projects-hidden.json"
+open_list() {
+    key "$CLIENT" P
+    wait_for 15 popup_up && wait_for 15 prompt
+    wait_for 5 listed
+}
+results_are() { [[ "$(results)" == "$1" ]]; }
+open_list
+type_keys a l p h a
+wait_for 5 results_are 1
+type_keys C-d
+wait_for 5 results_are 0
+check "Ctrl+d hides the folder" 0 "$(results)"
+check "the hidden folder is saved" "[\"$SB/projects/alpha\"]" "$(cat "$HIDDEN" 2>/dev/null)"
+type_keys C-h
+wait_for 5 results_are 1
+check "Ctrl+h shows it, marked hidden" "1 hidden" "$(results) $(selected_kind)"
+type_keys Escape d d
+wait_for 5 _not_hidden
+check "dd on a hidden one brings it back" "[]" "$(cat "$HIDDEN" 2>/dev/null)"
+type_keys Escape
+wait_for 5 popup_gone
+open_list
+check "brought back: in a new list again" 7 "$(results)"
+type_keys Escape Escape
+wait_for 5 popup_gone
+
+T new-session -d -s doomed -c "$SB/work"
+open_list
+type_keys d o o m e d
+wait_for 5 results_are 1
+type_keys Escape d d n
+check "dd on a session, n: it stays" 1 "$(T has-session -t =doomed 2>/dev/null && echo 1)"
+type_keys d d y
+_doomed_gone() { ! T has-session -t =doomed 2>/dev/null; }
+wait_for 5 _doomed_gone
+check "dd on a session, y: it closes" 1 "$(_doomed_gone && echo 1)"
+check "the list stays open" "open n" "$(popup_up && echo open) $(pv 'mode()')"
+type_keys Escape
+wait_for 5 popup_gone
 
 # --- prefix + C: a new session, named -------------------------------------
 

@@ -36,7 +36,7 @@ Every open file is a tab on top (once there are two). Shift+H / Shift+L take the
 | `<leader>fg` | Text in every file |
 | `<leader>fb` | An open buffer |
 | `<leader>fk` | A shortcut |
-| `<leader>fP` | A project or tmux session (switches tmux to it) |
+| `<leader>fP` | A project or tmux session (switches tmux to it); `Ctrl+d` / `dd` closes a session or hides a folder, `Ctrl+h` / `H` shows the hidden ones |
 | `<leader>"` | A register, to paste it |
 
 ## Copy and paste
