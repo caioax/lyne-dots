@@ -39,6 +39,10 @@ return {
         indent = { enabled = true },
         input = { enabled = true },
         notifier = { enabled = true },
+        -- Lists Neovim asks to pick from (vim.ui.select: code actions, Roslyn's
+        -- nested actions and Fix All scope) in a small picker with search,
+        -- instead of a numbered list at the bottom
+        picker = { enabled = true, ui_select = true },
         quickfile = { enabled = true },
         scroll = { enabled = false },
         statuscolumn = { enabled = true },

@@ -7,7 +7,11 @@
 # .styluaignore (4 spaces outside any), and the repo's Lua is formatted. Then nothing deprecated may have been
 # called (:checkhealth vim.deprecated), the servers get nvim-cmp's
 # capabilities, stylua runs only as conform's formatter, grr is the
-# references key, and every map has a desc (no_desc.lua).
+# references key, and every map has a desc (no_desc.lua). C# and QML keep
+# their own indent on o (nvim-treesitter has no indent rules for them), Tab
+# moves through the completion menu without writing and Enter picks,
+# completion commands the client knows (Roslyn's overrides) run in it, and
+# vim.ui.select is snacks' picker.
 #
 # Usage: tests/nvim/config.sh   (needs nvim, git, the plugins and Mason's
 # lua-language-server and stylua)
@@ -145,6 +149,63 @@ found="$(lua '(function() local p = require("telescope.actions.state").get_curre
 check "<leader>ff finds hidden files and names with git, not .git/ nor ignored ones" \
     ".data/state .github/workflows/ci.yml .gitignore lua/plugins/git.lua t.lua" "$found"
 keys '<Esc><Esc>'
+
+# Indent on o / Enter: nvim-treesitter's indent only where it has indent
+# rules (Lua); C# and QML have none (it answered 0 for every line), so they
+# keep their filetype's own (indent/cs.vim, qml.vim). In fmt/, which
+# .gitignore keeps out of <leader>ff
+printf 'class A\n{\n    void Run(bool x)\n    {\n        if (x)\n        {\n        }\n    }\n}\n' >"$SB/work/fmt/t.cs"
+printf 'Item {\n    Rectangle {\n    }\n}\n' >"$SB/work/fmt/t.qml"
+check "Lua uses nvim-treesitter's indent" "v:lua.require'nvim-treesitter'.indentexpr()" "$(nv '&indentexpr')"
+nv "execute('edit $SB/work/fmt/t.cs')" >/dev/null
+check "C# keeps Neovim's own indent (cindent)" "GetCSIndent(v:lnum)" "$(nv '&indentexpr')"
+keys '6Gofoo();<Esc>'
+check "o inside an if block of C# keeps its indent" "            foo();" "$(nv 'getline(7)')"
+nv "execute('edit $SB/work/fmt/t.qml')" >/dev/null
+check "QML keeps Neovim's own indent (qml.vim)" 1 "$(nv '&indentexpr =~# "GetQmlIndent" ? 1 : 0')"
+keys '2Gowidth: 1<Esc>'
+check "o inside a QML object keeps its indent" "        width: 1" "$(nv 'getline(3)')"
+
+# Completion: Tab moves through the menu without writing the item, Enter
+# picks it. A scratch buffer with words for cmp-buffer
+nv "execute('enew')" >/dev/null
+lua 'vim.api.nvim_buf_set_lines(0, 0, -1, false, { "alphabet alpine", "" })' >/dev/null
+keys 'G'
+keys 'Aalp'
+# Ctrl+Space through nvim_input: over --remote-send it arrives as Ctrl+@
+lua 'vim.api.nvim_input("<C-Space>")' >/dev/null
+sleep 0.6
+keys '<Tab>'
+check "Tab selects an item without writing it" "alp 1" \
+    "$(lua 'vim.api.nvim_get_current_line() .. " " .. (require("cmp").get_selected_entry() and 1 or 0)')"
+lua 'vim.api.nvim_input("<CR>")' >/dev/null
+sleep 0.4
+keys '<Esc>'
+picked="$(nv 'getline(".")')"
+check "Enter writes the selected item (the first, alpine)" "alpine" "$picked"
+nv "execute('bwipeout!')" >/dev/null
+
+# cmp-nvim-lsp sends an item's command to the server; Roslyn's override
+# completions need theirs run in the client (nvim-lspconfig's roslyn_ls
+# commands). A stand-in client: a command it knows runs in it, any other
+# still goes to the server
+wrapped="$(lua '(function()
+    local ran, sent = {}, {}
+    local client = { commands = { ["own.cmd"] = true } }
+    function client:exec_cmd(cmd) table.insert(ran, cmd.command) end
+    function client:request(method, params, cb) table.insert(sent, params.command); cb(nil, nil); return true, 1 end
+    function client:is_stopped() return false end
+    local src = require("cmp_nvim_lsp.source").new(client)
+    src:execute({ command = { command = "own.cmd" } }, function() end)
+    src:execute({ command = { command = "server.cmd" } }, function() end)
+    return table.concat(ran, ",") .. " " .. table.concat(sent, ",")
+end)()')"
+check "completion commands the client knows run in it, others go to the server" "own.cmd server.cmd" "$wrapped"
+
+# vim.ui.select (code actions, Roslyn's nested actions) is snacks' picker;
+# snacks sets it on UIEnter, which a headless Neovim never gets
+check "vim.ui.select is snacks' picker" "1 1" \
+    "$(lua '(Snacks.config.picker.enabled and 1 or 0) .. " " .. (Snacks.config.picker.ui_select and 1 or 0)')"
 
 # Deprecated in the plugins without vim.deprecate (so no health warning):
 # gitsigns' next_hunk/prev_hunk, conform's lsp_fallback; and Neovim's own

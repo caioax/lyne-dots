@@ -70,8 +70,13 @@ return {
                 -- highlights
                 vim.treesitter.start(buf, language)
 
-                -- indent
-                vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+                -- indent: only where nvim-treesitter has indent rules. Without
+                -- them (c_sharp, qmljs, kotlin, vim...) its indentexpr answers 0
+                -- for every line, so Enter dropped to column 0; those keep the
+                -- filetype's own indent (indent/cs.vim, qml.vim...)
+                if vim.treesitter.query.get(language, "indents") then
+                    vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+                end
                 -- folding
                 vim.wo.foldmethod = "expr"
                 vim.wo.foldexpr = "v:lua.vim.treesitter.foldexpr()"

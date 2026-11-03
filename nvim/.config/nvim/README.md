@@ -71,13 +71,15 @@ With a language server (Mason installs them):
 | `gd` | Go to the definition |
 | `grr` | References |
 | `<leader>rn` | Rename everywhere |
-| `<leader>ca` | Code actions (fixes, imports) |
+| `<leader>ca` | Code actions (fixes, imports) in a list: type to filter, `j` / `k` or the arrows, `Enter` applies |
 | `]d` / `[d` | Next / previous diagnostic |
 | `gl` | The line's diagnostics in a float (the message also shows at the end of the line) |
 | `<leader>mp` | Format (also happens on save) |
 | `<leader>uc` | Color preview on / off (colors in the code show their color; in QML 8 digits are #AARRGGBB) |
 
-The completion menu: `Tab` / `Shift+Tab` move through it, `Enter` picks, `Ctrl+Space` opens it.
+The completion menu: `Tab` / `Shift+Tab` move through it (nothing is written yet), `Enter` picks, `Ctrl+Space` opens it.
+
+C# (Roslyn): picking an `override` writes the whole method, and the line is formatted as you type `;`, `}` or Enter.
 
 ## Git
 

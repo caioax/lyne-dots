@@ -48,6 +48,18 @@ return {
                 -- them too)
                 callback = function(event)
                     require("config.buffer_keys").apply("lsp", event.buf)
+
+                    -- C#: Roslyn formats the line as you type ; } or Enter, as
+                    -- in Visual Studio. Through LspAttach, as roslyn_ls' own
+                    -- on_attach (it refreshes diagnostics) must stay
+                    local client = vim.lsp.get_client_by_id(event.data.client_id)
+                    if
+                        client
+                        and client.name == "roslyn_ls"
+                        and client.server_capabilities.documentOnTypeFormattingProvider
+                    then
+                        vim.lsp.on_type_formatting.enable(true, { client_id = client.id })
+                    end
                 end,
             })
 

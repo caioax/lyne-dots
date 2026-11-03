@@ -16,6 +16,25 @@ return {
             local cmp = require("cmp")
             local luasnip = require("luasnip")
 
+            -- cmp-nvim-lsp sends an item's command to the server
+            -- (workspace/executeCommand) even when the client handles it
+            -- itself. Roslyn's override and partial completions insert only the
+            -- name and leave the method to roslyn.client.completionComplexEdit,
+            -- which nvim-lspconfig's roslyn_ls handles in the client, so the
+            -- method never came. Commands the client knows run there
+            -- (client:exec_cmd); the rest still go to the server. The sources
+            -- read execute from this table, so the wrap covers all of them
+            local lsp_source = require("cmp_nvim_lsp.source")
+            local server_execute = lsp_source.execute
+            lsp_source.execute = function(self, item, callback)
+                local name = item.command and item.command.command
+                if name and ((self.client.commands or {})[name] or vim.lsp.commands[name]) then
+                    self.client:exec_cmd(item.command, { bufnr = vim.api.nvim_get_current_buf() })
+                    return callback()
+                end
+                return server_execute(self, item, callback)
+            end
+
             -- Load VSCode-style snippets
             require("luasnip.loaders.from_vscode").lazy_load()
 
@@ -36,10 +55,12 @@ return {
                     ["<C-e>"] = cmp.mapping.abort(), -- Cancel
                     ["<CR>"] = cmp.mapping.confirm({ select = true }), -- Enter confirms
 
-                    -- TAB configuration to navigate the menu
+                    -- Tab / Shift+Tab move through the menu without writing the
+                    -- item (only its word would go in: an override would stop at
+                    -- the name); Enter picks it
                     ["<Tab>"] = cmp.mapping(function(fallback)
                         if cmp.visible() then
-                            cmp.select_next_item()
+                            cmp.select_next_item({ behavior = cmp.SelectBehavior.Select })
                         elseif luasnip.expand_or_jumpable() then
                             luasnip.expand_or_jump()
                         else
@@ -49,7 +70,7 @@ return {
 
                     ["<S-Tab>"] = cmp.mapping(function(fallback)
                         if cmp.visible() then
-                            cmp.select_prev_item()
+                            cmp.select_prev_item({ behavior = cmp.SelectBehavior.Select })
                         elseif luasnip.jumpable(-1) then
                             luasnip.jump(-1)
                         else
