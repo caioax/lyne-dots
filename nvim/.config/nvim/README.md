@@ -79,7 +79,7 @@ With a language server (Mason installs them):
 
 The completion menu: `Tab` / `Shift+Tab` move through it (nothing is written yet), `Enter` picks, `Ctrl+Space` opens it.
 
-C# (Roslyn): picking an `override` writes the whole method, and the line is formatted as you type `;`, `}` or Enter.
+C# (Roslyn): picking an `override` writes the whole method.
 
 ## Git
 
@@ -111,6 +111,16 @@ The first Neovim opened in a project is that project's: the project is the neare
 From outside: `lyne nvim open [--project <folder>] <file> [line [column]]` opens the file there and shows it (tmux's pane, the terminal's window). With no Neovim in the project it starts one in the project's tmux session, starting tmux (and what tmux-continuum brings back) or a terminal when needed. `lyne nvim list` shows the ones running.
 
 **Godot (C#):** Editor Settings › Dotnet › Editor: External Editor `Custom`, Custom Exec Path `lyne`, Custom Exec Path Args `nvim open --project {project} {file} {line} {col}`. Text Editor › External stays off (that's for GDScript).
+
+Roslyn formats C# on save the C# way, with the braces on a line of their own. For `if (x) {` (and `} else {`), put this in the project's `.editorconfig` (Godot makes one with `root = true`, so one in your home folder isn't read):
+
+```ini
+[*.cs]
+csharp_new_line_before_open_brace = none
+csharp_new_line_before_else = false
+csharp_new_line_before_catch = false
+csharp_new_line_before_finally = false
+```
 
 ## Change the config
 
