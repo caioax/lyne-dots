@@ -73,8 +73,8 @@ fi
 # === TMUX: the tm commands ===
 # tm      the project's session, or main anywhere else (plain tmux does too)
 # tmn     a new session, named           tmq  close a session (this one)
-# tmk     close every session; the next tm brings back the last save
-#         (tmux-continuum)               tmkf the same, and forget that save
+# tmk     close every session; prefix + C-r in the next tmux brings back the
+#         last save (tmux-resurrect)     tmkf the same, and forget that save
 #
 # tmux with no arguments, outside tmux: in a project (the nearest folder
 # with project.godot, a *.sln, .git or .root) that project's session, made

@@ -4,9 +4,9 @@
 #   and not while no file is open (that would replace the folder's session)
 # - tmux-resurrect saves a tmux server whose pane runs Neovim; in a new
 #   server it restores it, and the pane's Neovim (started without a file)
-#   comes back with the folder's session: its two splits. tmux-continuum is
-#   on to restore by itself (it only does when its server is the only one on
-#   the machine, so here resurrect's restore runs the way continuum calls it)
+#   comes back with the folder's session: its two splits. tmux-continuum
+#   doesn't restore by itself: a new server waits for prefix + C-r, which
+#   runs this same restore script
 # - prefix + X and the shell's tmkf close everything and forget the save: the
 #   next restore finds nothing
 #
@@ -112,12 +112,13 @@ quit_nvims
 T kill-server
 sleep 0.5
 
-# continuum restores on its own only when its server is the only one on the
-# machine (yours runs): checked that it's on, then resurrect's restore runs
-# the way continuum would call it. The server starts with main, as the
+# continuum would restore on its own only when its server is the only one on
+# the machine (yours runs), so its option is what's checked; then resurrect's
+# restore runs, as prefix + C-r does. The server starts with main, as the
 # shell's tmux does outside a project
 start_server main continuum
-check "tmux-continuum restores by itself" on "$(T show -gv @continuum-restore)"
+check "tmux-continuum does not restore by itself" off "$(T show -gv @continuum-restore)"
+check "prefix + C-r runs the restore script" 1 "$(T list-keys -T prefix C-r | grep -c "$(T show -gv @resurrect-restore-script-path)")"
 T run-shell "$(T show -gv @resurrect-restore-script-path)"
 restored() { T has-session -t t 2>/dev/null; }
 wait_for 20 restored
@@ -150,7 +151,7 @@ check "the older saves stay on disk" "$kept" "$(saves)"
 start_server boot
 T run-shell "$(T show -gv @resurrect-restore-script-path)"
 sleep 1
-check "the next tmux starts empty" no "$(T has-session -t t 2>/dev/null && echo yes || echo no)"
+check "restoring in the next tmux finds nothing" no "$(T has-session -t t 2>/dev/null && echo yes || echo no)"
 T kill-server
 
 # The shell's tmkf (zsh/.zshrc) does the same from outside tmux. Its tmux

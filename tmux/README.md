@@ -56,7 +56,7 @@ A **session** is a whole workspace with a name (one per project, its name on the
 
 ## Sessions
 
-tmux keeps running after you close the terminal. Everything is saved every 15 minutes and when you log out, reboot or shut down from the shell's power menu; the first tmux after that brings it back, Neovim panes with their folder's session. Each project has one Neovim: an `nvim` typed in another window of the project takes you to its pane (`lyne nvim open` does it from outside, as Godot does; the Neovim guide has more).
+tmux keeps running after you close the terminal. Everything is saved every 15 minutes and when you log out, reboot or shut down from the shell's power menu; a new tmux starts empty and `C-Space C-r` brings the last save back, Neovim panes with their folder's session. The autosave goes on in the new tmux too: its first one comes after 15 minutes and replaces the last save, so use `C-Space C-r` before that. Each project has one Neovim: an `nvim` typed in another window of the project takes you to its pane (`lyne nvim open` does it from outside, as Godot does; the Neovim guide has more).
 
 From the shell, the `tm` commands:
 
@@ -65,8 +65,8 @@ From the shell, the `tm` commands:
 | `tm` | In a project's folder (or below it), that project's session; anywhere else the session `main`, made in `~` when there's none. No numbered sessions pile up (a plain `tmux` does the same) |
 | `tmn <name> [folder]` | A new session with that name, in the folder (the current one by default); a name already there just goes to it (inside tmux: `C-Space C`) |
 | `tmq [name]` | Close a session: with no name, the one you're in (the terminal goes to the one used last) |
-| `tmk` | Close every session (it comes back with the next `tm`) |
-| `tmkf` | Close every session and forget the save: the next `tm` starts empty |
+| `tmk` | Close every session (`C-Space C-r` in the next tmux brings them back) |
+| `tmkf` | Close every session and forget the save: `C-Space C-r` finds nothing |
 
 | Keys | Does |
 | :--- | :--- |
@@ -77,7 +77,7 @@ From the shell, the `tm` commands:
 | `C-Space $` | Rename the session |
 | `C-Space d` | Detach: leave tmux running in the background (`tm` in the project's folder, or anywhere else for `main`, comes back) |
 | `C-Space C-s` / `C-Space C-r` | Save now / restore the last save (tmux-resurrect) |
-| `C-Space X` | Close every session and forget the save: the next tmux starts empty (asks first) |
+| `C-Space X` | Close every session and forget the save: `C-Space C-r` finds nothing (asks first) |
 
 ## Help and config
 
