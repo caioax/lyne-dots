@@ -5,7 +5,9 @@
 -- folder in it that is a project (project_instance's markers) is listed; one
 -- that isn't lists the projects inside it instead, down to three levels
 -- below the root (~/Dev/Python gives ~/Dev/Python/game), or itself when it
--- has none. lyne-dots itself is always there.
+-- has none. Inside a project only a .root makes another one (a repo's
+-- submodules and vendored repos stay out), within the same three levels.
+-- lyne-dots itself is always there.
 --
 -- dd (Ctrl+d while typing) on an entry: a session closes (after a y/n), a
 -- folder is hidden from the list (saved in Neovim's state folder); H (Ctrl+h)
@@ -67,12 +69,27 @@ local function subdirs(dir)
     end, names)
 end
 
--- The projects inside DIR, DEPTH levels down at most; a project's own
--- subfolders aren't searched
+-- The folders with a .root inside the project DIR, DEPTH levels down at most
+local function marked_in(dir, depth, out)
+    if depth < 1 then
+        return out
+    end
+    for _, sub in ipairs(subdirs(dir)) do
+        if vim.uv.fs_stat(sub .. "/.root") then
+            table.insert(out, sub)
+        end
+        marked_in(sub, depth - 1, out)
+    end
+    return out
+end
+
+-- The projects inside DIR, DEPTH levels down at most; in a project's own
+-- subfolders, only the ones with a .root
 local function projects_in(dir, depth, out)
     for _, sub in ipairs(subdirs(dir)) do
         if require("project_instance").has_marker(sub) then
             table.insert(out, sub)
+            marked_in(sub, depth - 1, out)
         elseif depth > 1 then
             projects_in(sub, depth - 1, out)
         end
@@ -85,8 +102,13 @@ function M.folders()
     local has_marker = require("project_instance").has_marker
     for _, root in ipairs(M.roots()) do
         for _, dir in ipairs(subdirs(vim.fs.normalize(root))) do
-            local inside = not has_marker(dir) and projects_in(dir, 2, {}) or {}
-            vim.list_extend(out, #inside > 0 and inside or { dir })
+            if has_marker(dir) then
+                table.insert(out, dir)
+                marked_in(dir, 2, out)
+            else
+                local inside = projects_in(dir, 2, {})
+                vim.list_extend(out, #inside > 0 and inside or { dir })
+            end
         end
     end
     local dots = vim.fs.normalize(vim.env.LYNE_DOTS or "~/.lyne-dots")

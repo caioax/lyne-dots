@@ -9,7 +9,8 @@
 # - prefix + P lists the sessions (not the scratch one) and the project
 #   folders (fake ones: LYNE_PROJECT_ROOTS and LYNE_DOTS point into the
 #   sandbox; a folder that isn't a project lists the projects inside it, three
-#   levels down at most, not in node_modules nor in a project); a folder starts its session there and switches to it, a
+#   levels down at most, not in node_modules; inside a project only a .root
+#   makes another one, within the same three levels); a folder starts its session there and switches to it, a
 #   session switches back; Escape goes to normal mode (j / k move), a
 #   second one closes it. Ctrl+d (dd in normal mode) hides a folder, saved in
 #   Neovim's state folder, Ctrl+h (H) shows the hidden ones and dd brings one
@@ -60,6 +61,11 @@ G="$SB/projects/group"
 mkdir -p "$SB/projects/game/.git" "$SB/projects/game/inner/.git" "$G/one/.git" "$G/sub/two" \
     "$G/sub/deep/far/.git" "$G/node_modules/pkg/.git"
 touch "$G/sub/two/.root"
+# A .root inside a project: game/part and group/one/lib (3 levels down) count;
+# game/a/b/c, group/one/x/y and group/sub/two/three (4: too deep) don't
+mkdir -p "$SB/projects/game/part" "$SB/projects/game/a/b/c" "$G/one/lib" "$G/one/x/y" "$G/sub/two/three"
+touch "$SB/projects/game/part/.root" "$SB/projects/game/a/b/c/.root" "$G/one/lib/.root" "$G/one/x/y/.root" \
+    "$G/sub/two/three/.root"
 cat >"$SB/bin/lazygit" <<EOF
 #!/bin/sh
 pwd >"$SB/lazygit.cwd"
@@ -151,11 +157,11 @@ type_keys() {
 key "$CLIENT" P
 wait_for 15 popup_up && wait_for 15 prompt
 check "prefix + P opens the list" TelescopePrompt "$(pv '&filetype')"
-listed() { [[ "$(results)" == 7 ]]; }
+listed() { [[ "$(results)" == 9 ]]; }
 wait_for 5 listed
-check "it lists the session t and the folders alpha, beta.app, game, one, two, lyne-dots (not scratch)" 7 "$(results)"
-check "folders: a group gives its projects, a project not its inner ones" \
-    "alpha beta.app game group/one group/sub/two .lyne-dots" \
+check "it lists the session t and the folders alpha, beta.app, game, part, one, lib, two, lyne-dots (not scratch)" 9 "$(results)"
+check "folders: a group gives its projects, a project only the inner ones with a .root" \
+    "alpha beta.app game game/part group/one group/one/lib group/sub/two .lyne-dots" \
     "$(pv 'luaeval("table.concat(vim.tbl_map(function(d) return (d:gsub(\"^'"$SB"'/projects/\", \"\"):gsub(\"^'"$SB"'/\", \"\")) end, require(\"config.projects\").folders()), \" \")")')"
 
 type_keys b e t a Enter
@@ -216,7 +222,7 @@ check "dd on a hidden one brings it back" "[]" "$(cat "$HIDDEN" 2>/dev/null)"
 type_keys Escape
 wait_for 5 popup_gone
 open_list
-check "brought back: in a new list again" 7 "$(results)"
+check "brought back: in a new list again" 9 "$(results)"
 type_keys Escape Escape
 wait_for 5 popup_gone
 
