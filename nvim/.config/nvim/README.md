@@ -81,6 +81,16 @@ The completion menu: `Tab` / `Shift+Tab` move through it (nothing is written yet
 
 C# (Roslyn): picking an `override` writes the whole method.
 
+## Web pages
+
+| Keys | Does |
+| :--- | :--- |
+| `<leader>up` | Preview in the browser on / off: the page reloads when you save a page, a CSS or a JS file. From a CSS or JS file it shows the open page, or the folder's `index.html` |
+
+The preview serves the folder Neovim was opened in, so `/style.css` means that folder's `style.css`, like on a real site. Open Neovim in the project's folder (port 5500; `:LivePreview close` also stops it).
+
+Typing `<div>` writes `</div>` after it, and renaming the opening tag renames the closing one. Emmet abbreviations show in the completion menu: `ul>li*3` and `Enter` writes the list.
+
 ## Git
 
 | Keys | Does |

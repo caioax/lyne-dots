@@ -113,6 +113,7 @@ return {
                     "jsonls",
                     "yamlls",
                     "tailwindcss",
+                    "emmet_language_server",
                     "clangd",
                     "intelephense",
                     has_dotnet and "roslyn_ls" or nil, -- last, as above
