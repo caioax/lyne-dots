@@ -294,7 +294,7 @@ sddm_repo() {
 
 @test "SDDM as display manager: lyne-sddm built with makepkg and set up" {
     sddm_repo
-    ln -s /usr/lib/systemd/system/sddm.service "$LYNE_DM_LINK"
+    ln -s /nonexistent/systemd/sddm.service "$LYNE_DM_LINK"
     answers "categories=core quickshell" "reboot=no"
     run install --answers "$ANSWERS"
     assert_success
@@ -311,13 +311,13 @@ sddm_repo() {
 
 @test "lyne-sddm: not with another display manager, nor when answered no" {
     sddm_repo
-    ln -s /usr/lib/systemd/system/gdm.service "$LYNE_DM_LINK"
+    ln -s /nonexistent/systemd/gdm.service "$LYNE_DM_LINK"
     answers "categories=core" "reboot=no" "sddm=yes"
     run install --answers "$ANSWERS"
     assert_success
     refute_line --partial "Login screen"
     rm "$LYNE_DM_LINK"
-    ln -s /usr/lib/systemd/system/sddm.service "$LYNE_DM_LINK"
+    ln -s /nonexistent/systemd/sddm.service "$LYNE_DM_LINK"
     answers "categories=core" "reboot=no" "sddm=no"
     run install --answers "$ANSWERS"
     refute_line --partial "Login screen"
@@ -327,7 +327,7 @@ sddm_repo() {
 
 @test "a failing lyne-sddm build only warns: the install goes on" {
     sddm_repo
-    ln -s /usr/lib/systemd/system/sddm.service "$LYNE_DM_LINK"
+    ln -s /nonexistent/systemd/sddm.service "$LYNE_DM_LINK"
     answers "categories=core" "reboot=no"
     LYNE_DRY_FAIL="makepkg" run install --answers "$ANSWERS"
     assert_success

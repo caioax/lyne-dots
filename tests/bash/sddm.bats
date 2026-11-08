@@ -24,6 +24,8 @@ teardown() {
 
 set_state() { jq "$@" "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"; }
 sddm() { in_lyne sddm -- "$1"; }
+# The repo's CLI, not one on PATH (CI has none)
+lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
 conf() { cat "$LYNE_SDDM_DIR/theme.conf.user"; }
 
 @test "state: ok, missing, not writable" {
@@ -311,7 +313,7 @@ installed() { echo "lyne-sddm-git ${2:-0.2.0.r0}.g$(git -C "$SRC" rev-parse --sh
     export LYNE_DM_LINK="$BATS_TEST_TMPDIR/display-manager.service"
     run sddm sddm_dm
     assert_output ""
-    ln -s /usr/lib/systemd/system/sddm.service "$LYNE_DM_LINK"
+    ln -s /nonexistent/systemd/sddm.service "$LYNE_DM_LINK"
     run sddm sddm_dm
     assert_output sddm
 }

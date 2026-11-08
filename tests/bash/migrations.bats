@@ -452,7 +452,7 @@ real_stow() {
     run migrate 048-lyne-sddm-hint.sh
     assert_success
     assert_output ""
-    ln -s /usr/lib/systemd/system/sddm.service "$LYNE_DM_LINK"
+    ln -s /nonexistent/systemd/sddm.service "$LYNE_DM_LINK"
     run migrate 048-lyne-sddm-hint.sh
     assert_success
     assert_output --partial "lyne sddm install"

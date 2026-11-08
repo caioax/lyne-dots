@@ -231,9 +231,10 @@ sddm_reset() {
     printf '%s\n' "$SDDM_DEFAULT_CONF" | _sddm_write "$SDDM_DIR/theme.conf.user"
 }
 
+# The link's own target names it, whether or not that file is there
 sddm_dm() {
-    [[ -e "$SDDM_DM_LINK" ]] || return 0
-    basename "$(readlink -f "$SDDM_DM_LINK")" .service
+    [[ -L "$SDDM_DM_LINK" ]] || return 0
+    basename "$(readlink "$SDDM_DM_LINK")" .service
 }
 
 # The theme files from the old script install (not pacman's): the package
