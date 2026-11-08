@@ -8,13 +8,15 @@ import Quickshell.Io
 // The login screen (lyne-sddm) following the shell, for Settings › Theme ›
 // Login screen. Copies the applied palette (~/.cache/lyne/nvim.json, which
 // ThemeService reports through paletteWritten()), the background opacity,
-// the wallpaper and the profile picture into /var/lib/lyne-sddm, which
+// the wallpaper, the profile picture and the chosen layout (sddm.layout)
+// into /var/lib/lyne-sddm, which
 // lyne-sddm creates (scripts/sddm.sh, from lyne's sddm.sh lib; also `lyne
 // sddm`). Changes are gathered for a moment, so a theme switch that also
 // brings a wallpaper is one sync; files are only rewritten when they change.
 // Shows on the next login. Option in state.json: sddm.sync (off: the theme's
-// own defaults). The dir is checked again before each sync and by check()
-// (Settings › Theme), so running lyne-sddm needs no reload
+// own defaults, or what lyne-sddm --preset/--layout chose). The dir and the
+// theme's layouts are checked again before each sync and by check()
+// (Settings › Theme), so running or updating lyne-sddm needs no reload
 Singleton {
     id: root
 
@@ -27,12 +29,18 @@ Singleton {
     property string owner: ""
     readonly property bool installed: state === "ok"
 
+    // The theme's layouts (layouts/<Name>.qml): [{ id, thumbnail }], center
+    // first, then the lock screen's order, then by name
+    property var layouts: []
+
     readonly property bool sync: StateService.get("sddm.sync", true)
+    readonly property string layout: StateService.get("sddm.layout", "center")
     readonly property real opacity: StateService.get("opacity.background", 0.9)
     readonly property string wallpaper: WallpaperService.currentWallpaper
     readonly property string avatar: ProfileService.avatar
 
     onSyncChanged: schedule()
+    onLayoutChanged: schedule()
     onOpacityChanged: schedule()
     onWallpaperChanged: schedule()
     onAvatarChanged: schedule()
@@ -50,6 +58,32 @@ Singleton {
     function check() {
         if (!stateProc.running)
             stateProc.running = true;
+        if (!layoutsProc.running)
+            layoutsProc.running = true;
+    }
+
+    // Shown for a saved value: one the theme doesn't have reads as center,
+    // as the theme falls back to it
+    function shownLayout(id) {
+        return layouts.some(l => l.id === id) ? id : "center";
+    }
+
+    Process {
+        id: layoutsProc
+        command: [root.script, "layouts"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const order = ["center", "cards", "wallpaper"];
+                const rank = id => order.includes(id) ? order.indexOf(id) : order.length;
+                root.layouts = text.split("\n").filter(l => l.trim() !== "").map(l => {
+                    const [id, thumbnail] = l.trim().split(" ");
+                    return {
+                        id: id,
+                        thumbnail: thumbnail ?? ""
+                    };
+                }).sort((a, b) => rank(a.id) - rank(b.id) || a.id.localeCompare(b.id));
+            }
+        }
     }
 
     Component.onCompleted: check()
@@ -100,6 +134,7 @@ Singleton {
         applyProc.environment = {
             LYNE_SDDM_OPTIONS: JSON.stringify({
                 sync: sync,
+                layout: layout,
                 opacity: opacity,
                 wallpaper: wallpaper,
                 avatar: avatar

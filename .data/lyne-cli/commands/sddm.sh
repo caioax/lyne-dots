@@ -10,25 +10,33 @@ case "$subcmd" in
         echo ""
         echo "With the lyne-sddm theme installed, the login screen follows the shell:"
         echo "its palette, background opacity, wallpaper and profile picture are copied"
-        echo "to $SDDM_DIR (the greeter can't read your home), which lyne-sddm creates."
-        echo "The shell syncs on every change; it shows on the next login. Turn it off"
-        echo "in Settings > Theme > Login screen."
+        echo "to $SDDM_DIR (the greeter can't read your home), which lyne-sddm creates,"
+        echo "with the layout chosen in Settings > Theme > Login screen. The shell syncs"
+        echo "on every change; it shows on the next login. With the sync off there, what"
+        echo "lyne-sddm --preset/--layout/... wrote is left alone."
         echo ""
         echo "Subcommands:"
         echo "  status   Whether the theme is installed, selected and synced (default)"
-        echo "  apply    Sync now (with the option off: back to the theme's defaults)"
+        echo "  apply    Sync now (with the option off: back to the theme's defaults,"
+        echo "           unless lyne-sddm wrote the file)"
         ;;
     status)
         sddm_problem || return 0
-        local sync
+        local sync mode conf="$SDDM_DIR/theme.conf.user" f
         sync=$(_sddm_option sync .sddm.sync)
+        mode=$(sddm_mode)
         echo "  Theme     $SDDM_THEME"
         echo "  Selected  $(sddm_active && echo yes || echo "no (run lyne-sddm to select it)")"
         echo "  Files     $SDDM_DIR"
-        echo "  Sync      $([[ "$sync" == "false" ]] && echo "off (theme defaults)" || echo on)"
-        local conf="$SDDM_DIR/theme.conf.user" f
-        if [[ -f "$conf" ]] && grep -q '^accent=' "$conf"; then
-            echo "  Synced    $(date -r "$conf" '+%Y-%m-%d %H:%M')"
+        echo "  Sync      $([[ "$sync" == "false" ]] && echo off || echo on)"
+        case "$mode" in
+            synced) echo "  Mode      synced by lyne-dots" ;;
+            manual) echo "  Mode      manual (chosen with lyne-sddm)" ;;
+            *) echo "  Mode      theme defaults" ;;
+        esac
+        if [[ "$mode" != default ]]; then
+            echo "  Layout    $(sed -n 's/^layout=//p' "$conf" | tail -n1 | grep . || echo center)"
+            echo "  Written   $(date -r "$conf" '+%Y-%m-%d %H:%M')"
             for f in "$SDDM_DIR"/wallpaper.* "$SDDM_AVATAR"; do
                 [[ -f "$f" ]] && echo "            ${f#"$SDDM_DIR"/}"
             done

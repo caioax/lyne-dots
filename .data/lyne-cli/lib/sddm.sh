@@ -7,31 +7,38 @@
 # so everything it shows is copied there (world-readable, never linked):
 #   theme.conf.user     [General] overrides of theme.conf: the applied palette
 #                       (~/.cache/lyne/nvim.json, auto mode too),
-#                       backgroundOpacity, wallpaper= (absolute path)
+#                       backgroundOpacity, wallpaper= (absolute path), layout=
 #   wallpaper.<ext>     the current wallpaper, its extension kept
 #   avatars/<user>.png  the profile picture (Qt reads it by content)
 # Every file goes to a temp name inside the dir and is renamed into place, and
 # only when its content changed. Shows on the next login, nothing restarts.
 # Only lyne-sddm creates and removes the dir, and nothing under /usr is
-# written (the theme links its theme.conf.user here).
+# written (the theme links its theme.conf.user here). With the sync off the
+# file is only reset when lyne-dots wrote it: one written by `lyne-sddm
+# --preset/--layout/...` (manual) is left alone, with its wallpaper.
 #
 #   sddm_state           ok, absent (theme not installed), missing (no dir)
 #                        or foreign <owner> (dir not writable)
 #   sddm_problem         why it can't sync, with what to run; 1 when it can't
 #   sddm_installed       0 when the dir is there and writable
 #   sddm_active          0 when SDDM's config selects the lyne theme
-#   sddm_apply           sync on: write the overrides; off: sddm_reset
+#   sddm_mode            who wrote theme.conf.user: synced (lyne-dots),
+#                        manual (lyne-sddm) or default (its template)
+#   sddm_layouts         "<id> <thumbnail or empty>" per layout of the theme
+#                        (layouts/<Name>.qml, id = lowercase name)
+#   sddm_apply           sync on: write the overrides; off: sddm_reset when
+#                        the file is ours
 #   sddm_reset           back to the theme's defaults (Tokyo Night)
 #
-# Options (state.json): sddm.sync, wallpaper.current, profile.avatar,
-# opacity.background. LYNE_SDDM_OPTIONS ({"sync", "wallpaper", "avatar",
-# "opacity"}) overrides them, as the shell saves state.json a moment later.
-# LYNE_SDDM_DIR, LYNE_SDDM_PALETTE and LYNE_STATE_FILE point it at test
-# files.
+# Options (state.json): sddm.sync, sddm.layout, wallpaper.current,
+# profile.avatar, opacity.background. LYNE_SDDM_OPTIONS ({"sync", "layout",
+# "wallpaper", "avatar", "opacity"}) overrides them, as the shell saves
+# state.json a moment later. LYNE_SDDM_DIR, LYNE_SDDM_THEME,
+# LYNE_SDDM_PALETTE and LYNE_STATE_FILE point it at test files.
 # =============================================================================
 
 SDDM_THEME_NAME="lyne"
-SDDM_THEME="/usr/share/sddm/themes/$SDDM_THEME_NAME"
+SDDM_THEME="${LYNE_SDDM_THEME:-/usr/share/sddm/themes/$SDDM_THEME_NAME}"
 SDDM_DIR="${LYNE_SDDM_DIR:-/var/lib/lyne-sddm}"
 # wallpaper= is written as an absolute path
 [[ "$SDDM_DIR" == /* ]] || SDDM_DIR="$PWD/$SDDM_DIR"
@@ -39,6 +46,10 @@ SDDM_DIR="${SDDM_DIR%/}"
 SDDM_PALETTE="${LYNE_SDDM_PALETTE:-${XDG_CACHE_HOME:-$HOME/.cache}/lyne/nvim.json}"
 SDDM_STATE="${LYNE_STATE_FILE:-$DOTS_DIR/quickshell/.config/quickshell/state.json}"
 SDDM_AVATAR="$SDDM_DIR/avatars/$(id -un).png"
+
+# First comment line of theme.conf.user, by writer
+SDDM_HEADER_SYNCED="# Written by lyne-dots"
+SDDM_HEADER_MANUAL="# Written by lyne-sddm"
 
 # The empty file lyne-sddm installs
 SDDM_DEFAULT_CONF='[General]
@@ -85,6 +96,32 @@ sddm_active() {
     [[ "$current" == "$SDDM_THEME_NAME" ]]
 }
 
+sddm_mode() {
+    local header
+    header=$(grep -m1 '^# Written by ' "$SDDM_DIR/theme.conf.user" 2>/dev/null)
+    case "$header" in
+        "$SDDM_HEADER_SYNCED"*) echo synced ;;
+        "$SDDM_HEADER_MANUAL"*) echo manual ;;
+        *) echo default ;;
+    esac
+}
+
+sddm_layouts() {
+    local f name
+    for f in "$SDDM_THEME"/layouts/*.qml; do
+        [[ -f "$f" ]] || continue
+        name=$(basename "$f" .qml)
+        [[ "$name" =~ ^[A-Za-z0-9]+$ ]] || continue
+        printf '%s %s\n' "${name,,}" "$([[ -f "${f%.qml}.png" ]] && echo "${f%.qml}.png")"
+    done
+}
+
+# A layout id as the theme reads it: one lowercase word, else center
+_sddm_layout_id() {
+    local id="${1,,}"
+    [[ "$id" =~ ^[a-z0-9]+$ ]] && echo "$id" || echo center
+}
+
 # An option from LYNE_SDDM_OPTIONS, else state.json (jq path into it). A key
 # in the options wins even when empty (no avatar): "=" marks that it's there
 _sddm_option() {
@@ -115,21 +152,26 @@ _sddm_copy() {
     _sddm_write "$dest" < "$src"
 }
 
-# The [General] section: palette, opacity, wallpaper (absolute path)
+# The [General] section: palette, opacity, wallpaper (absolute path), layout
 _sddm_conf() {
-    local opacity="$1" wallpaper="$2"
+    local opacity="$1" wallpaper="$2" layout="$3"
     echo "[General]"
-    echo "# Written by lyne-dots (lyne sddm), edits here are lost."
+    echo "$SDDM_HEADER_SYNCED (lyne sddm), edits here are lost."
     # Values with a comma are quoted, or SDDM reads them as a list
     jq -r '.palette // {} | to_entries[] | select(.value | type == "string")
         | "\(.key)=\(if (.value | contains(",")) then "\"\(.value)\"" else .value end)"' "$SDDM_PALETTE"
     if [[ "$opacity" =~ ^[0-9.]+$ ]]; then echo "backgroundOpacity=$opacity"; fi
     if [[ -n "$wallpaper" ]]; then echo "wallpaper=$wallpaper"; fi
+    echo "layout=$(_sddm_layout_id "$layout")"
 }
 
 sddm_apply() {
     sddm_problem >&2 || return 1
-    [[ "$(_sddm_option sync .sddm.sync)" == "false" ]] && { sddm_reset; return; }
+    if [[ "$(_sddm_option sync .sddm.sync)" == "false" ]]; then
+        # Manual choices (lyne-sddm) and the template stay as they are
+        if [[ "$(sddm_mode)" == synced ]]; then sddm_reset; fi
+        return
+    fi
     [[ -f "$SDDM_PALETTE" ]] || { echo "lyne sddm: no palette at $SDDM_PALETTE yet" >&2; return 1; }
 
     # Wallpaper: a copy that keeps its extension; copies with another go
@@ -154,7 +196,8 @@ sddm_apply() {
     fi
 
     local conf
-    conf=$(_sddm_conf "$(_sddm_option opacity .opacity.background)" "$wallpaper") || return 1
+    conf=$(_sddm_conf "$(_sddm_option opacity .opacity.background)" "$wallpaper" \
+        "$(_sddm_option layout .sddm.layout)") || return 1
     printf '%s\n' "$conf" | _sddm_write "$SDDM_DIR/theme.conf.user"
 }
 

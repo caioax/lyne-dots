@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell.Widgets
 import qs.config
 import qs.services
 import "../rows/"
@@ -21,6 +22,31 @@ ColumnLayout {
     property string createEdit: ""
     property string createFrom: ""
     readonly property bool onGrid: detail === "" && !creating
+
+    // lyne-sddm layout ids: the known ones are translated, a newer one shows
+    // its own name until lyne-dots learns it
+    function sddmLayoutLabel(id) {
+        switch (id) {
+        case "center":
+            return I18n.tr("Center");
+        case "cards":
+            return I18n.tr("Cards");
+        case "wallpaper":
+            return I18n.tr("Wallpaper");
+        case "split":
+            return I18n.trc("login layout", "Split");
+        case "focus":
+            return I18n.trc("login layout", "Focus");
+        case "corner":
+            return I18n.trc("login layout", "Corner");
+        case "stacked":
+            return I18n.trc("login layout", "Stacked");
+        case "panel":
+            return I18n.trc("login layout", "Panel");
+        default:
+            return id.charAt(0).toUpperCase() + id.slice(1);
+        }
+    }
 
     function openDetail(themeName: string) {
         detail = themeName;
@@ -299,8 +325,56 @@ ColumnLayout {
         ToggleRow {
             visible: SddmService.installed
             label: I18n.tr("Follow the theme")
-            description: checked ? I18n.tr("Colors, background opacity, wallpaper and profile picture, from the next login") : I18n.tr("The login screen keeps its own look (Tokyo Night)")
+            description: checked ? I18n.tr("Colors, background opacity, wallpaper and profile picture, from the next login") : I18n.tr("The login screen keeps its own look: Tokyo Night, or what you chose with lyne-sddm")
             path: "sddm.sync"
+        }
+
+        // The theme's own layouts, read from its dir: new ones appear here
+        // after a lyne-sddm update. Only written while the sync is on
+        TemplatePicker {
+            visible: SddmService.installed && SddmService.sync && SddmService.layouts.length > 0
+            label: I18n.tr("Layout")
+            description: I18n.tr("How the login screen is arranged, apart from the lock screen template")
+            path: "sddm.layout"
+            // Four per row, each with the whole 16:9 screenshot, uncropped
+            columns: 4
+            thumbHeight: Math.round(((width - rowPadding * 2 - Config.spacing * (shownColumns - 1)) / shownColumns - Config.padding * 2) * 9 / 16)
+            value: SddmService.shownLayout(StateService.get("sddm.layout", "center"))
+            options: SddmService.layouts.map(l => ({
+                        label: root.sddmLayoutLabel(l.id),
+                        value: l.id
+                    }))
+            preview: Component {
+                ClippingRectangle {
+                    id: thumb
+
+                    property var value
+
+                    readonly property string thumbnail: SddmService.layouts.find(l => l.id === value)?.thumbnail ?? ""
+
+                    radius: Config.radius
+                    color: Config.surface0Color
+
+                    Image {
+                        anchors.fill: parent
+                        visible: thumb.thumbnail !== ""
+                        source: thumb.thumbnail !== "" ? "file://" + thumb.thumbnail : ""
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        sourceSize.width: 480
+                    }
+
+                    // No thumbnail shipped (yet): a screen icon
+                    Text {
+                        anchors.centerIn: parent
+                        visible: thumb.thumbnail === ""
+                        text: "\u{f0379}"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeIconLarge
+                        color: Config.subtextColor
+                    }
+                }
+            }
         }
 
         SettingRow {

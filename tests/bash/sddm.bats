@@ -111,3 +111,88 @@ conf() { cat "$LYNE_SDDM_DIR/theme.conf.user"; }
     assert_output --partial "doesn't exist: run lyne-sddm"
     refute [ -e "$LYNE_SDDM_DIR" ]
 }
+
+@test "layout: from sddm.layout, center when unset, unknown or path-like" {
+    run sddm sddm_apply
+    run conf
+    assert_line "layout=center"
+    set_state '.sddm.layout = "Cards"'
+    run sddm sddm_apply
+    run conf
+    assert_line "layout=cards"
+    refute_line "layout=center"
+    set_state '.sddm.layout = "../x"'
+    run sddm sddm_apply
+    run conf
+    assert_line "layout=center"
+    run sddm 'LYNE_SDDM_OPTIONS='"'"'{"layout": "wallpaper"}'"'"' sddm_apply'
+    run conf
+    assert_line "layout=wallpaper"
+}
+
+@test "layouts: the theme's layouts/*.qml, lowercase ids, thumbnails when shipped" {
+    export LYNE_SDDM_THEME="$BATS_TEST_TMPDIR/theme"
+    mkdir -p "$LYNE_SDDM_THEME/layouts"
+    touch "$LYNE_SDDM_THEME/layouts/"{Center.qml,Center.png,Cards.qml,Split-View.qml,notes.txt}
+    run sddm sddm_layouts
+    assert_success
+    assert_line "center $LYNE_SDDM_THEME/layouts/Center.png"
+    assert_line "cards "
+    refute_output --partial split
+    refute_output --partial notes
+    rm -rf "$LYNE_SDDM_THEME/layouts"
+    run sddm sddm_layouts
+    assert_output ""
+}
+
+@test "mode: synced, manual or default, by the header on any line" {
+    run sddm sddm_mode
+    assert_output default
+    run sddm sddm_apply
+    run sddm sddm_mode
+    assert_output synced
+    printf '[General]\n# Written by lyne-sddm (manual)\naccent=#ff0000\n' >"$LYNE_SDDM_DIR/theme.conf.user"
+    run sddm sddm_mode
+    assert_output manual
+    printf '[General]\n# Overrides of theme.conf, written by lyne-dots (see docs/sync.md).\n' >"$LYNE_SDDM_DIR/theme.conf.user"
+    run sddm sddm_mode
+    assert_output default
+}
+
+@test "sync off: manual choices and the template are left alone" {
+    set_state '.sddm.sync = false'
+    local manual='[General]
+# Written by lyne-sddm (manual)
+accent=#ff0000
+layout=cards
+wallpaper='"$LYNE_SDDM_DIR"'/wallpaper.png'
+    printf '%s\n' "$manual" >"$LYNE_SDDM_DIR/theme.conf.user"
+    printf 'mine' >"$LYNE_SDDM_DIR/wallpaper.png"
+    run sddm sddm_apply
+    assert_success
+    assert_equal "$(conf)" "$manual"
+    assert_equal "$(cat "$LYNE_SDDM_DIR/wallpaper.png")" mine
+    # Sync on: lyne-dots wins and replaces it all
+    set_state '.sddm.sync = true'
+    run sddm sddm_apply
+    run sddm sddm_mode
+    assert_output synced
+    refute [ -e "$LYNE_SDDM_DIR/wallpaper.png" ]
+}
+
+@test "lyne sddm status: mode and layout" {
+    set_state '.sddm.layout = "cards"'
+    run lyne sddm status
+    assert_line --partial "theme defaults"
+    refute_line --partial "Layout"
+    run lyne sddm apply
+    run lyne sddm status
+    assert_line --regexp "Mode +synced by lyne-dots"
+    assert_line --regexp "Layout +cards"
+    printf '[General]\n# Written by lyne-sddm (manual)\n' >"$LYNE_SDDM_DIR/theme.conf.user"
+    set_state '.sddm.sync = false'
+    run lyne sddm status
+    assert_line --regexp "Sync +off"
+    assert_line --regexp "Mode +manual"
+    assert_line --regexp "Layout +center"
+}

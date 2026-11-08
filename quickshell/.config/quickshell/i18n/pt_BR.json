@@ -1190,7 +1190,8 @@
     "Login screen": "Tela de login",
     "Follow the theme": "Seguir o tema",
     "Colors, background opacity, wallpaper and profile picture, from the next login": "Cores, opacidade do fundo, papel de parede e foto de perfil, a partir do próximo login",
-    "The login screen keeps its own look (Tokyo Night)": "A tela de login mantém a aparência própria (Tokyo Night)",
+    "The login screen keeps its own look: Tokyo Night, or what you chose with lyne-sddm": "A tela de login mantém a aparência própria: Tokyo Night ou o que você escolheu com o lyne-sddm",
+    "How the login screen is arranged, apart from the lock screen template": "Como a tela de login é organizada, independente do modelo da tela de bloqueio",
     "Not set up": "Não configurada",
     "%1 controls the login screen: run lyne-sddm to take it over": "%1 controla a tela de login: rode lyne-sddm para assumi-la",
     "Run lyne-sddm to let the login screen follow the theme": "Rode lyne-sddm para a tela de login seguir o tema",
@@ -1728,6 +1729,13 @@
         },
         "countdown": {
             "Off": "Desligada"
+        },
+        "login layout": {
+            "Split": "Dividido",
+            "Focus": "Foco",
+            "Corner": "Canto",
+            "Stacked": "Empilhado",
+            "Panel": "Painel"
         },
         "app state": {
             "open": "aberto"

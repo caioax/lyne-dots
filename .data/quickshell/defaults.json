@@ -286,7 +286,8 @@
         "transparent": false
     },
     "sddm": {
-        "sync": true
+        "sync": true,
+        "layout": "center"
     },
     "osd": {
         "style": "attached",
