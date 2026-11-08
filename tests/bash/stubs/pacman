@@ -1,5 +1,6 @@
 #!/bin/bash
-# Test stand-in for pacman over $FAKE_PKGS ("name version" lines)
+# Test stand-in for pacman over $FAKE_PKGS ("name version" lines); -Qo/-Qqo
+# own only the paths listed in $FAKE_OWNED ("path package" lines)
 echo "pacman $*" >>"${STUB_LOG:-/dev/null}"
 db="${FAKE_PKGS:?FAKE_PKGS not set}"
 touch "$db"
@@ -32,6 +33,21 @@ case "$op" in
     ;;
 -R* )
     for n in "${names[@]}"; do sed -i "/^$n /d" "$db"; done
+    ;;
+-Qo | -Qqo)
+    status=0
+    for n in "${names[@]}"; do
+        pkg="$(grep -m1 "^$n " "${FAKE_OWNED:-/dev/null}" 2>/dev/null | cut -d' ' -f2)"
+        if [[ -z "$pkg" ]]; then
+            echo "error: No package owns $n" >&2
+            status=1
+        elif [[ "$op" == -Qqo ]]; then
+            echo "$pkg"
+        else
+            echo "$n is owned by $pkg 1.0-1"
+        fi
+    done
+    exit $status
     ;;
 -Syu | -Sy | -Syy) ;;
 *) exit 0 ;;

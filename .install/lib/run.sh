@@ -547,7 +547,7 @@ EOF
     chmod +x "$bin/dry-stub"
     local cmd
     for cmd in sudo pacman yay paru makepkg git systemctl stow chsh reboot \
-        modprobe udevadm gsettings hyprctl kbuildsycoca6 awww awww-daemon ping; do
+        modprobe udevadm gsettings hyprctl kbuildsycoca6 awww awww-daemon ping lyne-sddm; do
         ln -sf dry-stub "$bin/$cmd" || _run_dry_fail "could not create the $cmd stand-in"
     done
 

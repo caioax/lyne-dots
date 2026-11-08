@@ -6,7 +6,7 @@ source "$DOTS_DIR/.data/lyne-cli/lib/sddm.sh"
 
 case "$subcmd" in
     -h|--help)
-        echo "Usage: lyne sddm [status|apply]"
+        echo "Usage: lyne sddm [status|apply|install]"
         echo ""
         echo "With the lyne-sddm theme installed, the login screen follows the shell:"
         echo "its palette, background opacity, wallpaper and profile picture are copied"
@@ -19,6 +19,8 @@ case "$subcmd" in
         echo "  status   Whether the theme is installed, selected and synced (default)"
         echo "  apply    Sync now (with the option off: back to the theme's defaults,"
         echo "           unless lyne-sddm wrote the file)"
+        echo "  install  Build and install the lyne-sddm theme (makepkg, asks for sudo),"
+        echo "           select it and sync; again later to update it"
         ;;
     status)
         sddm_problem || return 0
@@ -41,6 +43,16 @@ case "$subcmd" in
                 [[ -f "$f" ]] && echo "            ${f#"$SDDM_DIR"/}"
             done
         fi
+        ;;
+    install)
+        sddm_install || { echo "lyne sddm: the install stopped (see above)" >&2; return 1; }
+        local dm
+        dm=$(sddm_dm)
+        if [[ "$dm" != sddm ]]; then
+            echo "Note: the display manager is ${dm:-none}, not SDDM: the theme shows once SDDM starts at boot"
+        fi
+        sddm_problem || return 1
+        sddm_apply && echo "Login screen installed and synced (shows on the next login)"
         ;;
     apply)
         sddm_problem || return 1

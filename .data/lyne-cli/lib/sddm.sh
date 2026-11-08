@@ -29,12 +29,16 @@
 #   sddm_apply           sync on: write the overrides; off: sddm_reset when
 #                        the file is ours
 #   sddm_reset           back to the theme's defaults (Tokyo Night)
+#   sddm_dm              the display manager systemd starts (sddm, gdm...)
+#   sddm_install         build and install the lyne-sddm-git package, then
+#                        run lyne-sddm (sync dir + theme selected)
 #
 # Options (state.json): sddm.sync, sddm.layout, wallpaper.current,
 # profile.avatar, opacity.background. LYNE_SDDM_OPTIONS ({"sync", "layout",
 # "wallpaper", "avatar", "opacity"}) overrides them, as the shell saves
 # state.json a moment later. LYNE_SDDM_DIR, LYNE_SDDM_THEME,
-# LYNE_SDDM_PALETTE and LYNE_STATE_FILE point it at test files.
+# LYNE_SDDM_PALETTE, LYNE_STATE_FILE, LYNE_DM_LINK, LYNE_SDDM_REPO and
+# LYNE_SDDM_BUILD_DIR point it at test files.
 # =============================================================================
 
 SDDM_THEME_NAME="lyne"
@@ -46,6 +50,13 @@ SDDM_DIR="${SDDM_DIR%/}"
 SDDM_PALETTE="${LYNE_SDDM_PALETTE:-${XDG_CACHE_HOME:-$HOME/.cache}/lyne/nvim.json}"
 SDDM_STATE="${LYNE_STATE_FILE:-$DOTS_DIR/quickshell/.config/quickshell/state.json}"
 SDDM_AVATAR="$SDDM_DIR/avatars/$(id -un).png"
+
+# The display-manager.service link systemctl enable writes
+SDDM_DM_LINK="${LYNE_DM_LINK:-/etc/systemd/system/display-manager.service}"
+# lyne-sddm is built from its repo (the AUR was down for weeks in 2026-11);
+# the clone stays for the next build
+SDDM_REPO="${LYNE_SDDM_REPO:-https://github.com/caioax/lyne-sddm.git}"
+SDDM_BUILD_DIR="${LYNE_SDDM_BUILD_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/lyne/lyne-sddm}"
 
 # First comment line of theme.conf.user, by writer
 SDDM_HEADER_SYNCED="# Written by lyne-dots"
@@ -205,4 +216,42 @@ sddm_reset() {
     sddm_problem >&2 || return 1
     rm -f "$SDDM_DIR"/wallpaper.* "$SDDM_AVATAR"
     printf '%s\n' "$SDDM_DEFAULT_CONF" | _sddm_write "$SDDM_DIR/theme.conf.user"
+}
+
+sddm_dm() {
+    [[ -e "$SDDM_DM_LINK" ]] || return 0
+    basename "$(readlink -f "$SDDM_DM_LINK")" .service
+}
+
+# The theme files from the old script install (not pacman's): the package
+# would clash with them
+_sddm_script_install() {
+    [[ -f "$SDDM_THEME/metadata.desktop" ]] &&
+        ! pacman -Qqo "$SDDM_THEME/metadata.desktop" &>/dev/null
+}
+
+# Build lyne-sddm-git from its repo with makepkg (deps through pacman), then
+# lyne-sddm creates the sync dir and selects the theme. Asks for sudo; never
+# restarts SDDM. Once the AUR answers again this can become yay/paru
+sddm_install() {
+    if _sddm_script_install; then
+        echo "lyne-sddm was installed by its install.sh: remove it first with" >&2
+        echo "  ./install.sh --uninstall   (in its repo), then run this again" >&2
+        return 1
+    fi
+    echo ":: Build tools (git, base-devel)"
+    sudo pacman -S --needed --noconfirm git base-devel || return 1
+    if [[ -d "$SDDM_BUILD_DIR/.git" ]]; then
+        echo ":: Updating $SDDM_BUILD_DIR"
+        GIT_TERMINAL_PROMPT=0 timeout 300 git -C "$SDDM_BUILD_DIR" pull --ff-only || return 1
+    else
+        echo ":: Cloning $SDDM_REPO"
+        rm -rf "$SDDM_BUILD_DIR"
+        mkdir -p "$(dirname "$SDDM_BUILD_DIR")" || return 1
+        GIT_TERMINAL_PROMPT=0 timeout 300 git clone --depth 1 "$SDDM_REPO" "$SDDM_BUILD_DIR" || return 1
+    fi
+    echo ":: Building and installing lyne-sddm-git (makepkg)"
+    (cd "$SDDM_BUILD_DIR" && makepkg -sicf --noconfirm --needed) || return 1
+    echo ":: Setting it up (lyne-sddm)"
+    lyne-sddm || return 1
 }

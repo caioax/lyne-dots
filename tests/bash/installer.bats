@@ -32,6 +32,8 @@ setup() {
         mkdir -p "$LYNE_ICON_DIRS/$tela"
         printf '[Icon Theme]\nName=%s\nDirectories=48/apps\n' "$tela" >"$LYNE_ICON_DIRS/$tela/index.theme"
     done
+    # No display manager unless a test links one; no theme from this machine
+    export LYNE_DM_LINK="$BATS_TEST_TMPDIR/display-manager.service" LYNE_SDDM_THEME="$BATS_TEST_TMPDIR/sddm-theme"
     ANSWERS="$BATS_TEST_TMPDIR/answers"
     # shellcheck disable=SC2034 # read by repo_unchanged
     REPO_STATUS="$(git -C "$REPO" status --porcelain)"
@@ -282,3 +284,42 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     assert_failure
 }
 
+@test "SDDM as display manager: lyne-sddm built with makepkg and set up" {
+    ln -s /usr/lib/systemd/system/sddm.service "$LYNE_DM_LINK"
+    answers "categories=core quickshell" "reboot=no"
+    run install --answers "$ANSWERS"
+    assert_success
+    assert_line "[ok] Login screen (lyne-sddm)"
+    run log
+    assert_line "review Login screen: lyne-sddm, built with makepkg"
+    assert_line "[dry-run] sudo pacman -S --needed --noconfirm git base-devel"
+    assert_line "[dry-run] git clone --depth 1 https://github.com/caioax/lyne-sddm.git $DRY/.cache/lyne/lyne-sddm"
+    assert_line "[dry-run] makepkg -sicf --noconfirm --needed"
+    assert_line --regexp '^\[dry-run\] lyne-sddm ?$'
+}
+
+@test "lyne-sddm: not with another display manager, nor when answered no" {
+    ln -s /usr/lib/systemd/system/gdm.service "$LYNE_DM_LINK"
+    answers "categories=core" "reboot=no" "sddm=yes"
+    run install --answers "$ANSWERS"
+    assert_success
+    refute_line --partial "Login screen"
+    rm "$LYNE_DM_LINK"
+    ln -s /usr/lib/systemd/system/sddm.service "$LYNE_DM_LINK"
+    answers "categories=core" "reboot=no" "sddm=no"
+    run install --answers "$ANSWERS"
+    refute_line --partial "Login screen"
+    run log
+    refute_line --partial "lyne-sddm"
+}
+
+@test "a failing lyne-sddm build only warns: the install goes on" {
+    ln -s /usr/lib/systemd/system/sddm.service "$LYNE_DM_LINK"
+    answers "categories=core" "reboot=no"
+    LYNE_DRY_FAIL="makepkg" run install --answers "$ANSWERS"
+    assert_success
+    assert_line "[ok] Lyne CLI"
+    run log
+    assert_line --partial "run 'lyne sddm install' later"
+    refute_line --regexp '^\[dry-run\] lyne-sddm ?$'
+}

@@ -438,6 +438,18 @@ step_theming() {
     setup_theming
 }
 
+# The lyne-sddm login screen, built with makepkg (lib/sddm.sh). The shell
+# syncs it on its first start
+step_sddm() {
+    source "$DOTFILES_DIR/.data/lyne-cli/lib/sddm.sh"
+    log_step "Installing the lyne-sddm login screen..."
+    if ! sddm_install; then
+        log_warn "lyne-sddm wasn't installed: run 'lyne sddm install' later"
+        return 0
+    fi
+    log_info "Login screen: lyne-sddm (shows on the next login)"
+}
+
 step_migrations() {
     local MIGRATIONS_DIR="$DOTFILES_DIR/.data/lyne-cli/migrations"
     local DONE_FILE="$HOME/.local/share/lyne/migrations-done"
@@ -499,6 +511,7 @@ plan_steps() {
     has_category utils && step_add step_power_profiles "Power profiles (laptops)"
     has_category core && step_add step_wallpaper "Wallpaper"
     has_category theming && step_add step_theming "GTK theme and matugen"
+    [[ "${ANSWERS[sddm]:-no}" == yes ]] && step_add step_sddm "Login screen (lyne-sddm)" 2
     step_add step_migrations "Lyne CLI"
 }
 
@@ -575,6 +588,16 @@ _gpu_order_label() {
     echo "$label"
 }
 
+# Only where SDDM is the display manager: it would not show otherwise, and
+# switching display managers is left to the user (lyne sddm install later)
+q_sddm() {
+    [[ "$(sddm_dm)" == sddm ]] || return 3
+    ask_single sddm "Login screen" \
+        "SDDM starts your session. lyne-sddm is a login screen in the same style as the lock screen, following the theme." \
+        "yes|Install lyne-sddm|built from GitHub with makepkg, selected for the next login|1" \
+        "no|Keep the current one|lyne sddm install adds it later"
+}
+
 q_reboot() {
     ask_single reboot "Reboot when it's done?" \
         "Hyprland needs a new session. The reboot waits $REBOOT_SECONDS seconds (any key cancels it) and never happens after a failure." \
@@ -635,6 +658,7 @@ review_rows() {
     if [[ " $categories " == *" terminal "* && "$SHELL" != *zsh* ]]; then
         rows+=("Shell|Zsh becomes the default shell")
     fi
+    [[ "${ANSWERS[sddm]:-no}" == yes ]] && rows+=("Login screen|lyne-sddm, built with makepkg")
     if [[ "${ANSWERS[reboot]}" == yes ]]; then
         rows+=("Reboot|after a $REBOOT_SECONDS second countdown")
     else
@@ -653,7 +677,7 @@ q_review() {
         "${REVIEW_ROWS[@]}"
 }
 
-QUESTIONS=(q_categories q_graphics q_reboot q_review)
+QUESTIONS=(q_categories q_graphics q_sddm q_reboot q_review)
 
 # Answers not in an --answers file
 answer_defaults() {
@@ -692,6 +716,12 @@ answer_defaults() {
         esac
     fi
     [[ -v "ANSWERS[reboot]" ]] || ANSWERS[reboot]=no
+    # lyne-sddm only where SDDM is the display manager, unless a file says no
+    if [[ "$(sddm_dm)" == sddm ]]; then
+        [[ -v "ANSWERS[sddm]" ]] || ANSWERS[sddm]=yes
+    else
+        ANSWERS[sddm]=no
+    fi
 }
 
 # =============================================================================
@@ -817,6 +847,8 @@ main() {
     gpu_detect
     gpu_links
     nvidia_plan 0
+    # sddm_dm, for the Login screen question
+    source "$DOTFILES_DIR/.data/lyne-cli/lib/sddm.sh"
 
     ui_setup
     # Plain summary when the output goes to a file

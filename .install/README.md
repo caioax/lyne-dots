@@ -42,7 +42,8 @@ along (`| bash -s -- --dry-run`).
 
 Every question comes first (packages; graphics: the GPUs found and, for an
 NVIDIA GPU, the driver and environment variables, preselected from them;
-reboot), then a review screen. After the sudo password (asked once and kept alive) the
+the login screen, only where SDDM is the display manager; reboot), then a
+review screen. After the sudo password (asked once and kept alive) the
 install runs without further questions, showing each step, a progress bar and
 the latest output. Everything goes to `~/.cache/lyne/install-<date>.log`.
 Files already where the dotfiles are linked are moved to
@@ -62,7 +63,23 @@ EOF
 added; without it, the NVIDIA driver is installed when the GPU found has one.
 `gpu_order=igpu|dgpu|auto` sets the GPU order (automatic without it).
 `lyne gpu` lists the GPUs (`.data/lyne-cli/lib/gpus.sh`, reading sysfs and
-pci.ids only).
+pci.ids only). `sddm=no` skips the login screen (it is only installed where
+SDDM is the display manager anyway).
+
+### Login screen (lyne-sddm)
+
+Where SDDM is the display manager (`/etc/systemd/system/display-manager.service`
+points at `sddm.service`), the installer offers
+[lyne-sddm](https://github.com/caioax/lyne-sddm), a login screen in the lock
+screen's style that follows the theme. With another display manager it isn't
+asked: switching display managers is left to you. The step runs
+`lyne sddm install` (`.data/lyne-cli/lib/sddm.sh`): it clones the repo into
+`~/.cache/lyne/lyne-sddm`, builds and installs `lyne-sddm-git` with
+`makepkg -si` (from GitHub, as the AUR was down), and runs `lyne-sddm`, which
+creates `/var/lib/lyne-sddm` and selects the theme. SDDM is never restarted;
+it shows on the next login, and the shell syncs it on its first start. A failed
+build only warns. Existing installs get a one-time hint from a migration;
+`lyne sddm install` installs it, or updates it when run again.
 
 ### GPU order (more than one GPU)
 

@@ -14,6 +14,8 @@ setup() {
     fx_gpu "$SYS" 0000:01:00.0 10de:1f9d driver=nvidia card=card0 outputs="HDMI-A-1:connected"
     fx_gpu "$SYS" 0000:00:02.0 8086:3e9b driver=i915 card=card1 outputs="eDP-1:connected"
     STATE="$HOME/.config/quickshell/state.json"
+    # No display manager unless a test links one (not this machine's)
+    export LYNE_DM_LINK="$BATS_TEST_TMPDIR/display-manager.service"
 }
 
 teardown() { repo_unchanged; }
@@ -442,5 +444,20 @@ real_stow() {
     run bash -c 'ls "$1" | grep -vE "^[0-9]{3}-[a-z0-9-]+\.sh$"' _ "$REPO/.data/lyne-cli/migrations"
     assert_output ""
     run bash -c 'ls "$1" | cut -c1-3 | uniq -d' _ "$REPO/.data/lyne-cli/migrations"
+    assert_output ""
+}
+
+@test "048: a hint for SDDM users without lyne-sddm, silent otherwise" {
+    fake_dots
+    run migrate 048-lyne-sddm-hint.sh
+    assert_success
+    assert_output ""
+    ln -s /usr/lib/systemd/system/sddm.service "$LYNE_DM_LINK"
+    run migrate 048-lyne-sddm-hint.sh
+    assert_success
+    assert_output --partial "lyne sddm install"
+    echo "lyne-sddm-git 0.1.0.r7.g48662c9-1" >>"$FAKE_PKGS"
+    run migrate 048-lyne-sddm-hint.sh
+    assert_success
     assert_output ""
 }

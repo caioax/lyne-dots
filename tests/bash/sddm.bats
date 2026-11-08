@@ -7,6 +7,7 @@ setup() {
     lyne_setup
     fake_dots
     export LYNE_SDDM_DIR="$BATS_TEST_TMPDIR/lyne-sddm" LYNE_SDDM_PALETTE="$HOME/.cache/lyne/nvim.json"
+    export LYNE_SDDM_THEME="$BATS_TEST_TMPDIR/theme"
     mkdir -p "$LYNE_SDDM_DIR/avatars" "$HOME/.cache/lyne" "$HOME/Pictures"
     jq '{palette}' "$REPO/.data/themes/tokyonight.json" >"$LYNE_SDDM_PALETTE"
     printf 'jpg' >"$HOME/Pictures/wall.JPG"
@@ -131,7 +132,6 @@ conf() { cat "$LYNE_SDDM_DIR/theme.conf.user"; }
 }
 
 @test "layouts: the theme's layouts/*.qml, lowercase ids, thumbnails when shipped" {
-    export LYNE_SDDM_THEME="$BATS_TEST_TMPDIR/theme"
     mkdir -p "$LYNE_SDDM_THEME/layouts"
     touch "$LYNE_SDDM_THEME/layouts/"{Center.qml,Center.png,Cards.qml,Split-View.qml,notes.txt}
     run sddm sddm_layouts
@@ -195,4 +195,68 @@ wallpaper='"$LYNE_SDDM_DIR"'/wallpaper.png'
     assert_line --regexp "Sync +off"
     assert_line --regexp "Mode +manual"
     assert_line --regexp "Layout +center"
+}
+
+# lyne sddm install against a local repo, with makepkg and lyne-sddm logged
+install_stubs() {
+    local bin="$BATS_TEST_TMPDIR/bin" cmd
+    mkdir -p "$bin"
+    for cmd in makepkg lyne-sddm; do
+        printf '#!/bin/bash\necho "%s $* (in $PWD)" >>"$STUB_LOG"\n' "$cmd" >"$bin/$cmd"
+        chmod +x "$bin/$cmd"
+    done
+    export PATH="$bin:$PATH"
+    local src="$BATS_TEST_TMPDIR/lyne-sddm-src"
+    git init -q -b main "$src" && touch "$src/PKGBUILD" && git -C "$src" add PKGBUILD && git -C "$src" commit -qm init
+    export LYNE_SDDM_REPO="file://$src"
+}
+
+@test "install: clone, makepkg, lyne-sddm, then sync; again pulls the clone" {
+    install_stubs
+    run lyne sddm install
+    assert_success
+    assert_output --partial "Login screen installed and synced"
+    local build="$HOME/.cache/lyne/lyne-sddm"
+    assert [ -f "$build/PKGBUILD" ]
+    run cat "$STUB_LOG"
+    assert_line --partial "pacman -S --needed --noconfirm git base-devel"
+    assert_line "makepkg -sicf --noconfirm --needed (in $build)"
+    assert_line --regexp "^lyne-sddm  ?\(in "
+    run sddm sddm_mode
+    assert_output synced
+    touch "$BATS_TEST_TMPDIR/lyne-sddm-src/new" && git -C "$BATS_TEST_TMPDIR/lyne-sddm-src" add new && git -C "$BATS_TEST_TMPDIR/lyne-sddm-src" commit -qm new
+    run lyne sddm install
+    assert_success
+    assert_output --partial "Updating $build"
+    assert [ -f "$build/new" ]
+}
+
+@test "install: a script install is refused, a failed build stops before lyne-sddm" {
+    install_stubs
+    mkdir -p "$LYNE_SDDM_THEME" && touch "$LYNE_SDDM_THEME/metadata.desktop"
+    run lyne sddm install
+    assert_failure
+    assert_output --partial "./install.sh --uninstall"
+    # The package's own files are no script install
+    export FAKE_OWNED="$BATS_TEST_TMPDIR/owned"
+    echo "$LYNE_SDDM_THEME/metadata.desktop lyne-sddm-git" >"$FAKE_OWNED"
+    run lyne sddm install
+    assert_success
+    rm "$LYNE_SDDM_THEME/metadata.desktop"
+    printf '#!/bin/bash\nexit 1\n' >"$BATS_TEST_TMPDIR/bin/makepkg"
+    : >"$STUB_LOG"
+    run lyne sddm install
+    assert_failure
+    assert_output --partial "the install stopped"
+    run cat "$STUB_LOG"
+    refute_line --partial "lyne-sddm"
+}
+
+@test "dm: the display manager systemd starts, empty without one" {
+    export LYNE_DM_LINK="$BATS_TEST_TMPDIR/display-manager.service"
+    run sddm sddm_dm
+    assert_output ""
+    ln -s /usr/lib/systemd/system/sddm.service "$LYNE_DM_LINK"
+    run sddm sddm_dm
+    assert_output sddm
 }
