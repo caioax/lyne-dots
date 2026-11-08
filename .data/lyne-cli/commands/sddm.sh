@@ -20,7 +20,9 @@ case "$subcmd" in
         echo "  apply    Sync now (with the option off: back to the theme's defaults,"
         echo "           unless lyne-sddm wrote the file)"
         echo "  install  Build and install the lyne-sddm theme (makepkg, asks for sudo),"
-        echo "           select it and sync; again later to update it"
+        echo "           select it and sync; again later to update it. The update"
+        echo "           channel picks the version: stable = its newest release, latest"
+        echo "           = its main branch (lyne update offers new ones)"
         ;;
     status)
         sddm_problem || return 0
@@ -45,7 +47,10 @@ case "$subcmd" in
         fi
         ;;
     install)
-        sddm_install || { echo "lyne sddm: the install stopped (see above)" >&2; return 1; }
+        source "$DOTS_DIR/.data/lyne-cli/lib/channel.sh"
+        local channel
+        channel=$(channel_get) || return 1
+        sddm_install "$channel" || { echo "lyne sddm: the install stopped (see above)" >&2; return 1; }
         local dm
         dm=$(sddm_dm)
         if [[ "$dm" != sddm ]]; then

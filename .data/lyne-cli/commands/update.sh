@@ -12,7 +12,9 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
     echo "  stable   the newest release (default)"
     echo "  latest   every change as soon as it's on main"
     echo "Other branches follow their upstream. --channel overrides the"
-    echo "channel saved in Settings › About for one run."
+    echo "channel saved in Settings › About for one run. With lyne-sddm installed"
+    echo "(the login screen), it offers its newer build for the channel too:"
+    echo "its newest release on stable (never an older build), main on latest."
     echo ""
     echo "  status   Version, uncommitted changes and what an update would"
     echo "           bring (--fetch fetches first)"
@@ -111,14 +113,24 @@ if [[ "$subcmd" == status ]]; then
     [[ "$fetch" == true ]] && timeout 15 git -C "$DOTS_DIR" fetch --tags --quiet 2>/dev/null && fetched=true
     channel_resolve "$channel"
     version="$(channel_version)"
+    # lyne-sddm: the repo is only asked with --fetch
+    source "$DOTS_DIR/.data/lyne-cli/lib/sddm.sh"
+    if [[ "$fetch" == true ]]; then
+        sddm_update_check "$channel"
+    else
+        SDDM_UPD_VERSION=$(_sddm_installed_version) SDDM_UPD_STATE=none
+        [[ -n "$SDDM_UPD_VERSION" ]] && SDDM_UPD_STATE=unknown
+    fi
     if [[ "$json" == true ]]; then
         jq -n --arg branch "$CH_BRANCH" --arg follows "$CH_FOLLOWS" --arg channel "$channel" \
             --arg commit "$commit" --arg date "$date" --arg version "$version" \
             --arg upstream "$CH_UPSTREAM" --arg lastRelease "$CH_LAST_RELEASE" --arg target "$CH_TARGET_NAME" --arg targetCommit "$CH_TARGET_COMMIT" \
             --argjson dirty "$dirty" --argjson fetched "$fetched" --argjson behind "$CH_BEHIND" \
+            --arg sddmState "$SDDM_UPD_STATE" --arg sddmVersion "$SDDM_UPD_VERSION" --arg sddmRef "$SDDM_UPD_REF" --arg sddmSha "$SDDM_UPD_SHA" \
             '{branch: $branch, follows: $follows, channel: $channel, commit: $commit, date: $date,
               version: $version, upstream: $upstream, lastRelease: $lastRelease, target: $target, targetCommit: $targetCommit,
-              dirty: $dirty, fetched: $fetched, behind: $behind}'
+              dirty: $dirty, fetched: $fetched, behind: $behind}
+             + {sddm: {state: $sddmState, version: $sddmVersion, target: $sddmRef, targetCommit: $sddmSha}}'
         return 0
     fi
     echo "${version:-no release} · $CH_BRANCH @ $commit ($date)"
@@ -138,6 +150,12 @@ if [[ "$subcmd" == status ]]; then
     else
         echo "Up to date$note"
     fi
+    case "$SDDM_UPD_STATE" in
+    available) echo "Login screen (lyne-sddm): update to $SDDM_UPD_REF (${SDDM_UPD_SHA:0:7}), installed ${SDDM_UPD_HASH}" ;;
+    current) echo "Login screen (lyne-sddm): up to date ($SDDM_UPD_REF)" ;;
+    ahead) echo "Login screen (lyne-sddm): past $SDDM_UPD_REF (${SDDM_UPD_HASH}), kept until a newer release" ;;
+    unknown) echo "Login screen (lyne-sddm): ${SDDM_UPD_VERSION}$([[ "$fetch" == true ]] && echo " (couldn't reach its repo)" || echo " (not fetched)")" ;;
+    esac
     return 0
 fi
 
@@ -265,6 +283,11 @@ source "$DOTS_DIR/.data/lyne-cli/lib/sync-state.sh"
 echo -e "\e[1;34m:: Checking migrations...\e[0m"
 local migrations_ok=true
 source "$DOTS_DIR/.data/lyne-cli/lib/run-migrations.sh" || migrations_ok=false
+
+# lyne-sddm (the login screen) for the channel: asks before rebuilding,
+# only with a terminal (makepkg asks for sudo)
+source "$DOTS_DIR/.data/lyne-cli/lib/sddm.sh"
+sddm_offer_update "$channel"
 
 echo -e "\e[1;34m:: Reloading Quickshell...\e[0m"
 source "$DOTS_DIR/.data/lyne-cli/commands/reload.sh"

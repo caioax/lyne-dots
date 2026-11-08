@@ -81,6 +81,14 @@ it shows on the next login, and the shell syncs it on its first start. A failed
 build only warns. Existing installs get a one-time hint from a migration;
 `lyne sddm install` installs it, or updates it when run again.
 
+The update channel picks the version: on stable, lyne-sddm's newest release
+tag (built through `LYNE_SDDM_REF=<tag>`, the clone itself stays on main), on
+latest its main branch. `lyne update` compares the installed package's
+`pkgver` hash with the repo (`git ls-remote`, nothing is built to check) and,
+in a terminal, asks before rebuilding; without one it only says how. A build
+from latest is never replaced by an older stable release. `lyne update status
+--fetch` shows it too.
+
 ### GPU order (more than one GPU)
 
 `/dev/dri/card*` numbers change between boots, so each GPU gets a link by PCI

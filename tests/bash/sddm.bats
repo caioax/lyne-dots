@@ -202,14 +202,23 @@ install_stubs() {
     local bin="$BATS_TEST_TMPDIR/bin" cmd
     mkdir -p "$bin"
     for cmd in makepkg lyne-sddm; do
-        printf '#!/bin/bash\necho "%s $* (in $PWD)" >>"$STUB_LOG"\n' "$cmd" >"$bin/$cmd"
+        printf '#!/bin/bash\necho "%s $* (in $PWD${LYNE_SDDM_REF:+, ref $LYNE_SDDM_REF})" >>"$STUB_LOG"\n' "$cmd" >"$bin/$cmd"
         chmod +x "$bin/$cmd"
     done
     export PATH="$bin:$PATH"
-    local src="$BATS_TEST_TMPDIR/lyne-sddm-src"
-    git init -q -b main "$src" && touch "$src/PKGBUILD" && git -C "$src" add PKGBUILD && git -C "$src" commit -qm init
-    export LYNE_SDDM_REPO="file://$src"
+    SRC="$BATS_TEST_TMPDIR/lyne-sddm-src"
+    git init -q -b main "$SRC" && touch "$SRC/PKGBUILD" && git -C "$SRC" add PKGBUILD && git -C "$SRC" commit -qm init
+    export LYNE_SDDM_REPO="file://$SRC"
 }
+
+# src_commit NAME [TAG]: a commit in the fake lyne-sddm repo, annotated tag
+src_commit() {
+    touch "$SRC/$1" && git -C "$SRC" add "$1" && git -C "$SRC" commit -qm "$1"
+    if [[ -n "${2:-}" ]]; then git -C "$SRC" tag -a "$2" -m "$2"; fi
+}
+sha() { git -C "$SRC" rev-parse "$1"; }
+# installed NAME: lyne-sddm-git built from that commit of the fake repo
+installed() { echo "lyne-sddm-git ${2:-0.2.0.r0}.g$(git -C "$SRC" rev-parse --short=7 "$1^{commit}")-1" >"$FAKE_PKGS"; }
 
 @test "install: clone, makepkg, lyne-sddm, then sync; again pulls the clone" {
     install_stubs
@@ -220,11 +229,12 @@ install_stubs() {
     assert [ -f "$build/PKGBUILD" ]
     run cat "$STUB_LOG"
     assert_line --partial "pacman -S --needed --noconfirm git base-devel"
+    # No release yet: stable builds main
     assert_line "makepkg -sicf --noconfirm --needed (in $build)"
     assert_line --regexp "^lyne-sddm  ?\(in "
     run sddm sddm_mode
     assert_output synced
-    touch "$BATS_TEST_TMPDIR/lyne-sddm-src/new" && git -C "$BATS_TEST_TMPDIR/lyne-sddm-src" add new && git -C "$BATS_TEST_TMPDIR/lyne-sddm-src" commit -qm new
+    src_commit new
     run lyne sddm install
     assert_success
     assert_output --partial "Updating $build"
@@ -259,4 +269,107 @@ install_stubs() {
     ln -s /usr/lib/systemd/system/sddm.service "$LYNE_DM_LINK"
     run sddm sddm_dm
     assert_output sddm
+}
+
+@test "target: stable = newest annotated vX.Y.Z by version, else main; latest = main" {
+    install_stubs
+    run sddm 'sddm_target stable'
+    assert_output "main $(sha main)"
+    src_commit a v0.9.0
+    src_commit b v0.10.0
+    src_commit c
+    git -C "$SRC" tag v0.11.0    # lightweight: git describe skips it
+    git -C "$SRC" tag -a v1.0.0-rc -m rc
+    run sddm 'sddm_target stable'
+    assert_output "v0.10.0 $(sha "v0.10.0^{commit}")"
+    run sddm 'sddm_target latest'
+    assert_output "main $(sha main)"
+    LYNE_SDDM_REPO="file://$BATS_TEST_TMPDIR/nowhere" run sddm 'sddm_target stable'
+    assert_failure
+}
+
+@test "update check: none, current, available, unknown; by hash prefix" {
+    install_stubs
+    src_commit a v0.2.0
+    run sddm 'sddm_update_check stable; echo $SDDM_UPD_STATE'
+    assert_output none
+    installed v0.2.0
+    run sddm 'sddm_update_check stable; echo "$SDDM_UPD_STATE $SDDM_UPD_REF"'
+    assert_output "current v0.2.0"
+    src_commit b
+    run sddm 'sddm_update_check stable; echo $SDDM_UPD_STATE'
+    assert_output current
+    run sddm 'sddm_update_check latest; echo "$SDDM_UPD_STATE $SDDM_UPD_REF $SDDM_UPD_SHA"'
+    assert_output "available main $(sha main)"
+    # A longer hash in the pkgver (git lengthens ambiguous ones)
+    echo "lyne-sddm-git 0.2.0.r1.g$(git -C "$SRC" rev-parse --short=10 main)-1" >"$FAKE_PKGS"
+    run sddm 'sddm_update_check latest; echo $SDDM_UPD_STATE'
+    assert_output current
+    LYNE_SDDM_REPO="file://$BATS_TEST_TMPDIR/nowhere" run sddm 'sddm_update_check latest; echo $SDDM_UPD_STATE'
+    assert_output unknown
+    # A script install isn't followed
+    mkdir -p "$LYNE_SDDM_THEME" && touch "$LYNE_SDDM_THEME/metadata.desktop"
+    run sddm 'sddm_update_check latest; echo $SDDM_UPD_STATE'
+    assert_output none
+}
+
+@test "install follows the channel: stable builds the release through LYNE_SDDM_REF, the clone stays on main" {
+    install_stubs
+    src_commit a v0.2.0
+    src_commit b
+    run sddm 'sddm_install stable'
+    assert_success
+    run cat "$STUB_LOG"
+    assert_line "makepkg -sicf --noconfirm --needed (in $HOME/.cache/lyne/lyne-sddm, ref v0.2.0)"
+    assert_equal "$(git -C "$HOME/.cache/lyne/lyne-sddm" rev-parse HEAD)" "$(sha main)"
+    : >"$STUB_LOG"
+    run sddm 'sddm_install latest'
+    run cat "$STUB_LOG"
+    assert_line "makepkg -sicf --noconfirm --needed (in $HOME/.cache/lyne/lyne-sddm)"
+    # makepkg rewrites pkgver= in the clone; a new PKGBUILD upstream still comes in
+    echo "pkgver=0.2.0.r1.gabc1234" >"$HOME/.cache/lyne/lyne-sddm/PKGBUILD"
+    echo "pkgver=0.2.0.r0.gdef5678" >"$SRC/PKGBUILD" && git -C "$SRC" commit -qam pkgbuild
+    run sddm 'sddm_build ""'
+    assert_success
+    assert_equal "$(cat "$HOME/.cache/lyne/lyne-sddm/PKGBUILD")" "pkgver=0.2.0.r0.gdef5678"
+}
+
+@test "offer update: asks with a terminal, rebuilds on yes, not on no; only says how without one" {
+    install_stubs
+    src_commit a v0.2.0
+    installed v0.2.0
+    src_commit b v0.3.0
+    run sddm 'echo n | sddm_offer_update stable 1'
+    assert_success
+    assert_output --partial "New version: $(git -C "$SRC" rev-parse --short=7 "v0.2.0^{commit}") -> $(git -C "$SRC" rev-parse --short=7 "v0.3.0^{commit}") (v0.3.0)"
+    run cat "$STUB_LOG"
+    refute_line --partial makepkg
+    run sddm 'echo | sddm_offer_update stable 1'
+    assert_output --partial "lyne-sddm updated"
+    run cat "$STUB_LOG"
+    assert_line --partial "ref v0.3.0)"
+    refute_line --partial "lyne-sddm "
+    : >"$STUB_LOG"
+    run sddm 'sddm_offer_update stable 0 </dev/null'
+    assert_output --partial "Run lyne update in a terminal"
+    run cat "$STUB_LOG"
+    refute_line --partial makepkg
+    # Nothing new: silent
+    installed v0.3.0 0.3.0.r0
+    run sddm 'sddm_offer_update stable 1 </dev/null'
+    assert_output ""
+}
+
+@test "stable never downgrades a build from latest; a newer release replaces it" {
+    install_stubs
+    src_commit a v0.2.0
+    src_commit b
+    installed main 0.2.0.r1
+    run sddm 'sddm_update_check stable; echo $SDDM_UPD_STATE'
+    assert_output ahead
+    run sddm 'sddm_offer_update stable 1 </dev/null'
+    assert_output ""
+    src_commit c v0.2.1
+    run sddm 'sddm_update_check stable; echo "$SDDM_UPD_STATE $SDDM_UPD_REF"'
+    assert_output "available v0.2.1"
 }

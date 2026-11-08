@@ -284,7 +284,16 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     assert_failure
 }
 
+# A local stand-in for the lyne-sddm repo (no network): main with a release
+sddm_repo() {
+    local src="$BATS_TEST_TMPDIR/lyne-sddm-src"
+    git init -q -b main "$src" && touch "$src/PKGBUILD" && git -C "$src" add PKGBUILD &&
+        git -C "$src" commit -qm init && git -C "$src" tag -a v0.2.0 -m v0.2.0
+    export LYNE_SDDM_REPO="file://$src"
+}
+
 @test "SDDM as display manager: lyne-sddm built with makepkg and set up" {
+    sddm_repo
     ln -s /usr/lib/systemd/system/sddm.service "$LYNE_DM_LINK"
     answers "categories=core quickshell" "reboot=no"
     run install --answers "$ANSWERS"
@@ -293,12 +302,15 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
     run log
     assert_line "review Login screen: lyne-sddm, built with makepkg"
     assert_line "[dry-run] sudo pacman -S --needed --noconfirm git base-devel"
-    assert_line "[dry-run] git clone --depth 1 https://github.com/caioax/lyne-sddm.git $DRY/.cache/lyne/lyne-sddm"
+    assert_line "[dry-run] git clone -q --depth 1 --branch main $LYNE_SDDM_REPO $DRY/.cache/lyne/lyne-sddm"
+    # The stable channel (fresh install): the release
+    assert_line --partial "Building and installing lyne-sddm-git v0.2.0"
     assert_line "[dry-run] makepkg -sicf --noconfirm --needed"
     assert_line --regexp '^\[dry-run\] lyne-sddm ?$'
 }
 
 @test "lyne-sddm: not with another display manager, nor when answered no" {
+    sddm_repo
     ln -s /usr/lib/systemd/system/gdm.service "$LYNE_DM_LINK"
     answers "categories=core" "reboot=no" "sddm=yes"
     run install --answers "$ANSWERS"
@@ -314,6 +326,7 @@ log() { cat "$DRY"/.cache/lyne/install-*.log; }
 }
 
 @test "a failing lyne-sddm build only warns: the install goes on" {
+    sddm_repo
     ln -s /usr/lib/systemd/system/sddm.service "$LYNE_DM_LINK"
     answers "categories=core" "reboot=no"
     LYNE_DRY_FAIL="makepkg" run install --answers "$ANSWERS"

@@ -443,7 +443,10 @@ step_theming() {
 step_sddm() {
     source "$DOTFILES_DIR/.data/lyne-cli/lib/sddm.sh"
     log_step "Installing the lyne-sddm login screen..."
-    if ! sddm_install; then
+    # The update channel picks the version (stable: lyne-sddm's newest release)
+    local channel
+    channel="$(jq -r '.update.channel // "stable"' "$HOME/.config/quickshell/state.json" 2>/dev/null)"
+    if ! sddm_install "${channel:-stable}"; then
         log_warn "lyne-sddm wasn't installed: run 'lyne sddm install' later"
         return 0
     fi

@@ -30,8 +30,18 @@
 #                        the file is ours
 #   sddm_reset           back to the theme's defaults (Tokyo Night)
 #   sddm_dm              the display manager systemd starts (sddm, gdm...)
-#   sddm_install         build and install the lyne-sddm-git package, then
-#                        run lyne-sddm (sync dir + theme selected)
+#   sddm_install [ch]    build and install the lyne-sddm-git package for the
+#                        channel (stable: newest release tag), then run
+#                        lyne-sddm (sync dir + theme selected)
+#   sddm_target <ch>     "<ref> <sha>" the channel builds: the newest vX.Y.Z
+#                        tag (stable, main when there's none) or main
+#   sddm_update_check    SDDM_UPD_* for the channel: none (not a package),
+#     <ch>               unknown (repo unreachable), current, ahead (a
+#                        build past the stable release: never downgraded)
+#                        or available
+#   sddm_build <ref>     makepkg from the clone, a tag or main ("")
+#   sddm_offer_update    lyne update: a newer build for the channel, asked
+#     <ch> [tty]         before rebuilding (only with a terminal: sudo)
 #
 # Options (state.json): sddm.sync, sddm.layout, wallpaper.current,
 # profile.avatar, opacity.background. LYNE_SDDM_OPTIONS ({"sync", "layout",
@@ -233,25 +243,118 @@ _sddm_script_install() {
 # Build lyne-sddm-git from its repo with makepkg (deps through pacman), then
 # lyne-sddm creates the sync dir and selects the theme. Asks for sudo; never
 # restarts SDDM. Once the AUR answers again this can become yay/paru
+# Newest vX.Y.Z tag (stable) or main, from the repo without cloning it.
+# Only annotated tags count (they have a peeled ^{} line): the package's
+# pkgver comes from git describe, which skips lightweight ones
+sddm_target() {
+    local channel="$1" refs tag
+    refs=$(GIT_TERMINAL_PROMPT=0 timeout 10 git ls-remote "$SDDM_REPO" HEAD 'refs/tags/v*' 2>/dev/null) || return 1
+    [[ -n "$refs" ]] || return 1
+    if [[ "$channel" == stable ]]; then
+        tag=$(awk '$2 ~ /^refs\/tags\/v[0-9]+\.[0-9]+\.[0-9]+\^\{\}$/ { t = $2; sub(/^refs\/tags\//, "", t); sub(/\^\{\}$/, "", t); print t }' <<<"$refs" |
+            sort -V | tail -n1)
+        if [[ -n "$tag" ]]; then
+            echo "$tag $(awk -v r="refs/tags/$tag^{}" '$2 == r { print $1 }' <<<"$refs")"
+            return 0
+        fi
+    fi
+    echo "main $(awk '$2 == "HEAD" { print $1 }' <<<"$refs")"
+}
+
+# The commit the installed package was built from (pkgver ...g<hash>, at
+# least 7 characters), empty without the package
+_sddm_installed_version() { pacman -Q lyne-sddm-git 2>/dev/null | awk '{ print $2 }'; }
+
+# shellcheck disable=SC2034 # read by lyne update
+SDDM_UPD_STATE="" SDDM_UPD_VERSION="" SDDM_UPD_HASH="" SDDM_UPD_REF="" SDDM_UPD_SHA=""
+# shellcheck disable=SC2034
+sddm_update_check() {
+    SDDM_UPD_STATE=none SDDM_UPD_REF="" SDDM_UPD_SHA=""
+    SDDM_UPD_VERSION=$(_sddm_installed_version)
+    SDDM_UPD_HASH=$(sed -n 's/.*\.g\([0-9a-f]\{7,\}\)-[0-9]*$/\1/p' <<<"$SDDM_UPD_VERSION")
+    [[ -n "$SDDM_UPD_HASH" ]] || return 0
+    _sddm_script_install && return 0
+    local target
+    if ! target=$(sddm_target "$1"); then
+        SDDM_UPD_STATE=unknown
+        return 0
+    fi
+    SDDM_UPD_REF=${target%% *} SDDM_UPD_SHA=${target#* }
+    # The installed hash is a prefix of the full sha (git lengthens it when
+    # 7 characters are ambiguous)
+    if [[ -n "$SDDM_UPD_SHA" && "$SDDM_UPD_SHA" == "$SDDM_UPD_HASH"* ]]; then
+        SDDM_UPD_STATE=current
+    elif [[ "$SDDM_UPD_REF" != main ]] &&
+        (($(vercmp "${SDDM_UPD_REF#v}.r0" "${SDDM_UPD_VERSION%-*}") <= 0)); then
+        # From latest, past the release: kept until a newer release, as
+        # lyne-dots itself never goes back
+        SDDM_UPD_STATE=ahead
+    else
+        SDDM_UPD_STATE=available
+    fi
+}
+
+# makepkg from the clone, kept on main: its PKGBUILD builds the release
+# through LYNE_SDDM_REF (a tag checked out in the clone would bring that
+# tag's PKGBUILD, which may not know the variable)
+sddm_build() {
+    local ref="$1"
+    echo ":: Build tools (git, base-devel)"
+    sudo pacman -S --needed --noconfirm git base-devel || return 1
+    if [[ -d "$SDDM_BUILD_DIR/.git" ]]; then
+        echo ":: Updating $SDDM_BUILD_DIR"
+        # -f: makepkg rewrote pkgver= in the clone's PKGBUILD, nothing to keep
+        GIT_TERMINAL_PROMPT=0 timeout 300 git -C "$SDDM_BUILD_DIR" fetch -q --depth 1 origin main &&
+            git -C "$SDDM_BUILD_DIR" checkout -q -f -B main FETCH_HEAD || return 1
+    else
+        echo ":: Cloning $SDDM_REPO"
+        rm -rf "$SDDM_BUILD_DIR"
+        mkdir -p "$(dirname "$SDDM_BUILD_DIR")" || return 1
+        GIT_TERMINAL_PROMPT=0 timeout 300 git clone -q --depth 1 --branch main "$SDDM_REPO" "$SDDM_BUILD_DIR" || return 1
+    fi
+    echo ":: Building and installing lyne-sddm-git ${ref:-from main} (makepkg)"
+    (cd "$SDDM_BUILD_DIR" && LYNE_SDDM_REF="$ref" makepkg -sicf --noconfirm --needed) || return 1
+}
+
+# Build lyne-sddm-git for the channel (stable when not given), then
+# lyne-sddm creates the sync dir and selects the theme. Asks for sudo; never
+# restarts SDDM. Once the AUR answers again this can become yay/paru
 sddm_install() {
+    local channel="${1:-stable}" target ref=""
     if _sddm_script_install; then
         echo "lyne-sddm was installed by its install.sh: remove it first with" >&2
         echo "  ./install.sh --uninstall   (in its repo), then run this again" >&2
         return 1
     fi
-    echo ":: Build tools (git, base-devel)"
-    sudo pacman -S --needed --noconfirm git base-devel || return 1
-    if [[ -d "$SDDM_BUILD_DIR/.git" ]]; then
-        echo ":: Updating $SDDM_BUILD_DIR"
-        GIT_TERMINAL_PROMPT=0 timeout 300 git -C "$SDDM_BUILD_DIR" pull --ff-only || return 1
-    else
-        echo ":: Cloning $SDDM_REPO"
-        rm -rf "$SDDM_BUILD_DIR"
-        mkdir -p "$(dirname "$SDDM_BUILD_DIR")" || return 1
-        GIT_TERMINAL_PROMPT=0 timeout 300 git clone --depth 1 "$SDDM_REPO" "$SDDM_BUILD_DIR" || return 1
-    fi
-    echo ":: Building and installing lyne-sddm-git (makepkg)"
-    (cd "$SDDM_BUILD_DIR" && makepkg -sicf --noconfirm --needed) || return 1
+    target=$(sddm_target "$channel") || { echo "lyne-sddm: $SDDM_REPO isn't reachable" >&2; return 1; }
+    [[ "${target%% *}" == main ]] || ref=${target%% *}
+    sddm_build "$ref" || return 1
     echo ":: Setting it up (lyne-sddm)"
     lyne-sddm || return 1
+}
+
+# lyne update's part: says what's new and asks before rebuilding. Without a
+# terminal (tty 0) only says how to: makepkg's sudo would fail there, and
+# failed sudo attempts count towards the account lockout
+sddm_offer_update() {
+    local channel="$1" tty="${2:-}"
+    [[ -n "$tty" ]] || { [[ -t 0 ]] && tty=1 || tty=0; }
+    sddm_update_check "$channel"
+    [[ "$SDDM_UPD_STATE" == available ]] || return 0
+    echo -e "\e[1;34m:: Login screen (lyne-sddm)\e[0m"
+    echo "   New version: $SDDM_UPD_HASH -> ${SDDM_UPD_SHA:0:7} ($SDDM_UPD_REF)"
+    if ((!tty)); then
+        echo "   Run lyne update in a terminal (or lyne sddm install) to rebuild it"
+        return 0
+    fi
+    local answer="" ref=""
+    read -rp "   Rebuild it now? [Y/n] " answer
+    [[ "$answer" =~ ^[Nn] ]] && return 0
+    [[ "$SDDM_UPD_REF" == main ]] || ref="$SDDM_UPD_REF"
+    if sddm_build "$ref"; then
+        echo "   lyne-sddm updated (shows on the next login)"
+    else
+        echo "lyne update: lyne-sddm wasn't rebuilt (see above); lyne sddm install tries again"
+    fi
+    return 0
 }
