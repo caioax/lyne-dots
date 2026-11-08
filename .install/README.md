@@ -79,7 +79,12 @@ asked: switching display managers is left to you. The step runs
 creates `/var/lib/lyne-sddm` and selects the theme. SDDM is never restarted;
 it shows on the next login, and the shell syncs it on its first start. A failed
 build only warns. Existing installs get a one-time hint from a migration;
-`lyne sddm install` installs it, or updates it when run again.
+`lyne sddm install` installs it, or updates it when run again. A lyne-sddm
+installed by its own `install.sh` is offered a switch to the package (in a
+terminal, asked first): the package is built, then the script's theme files
+are replaced, and `/var/lib/lyne-sddm` and `lyne.conf` stay, so the login
+screen keeps its look and choices. The installer never asks that (it leaves a
+script install alone).
 
 The update channel picks the version: on stable, lyne-sddm's newest release
 tag (built through `LYNE_SDDM_REF=<tag>`, the clone itself stays on main), on

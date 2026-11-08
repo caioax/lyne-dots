@@ -446,7 +446,8 @@ step_sddm() {
     # The update channel picks the version (stable: lyne-sddm's newest release)
     local channel
     channel="$(jq -r '.update.channel // "stable"' "$HOME/.config/quickshell/state.json" 2>/dev/null)"
-    if ! sddm_install "${channel:-stable}"; then
+    # Never a prompt behind the progress screen (tty 0)
+    if ! sddm_install "${channel:-stable}" 0; then
         log_warn "lyne-sddm wasn't installed: run 'lyne sddm install' later"
         return 0
     fi

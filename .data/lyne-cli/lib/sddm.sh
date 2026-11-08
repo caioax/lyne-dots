@@ -31,15 +31,18 @@
 #   sddm_reset           back to the theme's defaults (Tokyo Night)
 #   sddm_dm              the display manager systemd starts (sddm, gdm...)
 #   sddm_install [ch]    build and install the lyne-sddm-git package for the
-#                        channel (stable: newest release tag), then run
-#                        lyne-sddm (sync dir + theme selected)
+#     [tty]              channel (stable: newest release tag), then run
+#                        lyne-sddm (sync dir + theme selected); a script
+#                        install is replaced when the user agrees
 #   sddm_target <ch>     "<ref> <sha>" the channel builds: the newest vX.Y.Z
 #                        tag (stable, main when there's none) or main
 #   sddm_update_check    SDDM_UPD_* for the channel: none (not a package),
 #     <ch>               unknown (repo unreachable), current, ahead (a
 #                        build past the stable release: never downgraded)
 #                        or available
-#   sddm_build <ref>     makepkg from the clone, a tag or main ("")
+#   sddm_build <ref>     makepkg from the clone, a tag or main (""); with
+#     [replace]          replace=1 the script install's theme files go
+#                        only once the package is built
 #   sddm_offer_update    lyne update: a newer build for the channel, asked
 #     <ch> [tty]         before rebuilding (only with a terminal: sudo)
 #
@@ -298,7 +301,7 @@ sddm_update_check() {
 # through LYNE_SDDM_REF (a tag checked out in the clone would bring that
 # tag's PKGBUILD, which may not know the variable)
 sddm_build() {
-    local ref="$1"
+    local ref="$1" replace="${2:-0}"
     echo ":: Build tools (git, base-devel)"
     sudo pacman -S --needed --noconfirm git base-devel || return 1
     if [[ -d "$SDDM_BUILD_DIR/.git" ]]; then
@@ -313,7 +316,17 @@ sddm_build() {
         GIT_TERMINAL_PROMPT=0 timeout 300 git clone -q --depth 1 --branch main "$SDDM_REPO" "$SDDM_BUILD_DIR" || return 1
     fi
     echo ":: Building and installing lyne-sddm-git ${ref:-from main} (makepkg)"
-    (cd "$SDDM_BUILD_DIR" && LYNE_SDDM_REF="$ref" makepkg -sicf --noconfirm --needed) || return 1
+    if ((replace)); then
+        # Built first, so a failed build leaves the working login screen
+        (cd "$SDDM_BUILD_DIR" && LYNE_SDDM_REF="$ref" makepkg -scf --noconfirm) || return 1
+        local pkg
+        pkg=$(compgen -G "$SDDM_BUILD_DIR/lyne-sddm-git-*.pkg.tar.*" | tail -n1)
+        [[ -n "$pkg" ]] || { echo "lyne-sddm: makepkg left no package" >&2; return 1; }
+        echo ":: Replacing the script install's theme files with the package"
+        sudo rm -rf -- "$SDDM_THEME" && sudo pacman -U --noconfirm "$pkg" || return 1
+    else
+        (cd "$SDDM_BUILD_DIR" && LYNE_SDDM_REF="$ref" makepkg -sicf --noconfirm --needed) || return 1
+    fi
     # Installed: the package file would pile up, one per version (makepkg's
     # git mirror stays, for the next fetch)
     rm -f "$SDDM_BUILD_DIR"/*.pkg.tar.*
@@ -323,15 +336,24 @@ sddm_build() {
 # lyne-sddm creates the sync dir and selects the theme. Asks for sudo; never
 # restarts SDDM. Once the AUR answers again this can become yay/paru
 sddm_install() {
-    local channel="${1:-stable}" target ref=""
+    local channel="${1:-stable}" tty="${2:-}" target ref="" replace=0
+    [[ -n "$tty" ]] || { [[ -t 0 ]] && tty=1 || tty=0; }
     if _sddm_script_install; then
-        echo "lyne-sddm was installed by its install.sh: remove it first with" >&2
-        echo "  ./install.sh --uninstall   (in its repo), then run this again" >&2
-        return 1
+        # Its theme files would clash with the package's. /var/lib/lyne-sddm
+        # and lyne.conf stay: the login screen keeps its look and choices
+        echo "lyne-sddm was installed by its install.sh. The package replaces its theme"
+        echo "files and keeps your login screen settings; lyne update then keeps it up to date."
+        local answer=""
+        ((tty)) && read -rp "Replace it with the package? [Y/n] " answer
+        if ((!tty)) || [[ "$answer" =~ ^[Nn] ]]; then
+            echo "lyne-sddm: left as it is (git pull and ./install.sh in its repo update it)" >&2
+            return 1
+        fi
+        replace=1
     fi
     target=$(sddm_target "$channel") || { echo "lyne-sddm: $SDDM_REPO isn't reachable" >&2; return 1; }
     [[ "${target%% *}" == main ]] || ref=${target%% *}
-    sddm_build "$ref" || return 1
+    sddm_build "$ref" "$replace" || return 1
     echo ":: Setting it up (lyne-sddm)"
     lyne-sddm || return 1
 }

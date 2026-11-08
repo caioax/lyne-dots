@@ -243,12 +243,17 @@ installed() { echo "lyne-sddm-git ${2:-0.2.0.r0}.g$(git -C "$SRC" rev-parse --sh
     assert [ -f "$build/new" ]
 }
 
-@test "install: a script install is refused, a failed build stops before lyne-sddm" {
+@test "install: a script install is kept without a terminal or on no; a failed build stops before lyne-sddm" {
     install_stubs
     mkdir -p "$LYNE_SDDM_THEME" && touch "$LYNE_SDDM_THEME/metadata.desktop"
-    run lyne sddm install
+    run lyne sddm install </dev/null
     assert_failure
-    assert_output --partial "./install.sh --uninstall"
+    assert_output --partial "left as it is"
+    run sddm 'echo n | sddm_install stable 1'
+    assert_failure
+    assert [ -f "$LYNE_SDDM_THEME/metadata.desktop" ]
+    run cat "$STUB_LOG"
+    refute_line --partial makepkg
     # The package's own files are no script install
     export FAKE_OWNED="$BATS_TEST_TMPDIR/owned"
     echo "$LYNE_SDDM_THEME/metadata.desktop lyne-sddm-git" >"$FAKE_OWNED"
@@ -262,6 +267,33 @@ installed() { echo "lyne-sddm-git ${2:-0.2.0.r0}.g$(git -C "$SRC" rev-parse --sh
     assert_output --partial "the install stopped"
     run cat "$STUB_LOG"
     refute_line --partial "lyne-sddm"
+}
+
+@test "install: a script install is replaced once the package is built, settings kept" {
+    install_stubs
+    mkdir -p "$LYNE_SDDM_THEME" && touch "$LYNE_SDDM_THEME/metadata.desktop"
+    run sddm sddm_apply
+    local conf
+    conf=$(conf)
+    # A failed build leaves the script install as it was
+    local bin="$BATS_TEST_TMPDIR/bin"
+    mv "$bin/makepkg" "$bin/makepkg.ok" && printf '#!/bin/bash\nexit 1\n' >"$bin/makepkg" && chmod +x "$bin/makepkg"
+    run sddm 'echo | sddm_install stable 1'
+    assert_failure
+    assert [ -f "$LYNE_SDDM_THEME/metadata.desktop" ]
+    mv "$bin/makepkg.ok" "$bin/makepkg"
+    : >"$STUB_LOG"
+    run sddm 'echo | sddm_install stable 1'
+    assert_success
+    run cat "$STUB_LOG"
+    assert_line "makepkg -scf --noconfirm (in $HOME/.cache/lyne/lyne-sddm)"
+    assert_line "sudo rm -rf -- $LYNE_SDDM_THEME"
+    assert_line "sudo pacman -U --noconfirm $HOME/.cache/lyne/lyne-sddm/lyne-sddm-git-1-any.pkg.tar.zst"
+    assert_line --regexp "^lyne-sddm  ?\(in "
+    refute [ -e "$LYNE_SDDM_THEME" ]
+    # The sync dir and its files are the package's too
+    assert_equal "$(conf)" "$conf"
+    refute compgen -G "$HOME/.cache/lyne/lyne-sddm/*.pkg.tar.*"
 }
 
 @test "dm: the display manager systemd starts, empty without one" {
