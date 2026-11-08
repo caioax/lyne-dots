@@ -1,7 +1,12 @@
 #!/bin/bash
 # Test stand-in for pacman over $FAKE_PKGS ("name version" lines); -Qo/-Qqo
 # own only the paths listed in $FAKE_OWNED ("path package" lines)
+# $FAKE_PACMAN_FAIL: an operation (-U, -S...) that fails
 echo "pacman $*" >>"${STUB_LOG:-/dev/null}"
+if [[ -n "${FAKE_PACMAN_FAIL:-}" && "$1" == "$FAKE_PACMAN_FAIL" ]]; then
+    echo "error: failed to commit transaction (FAKE_PACMAN_FAIL)" >&2
+    exit 1
+fi
 db="${FAKE_PKGS:?FAKE_PKGS not set}"
 touch "$db"
 op=$1

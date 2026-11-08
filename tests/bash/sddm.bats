@@ -287,13 +287,24 @@ installed() { echo "lyne-sddm-git ${2:-0.2.0.r0}.g$(git -C "$SRC" rev-parse --sh
     assert_success
     run cat "$STUB_LOG"
     assert_line "makepkg -scf --noconfirm (in $HOME/.cache/lyne/lyne-sddm)"
-    assert_line "sudo rm -rf -- $LYNE_SDDM_THEME"
+    assert_line "sudo mv -- $LYNE_SDDM_THEME $BATS_TEST_TMPDIR/.theme-script-bak"
     assert_line "sudo pacman -U --noconfirm $HOME/.cache/lyne/lyne-sddm/lyne-sddm-git-1-any.pkg.tar.zst"
+    refute [ -e "$BATS_TEST_TMPDIR/.theme-script-bak" ]
     assert_line --regexp "^lyne-sddm  ?\(in "
     refute [ -e "$LYNE_SDDM_THEME" ]
     # The sync dir and its files are the package's too
     assert_equal "$(conf)" "$conf"
     refute compgen -G "$HOME/.cache/lyne/lyne-sddm/*.pkg.tar.*"
+}
+
+@test "install: pacman failing on the package puts the script install back" {
+    install_stubs
+    mkdir -p "$LYNE_SDDM_THEME" && touch "$LYNE_SDDM_THEME/metadata.desktop"
+    FAKE_PACMAN_FAIL=-U run sddm 'echo | sddm_install stable 1'
+    assert_failure
+    assert_output --partial "the script install is back"
+    assert [ -f "$LYNE_SDDM_THEME/metadata.desktop" ]
+    refute [ -e "$BATS_TEST_TMPDIR/.theme-script-bak" ]
 }
 
 @test "dm: the display manager systemd starts, empty without one" {

@@ -322,8 +322,18 @@ sddm_build() {
         local pkg
         pkg=$(compgen -G "$SDDM_BUILD_DIR/lyne-sddm-git-*.pkg.tar.*" | tail -n1)
         [[ -n "$pkg" ]] || { echo "lyne-sddm: makepkg left no package" >&2; return 1; }
+        # Set aside, not deleted, until pacman installed the package: a failed
+        # install puts the working theme back
         echo ":: Replacing the script install's theme files with the package"
-        sudo rm -rf -- "$SDDM_THEME" && sudo pacman -U --noconfirm "$pkg" || return 1
+        local backup
+        backup="$(dirname "$SDDM_THEME")/.$(basename "$SDDM_THEME")-script-bak"
+        sudo rm -rf -- "$backup" && sudo mv -- "$SDDM_THEME" "$backup" || return 1
+        if ! sudo pacman -U --noconfirm "$pkg"; then
+            sudo mv -- "$backup" "$SDDM_THEME"
+            echo "lyne-sddm: the package didn't install, the script install is back" >&2
+            return 1
+        fi
+        sudo rm -rf -- "$backup"
     else
         (cd "$SDDM_BUILD_DIR" && LYNE_SDDM_REF="$ref" makepkg -sicf --noconfirm --needed) || return 1
     fi
