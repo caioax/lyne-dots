@@ -8,6 +8,9 @@ CMD_DIR="$DOTS_DIR/.data/lyne-cli/commands"
 
 # lyne_state_set and lyne_state_replace, for the commands and migrations
 source "$DOTS_DIR/.data/lyne-cli/lib/state.sh"
+# A terminal from before the current Hyprland session: its variables
+source "$DOTS_DIR/.data/lyne-cli/lib/session-env.sh"
+lyne_session_env
 
 cmd="${1:-help}"
 [[ "$cmd" == "--help" || "$cmd" == "-h" ]] && cmd="help"

@@ -1,5 +1,6 @@
 #!/bin/bash
-# Test stand-in for systemctl: is-enabled/enable/disable over $FAKE_ENABLED
+# Test stand-in for systemctl: is-enabled/enable/disable over $FAKE_ENABLED,
+# show-environment prints $FAKE_SYSTEMD_ENV
 echo "systemctl $*" >>"${STUB_LOG:-/dev/null}"
 db="${FAKE_ENABLED:-/dev/null}"
 args=()
@@ -10,5 +11,6 @@ is-enabled)
     ;;
 enable) printf '%s\n' "${args[@]:1}" >>"$db" ;;
 disable) for u in "${args[@]:1}"; do sed -i "/^$u\$/d" "$db"; done ;;
+show-environment) cat "${FAKE_SYSTEMD_ENV:-/dev/null}" ;;
 esac
 exit 0
