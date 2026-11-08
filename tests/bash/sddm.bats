@@ -202,7 +202,7 @@ install_stubs() {
     local bin="$BATS_TEST_TMPDIR/bin" cmd
     mkdir -p "$bin"
     for cmd in makepkg lyne-sddm; do
-        printf '#!/bin/bash\necho "%s $* (in $PWD${LYNE_SDDM_REF:+, ref $LYNE_SDDM_REF})" >>"$STUB_LOG"\n' "$cmd" >"$bin/$cmd"
+        printf '#!/bin/bash\necho "%s $* (in $PWD${LYNE_SDDM_REF:+, ref $LYNE_SDDM_REF})" >>"$STUB_LOG"\n[[ $0 == *makepkg ]] && touch lyne-sddm-git-1-any.pkg.tar.zst\nexit 0\n' "$cmd" >"$bin/$cmd"
         chmod +x "$bin/$cmd"
     done
     export PATH="$bin:$PATH"
@@ -227,6 +227,8 @@ installed() { echo "lyne-sddm-git ${2:-0.2.0.r0}.g$(git -C "$SRC" rev-parse --sh
     assert_output --partial "Login screen installed and synced"
     local build="$HOME/.cache/lyne/lyne-sddm"
     assert [ -f "$build/PKGBUILD" ]
+    # The package file goes once installed
+    refute compgen -G "$build/*.pkg.tar.*"
     run cat "$STUB_LOG"
     assert_line --partial "pacman -S --needed --noconfirm git base-devel"
     # No release yet: stable builds main

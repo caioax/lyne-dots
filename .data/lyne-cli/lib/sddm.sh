@@ -314,6 +314,9 @@ sddm_build() {
     fi
     echo ":: Building and installing lyne-sddm-git ${ref:-from main} (makepkg)"
     (cd "$SDDM_BUILD_DIR" && LYNE_SDDM_REF="$ref" makepkg -sicf --noconfirm --needed) || return 1
+    # Installed: the package file would pile up, one per version (makepkg's
+    # git mirror stays, for the next fetch)
+    rm -f "$SDDM_BUILD_DIR"/*.pkg.tar.*
 }
 
 # Build lyne-sddm-git for the channel (stable when not given), then
