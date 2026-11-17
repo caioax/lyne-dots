@@ -88,24 +88,31 @@ Item {
         }
     }
 
-    // Clips at the main edge, with room for the fillets on the other sides
+    // Clips at every flush side (the panel's own shadow must not paint over
+    // the bar or the next edge), with room for the fillets and the shadow on
+    // the free sides
     Item {
         id: clipper
 
-        // Room on the free sides: the fillets, or the shadow
+        // Room on a free side: the fillets, or the shadow
         readonly property real s: root.shadow ? Math.max(root.filletSize, Config.shadowPad) : root.filletSize
+        readonly property real roomTop: root._top ? 0 : s
+        readonly property real roomBottom: root._bottom ? 0 : s
+        readonly property real roomLeft: root._left ? 0 : s
+        readonly property real roomRight: root._right ? 0 : s
 
-        x: root._main === "left" ? 0 : -s
-        y: root._main === "top" ? 0 : -s
-        width: root.width + (root._main === "left" || root._main === "right" ? s : s * 2)
-        height: root.height + (root._main === "top" || root._main === "bottom" ? s : s * 2)
+        x: -roomLeft
+        y: -roomTop
+        width: root.width + roomLeft + roomRight
+        height: root.height + roomTop + roomBottom
         clip: true
 
         Item {
             id: slide
 
-            // How far the panel travels to get fully behind the main edge
-            readonly property real hiddenOffset: (root._main === "top" || root._main === "bottom" ? root.height : root.width) + clipper.s
+            // How far the panel travels to get fully behind the main edge,
+            // shadow on the opposite side included
+            readonly property real hiddenOffset: root._main === "top" ? root.height + clipper.roomBottom : root._main === "bottom" ? root.height + clipper.roomTop : root._main === "left" ? root.width + clipper.roomRight : root.width + clipper.roomLeft
             readonly property real offset: (1 - root._progress) * hiddenOffset
 
             x: -clipper.x + (root._main === "left" ? -offset : root._main === "right" ? offset : 0)
