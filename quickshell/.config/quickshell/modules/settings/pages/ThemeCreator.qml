@@ -522,7 +522,7 @@ ColumnLayout {
 
                                     Image {
                                         anchors.fill: parent
-                                        source: WallpaperService.stillSource(thumb.modelData)
+                                        source: WallpaperService.thumbSource(thumb.modelData)
                                         fillMode: Image.PreserveAspectCrop
                                         sourceSize: Config.wallpaperThumbSize
                                         asynchronous: true

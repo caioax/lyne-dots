@@ -50,7 +50,7 @@ Item {
             width: parent.width
             height: tile.thumbHeight
             // Only loaded while the page is open
-            source: tile.loadImage && tile.preview.wallpaper ? WallpaperService.stillSource(ThemeService.wallpaperDir + "/" + tile.preview.wallpaper) : ""
+            source: tile.loadImage && tile.preview.wallpaper ? WallpaperService.thumbSource(ThemeService.wallpaperDir + "/" + tile.preview.wallpaper) : ""
             fillMode: Image.PreserveAspectCrop
             sourceSize: Config.wallpaperThumbSize
             asynchronous: true

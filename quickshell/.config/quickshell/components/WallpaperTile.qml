@@ -75,7 +75,7 @@ Item {
         Image {
             id: image
             anchors.fill: parent
-            source: root.making ? (root.progressPoster ? "file://" + root.progressPoster : "") : WallpaperService.stillSource(root.path)
+            source: root.making ? (root.progressPoster ? "file://" + root.progressPoster : "") : WallpaperService.thumbSource(root.path)
             fillMode: Image.PreserveAspectCrop
             sourceSize: Config.wallpaperThumbSize
             asynchronous: true

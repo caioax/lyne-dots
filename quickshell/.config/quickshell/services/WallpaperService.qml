@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.UPower
+import qs.config
 import qs.services
 import "videoRules.js" as VideoRules
 
@@ -77,6 +78,12 @@ Singleton {
     // video path -> its poster, filled as tiles ask for them
     property var posters: ({})
     property var _posterQueue: []
+    // Small cached JPEGs for tiles (wallpaper-thumb.sh), so a list doesn't
+    // decode every full-size image: path -> its thumbnail, "" when none
+    // could be made, filled as tiles ask for them
+    readonly property string thumbScript: Qt.resolvedUrl("../scripts/wallpaper-thumb.sh").toString().replace("file://", "")
+    property var thumbs: ({})
+    property var _thumbQueue: []
 
     readonly property string _setScript: Qt.resolvedUrl("../scripts/wallpaper-set.sh").toString().replace("file://", "")
     // Transition of every wallpaper change (Settings › Wallpaper): none, fade,
@@ -170,6 +177,37 @@ Singleton {
     function stillSource(path: string): string {
         const still = posterOf(path);
         return still ? "file://" + still : "";
+    }
+
+    // A tile's image source: the cached thumbnail ("" while it's made,
+    // asking for it starts that), or the still image when none could be made
+    function thumbSource(path: string): string {
+        if (!path)
+            return "";
+        const thumb = thumbs[path];
+        if (thumb === undefined) {
+            requestThumb(path);
+            return "";
+        }
+        return thumb ? "file://" + thumb : stillSource(path);
+    }
+
+    function requestThumb(path: string) {
+        if (_thumbQueue.includes(path))
+            return;
+        _thumbQueue.push(path);
+        // Tiles of a whole list ask in the same tick: one run for them all
+        Qt.callLater(_makeThumbs);
+    }
+
+    function _makeThumbs() {
+        if (thumbProc.running || _thumbQueue.length === 0)
+            return;
+        const batch = _thumbQueue;
+        _thumbQueue = [];
+        const size = Config.wallpaperThumbSize;
+        thumbProc.command = [thumbScript, size.width + "x" + size.height, ...batch];
+        thumbProc.running = true;
     }
 
     function requestPoster(path: string) {
@@ -366,6 +404,9 @@ Singleton {
         const posters = Object.assign({}, root.posters);
         paths.forEach(p => delete posters[p]);
         root.posters = posters;
+        const thumbs = Object.assign({}, root.thumbs);
+        paths.forEach(p => delete thumbs[p]);
+        root.thumbs = thumbs;
         themeWallpapers = themeWallpapers.filter(w => !paths.includes(w));
         if (paths.includes(currentWallpaper))
             currentWallpaper = "";
@@ -538,6 +579,31 @@ Singleton {
                 posters[v] = _found[v] ?? "";
             root.posters = posters;
             Qt.callLater(root._makePosters);
+        }
+    }
+
+    // "path<TAB>thumbnail" lines from wallpaper-thumb.sh
+    Process {
+        id: thumbProc
+
+        property var _found: ({})
+
+        stdout: SplitParser {
+            onRead: data => {
+                const tab = data.indexOf("\t");
+                if (tab > 0)
+                    thumbProc._found[data.substring(0, tab)] = data.substring(tab + 1);
+            }
+        }
+        onStarted: _found = {}
+        onExited: {
+            // A file without a thumbnail stays "" (asked once)
+            const thumbs = Object.assign({}, root.thumbs);
+            // [script, size, ...paths]
+            for (const p of command.slice(2))
+                thumbs[p] = _found[p] ?? "";
+            root.thumbs = thumbs;
+            Qt.callLater(root._makeThumbs);
         }
     }
 
