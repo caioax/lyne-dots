@@ -36,7 +36,7 @@ if [[ ! -s "$poster" ]]; then
     mkdir -p "$cache"
     # Written aside and moved, so a reader never gets half a file
     tmp="$cache/.$key.$$.jpg"
-    if ! ffmpeg -nostdin -loglevel error -y -i "$real" -frames:v 1 -q:v 2 "$tmp" || [[ ! -s "$tmp" ]]; then
+    if ! ffmpeg -nostdin -loglevel error -y -i "$real" -frames:v 1 -q:v 2 "$tmp" >/dev/null || [[ ! -s "$tmp" ]]; then
         rm -f "$tmp"
         echo "no frame from: $video" >&2
         exit 4

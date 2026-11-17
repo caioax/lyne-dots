@@ -37,13 +37,6 @@ done
 echo "scaled $size $tag" >"$f"
 printf 'out_time_us=2500000\nprogress=continue\nout_time_us=10000000\nprogress=end\n'
 EOF
-    # notify-send: logs, and prints an id for -p so the progress updates it
-    cat >"$BATS_TEST_TMPDIR/bin/notify-send" <<'EOF'
-#!/bin/bash
-echo "notify-send $*" >>"$STUB_LOG"
-[[ " $* " == *" -p "* ]] && echo 7
-exit 0
-EOF
     chmod +x "$BATS_TEST_TMPDIR/bin/"*
     export PATH="$BATS_TEST_TMPDIR/bin:$PATH"
 }
@@ -142,20 +135,29 @@ added:$LIBRARY/a-3.jpg"
     img "$SRC/big.mkv" 3840x2160
     run "$SCRIPT" --fit 1920x1080 "$LIBRARY" "$SRC/big.mkv"
     assert_success
-    assert_output "added:$LIBRARY/big.mp4"
+    poster="$(ls "$HOME/.cache/lyne/wallpaper-posters/"*.jpg)"
+    assert_output "$(printf 'fitting:%s\t%s\nprogress:%s\t25\nprogress:%s\t99\nadded:%s' \
+        "$LIBRARY/big.mp4" "$poster" "$LIBRARY/big.mp4" "$LIBRARY/big.mp4" "$LIBRARY/big.mp4")"
     read -r _ size tag <"$LIBRARY/big.mp4"
     assert_equal "$size" 1920x1080
     assert_equal "$tag" "lyne-source:$(sha1sum "$SRC/big.mkv" | cut -d' ' -f1)"
     # The source as it was, no temporary file left
     assert_equal "$(cat "$SRC/big.mkv")" 3840x2160
     assert_equal "$(ls -A "$LIBRARY")" big.mp4
-    # Opened at 0, replaced at each step, 100 when done
-    run grep -o 'int:value:[0-9]*' "$STUB_LOG"
-    assert_output "int:value:0
-int:value:25
-int:value:99
-int:value:100"
-    assert_equal "$(grep -c -- '-r 7 ' "$STUB_LOG")" 3
+    # No notification: Settings shows the progress
+    run grep -c '^notify-send' "$STUB_LOG"
+    assert_output 0
+}
+
+@test "fit: a cancelled video is not added, the next one is" {
+    img "$SRC/a.mp4" 3840x2160
+    img "$SRC/b.mp4" "3840x2160 b"
+    echo "$LIBRARY/a.mp4" >"$BATS_TEST_TMPDIR/cancel"
+    LYNE_ADD_CANCEL="$BATS_TEST_TMPDIR/cancel" run "$SCRIPT" --fit 1920x1080 "$LIBRARY" "$SRC"
+    assert_success
+    assert_line "cancelled:$LIBRARY/a.mp4"
+    assert_line "added:$LIBRARY/b.mp4"
+    assert_equal "$(ls -A "$LIBRARY")" b.mp4
 }
 
 @test "fit: another shape keeps it, covering the screen" {
@@ -187,13 +189,14 @@ int:value:100"
     assert_output "skipped:$SRC/big.mp4"
     img "$SRC/other/big.mp4" "3840x2160 other"
     run "$SCRIPT" --fit 1920x1080 "$LIBRARY" "$SRC/other/big.mp4"
-    assert_output "added:$LIBRARY/big-1.mp4"
+    assert_line "added:$LIBRARY/big-1.mp4"
 }
 
 @test "fit: a video ffmpeg can't read is not added" {
     img "$SRC/broken.mp4" 3840x2160
     run "$SCRIPT" --fit 1920x1080 "$LIBRARY" "$SRC/broken.mp4"
     assert_success
-    assert_output ""
+    assert_line "failed:$LIBRARY/broken.mp4"
+    refute_output --partial "added:"""
     assert_equal "$(ls -A "$LIBRARY")" ""
 }

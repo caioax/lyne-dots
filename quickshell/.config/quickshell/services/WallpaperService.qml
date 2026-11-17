@@ -56,6 +56,11 @@ Singleton {
     property var _added: []
     // Images the running Add found already in the library
     property int _skipped: 0
+    // Videos the running Add is scaling down to the screen (wallpapers-add.sh
+    // --fit): the copy's path -> { poster (the source's), progress 0-100 }.
+    // Settings shows a tile for each until the list has the copy
+    property var fitting: ({})
+    readonly property string _cancelFile: Quickshell.env("XDG_RUNTIME_DIR") + "/lyne-wallpapers-add.cancel"
     readonly property string _addScript: Qt.resolvedUrl("../scripts/wallpapers-add.sh").toString().replace("file://", "")
 
     // Wallpapers are images or videos (mp4, webm, mkv; wallpaper-set.sh plays
@@ -380,6 +385,22 @@ Singleton {
         addWallpapersProc.running = true;
     }
 
+    // Stops scaling that video; the rest of the Add goes on
+    function cancelFit(path: string) {
+        if (fitting[path] === undefined)
+            return;
+        Quickshell.execDetached(["sh", "-c", "printf '%s\\n' \"$1\" >> \"$2\"", "sh", path, _cancelFile]);
+    }
+
+    function _setFitting(path: string, entry) {
+        const next = Object.assign({}, fitting);
+        if (entry)
+            next[path] = entry;
+        else
+            delete next[path];
+        fitting = next;
+    }
+
     // After a folder: how many came in; after images: only when none did
     function _notifyAdded(folder: bool) {
         const added = _added.length;
@@ -420,6 +441,9 @@ Singleton {
         onStarted: listWallpapersProc._buffer = []
         onExited: {
             root.wallpapers = listWallpapersProc._buffer;
+            // Scaled copies now listed lose their progress tile
+            const done = Object.keys(root.fitting).filter(p => root.fitting[p].progress >= 100 && root.wallpapers.includes(p));
+            done.forEach(p => root._setFitting(p, null));
             const added = root._added.filter(p => root.wallpapers.includes(p));
             root._added = [];
             if (added.length > 0)
@@ -521,6 +545,7 @@ Singleton {
         property bool folder: false
 
         onStarted: {
+            root.fitting = {};
             root._added = [];
             root._skipped = 0;
         }
@@ -543,18 +568,40 @@ Singleton {
                 exit 0
             fi
             mapfile -t paths <<<"$picked"
+            rm -f "$LYNE_ADD_CANCEL"
             "$1" --fit "$8" "${root.wallpaperDir}" "\${paths[@]}"
+            rm -f "$LYNE_ADD_CANCEL"
             echo "done"
         `, "bash", root._addScript, folder ? "folder" : "files", I18n.tr("Add wallpapers"), I18n.tr("Add a folder of wallpapers"), I18n.tr("Images and videos"), I18n.tr("Wallpaper"), I18n.tr("Install zenity to add wallpapers"), root.largestScreenPixels()]
-        // Title of the progress notification while a video is scaled down
+        // Where cancelFit asks the script to stop a scaling
         environment: ({
-                LYNE_FIT_TITLE: I18n.tr("Fitting a video to your screen")
+                LYNE_ADD_CANCEL: root._cancelFile
             })
         stdout: SplitParser {
             onRead: data => {
                 const result = data.trim();
+                const tab = result.indexOf("\t");
                 if (result.startsWith("added:")) {
-                    root._added = [...root._added, result.slice(6)];
+                    const path = result.slice(6);
+                    root._added = [...root._added, path];
+                    // Its tile stays, full, until the list shows the copy
+                    if (root.fitting[path] !== undefined)
+                        root._setFitting(path, Object.assign({}, root.fitting[path], {
+                            progress: 100
+                        }));
+                } else if (result.startsWith("fitting:") && tab > 0) {
+                    root._setFitting(result.substring(8, tab), {
+                        poster: result.substring(tab + 1),
+                        progress: 0
+                    });
+                } else if (result.startsWith("progress:") && tab > 0) {
+                    const path = result.substring(9, tab);
+                    if (root.fitting[path] !== undefined)
+                        root._setFitting(path, Object.assign({}, root.fitting[path], {
+                            progress: Number(result.substring(tab + 1))
+                        }));
+                } else if (result.startsWith("failed:") || result.startsWith("cancelled:")) {
+                    root._setFitting(result.substring(result.indexOf(":") + 1), null);
                 } else if (result.startsWith("skipped:")) {
                     root._skipped++;
                 } else if (result === "done") {

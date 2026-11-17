@@ -7,7 +7,9 @@ import qs.services
 // Wallpaper thumbnail with its name. Click applies it (the page decides what
 // that means), Ctrl+click selects; the ⋮ button shows up on hover, and a
 // right click asks for the same menu. A video shows its poster, with a play
-// mark in the corner
+// mark in the corner. With a progress (a video Add is scaling down), the
+// source's poster shows dimmed under a ring with the percentage and a ✕
+// that cancels; nothing else reacts
 Item {
     id: root
 
@@ -28,6 +30,11 @@ Item {
     property bool showName: true
     // Just added: an accent outline pulses a few times when it turns on
     property bool isNew: false
+    // 0-100 while it's being made (-1: a wallpaper in the library), over
+    // progressPoster
+    property real progress: -1
+    property string progressPoster: ""
+    readonly property bool making: progress >= 0
 
     readonly property bool favorite: WallpaperService.isFavorite(path)
     readonly property bool animated: WallpaperService.isVideo(path)
@@ -42,6 +49,7 @@ Item {
     signal activated
     signal selectToggled
     signal menuRequested(Item anchor)
+    signal cancelRequested
 
     implicitHeight: thumb.height + (showName ? nameText.implicitHeight + Config.padding : 0)
 
@@ -67,7 +75,7 @@ Item {
         Image {
             id: image
             anchors.fill: parent
-            source: WallpaperService.stillSource(root.path)
+            source: root.making ? (root.progressPoster ? "file://" + root.progressPoster : "") : WallpaperService.stillSource(root.path)
             fillMode: Image.PreserveAspectCrop
             sourceSize: Config.wallpaperThumbSize
             asynchronous: true
@@ -90,6 +98,7 @@ Item {
         MouseArea {
             id: tileMouse
             anchors.fill: parent
+            enabled: !root.making
             cursorShape: Qt.PointingHandCursor
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             onClicked: mouse => {
@@ -123,22 +132,78 @@ Item {
             }
         }
 
-        // Animated wallpaper (md-play), always shown
+        // Being made: dimmed, a ring with the percentage, ✕ to cancel
         Rectangle {
-            visible: root.animated && !root.selecting
+            visible: root.making
+            anchors.fill: parent
+            color: Qt.alpha(Config.backgroundColor, 0.6)
+
+            ProgressRing {
+                id: ring
+
+                anchors.centerIn: parent
+                width: Math.round(parent.height * 0.5)
+                height: width
+                strokeWidth: Math.max(3, Math.round(width / 12))
+                value: root.progress
+                trackColor: Qt.alpha(Config.textColor, 0.2)
+            }
+
+            Text {
+                anchors.centerIn: ring
+                text: Math.round(root.progress) + "%"
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeNormal
+                font.bold: true
+                color: Config.textColor
+            }
+
+            // md-close
+            Rectangle {
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Config.padding
+                width: root.badgeSize + Config.padding
+                height: width
+                radius: Config.radius
+                color: cancelMouse.containsMouse ? Config.surface2Color : Qt.alpha(Config.backgroundColor, 0.7)
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "\u{f0156}"
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeLarge
+                    color: cancelMouse.containsMouse ? Config.errorColor : Config.textColor
+                }
+
+                MouseArea {
+                    id: cancelMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.cancelRequested()
+                }
+            }
+        }
+
+        // Animated wallpaper (md-play), always shown; as large as the ⋮ button
+        Rectangle {
+            visible: root.animated && !root.selecting && !root.making
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             anchors.margins: Config.padding
-            width: root.badgeSize
+            width: root.badgeSize + Config.padding
             height: width
             radius: width / 2
-            color: Qt.alpha(Config.backgroundColor, 0.7)
+            color: Qt.alpha(Config.backgroundColor, 0.85)
 
             Text {
                 anchors.centerIn: parent
+                // The triangle's weight sits left: nudged to look centered
+                anchors.horizontalCenterOffset: Math.round(Config.fontSizeLarge / 12)
                 text: "\u{f040a}"
                 font.family: Config.font
-                font.pixelSize: Config.fontSizeSmall
+                font.pixelSize: Config.fontSizeLarge
                 color: Config.textColor
             }
         }
@@ -169,7 +234,7 @@ Item {
         Rectangle {
             id: menuButton
 
-            visible: root.showMenu && (root.hovered || menuMouse.containsMouse) && !root.selecting
+            visible: root.showMenu && (root.hovered || menuMouse.containsMouse) && !root.selecting && !root.making
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.margins: Config.padding

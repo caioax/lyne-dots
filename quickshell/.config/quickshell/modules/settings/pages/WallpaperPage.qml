@@ -44,7 +44,9 @@ ColumnLayout {
             const q = query.toLowerCase();
             list = list.filter(w => WallpaperService.fileName(w).toLowerCase().includes(q));
         }
-        return list;
+        // Videos being scaled down by Add, at the end until they're listed
+        const fitting = Object.keys(WallpaperService.fitting).filter(p => !list.includes(p));
+        return fitting.length > 0 ? [...list, ...fitting] : list;
     }
 
     function displayName(path: string): string {
@@ -633,7 +635,11 @@ ColumnLayout {
 
                             Layout.fillWidth: true
                             Layout.preferredWidth: grid.cellWidth
+                            readonly property var fit: WallpaperService.fitting[path]
+
                             current: path === WallpaperService.currentWallpaper
+                            progress: fit !== undefined && !WallpaperService.wallpapers.includes(path) ? fit.progress : -1
+                            progressPoster: fit?.poster ?? ""
                             selected: root.selection.includes(path)
                             selecting: root.selecting
                             isNew: root.newPaths.includes(path)
@@ -641,6 +647,7 @@ ColumnLayout {
                             onActivated: root.activate(tile.path)
                             onSelectToggled: root.toggleSelected(tile.path)
                             onMenuRequested: anchor => menu.openAt(anchor, tile.path)
+                            onCancelRequested: WallpaperService.cancelFit(tile.path)
                         }
                     }
 

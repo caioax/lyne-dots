@@ -14,10 +14,14 @@
 #   skipped:<PATH's file>
 #
 # --fit WxH (the largest screen, in pixels): a video larger than needed to
-# cover it is stored scaled down to that, as H.264 mp4 without sound, with a
-# progress notification ($LYNE_FIT_TITLE, translated by the caller); the
+# cover it is stored scaled down to that, as H.264 mp4 without sound; the
 # source file is left as it is. The copy remembers its source, so adding the
-# same video again is still skipped.
+# same video again is still skipped. While it's scaled (Settings shows a
+# tile with a progress ring):
+#   fitting:<the copy in DEST><TAB><the source's poster>
+#   progress:<the copy in DEST><TAB><0-99>
+# then added:, or failed:/cancelled: with the copy's path. A line with the
+# copy's path in the file $LYNE_ADD_CANCEL stops its scaling.
 
 set -uo pipefail
 
@@ -30,6 +34,7 @@ dest="${1:?usage: wallpapers-add.sh [--fit WxH] DEST PATH...}"
 shift
 mkdir -p "$dest" || exit 1
 real_dest="$(realpath "$dest")"
+here="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 
 ext_of() {
     local ext="${1##*.}"
@@ -78,37 +83,42 @@ copy_tag() {
     ffprobe -v error -show_entries format_tags=comment -of default=nw=1:nk=1 -- "$1" 2>/dev/null
 }
 
-# scale SRC TARGET W H TAG: the scaled copy, with a progress notification
+# scale SRC TARGET W H TAG: the scaled copy, reporting its progress
 scale() {
-    local src="$1" target="$2" w="$3" h="$4" tag="$5" duration id="" pct last=-1 line us
-    local tmp="$dest/.adding-$$.mp4"
+    local src="$1" target="$2" w="$3" h="$4" tag="$5" duration pct last=-1 line us fd ffmpeg_pid
+    local tmp="$dest/.adding-$$.mp4" cancelled=0
     duration="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 -- "$src" 2>/dev/null)"
     duration="${duration%%.*}"
-    local title="${LYNE_FIT_TITLE:-Fitting a video to your screen}"
-    id="$(notify-send -a Settings -i preferences-desktop-wallpaper -p -h int:value:0 "$title" "${src##*/}" 2>/dev/null)"
-    while IFS= read -r line; do
+    printf 'fitting:%s\t%s\n' "$target" "$("$here/wallpaper-poster.sh" "$src" 2>/dev/null)"
+    # Nice: it takes every core for a few seconds
+    exec {fd}< <(exec nice -n 10 ffmpeg -nostdin -loglevel error -nostats -progress pipe:1 -y -i "$src" -an \
+        -vf "scale=$w:$h:flags=lanczos" -c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p \
+        -movflags +faststart -metadata "comment=$tag" "$tmp")
+    ffmpeg_pid=$!
+    while IFS= read -r -u "$fd" line; do
+        if [[ -n "${LYNE_ADD_CANCEL:-}" && -f "$LYNE_ADD_CANCEL" ]] && grep -qxF -- "$target" "$LYNE_ADD_CANCEL"; then
+            kill "$ffmpeg_pid" 2>/dev/null
+            cancelled=1
+            break
+        fi
         [[ "$line" == out_time_us=* && "${duration:-0}" -gt 0 ]] || continue
         us="${line#out_time_us=}"
         [[ "$us" =~ ^[0-9]+$ ]] || continue
         pct=$((us / 10000 / duration))
         ((pct > 99)) && pct=99
-        # Every 5%, not every frame
-        if ((pct / 5 != last / 5)) && [[ -n "$id" ]]; then
-            notify-send -a Settings -i preferences-desktop-wallpaper -r "$id" -h "int:value:$pct" "$title" "${src##*/}" 2>/dev/null
+        if ((pct != last)); then
+            printf 'progress:%s\t%s\n' "$target" "$pct"
             last=$pct
         fi
-    # Nice: it takes every core for a few seconds
-    done < <(nice -n 10 ffmpeg -nostdin -loglevel error -nostats -progress pipe:1 -y -i "$src" -an \
-        -vf "scale=$w:$h:flags=lanczos" -c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p \
-        -movflags +faststart -metadata "comment=$tag" "$tmp")
-    if [[ -s "$tmp" && "$(copy_tag "$tmp")" == "$tag" ]]; then
+    done
+    exec {fd}<&-
+    wait "$ffmpeg_pid" 2>/dev/null
+    if ((!cancelled)) && [[ -s "$tmp" && "$(copy_tag "$tmp")" == "$tag" ]]; then
         mv -f -- "$tmp" "$target"
-        [[ -n "$id" ]] && notify-send -a Settings -i preferences-desktop-wallpaper -r "$id" -t 2000 \
-            -h int:value:100 "$title" "${src##*/}" 2>/dev/null
         return 0
     fi
     rm -f -- "$tmp"
-    [[ -n "$id" ]] && notify-send -a Settings -i preferences-desktop-wallpaper -r "$id" -t 1 "$title" "" 2>/dev/null
+    ((cancelled)) && echo "cancelled:$target" || echo "failed:$target"
     return 1
 }
 

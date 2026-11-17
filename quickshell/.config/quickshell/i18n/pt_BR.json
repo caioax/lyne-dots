@@ -1602,7 +1602,6 @@
     "Add a folder of wallpapers": "Adicionar uma pasta de papéis de parede",
     "Images and videos": "Imagens e vídeos",
     "Install zenity to add wallpapers": "Instale o zenity para adicionar papéis de parede",
-    "Fitting a video to your screen": "Ajustando um vídeo à sua tela",
     "Missing Python modules: run lyne update (python-numpy, python-pillow)": "Faltam módulos Python: rode lyne update (python-numpy, python-pillow)",
     "rsvg-convert not found: run lyne update (librsvg)": "rsvg-convert não encontrado: rode lyne update (librsvg)",
     "The generator failed": "O gerador falhou",
