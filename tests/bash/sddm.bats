@@ -71,6 +71,33 @@ conf() { cat "$LYNE_SDDM_DIR/theme.conf.user"; }
     refute [ -e "$LYNE_SDDM_DIR/wallpaper.jpg" ]
 }
 
+@test "a video wallpaper: its poster is copied, none when it has no frame" {
+    # The poster script: a jpg next to the video, nothing for a broken one
+    export LYNE_SDDM_POSTER="$BATS_TEST_TMPDIR/poster"
+    cat >"$LYNE_SDDM_POSTER" <<'EOF'
+#!/bin/bash
+[[ "$1" == *broken* ]] && exit 4
+printf 'first frame' >"$1.jpg"
+echo "$1.jpg"
+EOF
+    chmod +x "$LYNE_SDDM_POSTER"
+    printf 'video' >"$HOME/Pictures/loop.WebM"
+    set_state '.wallpaper.current = $w' --arg w "$HOME/Pictures/loop.WebM"
+    run sddm sddm_apply
+    assert_success
+    run conf
+    assert_line "wallpaper=$LYNE_SDDM_DIR/wallpaper.jpg"
+    assert_equal "$(cat "$LYNE_SDDM_DIR/wallpaper.jpg")" "first frame"
+    refute [ -e "$LYNE_SDDM_DIR/wallpaper.webm" ]
+    printf 'video' >"$HOME/Pictures/broken.mp4"
+    set_state '.wallpaper.current = $w' --arg w "$HOME/Pictures/broken.mp4"
+    run sddm sddm_apply
+    assert_success
+    run conf
+    refute_output --partial wallpaper
+    refute [ -e "$LYNE_SDDM_DIR/wallpaper.jpg" ]
+}
+
 @test "options: LYNE_SDDM_OPTIONS over state.json, even empty; no avatar removes the copy" {
     run sddm sddm_apply
     run sddm 'LYNE_SDDM_OPTIONS='"'"'{"opacity": 1}'"'"' sddm_apply'

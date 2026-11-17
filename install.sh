@@ -394,6 +394,14 @@ step_wallpaper() {
         WALLPAPER="$HOME/.local/wallpapers/themes/tokyonight/lyne-tokyonight-contour.jpg"
     fi
 
+    # A video wallpaper plays from the next login (wallpaper-boot.sh); awww
+    # shows its poster now
+    case "${WALLPAPER,,}" in
+        *.mp4 | *.webm | *.mkv)
+            WALLPAPER="$("$DOTFILES_DIR/quickshell/.config/quickshell/scripts/wallpaper-poster.sh" "$WALLPAPER" 2>/dev/null)" || WALLPAPER=""
+            ;;
+    esac
+
     # Check if awww is installed
     if ! command -v awww &>/dev/null; then
         log_warn "awww is not installed. Skipping wallpaper configuration."

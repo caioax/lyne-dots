@@ -8,7 +8,8 @@
 #   theme.conf.user     [General] overrides of theme.conf: the applied palette
 #                       (~/.cache/lyne/nvim.json, auto mode too),
 #                       backgroundOpacity, wallpaper= (absolute path), layout=
-#   wallpaper.<ext>     the current wallpaper, its extension kept
+#   wallpaper.<ext>     the current wallpaper, its extension kept; a video
+#                       wallpaper gives its poster (first frame, a jpg)
 #   avatars/<user>.png  the profile picture (Qt reads it by content)
 # Every file goes to a temp name inside the dir and is renamed into place, and
 # only when its content changed. Shows on the next login, nothing restarts.
@@ -63,6 +64,8 @@ SDDM_DIR="${SDDM_DIR%/}"
 SDDM_PALETTE="${LYNE_SDDM_PALETTE:-${XDG_CACHE_HOME:-$HOME/.cache}/lyne/nvim.json}"
 SDDM_STATE="${LYNE_STATE_FILE:-$DOTS_DIR/quickshell/.config/quickshell/state.json}"
 SDDM_AVATAR="$SDDM_DIR/avatars/$(id -un).png"
+# The still image of a wallpaper: a video's poster (LYNE_SDDM_POSTER for tests)
+SDDM_POSTER="${LYNE_SDDM_POSTER:-$DOTS_DIR/quickshell/.config/quickshell/scripts/wallpaper-poster.sh}"
 
 # The display-manager.service link systemctl enable writes
 SDDM_DM_LINK="${LYNE_DM_LINK:-/etc/systemd/system/display-manager.service}"
@@ -198,9 +201,13 @@ sddm_apply() {
     fi
     [[ -f "$SDDM_PALETTE" ]] || { echo "lyne sddm: no palette at $SDDM_PALETTE yet" >&2; return 1; }
 
-    # Wallpaper: a copy that keeps its extension; copies with another go
+    # Wallpaper: a copy that keeps its extension; copies with another go.
+    # SDDM can't play a video: its poster stands in
     local src ext wallpaper="" f
     src=$(_sddm_option wallpaper .wallpaper.current)
+    case "${src,,}" in
+        *.mp4 | *.webm | *.mkv) src=$("$SDDM_POSTER" "$src" 2>/dev/null) || src="" ;;
+    esac
     if [[ -f "$src" && -r "$src" ]]; then
         ext="${src##*.}"
         wallpaper="$SDDM_DIR/wallpaper.${ext,,}"
