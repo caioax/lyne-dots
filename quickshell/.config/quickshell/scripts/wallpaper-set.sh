@@ -19,7 +19,9 @@
 # transition (wallpaper-poster.sh), then mpvpaper starts on top of it.
 # Leaving a video, awww takes over the frame on screen before mpvpaper is
 # stopped, so nothing jumps back to the poster, and the transition runs from
-# there. One video plays at a time; it pauses under a fullscreen window.
+# there. One video plays at a time; WallpaperService pauses it
+# (wallpaper-video.sh) when every screen is covered by a fullscreen window,
+# the session is locked or on battery, as set in Settings.
 #
 # Exits 3 when PATH is not a file, 4 when a video has no poster.
 # =============================================================================
@@ -80,30 +82,13 @@ video_playing() {
     tr '\0' '\n' <"/proc/$pid/cmdline" | tail -n 1
 }
 
-# ipc JSON: one command to mpv, waits for its answer
-ipc() {
-    python3 - "$sock" "$1" <<'EOF' 2>/dev/null
-import socket, sys
-s = socket.socket(socket.AF_UNIX)
-s.settimeout(2)
-s.connect(sys.argv[1])
-s.sendall(sys.argv[2].encode() + b"\n")
-buf = b""
-while b'"error"' not in buf:
-    data = s.recv(4096)
-    if not data:
-        break
-    buf += data
-EOF
-}
-
 # Stops our mpvpaper, leaving the frame it showed on screen through awww
 stop_video() {
     local pid
     pid="$(video_pid)"
     [[ -n "$pid" ]] || return 0
     rm -f "$frame"
-    ipc '{"command": ["screenshot-to-file", "'"$frame"'", "video"]}'
+    "$here/wallpaper-video.sh" screenshot "$frame"
     [[ -s "$frame" ]] && awww img "$frame" --transition-type none
     pkill -f -- "input-ipc-server=$sock"
     for _ in {1..20}; do
@@ -148,6 +133,6 @@ fi
 
 # Detached, so it outlives this script and whoever ran it; without the lock
 # fd, or the next change would wait for it forever
-setsid -f mpvpaper -l bottom -p -a FULL \
+setsid -f mpvpaper -l bottom \
     -o "no-audio loop hwdec=auto-safe input-ipc-server=$sock" \
     ALL "$real" >/dev/null 2>&1 </dev/null 9>&-

@@ -4,7 +4,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Services.UPower
 import qs.services
+import "videoRules.js" as VideoRules
 
 Singleton {
     id: root
@@ -74,6 +76,32 @@ Singleton {
     property string transition: getState("wallpaper.transition", "fade")
     property string transitionSpeed: getState("wallpaper.transitionSpeed", "normal")
 
+    // Pause rules of a video wallpaper (Settings › Wallpaper › Animated
+    // wallpapers): every screen covered by a fullscreen window, the session
+    // locked, on battery. Its rows store them in the state and set these
+    property bool pauseCovered: getState("wallpaper.pauseCovered", true)
+    property bool pauseLocked: getState("wallpaper.pauseLocked", true)
+    property bool pauseOnBattery: getState("wallpaper.pauseOnBattery", false)
+    readonly property bool videoPlaying: isVideo(currentWallpaper)
+    readonly property bool videoPaused: videoPlaying && VideoRules.shouldPause({
+        covered: pauseCovered,
+        locked: pauseLocked,
+        battery: pauseOnBattery
+    }, {
+        screens: Quickshell.screens.map(s => s.name),
+        coveredScreens: BarService.coveredScreens,
+        locked: LockService.locked,
+        onBattery: UPower.onBattery
+    })
+    readonly property string _videoScript: Qt.resolvedUrl("../scripts/wallpaper-video.sh").toString().replace("file://", "")
+
+    // Sent on each change, and again once a new video has started
+    onVideoPausedChanged: _sendPause()
+    function _sendPause() {
+        if (videoPlaying)
+            pauseProc.run([_videoScript, "pause", videoPaused ? "yes" : "no"], null);
+    }
+
     // ========================================================================
     // INITIALIZATION
     // ========================================================================
@@ -81,6 +109,9 @@ Singleton {
     Component.onCompleted: {
         refreshWallpapers();
         getCurrentWallpaper();
+        // A video kept playing across a shell restart, or started by the
+        // boot script: it gets the state of the rules now
+        Qt.callLater(_sendPause);
     }
 
     Connections {
@@ -93,6 +124,9 @@ Singleton {
             root.favorites = getState("wallpaper.favorites", []);
             root.transition = getState("wallpaper.transition", "fade");
             root.transitionSpeed = getState("wallpaper.transitionSpeed", "normal");
+            root.pauseCovered = getState("wallpaper.pauseCovered", true);
+            root.pauseLocked = getState("wallpaper.pauseLocked", true);
+            root.pauseOnBattery = getState("wallpaper.pauseOnBattery", false);
             // What awww shows wins over the saved path
             root.getCurrentWallpaper();
         }
@@ -292,6 +326,10 @@ Singleton {
         writeCurrentProc.command = ["sh", "-c", "printf '%s\\n' \"$1\" > \"$2/.current\"", "sh", path, wallpaperDir];
         writeCurrentProc.running = true;
 
+        // A video starts playing: paused at once when a rule says so
+        if (isVideo(path) && videoPaused)
+            _sendPause();
+
         // In auto mode, regenerate colors from the new wallpaper
         if (ThemeService.isAutoMode)
             ThemeService.runMatugen(path);
@@ -426,6 +464,11 @@ Singleton {
                 console.error("[Wallpaper] Failed to change wallpaper");
             }
         }
+    }
+
+    // Pause or resume of the video wallpaper; only the newest one matters
+    QueuedProcess {
+        id: pauseProc
     }
 
     // "video<TAB>poster" lines from wallpaper-poster.sh, one per video

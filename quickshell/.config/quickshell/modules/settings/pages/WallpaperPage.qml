@@ -409,6 +409,35 @@ ColumnLayout {
         }
     }
 
+    // ================= ANIMATED WALLPAPERS =================
+    SettingsGroup {
+        title: I18n.tr("Animated wallpapers")
+
+        ToggleRow {
+            label: I18n.tr("Pause under fullscreen windows")
+            description: I18n.tr("Once every screen is covered; a free screen keeps it moving")
+            path: "wallpaper.pauseCovered"
+            onToggled: value => WallpaperService.pauseCovered = value
+            onResetRequested: WallpaperService.pauseCovered = StateService.get(path, true)
+        }
+
+        ToggleRow {
+            label: I18n.tr("Pause while locked")
+            description: I18n.tr("The lock screen shows its first frame instead")
+            path: "wallpaper.pauseLocked"
+            onToggled: value => WallpaperService.pauseLocked = value
+            onResetRequested: WallpaperService.pauseLocked = StateService.get(path, true)
+        }
+
+        ToggleRow {
+            label: I18n.tr("Pause on battery")
+            description: I18n.tr("Saves power while the charger is unplugged")
+            path: "wallpaper.pauseOnBattery"
+            onToggled: value => WallpaperService.pauseOnBattery = value
+            onResetRequested: WallpaperService.pauseOnBattery = StateService.get(path, false)
+        }
+    }
+
     // ================= PICKER =================
     SettingsGroup {
         title: I18n.tr("Picker")

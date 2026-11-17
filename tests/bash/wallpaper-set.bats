@@ -1,13 +1,15 @@
 #!/usr/bin/env bats
 # scripts/wallpaper-set.sh (the transition of every wallpaper change), the
-# poster of videos (wallpaper-poster.sh) and the boot script that calls it,
-# with stand-ins for awww, ffmpeg and mpvpaper
+# poster of videos (wallpaper-poster.sh), the pause of a video
+# (wallpaper-video.sh) and the boot script, with stand-ins for awww, ffmpeg
+# and mpvpaper
 
 load helpers
 
 setup() {
     lyne_setup
     SCRIPT="$REPO/quickshell/.config/quickshell/scripts/wallpaper-set.sh"
+    VIDEO="$REPO/quickshell/.config/quickshell/scripts/wallpaper-video.sh"
     BOOT="$REPO/local/.local/scripts/Wallpaper/wallpaper-boot.sh"
     STATE="$HOME/.config/quickshell/state.json"
     WALL="$HOME/.local/wallpapers/a.jpg"
@@ -48,7 +50,7 @@ while True:
     conn, _ = srv.accept()
     cmd = json.loads(conn.makefile().readline())["command"]
     with open(os.environ["STUB_LOG"], "a") as log:
-        log.write("ipc " + " ".join(cmd) + "\n")
+        log.write("ipc " + " ".join(json.dumps(c) if isinstance(c, bool) else str(c) for c in cmd) + "\n")
     if cmd[0] == "screenshot-to-file":
         open(cmd[1], "w").write("frame")
     conn.sendall(b'{"error": "success"}\n')
@@ -158,7 +160,7 @@ wait_player() {
     poster="$(poster_of "$VID")"
     assert_equal "$(grep -c '^ffmpeg' "$STUB_LOG")" 1
     assert_equal "$(grep '^awww' "$STUB_LOG")" "awww img $poster --transition-type fade --transition-duration 0.6 --transition-fps 60 --transition-step 90"
-    assert_equal "$(grep '^mpvpaper' "$STUB_LOG")" "mpvpaper -l bottom -p -a FULL -o no-audio loop hwdec=auto-safe input-ipc-server=$SOCK ALL $(realpath "$VID")"
+    assert_equal "$(grep '^mpvpaper' "$STUB_LOG")" "mpvpaper -l bottom -o no-audio loop hwdec=auto-safe input-ipc-server=$SOCK ALL $(realpath "$VID")"
     assert_equal "$(players | wc -l)" 1
 }
 
@@ -248,5 +250,27 @@ awww img $(poster_of "$other")"
     run poster_of "$WALL"
     assert_success
     assert_output "$WALL"
+    assert_equal "$(cat "$STUB_LOG")" ""
+}
+
+@test "video: paused and resumed through its socket" {
+    "$SCRIPT" "$VID" none
+    : >"$STUB_LOG"
+    # Right after the start: it waits for the socket
+    run "$VIDEO" pause yes
+    assert_success
+    run "$VIDEO" pause no
+    assert_success
+    assert_equal "$(grep '^ipc' "$STUB_LOG")" "ipc set_property pause true
+ipc set_property pause false"
+}
+
+@test "video: no player, nothing to pause; bad commands" {
+    run "$VIDEO" pause yes
+    assert_failure 1
+    run "$VIDEO" pause maybe
+    assert_failure 2
+    run "$VIDEO" rewind
+    assert_failure 2
     assert_equal "$(cat "$STUB_LOG")" ""
 }
