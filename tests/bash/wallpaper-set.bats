@@ -1,6 +1,7 @@
 #!/usr/bin/env bats
-# scripts/wallpaper-set.sh (the transition of every wallpaper change) and
-# the boot script that calls it, with a stand-in awww
+# scripts/wallpaper-set.sh (the transition of every wallpaper change), the
+# poster of videos (wallpaper-poster.sh) and the boot script that calls it,
+# with stand-ins for awww, ffmpeg and mpvpaper
 
 load helpers
 
@@ -23,7 +24,71 @@ case "$1" in
 esac
 EOF
     chmod +x "$BATS_TEST_TMPDIR/bin/awww"
+    # ffmpeg: writes a poster to its last argument, fails on a "broken" file
+    cat >"$BATS_TEST_TMPDIR/bin/ffmpeg" <<'EOF'
+#!/bin/bash
+for a; do :; done
+[[ "$*" == *broken* ]] && exit 1
+echo "ffmpeg $*" >>"$STUB_LOG"
+printf 'poster' >"$a"
+EOF
+    chmod +x "$BATS_TEST_TMPDIR/bin/ffmpeg"
+    # mpvpaper: logs its arguments, answers mpv's IPC on its socket and
+    # writes a frame for screenshot-to-file
+    cat >"$BATS_TEST_TMPDIR/bin/mpvpaper" <<'EOF'
+#!/usr/bin/env python3
+import json, os, re, socket, sys
+with open(os.environ["STUB_LOG"], "a") as log:
+    log.write("mpvpaper " + " ".join(sys.argv[1:]) + "\n")
+path = re.search(r"input-ipc-server=(\S+)", " ".join(sys.argv)).group(1)
+srv = socket.socket(socket.AF_UNIX)
+srv.bind(path)
+srv.listen()
+while True:
+    conn, _ = srv.accept()
+    cmd = json.loads(conn.makefile().readline())["command"]
+    with open(os.environ["STUB_LOG"], "a") as log:
+        log.write("ipc " + " ".join(cmd) + "\n")
+    if cmd[0] == "screenshot-to-file":
+        open(cmd[1], "w").write("frame")
+    conn.sendall(b'{"error": "success"}\n')
+    conn.close()
+EOF
+    chmod +x "$BATS_TEST_TMPDIR/bin/mpvpaper"
+    # The real pgrep (the suite's stand-in sees nothing): every pattern here
+    # names the test's own socket
+    ln -s "$(PATH=/usr/bin:/bin command -v pgrep)" "$BATS_TEST_TMPDIR/bin/pgrep"
     export PATH="$BATS_TEST_TMPDIR/bin:$PATH"
+    # The socket, lock and frame: never the session's
+    export XDG_RUNTIME_DIR="$BATS_TEST_TMPDIR/run"
+    mkdir -p "$XDG_RUNTIME_DIR"
+    SOCK="$XDG_RUNTIME_DIR/lyne-wallpaper-video.sock"
+    FRAME="$XDG_RUNTIME_DIR/lyne-wallpaper-frame.jpg"
+    VID="$HOME/.local/wallpapers/clip.mp4"
+    printf 'video' >"$VID"
+}
+
+teardown() {
+    pkill -f -- "input-ipc-server=$SOCK" || true
+}
+
+# PIDs of the stand-in mpvpaper
+players() {
+    pgrep -f -- "input-ipc-server=$SOCK"
+}
+
+# The poster wallpaper-poster.sh made for $1
+poster_of() {
+    "$REPO/quickshell/.config/quickshell/scripts/wallpaper-poster.sh" "$1"
+}
+
+# Waits for the detached mpvpaper's socket
+wait_player() {
+    for _ in {1..40}; do
+        [[ -S "$SOCK" ]] && return 0
+        sleep 0.05
+    done
+    return 1
 }
 
 @test "type and speed from the arguments" {
@@ -84,4 +149,97 @@ EOF
     AWWW_SHOWS="$(realpath "$WALL")" run "$BOOT"
     assert_success
     assert_equal "$(cat "$STUB_LOG")" ""
+}
+
+@test "video: awww shows the poster, then mpvpaper plays it on every output" {
+    run "$SCRIPT" "$VID" fade fast
+    assert_success
+    wait_player
+    poster="$(poster_of "$VID")"
+    assert_equal "$(grep -c '^ffmpeg' "$STUB_LOG")" 1
+    assert_equal "$(grep '^awww' "$STUB_LOG")" "awww img $poster --transition-type fade --transition-duration 0.6 --transition-fps 60 --transition-step 90"
+    assert_equal "$(grep '^mpvpaper' "$STUB_LOG")" "mpvpaper -l bottom -p -a FULL -o no-audio loop hwdec=auto-safe input-ipc-server=$SOCK ALL $(realpath "$VID")"
+    assert_equal "$(players | wc -l)" 1
+}
+
+@test "video already playing: nothing again" {
+    "$SCRIPT" "$VID" none
+    wait_player
+    : >"$STUB_LOG"
+    run "$SCRIPT" "$VID" none
+    assert_success
+    assert_equal "$(cat "$STUB_LOG")" ""
+    assert_equal "$(players | wc -l)" 1
+}
+
+@test "video to image: the frame on screen stays while the image comes in" {
+    "$SCRIPT" "$VID" none
+    wait_player
+    : >"$STUB_LOG"
+    run "$SCRIPT" "$WALL" wipe fast
+    assert_success
+    assert_equal "$(cat "$STUB_LOG")" "ipc screenshot-to-file $FRAME video
+awww img $FRAME --transition-type none
+awww img $WALL --transition-type wipe --transition-duration 0.6 --transition-fps 60 --transition-step 90"
+    assert_equal "$(players | wc -l)" 0
+    [[ ! -e "$SOCK" ]]
+}
+
+@test "video to video: one player, on the new one" {
+    other="$HOME/.local/wallpapers/other.webm"
+    printf 'other' >"$other"
+    "$SCRIPT" "$VID" none
+    wait_player
+    : >"$STUB_LOG"
+    run "$SCRIPT" "$other" none
+    assert_success
+    sleep 0.3
+    wait_player
+    assert_equal "$(players | wc -l)" 1
+    # The poster is made before the old player stops
+    assert_equal "$(grep -v '^mpvpaper' "$STUB_LOG" | cut -d' ' -f1-3)" "ffmpeg -nostdin -loglevel
+ipc screenshot-to-file $FRAME
+awww img $FRAME
+awww img $(poster_of "$other")"
+    assert_equal "$(grep '^mpvpaper' "$STUB_LOG" | awk '{print $NF}')" "$(realpath "$other")"
+}
+
+@test "video whose poster awww already shows (login): only the player starts" {
+    poster="$(poster_of "$VID")"
+    : >"$STUB_LOG"
+    AWWW_SHOWS="$poster" run "$SCRIPT" "$VID" fade slow
+    assert_success
+    wait_player
+    run grep -c '^awww\|^ffmpeg' "$STUB_LOG"
+    assert_output 0
+    assert_equal "$(players | wc -l)" 1
+}
+
+@test "poster: made once, made again when the video changes" {
+    first="$(poster_of "$VID")"
+    assert_equal "$(poster_of "$VID")" "$first"
+    assert_equal "$(grep -c '^ffmpeg' "$STUB_LOG")" 1
+    printf 'longer video' >"$VID"
+    touch -d '1 hour ago' "$VID"
+    second="$(poster_of "$VID")"
+    [[ "$second" != "$first" && -s "$second" ]]
+    assert_equal "$(grep -c '^ffmpeg' "$STUB_LOG")" 2
+}
+
+@test "video without a frame: exit 4, the wallpaper stays" {
+    bad="$HOME/.local/wallpapers/broken.mkv"
+    printf 'x' >"$bad"
+    run "$SCRIPT" "$bad" none
+    assert_failure 4
+    assert_equal "$(cat "$STUB_LOG")" ""
+    assert_equal "$(players | wc -l)" 0
+}
+
+@test "boot: a saved video plays again" {
+    echo "$VID" >"$HOME/.local/wallpapers/.current"
+    echo '{"wallpaper": {"transition": "none"}}' >"$STATE"
+    run "$BOOT"
+    assert_success
+    wait_player
+    assert_equal "$(players | wc -l)" 1
 }

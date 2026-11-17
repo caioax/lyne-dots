@@ -351,10 +351,12 @@ Singleton {
     }
 
     // awww reports the resolved path; ~/.local/wallpapers is usually a
-    // symlink, so map it back or relativePath() and the markers stop matching
+    // symlink, so map it back or relativePath() and the markers stop matching.
+    // Under a video awww shows its poster or a frame of it
+    // (wallpaper-set.sh): the saved path stays
     Process {
         id: getCurrentProc
-        command: ["sh", "-c", "real=$(realpath \"$1\" 2>/dev/null); awww query | sed -n 's/.*image: //p' | head -n 1 | " + "while IFS= read -r p; do case \"$p\" in \"$real\"/*) p=\"$1/${p#\"$real\"/}\";; esac; printf '%s\\n' \"$p\"; done", "sh", root.wallpaperDir]
+        command: ["sh", "-c", "real=$(realpath \"$1\" 2>/dev/null); awww query | sed -n 's/.*image: //p' | head -n 1 | " + "while IFS= read -r p; do case \"$p\" in \"$real\"/*) p=\"$1/${p#\"$real\"/}\";; " + "*/lyne/wallpaper-posters/* | */lyne-wallpaper-frame.jpg) continue;; esac; printf '%s\\n' \"$p\"; done", "sh", root.wallpaperDir]
         stdout: SplitParser {
             onRead: data => {
                 const path = data.trim();

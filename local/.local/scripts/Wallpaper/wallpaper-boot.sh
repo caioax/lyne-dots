@@ -5,7 +5,9 @@
 # awww-daemon restores its last wallpaper on its own. This makes sure the one
 # saved in ~/.local/wallpapers/.current (written by Quickshell's
 # WallpaperService) is shown, and falls back to the first wallpaper only when
-# nothing is displayed at all.
+# nothing is displayed at all. A saved video starts again through
+# wallpaper-set.sh, which keeps the poster awww restored and doesn't start a
+# second player for one already playing.
 # =============================================================================
 
 CURRENT_FILE="$HOME/.local/wallpapers/.current"
@@ -25,7 +27,7 @@ if [[ -z "$WALLPAPER" || ! -f "$WALLPAPER" ]]; then
     WALLPAPER="$(find "$WALLPAPER_DIR" -maxdepth 1 -type f \( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' -o -name '*.webp' \) | sort | head -1)"
 fi
 
-# Already on screen (restored from the cache): nothing to do
+# Already on screen (an image restored from the cache): nothing to do
 [[ "$(realpath "$WALLPAPER" 2>/dev/null)" == "$(awww query 2>/dev/null | sed -n 's/.*image: //p' | head -n 1)" ]] && exit 0
 
 # Same transition as a change from the shell (Settings › Wallpaper)
