@@ -1260,6 +1260,10 @@
         "%n selecionado · Ctrl+A seleciona todos",
         "%n selecionados · Ctrl+A seleciona todos"
     ],
+    "Fitting %n video to your screen": [
+        "Ajustando %n vídeo à sua tela",
+        "Ajustando %n vídeos à sua tela"
+    ],
     "New": "Novo",
     "No wallpapers match “%1”": "Nenhum papel de parede corresponde a “%1”",
     "No favorites yet: use ⋮ › Add to favorites": "Nenhum favorito ainda: use ⋮ › Adicionar aos favoritos",
@@ -1591,6 +1595,10 @@
     "%n wallpaper added": [
         "%n papel de parede adicionado",
         "%n papéis de parede adicionados"
+    ],
+    "%n video couldn't be used": [
+        "%n vídeo não pôde ser usado",
+        "%n vídeos não puderam ser usados"
     ],
     "Already in the library": "Já está na biblioteca",
     "Nothing new in that folder": "Nada novo nessa pasta",

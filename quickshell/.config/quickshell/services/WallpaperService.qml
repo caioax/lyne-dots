@@ -54,6 +54,10 @@ Singleton {
     signal wallpapersAdded(var paths)
     // Copied by the running Add, announced after the next listing
     property var _added: []
+    // How many the running Add brought in, and the videos it couldn't use
+    // (for its notification)
+    property int _addedCount: 0
+    property int _failed: 0
     // Images the running Add found already in the library
     property int _skipped: 0
     // Videos the running Add is scaling down to the screen (wallpapers-add.sh
@@ -402,22 +406,33 @@ Singleton {
     }
 
     // After a folder: how many came in; after images: only when none did
+    // Videos that couldn't be read or scaled count too (cancelled ones don't)
     function _notifyAdded(folder: bool) {
-        const added = _added.length;
-        if (!folder && (added > 0 || _skipped === 0))
+        const added = _addedCount;
+        if (!folder && _failed === 0 && (added > 0 || _skipped === 0))
             return;
         let title = I18n.trn("%n wallpaper added", "%n wallpapers added", added);
-        if (!folder)
-            title = I18n.tr("Already in the library");
-        else if (added === 0)
-            title = _skipped > 0 ? I18n.tr("Nothing new in that folder") : I18n.tr("No wallpapers in that folder");
-        const body = folder && _skipped > 0 ? I18n.trn("%n already in the library was skipped", "%n already in the library were skipped", _skipped) : "";
-        Quickshell.execDetached(["notify-send", "-a", "Settings", "-i", "preferences-desktop-wallpaper", title, body]);
+        if (!folder && added === 0)
+            title = _failed > 0 ? I18n.trn("%n video couldn't be used", "%n videos couldn't be used", _failed) : I18n.tr("Already in the library");
+        else if (folder && added === 0)
+            title = _skipped > 0 || _failed > 0 ? I18n.tr("Nothing new in that folder") : I18n.tr("No wallpapers in that folder");
+        const lines = [];
+        if (folder && _skipped > 0)
+            lines.push(I18n.trn("%n already in the library was skipped", "%n already in the library were skipped", _skipped));
+        if (_failed > 0 && (folder || added > 0))
+            lines.push(I18n.trn("%n video couldn't be used", "%n videos couldn't be used", _failed));
+        Quickshell.execDetached(["notify-send", "-a", "Settings", "-i", "preferences-desktop-wallpaper", title, lines.join("\n")]);
     }
 
+    // Asked while a listing runs (an Add copying many files): once more
+    // after it, so the newest files are in
     function refreshWallpapers() {
-        listWallpapersProc.running = true;
+        if (listWallpapersProc.running)
+            _relist = true;
+        else
+            listWallpapersProc.running = true;
     }
+    property bool _relist: false
 
     function getCurrentWallpaper() {
         getCurrentProc.running = true;
@@ -444,10 +459,15 @@ Singleton {
             // Scaled copies now listed lose their progress tile
             const done = Object.keys(root.fitting).filter(p => root.fitting[p].progress >= 100 && root.wallpapers.includes(p));
             done.forEach(p => root._setFitting(p, null));
+            // Announced once listed; the rest wait for the next listing
             const added = root._added.filter(p => root.wallpapers.includes(p));
-            root._added = [];
+            root._added = root._added.filter(p => !added.includes(p));
             if (added.length > 0)
                 root.wallpapersAdded(added);
+            if (root._relist) {
+                root._relist = false;
+                Qt.callLater(root.refreshWallpapers);
+            }
         }
     }
 
@@ -547,6 +567,8 @@ Singleton {
         onStarted: {
             root.fitting = {};
             root._added = [];
+            root._addedCount = 0;
+            root._failed = 0;
             root._skipped = 0;
         }
         // The dialog's texts come translated as $3..$7, the screen size to
@@ -584,11 +606,16 @@ Singleton {
                 if (result.startsWith("added:")) {
                     const path = result.slice(6);
                     root._added = [...root._added, path];
-                    // Its tile stays, full, until the list shows the copy
-                    if (root.fitting[path] !== undefined)
+                    root._addedCount++;
+                    // A scaled video takes its place in the library now,
+                    // not after the rest of the Add: its tile stays full
+                    // until the list shows it
+                    if (root.fitting[path] !== undefined) {
                         root._setFitting(path, Object.assign({}, root.fitting[path], {
                             progress: 100
                         }));
+                        root.refreshWallpapers();
+                    }
                 } else if (result.startsWith("fitting:") && tab > 0) {
                     root._setFitting(result.substring(8, tab), {
                         poster: result.substring(tab + 1),
@@ -601,6 +628,8 @@ Singleton {
                             progress: Number(result.substring(tab + 1))
                         }));
                 } else if (result.startsWith("failed:") || result.startsWith("cancelled:")) {
+                    if (result.startsWith("failed:"))
+                        root._failed++;
                     root._setFitting(result.substring(result.indexOf(":") + 1), null);
                 } else if (result.startsWith("skipped:")) {
                     root._skipped++;

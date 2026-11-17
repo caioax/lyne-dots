@@ -200,3 +200,13 @@ added:$LIBRARY/a-3.jpg"
     refute_output --partial "added:"""
     assert_equal "$(ls -A "$LIBRARY")" ""
 }
+
+@test "a video ffprobe can't read is left out, reported as failed" {
+    img "$SRC/notavideo.mp4" "just text"
+    img "$SRC/ok.jpg"
+    run "$SCRIPT" --fit 1920x1080 "$LIBRARY" "$SRC"
+    assert_success
+    assert_output "failed:$SRC/notavideo.mp4
+added:$LIBRARY/ok.jpg"
+    [[ ! -e "$LIBRARY/notavideo.mp4" ]]
+}

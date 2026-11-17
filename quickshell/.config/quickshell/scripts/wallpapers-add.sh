@@ -21,7 +21,8 @@
 #   fitting:<the copy in DEST><TAB><the source's poster>
 #   progress:<the copy in DEST><TAB><0-99>
 # then added:, or failed:/cancelled: with the copy's path. A line with the
-# copy's path in the file $LYNE_ADD_CANCEL stops its scaling.
+# copy's path in the file $LYNE_ADD_CANCEL stops its scaling. A video ffprobe
+# can't read is left out with failed:<PATH's file>.
 
 set -uo pipefail
 
@@ -56,14 +57,19 @@ is_wallpaper() {
     return 1
 }
 
-# fit_size VIDEO: "W H" to scale VIDEO down to, the smallest size of its
+# video_size VIDEO: "W H" of its picture; nothing when ffprobe can't read it
+video_size() {
+    local vw vh
+    read -r vw vh < <(ffprobe -v error -select_streams v:0 -show_entries stream=width,height \
+        -of csv=p=0:s=x -- "$1" 2>/dev/null | tr x ' ')
+    [[ "$vw" =~ ^[0-9]+$ && "$vh" =~ ^[0-9]+$ ]] && echo "$vw $vh"
+}
+
+# fit_size W H: the size to scale a W x H video down to, the smallest of its
 # shape that still covers --fit (even numbers); nothing when it already fits
 fit_size() {
     [[ "$fit" =~ ^([0-9]+)x([0-9]+)$ ]] || return 0
-    local sw="${BASH_REMATCH[1]}" sh="${BASH_REMATCH[2]}" vw vh
-    read -r vw vh < <(ffprobe -v error -select_streams v:0 -show_entries stream=width,height \
-        -of csv=p=0:s=x -- "$1" 2>/dev/null | tr x ' ')
-    [[ "$vw" =~ ^[0-9]+$ && "$vh" =~ ^[0-9]+$ ]] || return 0
+    local sw="${BASH_REMATCH[1]}" sh="${BASH_REMATCH[2]}" vw="$1" vh="$2"
     # Covering the screen takes scale max(sw/vw, sh/vh); below 1 it shrinks
     if ((sw * vh >= sh * vw)); then
         ((vw > sw)) || return 0
@@ -133,7 +139,15 @@ copy_one() {
     base="${name%.*}"
     ext="${name##*.}"
     if is_video "$src"; then
-        size="$(fit_size "$src")"
+        local dims
+        dims="$(video_size "$src")"
+        # Not a video ffprobe can read: it would never play
+        if [[ -z "$dims" ]]; then
+            echo "failed:$src"
+            return
+        fi
+        # shellcheck disable=SC2086 # "W H"
+        size="$(fit_size $dims)"
         if [[ -n "$size" ]]; then
             ext=mp4
             tag="$(source_tag "$src")"

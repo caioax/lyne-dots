@@ -44,10 +44,12 @@ ColumnLayout {
             const q = query.toLowerCase();
             list = list.filter(w => WallpaperService.fileName(w).toLowerCase().includes(q));
         }
-        // Videos being scaled down by Add, at the end until they're listed
-        const fitting = Object.keys(WallpaperService.fitting).filter(p => !list.includes(p));
-        return fitting.length > 0 ? [...list, ...fitting] : list;
+        return list;
     }
+
+    // Videos Add is scaling down, shown above the library until they're
+    // listed: then they take their place in it like any new wallpaper
+    readonly property var fittingShown: Object.keys(WallpaperService.fitting).filter(p => !WallpaperService.wallpapers.includes(p))
 
     function displayName(path: string): string {
         const name = WallpaperService.fileName(path);
@@ -156,6 +158,29 @@ ColumnLayout {
                 search.text = "";
             root._scrollTarget = paths[0];
             scrollTimer.restart();
+        }
+
+        // A video Add starts scaling down: the area above the library comes
+        // into view
+        function onFittingChanged() {
+            const started = Object.keys(WallpaperService.fitting).filter(p => !root._fitSeen.includes(p));
+            root._fitSeen = Object.keys(WallpaperService.fitting);
+            if (started.length > 0)
+                fitScrollTimer.restart();
+        }
+    }
+
+    // Progress tiles already announced
+    property var _fitSeen: []
+
+    Timer {
+        id: fitScrollTimer
+
+        // Lets the area lay out before measuring
+        interval: Config.animDuration
+        onTriggered: {
+            if (fittingArea.visible)
+                SettingsService.scrollToItem(fittingArea);
         }
     }
 
@@ -613,6 +638,60 @@ ColumnLayout {
                     }
                 }
 
+                // Videos being scaled down (Add), apart until they're done
+                ColumnLayout {
+                    id: fittingArea
+
+                    visible: root.fittingShown.length > 0
+                    Layout.fillWidth: true
+                    Layout.bottomMargin: Config.padding
+                    spacing: Config.padding
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: I18n.trn("Fitting %n video to your screen", "Fitting %n videos to your screen", root.fittingShown.length)
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeSmall
+                        color: Config.subtextColor
+                    }
+
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: root.columns
+                        columnSpacing: Config.spacing
+                        rowSpacing: Config.spacing
+
+                        Repeater {
+                            model: root.fittingShown
+
+                            WallpaperTile {
+                                id: fitTile
+
+                                required property string modelData
+                                readonly property var fit: WallpaperService.fitting[modelData] ?? null
+
+                                Layout.fillWidth: true
+                                Layout.preferredWidth: grid.cellWidth
+                                path: modelData
+                                progress: fit ? fit.progress : 0
+                                progressPoster: fit?.poster ?? ""
+                                showMenu: false
+                                onCancelRequested: WallpaperService.cancelFit(fitTile.path)
+                            }
+                        }
+
+                        // Keeps a lone tile at the library's size
+                        Repeater {
+                            model: Math.max(0, root.columns - root.fittingShown.length)
+
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.preferredWidth: grid.cellWidth
+                            }
+                        }
+                    }
+                }
+
                 GridLayout {
                     id: grid
 
@@ -635,11 +714,7 @@ ColumnLayout {
 
                             Layout.fillWidth: true
                             Layout.preferredWidth: grid.cellWidth
-                            readonly property var fit: WallpaperService.fitting[path]
-
                             current: path === WallpaperService.currentWallpaper
-                            progress: fit !== undefined && !WallpaperService.wallpapers.includes(path) ? fit.progress : -1
-                            progressPoster: fit?.poster ?? ""
                             selected: root.selection.includes(path)
                             selecting: root.selecting
                             isNew: root.newPaths.includes(path)
@@ -647,7 +722,6 @@ ColumnLayout {
                             onActivated: root.activate(tile.path)
                             onSelectToggled: root.toggleSelected(tile.path)
                             onMenuRequested: anchor => menu.openAt(anchor, tile.path)
-                            onCancelRequested: WallpaperService.cancelFit(tile.path)
                         }
                     }
 
@@ -665,7 +739,7 @@ ColumnLayout {
 
                 // Empty state
                 ColumnLayout {
-                    visible: root.shown.length === 0
+                    visible: root.shown.length === 0 && root.fittingShown.length === 0
                     Layout.fillWidth: true
                     Layout.topMargin: Config.spacing * 2
                     Layout.bottomMargin: Config.spacing * 2
