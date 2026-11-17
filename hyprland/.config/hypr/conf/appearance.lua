@@ -148,6 +148,16 @@ hl.layer_rule({
     no_anim = true,
 })
 
+-- A video wallpaper (mpvpaper, scripts/wallpaper-set.sh) starts above its
+-- poster, its own first frame, and leaves over a copy of its last one: a
+-- slide in or out would move the picture
+hl.layer_rule({
+    name  = "video-wallpaper",
+    match = { namespace = "mpvpaper" },
+
+    no_anim = true,
+})
+
 -- See https://wiki.hypr.land/Configuring/Layouts/Dwindle-Layout/ for more
 hl.config({
     dwindle = {
