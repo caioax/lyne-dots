@@ -6,7 +6,8 @@ import qs.services
 
 // Wallpaper thumbnail with its name. Click applies it (the page decides what
 // that means), Ctrl+click selects; the ⋮ button shows up on hover, and a
-// right click asks for the same menu
+// right click asks for the same menu. A video shows its poster, with a play
+// mark in the corner
 Item {
     id: root
 
@@ -29,6 +30,7 @@ Item {
     property bool isNew: false
 
     readonly property bool favorite: WallpaperService.isFavorite(path)
+    readonly property bool animated: WallpaperService.isVideo(path)
     readonly property bool hovered: tileHover.hovered
     readonly property string displayName: {
         const name = WallpaperService.fileName(path);
@@ -65,7 +67,7 @@ Item {
         Image {
             id: image
             anchors.fill: parent
-            source: "file://" + root.path
+            source: WallpaperService.stillSource(root.path)
             fillMode: Image.PreserveAspectCrop
             sourceSize: Config.wallpaperThumbSize
             asynchronous: true
@@ -118,6 +120,26 @@ Item {
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeSmall
                 color: Config.errorColor
+            }
+        }
+
+        // Animated wallpaper (md-play), always shown
+        Rectangle {
+            visible: root.animated && !root.selecting
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: Config.padding
+            width: root.badgeSize
+            height: width
+            radius: width / 2
+            color: Qt.alpha(Config.backgroundColor, 0.7)
+
+            Text {
+                anchors.centerIn: parent
+                text: "\u{f040a}"
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeSmall
+                color: Config.textColor
             }
         }
 

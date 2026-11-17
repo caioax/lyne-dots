@@ -210,8 +210,9 @@ ColumnLayout {
         wallpaperColors = [];
         if (wallpaperPath === "")
             return;
-        // Our own extraction (small bright areas count) plus matugen's
-        colorsProc.command = ["sh", "-c", "python3 \"$2\" \"$1\" 2>/dev/null; matugen image \"$1\" --show-source-colors 2>/dev/null | grep -oiE '#[0-9a-f]{6}'", "sh", wallpaperPath, Qt.resolvedUrl("../../../scripts/wallpaper-colors.py").toString().replace("file://", "")];
+        // Our own extraction (small bright areas count) plus matugen's, from
+        // a video's poster
+        colorsProc.command = ["sh", "-c", "p=$(\"$3\" \"$1\") || exit 0; python3 \"$2\" \"$p\" 2>/dev/null; matugen image \"$p\" --show-source-colors 2>/dev/null | grep -oiE '#[0-9a-f]{6}'", "sh", wallpaperPath, Qt.resolvedUrl("../../../scripts/wallpaper-colors.py").toString().replace("file://", ""), WallpaperService.posterScript];
         colorsProc.running = true;
     }
 
@@ -461,7 +462,7 @@ ColumnLayout {
 
                         Image {
                             anchors.fill: parent
-                            source: root.wallpaperPath !== "" ? "file://" + root.wallpaperPath : ""
+                            source: WallpaperService.stillSource(root.wallpaperPath)
                             fillMode: Image.PreserveAspectCrop
                             sourceSize: Config.wallpaperThumbSize
                             asynchronous: true
@@ -521,7 +522,7 @@ ColumnLayout {
 
                                     Image {
                                         anchors.fill: parent
-                                        source: "file://" + thumb.modelData
+                                        source: WallpaperService.stillSource(thumb.modelData)
                                         fillMode: Image.PreserveAspectCrop
                                         sourceSize: Config.wallpaperThumbSize
                                         asynchronous: true

@@ -58,7 +58,7 @@ ClippingRectangle {
     Image {
         anchors.fill: parent
         visible: root.wallpaper !== ""
-        source: root.wallpaper !== "" ? "file://" + root.wallpaper : ""
+        source: WallpaperService.stillSource(root.wallpaper)
         fillMode: Image.PreserveAspectCrop
         sourceSize: Config.wallpaperPreviewSize
         asynchronous: true

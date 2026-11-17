@@ -229,9 +229,11 @@ Singleton {
         return availableThemes.find(t => variant(t) === scheme && (scheme === "light" ? previews[t].darkPair : previews[t].lightPair) === name) ?? "";
     }
 
+    // A video wallpaper gives its colors through its poster
+    // (wallpaper-poster.sh prints an image's own path)
     function runMatugen(wallpaperPath: string) {
         console.log("[Theme] Running matugen on:", wallpaperPath);
-        matugenProc.run(["matugen", "image", wallpaperPath, "-m", colorScheme, "-c", matugenConfigPath, "--prefer", "saturation"]);
+        matugenProc.run(["sh", "-c", "still=$(\"$1\" \"$2\") || exit 1; shift 2; exec matugen image \"$still\" \"$@\"", "sh", WallpaperService.posterScript, wallpaperPath, "-m", colorScheme, "-c", matugenConfigPath, "--prefer", "saturation"]);
     }
 
     function listThemes() {

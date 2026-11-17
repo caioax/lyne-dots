@@ -56,6 +56,17 @@ Singleton {
     property int _skipped: 0
     readonly property string _addScript: Qt.resolvedUrl("../scripts/wallpapers-add.sh").toString().replace("file://", "")
 
+    // Wallpapers are images or videos (mp4, webm, mkv; wallpaper-set.sh plays
+    // these through mpvpaper). A video stands as its poster, its first frame,
+    // wherever a still image is needed: posterOf/stillSource
+    readonly property var videoExtensions: ["mp4", "webm", "mkv"]
+    // Brace list for the ls listings (every case the Add script takes)
+    readonly property string listGlob: "png,jpg,jpeg,webp,mp4,webm,mkv,PNG,JPG,JPEG,WEBP,MP4,WEBM,MKV"
+    readonly property string posterScript: Qt.resolvedUrl("../scripts/wallpaper-poster.sh").toString().replace("file://", "")
+    // video path -> its poster, filled as tiles ask for them
+    property var posters: ({})
+    property var _posterQueue: []
+
     readonly property string _setScript: Qt.resolvedUrl("../scripts/wallpaper-set.sh").toString().replace("file://", "")
     // Transition of every wallpaper change (Settings › Wallpaper): none, fade,
     // grow, wipe, wave or random, and fast, normal or slow. Its rows store
@@ -94,6 +105,45 @@ Singleton {
     // Utility
     function fileName(path: string): string {
         return path.split("/").pop();
+    }
+
+    function isVideo(path: string): bool {
+        const dot = path.lastIndexOf(".");
+        return dot > 0 && videoExtensions.includes(path.substring(dot + 1).toLowerCase());
+    }
+
+    // The still image of a wallpaper: the path itself, or a video's poster
+    // ("" until it's made; asking for it starts that)
+    function posterOf(path: string): string {
+        if (!path || !isVideo(path))
+            return path;
+        const poster = posters[path];
+        if (poster === undefined)
+            requestPoster(path);
+        return poster ?? "";
+    }
+
+    // posterOf as an Image source
+    function stillSource(path: string): string {
+        const still = posterOf(path);
+        return still ? "file://" + still : "";
+    }
+
+    function requestPoster(path: string) {
+        if (_posterQueue.includes(path))
+            return;
+        _posterQueue.push(path);
+        // Tiles of a whole list ask in the same tick: one run for them all
+        Qt.callLater(_makePosters);
+    }
+
+    function _makePosters() {
+        if (posterProc.running || _posterQueue.length === 0)
+            return;
+        const batch = _posterQueue;
+        _posterQueue = [];
+        posterProc.command = ["sh", "-c", "s=$1; shift; for v; do p=$(\"$s\" \"$v\") && printf '%s\\t%s\\n' \"$v\" \"$p\"; done", "sh", posterScript, ...batch];
+        posterProc.running = true;
     }
 
     function relativePath(path: string): string {
@@ -161,7 +211,7 @@ Singleton {
             themeWallpapers = [];
             return;
         }
-        listThemeWallpapersProc.run(["bash", "-c", "mkdir -p '" + themeWallpaperDir + "/" + themeName + "' && " + "ls -1 '" + themeWallpaperDir + "/" + themeName + "'/*.{png,jpg,jpeg,webp,gif} 2>/dev/null | sort"]);
+        listThemeWallpapersProc.run(["bash", "-c", "mkdir -p '" + themeWallpaperDir + "/" + themeName + "' && " + "ls -1 '" + themeWallpaperDir + "/" + themeName + "'/*.{" + listGlob + "} 2>/dev/null | sort"]);
     }
 
     // The active wallpaper of a theme, from its JSON
@@ -184,15 +234,8 @@ Singleton {
     function generateThemeWallpapers(themeName: string, makeActive = false) {
         if (generatingFor !== "")
             return;
-        let w = 1920, h = 1080;
-        const screens = Quickshell.screens;
-        for (let i = 0; i < screens.length; i++) {
-            const screen = screens[i];
-            if (screen.width * screen.height > w * h) {
-                w = screen.width;
-                h = screen.height;
-            }
-        }
+        const size = largestScreen();
+        const w = size.width, h = size.height;
         const errors = Object.assign({}, generateErrors);
         delete errors[themeName];
         generateErrors = errors;
@@ -202,6 +245,37 @@ Singleton {
         // ~3 GB of RAM per 4K render: one at a time above 1440p
         generateProc.command = ["python3", generatorPath, "--theme-file", themesConfigDir + "/" + themeName + ".json", "--out", themeWallpaperDir, "--size", w + "x" + h, "--jobs", w * h > 2560 * 1440 ? "1" : "3"];
         generateProc.running = true;
+    }
+
+    // The largest screen (1920x1080 at least), in logical pixels
+    function largestScreen() {
+        let w = 1920, h = 1080;
+        const screens = Quickshell.screens;
+        for (let i = 0; i < screens.length; i++) {
+            const screen = screens[i];
+            if (screen.width * screen.height > w * h) {
+                w = screen.width;
+                h = screen.height;
+            }
+        }
+        return Qt.size(w, h);
+    }
+
+    // The largest screen in device pixels: videos larger than that are
+    // scaled down when added (wallpapers-add.sh --fit)
+    function largestScreenPixels(): string {
+        let w = 0, h = 0;
+        const screens = Quickshell.screens;
+        for (let i = 0; i < screens.length; i++) {
+            const screen = screens[i];
+            const dpr = screen.devicePixelRatio || 1;
+            const sw = Math.round(screen.width * dpr), sh = Math.round(screen.height * dpr);
+            if (sw * sh > w * h) {
+                w = sw;
+                h = sh;
+            }
+        }
+        return w > 0 ? w + "x" + h : "1920x1080";
     }
 
     // Apply wallpaper, with the transition set in Settings (wallpaper-set.sh).
@@ -241,6 +315,10 @@ Singleton {
             return;
 
         wallpapers = wallpapers.filter(w => !paths.includes(w));
+        // A new file under the same name gets its own poster
+        const posters = Object.assign({}, root.posters);
+        paths.forEach(p => delete posters[p]);
+        root.posters = posters;
         themeWallpapers = themeWallpapers.filter(w => !paths.includes(w));
         if (paths.includes(currentWallpaper))
             currentWallpaper = "";
@@ -273,7 +351,7 @@ Singleton {
         if (!folder)
             title = I18n.tr("Already in the library");
         else if (added === 0)
-            title = _skipped > 0 ? I18n.tr("Nothing new in that folder") : I18n.tr("No images in that folder");
+            title = _skipped > 0 ? I18n.tr("Nothing new in that folder") : I18n.tr("No wallpapers in that folder");
         const body = folder && _skipped > 0 ? I18n.trn("%n already in the library was skipped", "%n already in the library were skipped", _skipped) : "";
         Quickshell.execDetached(["notify-send", "-a", "Settings", "-i", "preferences-desktop-wallpaper", title, body]);
     }
@@ -293,7 +371,7 @@ Singleton {
     Process {
         id: listWallpapersProc
         property var _buffer: []
-        command: ["bash", "-c", "ls -1 '" + root.wallpaperDir + "'/*.{png,jpg,jpeg,webp,gif} 2>/dev/null | sort"]
+        command: ["bash", "-c", "ls -1 '" + root.wallpaperDir + "'/*.{" + root.listGlob + "} 2>/dev/null | sort"]
         stdout: SplitParser {
             onRead: data => {
                 const trimmed = data.trim();
@@ -350,6 +428,32 @@ Singleton {
         }
     }
 
+    // "video<TAB>poster" lines from wallpaper-poster.sh, one per video
+    Process {
+        id: posterProc
+
+        property var _found: ({})
+
+        stdout: SplitParser {
+            onRead: data => {
+                const tab = data.indexOf("\t");
+                if (tab > 0)
+                    posterProc._found[data.substring(0, tab)] = data.substring(tab + 1);
+            }
+        }
+        onStarted: _found = {}
+        onExited: {
+            // A video without a frame stays "" (asked once)
+            const posters = Object.assign({}, root.posters);
+            // ["sh", "-c", script, "sh", posterScript, ...videos]
+            const asked = command.slice(5);
+            for (const v of asked)
+                posters[v] = _found[v] ?? "";
+            root.posters = posters;
+            Qt.callLater(root._makePosters);
+        }
+    }
+
     // awww reports the resolved path; ~/.local/wallpapers is usually a
     // symlink, so map it back or relativePath() and the markers stop matching.
     // Under a video awww shows its poster or a frame of it
@@ -377,8 +481,9 @@ Singleton {
             root._added = [];
             root._skipped = 0;
         }
-        // The dialog's texts come translated as $3..$7; zenity prints one
-        // path per line, handed to the script as its arguments
+        // The dialog's texts come translated as $3..$7, the screen size to
+        // fit videos to as $8; zenity prints one path per line, handed to the
+        // script as its arguments
         command: ["bash", "-c", `
             if ! command -v zenity >/dev/null; then
                 notify-send "$6" "$7"
@@ -388,16 +493,20 @@ Singleton {
             if [ "$2" = folder ]; then
                 picked=$(zenity --file-selection --directory --title="$4" --filename="$HOME/")
             else
-                picked=$(zenity --file-selection --multiple --separator=$'\\n' --title="$3" --filename="$HOME/" --file-filter="$5 | *.png *.jpg *.jpeg *.webp *.gif")
+                picked=$(zenity --file-selection --multiple --separator=$'\\n' --title="$3" --filename="$HOME/" --file-filter="$5 | *.png *.jpg *.jpeg *.webp *.mp4 *.webm *.mkv *.PNG *.JPG *.JPEG *.WEBP *.MP4 *.WEBM *.MKV")
             fi
             if [ -z "$picked" ]; then
                 echo "cancelled"
                 exit 0
             fi
             mapfile -t paths <<<"$picked"
-            "$1" "${root.wallpaperDir}" "\${paths[@]}"
+            "$1" --fit "$8" "${root.wallpaperDir}" "\${paths[@]}"
             echo "done"
-        `, "bash", root._addScript, folder ? "folder" : "files", I18n.tr("Add wallpapers"), I18n.tr("Add a folder of wallpapers"), I18n.tr("Images"), I18n.tr("Wallpaper"), I18n.tr("Install zenity to add wallpapers")]
+        `, "bash", root._addScript, folder ? "folder" : "files", I18n.tr("Add wallpapers"), I18n.tr("Add a folder of wallpapers"), I18n.tr("Images and videos"), I18n.tr("Wallpaper"), I18n.tr("Install zenity to add wallpapers"), root.largestScreenPixels()]
+        // Title of the progress notification while a video is scaled down
+        environment: ({
+                LYNE_FIT_TITLE: I18n.tr("Fitting a video to your screen")
+            })
         stdout: SplitParser {
             onRead: data => {
                 const result = data.trim();

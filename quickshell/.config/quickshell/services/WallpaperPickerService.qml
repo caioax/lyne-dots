@@ -252,7 +252,7 @@ Singleton {
             return;
         }
         listThemeProc._buffer = [];
-        listThemeProc.command = ["sh", "-c", "ls -1 \"$1\"/*.png \"$1\"/*.jpg \"$1\"/*.jpeg \"$1\"/*.webp \"$1\"/*.gif 2>/dev/null | sort", "sh", WallpaperService.themeWallpaperDir + "/" + themeName];
+        listThemeProc.command = ["bash", "-c", "ls -1 \"$1\"/*.{" + WallpaperService.listGlob + "} 2>/dev/null | sort", "bash", WallpaperService.themeWallpaperDir + "/" + themeName];
         listThemeProc.running = true;
     }
 

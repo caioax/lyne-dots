@@ -243,3 +243,10 @@ awww img $(poster_of "$other")"
     wait_player
     assert_equal "$(players | wc -l)" 1
 }
+
+@test "poster of an image: the image itself, nothing made" {
+    run poster_of "$WALL"
+    assert_success
+    assert_output "$WALL"
+    assert_equal "$(cat "$STUB_LOG")" ""
+}

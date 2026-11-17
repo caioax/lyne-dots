@@ -23,7 +23,7 @@ Item {
         id: wallpaper
 
         anchors.fill: parent
-        source: WallpaperService.currentWallpaper !== "" ? "file://" + WallpaperService.currentWallpaper : ""
+        source: WallpaperService.stillSource(WallpaperService.currentWallpaper)
         fillMode: Image.PreserveAspectCrop
         sourceSize: Qt.size(width, height)
         visible: false

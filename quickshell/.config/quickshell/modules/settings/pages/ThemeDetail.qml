@@ -334,7 +334,7 @@ ColumnLayout {
 
                 Image {
                     anchors.fill: parent
-                    source: root.activePath !== "" ? "file://" + root.activePath : ""
+                    source: WallpaperService.stillSource(root.activePath)
                     fillMode: Image.PreserveAspectCrop
                     sourceSize: Config.wallpaperThumbSize
                     asynchronous: true

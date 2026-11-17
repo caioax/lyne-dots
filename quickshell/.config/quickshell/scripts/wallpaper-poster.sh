@@ -1,14 +1,15 @@
 #!/bin/bash
 # =============================================================================
-# wallpaper-poster.sh VIDEO
+# wallpaper-poster.sh PATH
 # =============================================================================
-# Prints the poster of an animated wallpaper: its first frame as a JPEG,
-# made once with ffmpeg and cached by path, size and modification time, so
-# a replaced video gets a new one. The poster stands in for the video
+# Prints the still image of a wallpaper: PATH itself for an image; for a
+# video (mp4, webm, mkv) its poster: the first frame as a JPEG, made once
+# with ffmpeg and cached by path, size and modification time, so a replaced
+# video gets a new one. The poster stands in for the video
 # wherever a still image is needed: under the video while it starts, colors
 # (matugen), thumbnails, the lock screen and the login screen.
 #
-# Exits 3 when VIDEO is not a file, 4 when ffmpeg can't read it.
+# Exits 3 when PATH is not a file, 4 when ffmpeg can't read the video.
 # =============================================================================
 
 video="$1"
@@ -17,6 +18,14 @@ video="$1"
     echo "not found: $video" >&2
     exit 3
 }
+
+case "${video,,}" in
+    *.mp4 | *.webm | *.mkv) ;;
+    *)
+        printf '%s\n' "$video"
+        exit 0
+        ;;
+esac
 
 cache="${XDG_CACHE_HOME:-$HOME/.cache}/lyne/wallpaper-posters"
 real="$(realpath "$video")"
