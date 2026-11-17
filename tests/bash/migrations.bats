@@ -469,3 +469,40 @@ real_stow() {
     assert_success
     assert_output --partial "replaces the script install and keeps its settings"
 }
+
+@test "049: with the shell's packages, ffmpeg and mpvpaper when missing" {
+    fake_dots
+    pkgs quickshell-git
+    run migrate 049-animated-wallpapers.sh
+    assert_success
+    assert_line "   Installing ffmpeg..."
+    assert_line "   Installing mpvpaper (AUR)..."
+    grep -q "^ffmpeg " "$FAKE_PKGS"
+    grep -qx "yay -S --needed --noconfirm mpvpaper" "$STUB_LOG"
+}
+
+@test "049: both there, nothing installed; without the shell's packages, nothing" {
+    fake_dots
+    pkgs quickshell ffmpeg mpvpaper
+    run migrate 049-animated-wallpapers.sh
+    assert_success
+    assert_output "   ffmpeg already installed, skipping
+   mpvpaper already installed, skipping"
+    refute grep -q "yay" "$STUB_LOG"
+    : >"$FAKE_PKGS"
+    run migrate 049-animated-wallpapers.sh
+    assert_success
+    assert_output ""
+}
+
+@test "049: a failed mpvpaper build only warns" {
+    fake_dots
+    pkgs quickshell-git ffmpeg
+    mkdir -p "$BATS_TEST_TMPDIR/bin"
+    printf '#!/bin/bash\necho "yay $*" >>"$STUB_LOG"\nexit 1\n' >"$BATS_TEST_TMPDIR/bin/yay"
+    chmod +x "$BATS_TEST_TMPDIR/bin/yay"
+    PATH="$BATS_TEST_TMPDIR/bin:$PATH" run migrate 049-animated-wallpapers.sh
+    assert_success
+    assert_line --partial "mpvpaper didn't build: try yay -S mpvpaper later"
+}
+

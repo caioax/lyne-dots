@@ -174,7 +174,7 @@ one out (its old files come back from the backup).
 | apps       | Dolphin, Zen Browser, Spotify, Chromium, mpv   |
 | utils      | Clipboard, audio, bluetooth, brightnessctl     |
 | fonts      | Nerd Fonts, Noto fonts and emoji               |
-| quickshell | QuickShell bar/shell + Qt6                     |
+| quickshell | QuickShell bar/shell + Qt6, mpvpaper and ffmpeg (video wallpapers) |
 | theming    | Qt5ct, Qt6ct, nwg-look, Bibata cursor, Tela icons |
 | nvidia     | NVIDIA drivers (install only if needed)        |
 

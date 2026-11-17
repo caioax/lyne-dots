@@ -131,6 +131,12 @@ if [[ "$(awww query 2>/dev/null | sed -n 's/.*image: //p' | head -n 1)" != "$(re
     [[ "$type" != none ]] && sleep "$duration"
 fi
 
+# Without mpvpaper (its AUR build failed) the poster stays
+if ! command -v mpvpaper >/dev/null; then
+    echo "mpvpaper not installed: showing the first frame of $path" >&2
+    exit 0
+fi
+
 # Detached, so it outlives this script and whoever ran it; without the lock
 # fd, or the next change would wait for it forever
 setsid -f mpvpaper -l bottom \

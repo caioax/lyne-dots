@@ -274,3 +274,18 @@ ipc set_property pause false"
     assert_failure 2
     assert_equal "$(cat "$STUB_LOG")" ""
 }
+
+@test "video without mpvpaper installed: its poster stays, no error" {
+    # A PATH with the stand-ins and the tools the scripts use, mpvpaper left out
+    nompv="$BATS_TEST_TMPDIR/nompv"
+    mkdir -p "$nompv"
+    for t in bash dirname realpath jq flock pgrep pkill head tail tr sed rm sleep sha1sum cut stat mkdir mv python3 setsid; do
+        ln -s "$(PATH=/usr/bin:/bin command -v "$t")" "$nompv/$t"
+    done
+    ln -s "$BATS_TEST_TMPDIR/bin/awww" "$BATS_TEST_TMPDIR/bin/ffmpeg" "$nompv/"
+    PATH="$nompv" run "$SCRIPT" "$VID" none
+    assert_success
+    assert_output --partial "mpvpaper not installed"
+    assert_equal "$(grep '^awww' "$STUB_LOG")" "awww img $(poster_of "$VID") --transition-type none"
+    assert_equal "$(players | wc -l)" 0
+}

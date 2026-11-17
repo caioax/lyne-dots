@@ -19,6 +19,10 @@ QUICKSHELL_PACKAGES=(
     # Dialogs
     "zenity" # File picker for adding wallpapers
 
+    # Video wallpapers: posters, and scaling large ones down when added
+    # (mpvpaper plays them, below)
+    "ffmpeg"
+
     # Bluetooth pairing agent (scripts/bluetooth-agent.py)
     "python-dbus"
     "python-gobject"
@@ -49,4 +53,7 @@ QUICKSHELL_PACKAGES=(
 QUICKSHELL_AUR_PACKAGES=(
     # QuickShell
     "quickshell-git" # QuickShell shell framework
+
+    # Video wallpapers (scripts/wallpaper-set.sh)
+    "mpvpaper"
 )
