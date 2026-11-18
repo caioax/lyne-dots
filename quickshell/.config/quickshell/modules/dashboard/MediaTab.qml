@@ -170,10 +170,9 @@ Item {
                     elide: Text.ElideRight
                 }
 
-                LyricsButton {}
-
+                // One per player (even a single one), its X on hover
                 Repeater {
-                    model: MprisService.players.length > 1 ? MprisService.players : []
+                    model: MprisService.players
 
                     PlayerButton {}
                 }
@@ -279,7 +278,8 @@ Item {
                 timeFontSize: Config.fontSizeSmall
             }
 
-            // Controls in the middle, the volume in the room on their right
+            // Controls in the middle, the lyrics switch on their left and the volume
+            // in the room on their right
             Item {
                 Layout.fillWidth: true
                 Layout.topMargin: Config.padding
@@ -291,6 +291,14 @@ Item {
                     round: true
                     playSize: Config.fontSizeIconLarge * 1.6
                     spacing: Config.padding
+                }
+
+                // Sized like the previous and next buttons
+                LyricsButton {
+                    size: controls.buttonSize
+                    anchors.right: controls.left
+                    anchors.rightMargin: Config.spacing * 2
+                    anchors.verticalCenter: parent.verticalCenter
                 }
 
                 RowLayout {
@@ -335,8 +343,8 @@ Item {
         id: gif
 
         readonly property real lineY: columns.y + info.y + progress.y + progress.height / 2
-        // Below the header when it holds the player switches on the right
-        readonly property real topY: columns.y + info.y + (MprisService.players.length > 1 ? header.height + Config.spacing : 0)
+        // Below the header, which holds the player switches on the right
+        readonly property real topY: columns.y + info.y + header.height + Config.spacing
 
         x: columns.x + info.x + info.width - width - root.gifMargin
         y: topY
@@ -346,17 +354,23 @@ Item {
         verticalAlignment: Image.AlignVCenter
     }
 
-    // Round switch to one of the players (outlined when it's the current one)
+    // Round switch to one of the players (outlined when it's the current
+    // one). Hovered, an X on its corner closes that player: pauses it and
+    // hides it until it plays again
     component PlayerButton: Rectangle {
         id: playerButton
 
         required property MprisPlayer modelData
         readonly property bool current: modelData === MprisService.activePlayer
+        readonly property bool hovered: buttonMouse.containsMouse || closeMouse.containsMouse
 
-        implicitWidth: Config.fontSizeNormal + Config.padding * 2
+        // Its badge over the next button
+        z: hovered ? 1 : 0
+
+        implicitWidth: Config.fontSizeIconSmall + Config.padding * 3
         implicitHeight: implicitWidth
         radius: width / 2
-        color: current ? Qt.alpha(Config.accentColor, 0.15) : buttonMouse.containsMouse ? Config.cardHoverColor : Qt.alpha(Config.cardHoverColor, 0)
+        color: current ? Qt.alpha(Config.accentColor, 0.15) : hovered ? Config.cardHoverColor : Qt.alpha(Config.cardHoverColor, 0)
         border.width: current ? 1 : 0
         border.color: Qt.alpha(Config.accentColor, 0.6)
 
@@ -370,6 +384,7 @@ Item {
         PlayerIcon {
             anchors.centerIn: parent
             player: playerButton.modelData
+            size: Config.fontSizeIconSmall
         }
 
         MouseArea {
@@ -379,11 +394,59 @@ Item {
             cursorShape: Qt.PointingHandCursor
             onClicked: MprisService.selectPlayer(playerButton.modelData)
         }
+
+        // Close badge over the top-right corner
+        Rectangle {
+            readonly property real size: Config.fontSizeSmall + Config.padding
+
+            x: parent.width - size * 0.75
+            y: -size * 0.25
+            width: size
+            height: size
+            radius: size / 2
+            color: closeMouse.containsMouse ? Config.errorColor : Config.surface2Color
+            opacity: playerButton.hovered ? 1 : 0
+            visible: opacity > 0
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Config.animDurationShort
+                }
+            }
+
+            Behavior on color {
+                enabled: !Config.themeTransitioning
+                ColorAnimation {
+                    duration: Config.animDurationShort
+                }
+            }
+
+            // md-close
+            Text {
+                anchors.centerIn: parent
+                text: "\u{f0156}"
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeSmall
+                color: closeMouse.containsMouse ? Config.textReverseColor : Config.textColor
+            }
+
+            MouseArea {
+                id: closeMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: MprisService.closePlayer(playerButton.modelData)
+            }
+        }
     }
 
     // Switches between the track info and its lyrics (outlined while on)
     component LyricsButton: Rectangle {
-        implicitWidth: Config.fontSizeNormal + Config.padding * 2
+        id: lyricsButton
+
+        property real size: Config.fontSizeNormal + Config.padding * 2
+
+        implicitWidth: size
         implicitHeight: implicitWidth
         radius: width / 2
         color: root.showLyrics ? Qt.alpha(Config.accentColor, 0.15) : lyricsMouse.containsMouse ? Config.cardHoverColor : Qt.alpha(Config.cardHoverColor, 0)
@@ -401,7 +464,7 @@ Item {
             anchors.centerIn: parent
             text: "\u{f0370}"
             font.family: Config.font
-            font.pixelSize: Config.fontSizeNormal
+            font.pixelSize: Math.round(lyricsButton.size * 0.45)
             color: root.showLyrics ? Config.accentColor : Config.subtextColor
         }
 

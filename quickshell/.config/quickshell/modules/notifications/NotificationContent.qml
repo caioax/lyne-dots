@@ -5,18 +5,22 @@ import Quickshell.Widgets
 import qs.config
 import qs.services
 
-// Icon, texts, action buttons and inline reply of one notification.
-// Shared by the popups and the history groups.
+// Icon, texts, action buttons and inline reply of one notification (the
+// popups), looking like a history conversation: "Name • time", the newest
+// message, and the pill that opens the earlier messages of the conversation.
 ColumnLayout {
     id: root
 
     required property var notif
     property bool showIcon: true
-    property bool showAppName: true
+    // The badge on the picture already shows the app
+    property bool showAppName: false
     property bool expanded: false
     default property alias trailing: trailingSlot.data
 
-    readonly property bool canExpand: expanded || summaryText.truncated || bodyText.truncated
+    // Earlier messages of its conversation, oldest first
+    readonly property var earlier: NotificationService.conversationOf(NotificationService.conversationKey(notif)).filter(n => n !== notif && n.time.getTime() <= notif.time.getTime()).reverse()
+    readonly property bool canExpand: expanded || summaryText.truncated || bodyText.truncated || earlier.length > 0
     readonly property bool replyFocused: reply.inputFocused
     readonly property bool replyWantsKeyboard: reply.wantsKeyboard
     readonly property color tint: notif.isCritical ? Config.errorColor : Config.accentColor
@@ -44,32 +48,30 @@ ColumnLayout {
             Layout.alignment: Qt.AlignTop
             spacing: Math.round(Config.padding / 3)
 
-            // App name · time, expand and trailing buttons
+            // Name • time (the badge shows the app)
             RowLayout {
                 width: texts.width
                 spacing: Config.padding
 
+                // Shrinks first, the app and time keep their room
                 Text {
-                    visible: root.showAppName
-                    Layout.maximumWidth: root.width / 2
-                    text: root.notif.appName
+                    id: summaryText
+                    Layout.fillWidth: true
+                    // Rounded up: a fraction short and the bold text elides
+                    Layout.maximumWidth: Math.ceil(implicitWidth) + 1
+                    visible: text !== ""
+                    text: root.notif.summary
                     font.family: Config.font
-                    font.pixelSize: Config.fontSizeSmall
+                    font.pixelSize: Config.fontSizeNormal
                     font.bold: true
-                    color: root.tint
+                    color: root.notif.isCritical ? Config.errorColor : Config.textColor
+                    textFormat: Text.StyledText
                     elide: Text.ElideRight
                 }
 
                 Text {
-                    visible: root.showAppName
-                    text: "•"
-                    font.family: Config.font
-                    font.pixelSize: Config.fontSizeSmall
-                    color: Config.subtextColor
-                }
-
-                Text {
-                    text: NotificationService.relativeTime(root.notif.time)
+                    Layout.minimumWidth: implicitWidth
+                    text: [summaryText.visible ? "" : null, root.showAppName || !summaryText.visible ? root.notif.appName : null, NotificationService.relativeTime(root.notif.time)].filter(t => t !== null).join(" • ").trim()
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeSmall
                     color: Config.subtextColor
@@ -78,40 +80,25 @@ ColumnLayout {
                 Item {
                     Layout.fillWidth: true
                 }
-
-                NotificationIconButton {
-                    visible: root.canExpand
-                    icon: "󰅀"
-                    rotation: root.expanded ? 180 : 0
-                    onClicked: root.expanded = !root.expanded
-
-                    Behavior on rotation {
-                        NumberAnimation {
-                            duration: Config.animDuration
-                            easing.type: Easing.OutQuad
-                        }
-                    }
-                }
-
-                RowLayout {
-                    id: trailingSlot
-                    spacing: Config.padding
-                }
             }
 
-            Text {
-                id: summaryText
-                width: texts.width
-                visible: text !== ""
-                text: root.notif.summary
-                font.family: Config.font
-                font.pixelSize: Config.fontSizeNormal
-                font.bold: true
-                color: Config.textColor
-                textFormat: Text.StyledText
-                wrapMode: Text.Wrap
-                maximumLineCount: root.expanded ? undefined : 1
-                elide: Text.ElideRight
+            // Earlier messages, while open
+            Repeater {
+                model: root.expanded ? root.earlier : []
+
+                Text {
+                    required property var modelData
+                    width: texts.width
+                    visible: text !== ""
+                    text: modelData.body
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    color: Config.subtextColor
+                    textFormat: Text.StyledText
+                    wrapMode: Text.Wrap
+                    linkColor: root.tint
+                    onLinkActivated: link => Qt.openUrlExternally(link)
+                }
             }
 
             Text {
@@ -164,6 +151,25 @@ ColumnLayout {
                     }
                 }
             }
+        }
+
+        // Trailing buttons (the popup's X), then the pill
+        RowLayout {
+            id: trailingSlot
+            Layout.alignment: Qt.AlignTop
+            // Level with the picture's middle, open or closed: it doesn't jump
+            Layout.topMargin: Math.max(0, Math.round((Config.notifImageSize - implicitHeight) / 2))
+            spacing: Config.padding
+        }
+
+        NotificationPill {
+            visible: root.canExpand
+            Layout.alignment: Qt.AlignTop
+            // Level with the picture's middle, open or closed: it doesn't jump
+            Layout.topMargin: Math.max(0, Math.round((Config.notifImageSize - implicitHeight) / 2))
+            count: root.earlier.length + 1
+            expanded: root.expanded
+            onClicked: root.expanded = !root.expanded
         }
     }
 

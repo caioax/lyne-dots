@@ -9,7 +9,10 @@ Singleton {
     id: root
 
     // --- PLAYER LIST ---
-    readonly property list<MprisPlayer> players: Mpris.players.values
+    // Players the user closed (dbusName -> true): out of the shell until they
+    // play again. Pausing doesn't bring them back
+    property var hiddenPlayers: ({})
+    readonly property list<MprisPlayer> players: Mpris.players.values.filter(p => !hiddenPlayers[p.dbusName])
     property MprisPlayer activePlayer: null
     readonly property bool hasPlayer: activePlayer !== null
     property list<MprisPlayer> orderedPlayers
@@ -93,10 +96,12 @@ Singleton {
         delegate: QtObject {
             required property MprisPlayer modelData
             property bool isPlaying: modelData.isPlaying ?? false
-            // The player that starts playing takes over
+            // The player that starts playing takes over (a closed one comes back)
             onIsPlayingChanged: {
-                if (isPlaying)
+                if (isPlaying) {
+                    root.setHidden(modelData, false);
                     root.activePlayer = modelData;
+                }
                 root.updateActivePlayer();
             }
         }
@@ -110,7 +115,18 @@ Singleton {
     // picks one (selectPlayer); when it goes away, a playing one (or the
     // first) takes its place
     function updateActivePlayer() {
-        const rawList = Mpris.players.values;
+        // Forget closed players that went away
+        const names = Mpris.players.values.map(p => p.dbusName);
+        if (Object.keys(root.hiddenPlayers).some(name => !names.includes(name))) {
+            const kept = {};
+            for (const name of names)
+                if (root.hiddenPlayers[name])
+                    kept[name] = true;
+            root.hiddenPlayers = kept;
+        }
+
+        // Not root.players: its binding may not have caught up yet
+        const rawList = Mpris.players.values.filter(p => !root.hiddenPlayers[p.dbusName]);
 
         if (rawList.length === 0) {
             root.activePlayer = null;
@@ -131,6 +147,31 @@ Singleton {
             return;
         activePlayer = player;
         updateActivePlayer();
+    }
+
+    // Pauses the player and takes it out of the shell (Media tab, bar, lock)
+    // until it plays again; the app itself stays open
+    function closePlayer(player: MprisPlayer) {
+        if (!player)
+            return;
+        if (player.isPlaying && player.canPause)
+            player.pause();
+        setHidden(player, true);
+        if (player === activePlayer)
+            activePlayer = null;
+        updateActivePlayer();
+    }
+
+    function setHidden(player: MprisPlayer, hidden: bool) {
+        if (!player || !!hiddenPlayers[player.dbusName] === hidden)
+            return;
+        // Reassigned (not mutated) so the bindings see it
+        const next = Object.assign({}, hiddenPlayers);
+        if (hidden)
+            next[player.dbusName] = true;
+        else
+            delete next[player.dbusName];
+        hiddenPlayers = next;
     }
 
     // Icon of the player's app (from its desktop entry), "" when unknown

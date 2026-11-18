@@ -27,6 +27,18 @@ Singleton {
         return names;
     }
 
+    // History entries: one per conversation (app + summary, so each sender
+    // of a chat), ordered by their newest notification
+    readonly property var conversationKeys: {
+        const keys = [];
+        for (const n of list) {
+            const key = conversationKey(n);
+            if (!keys.includes(key))
+                keys.push(key);
+        }
+        return keys;
+    }
+
     readonly property int count: list.length
     readonly property int activePopupCount: popups.length
 
@@ -68,12 +80,17 @@ Singleton {
     // PUBLIC FUNCTIONS
     // ========================================================================
 
-    function notificationsOf(appName: string): var {
-        return list.filter(n => n.appName === appName);
+    function conversationKey(n: var): string {
+        return n.appName + "\n" + n.summary;
     }
 
-    function dismissGroup(appName: string) {
-        for (const n of notificationsOf(appName))
+    // Newest first
+    function conversationOf(key: string): var {
+        return list.filter(n => conversationKey(n) === key);
+    }
+
+    function dismissConversation(key: string) {
+        for (const n of conversationOf(key))
             n.close();
     }
 
@@ -82,9 +99,12 @@ Singleton {
             n.close();
     }
 
-    // "now", "5m", "2h", "3d" — re-evaluated every second through TimeService
+    // "now", "5m", "2h", "3d" — re-evaluated every minute through TimeService,
+    // against the real time: TimeService.date stays at the minute's start, so
+    // it read up to a minute short
     function relativeTime(time: date): string {
-        const minutes = Math.floor((TimeService.date.getTime() - time.getTime()) / 60000);
+        void TimeService.date;
+        const minutes = Math.floor((Date.now() - time.getTime()) / 60000);
         if (minutes < 1)
             return I18n.trc("time", "now");
         if (minutes < 60)
@@ -133,11 +153,28 @@ Singleton {
             notif.tracked = true;
 
             const critical = notif.urgency === NotificationUrgency.Critical;
+            // Restored after a reload: keeps the time it arrived, not "now"
+            const saved = notif.lastGeneration ? root._times()[notif.id] : undefined;
             const data = notifComponent.createObject(root, {
-                "notification": notif
+                "notification": notif,
+                "time": saved ? new Date(saved) : new Date()
             });
+            root._setTime(data.notifId, data.time.getTime());
+
+            // The earlier message of this conversation, just closed by the
+            // app, stays as a copy
+            if (data.chat) {
+                for (const n of root.list.filter(n => n.nextTimer.running && n.appName === data.appName && n.summary === data.summary))
+                    n.becomeCopyOf(data.notifId);
+            }
 
             root.list = [data, ...root.list];
+            // Its earlier messages come back with it, in time order
+            if (notif.lastGeneration) {
+                for (const c of root._copies().filter(c => c.sourceId === notif.id))
+                    root._createCopy(c);
+                root._sortList();
+            }
             root._trimHistory();
 
             // Notifications restored after a reload go straight to history
@@ -146,6 +183,100 @@ Singleton {
             else if (data.isTransient)
                 data.close();
         }
+    }
+
+    // Arrival times by notification id, kept across reloads (the history is
+    // rebuilt then). JSON: a JS object doesn't survive the reload
+    PersistentProperties {
+        id: kept
+        reloadableId: "notificationTimes"
+
+        property string times: "{}"
+    }
+
+    function _times(): var {
+        try {
+            return JSON.parse(kept.times);
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function _setTime(id: int, ms: real): void {
+        const times = _times();
+        if (ms > 0)
+            times[id] = ms;
+        else
+            delete times[id];
+        kept.times = JSON.stringify(times);
+    }
+
+    // Earlier messages of a replaced chat notification (see _applyReplace):
+    // frozen copies, kept across reloads as JSON like the times
+    PersistentProperties {
+        id: keptCopies
+        reloadableId: "notificationCopies"
+
+        property string copies: "[]"
+    }
+
+    function _copies(): var {
+        try {
+            return JSON.parse(keptCopies.copies);
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function _copyKey(c: var): string {
+        return c.sourceId + ":" + c.time;
+    }
+
+    // Added and removed one by one (not rewritten from the list): during a
+    // reload's restore the list doesn't hold everyone's copies yet
+    function _keepCopy(c: var, keep: bool): void {
+        const copies = _copies().filter(other => _copyKey(other) !== _copyKey(c));
+        if (keep)
+            copies.push(c);
+        keptCopies.copies = JSON.stringify(copies);
+    }
+
+    // How long a chat notification closed by its app waits for the next
+    // message (Chromium sends it within a few ms)
+    readonly property int nextMessageWindow: 1000
+
+    function _snapshot(n: var): var {
+        return {
+            "sourceId": n.frozen ? n.sourceId : n.notifId,
+            "time": n.time.getTime(),
+            "appName": n.appName,
+            "appIcon": n.appIcon,
+            "summary": n.summary,
+            "body": n.body,
+            "image": n.image,
+            "urgency": n.urgency
+        };
+    }
+
+    function _createCopy(c: var): void {
+        const copy = notifComponent.createObject(root, {
+            "notification": null,
+            "frozen": true,
+            "sourceId": c.sourceId,
+            "time": new Date(c.time),
+            "appName": c.appName,
+            "appIcon": c.appIcon,
+            "summary": c.summary,
+            "body": c.body,
+            "image": c.image,
+            "urgency": c.urgency
+        });
+        list = [...list, copy];
+    }
+
+    // Newest first
+    function _sortList(): void {
+        list = list.slice().sort((a, b) => b.time.getTime() - a.time.getTime());
     }
 
     // History kept: older notifications go, except resident ones and those
@@ -175,9 +306,18 @@ Singleton {
     component NotifData: QtObject {
         id: notif
 
+        // null for a frozen copy
         required property Notification notification
+        // Frozen copy of an earlier message: text only (no actions or reply),
+        // gone with its source when the app closes it
+        property bool frozen: false
+        // Copy: notifId of the notification it was taken from
+        property int sourceId: -1
+        // A chat: a replacement is a new message, the earlier one stays
+        property bool chat: false
 
-        readonly property date time: new Date()
+        // When it arrived, or when the app last replaced it with news
+        property date time: new Date()
         property bool popup: false
         // Popup is playing its exit animation; `popup` turns false right after
         property bool exiting: false
@@ -240,7 +380,43 @@ Singleton {
             onTriggered: notif.finishExit()
         }
 
+        // Closed by a chat app: kept as an earlier message if the next one
+        // of the conversation arrives now, gone otherwise (the chat was opened)
+        readonly property Timer nextTimer: Timer {
+            interval: root.nextMessageWindow
+            onTriggered: notif.close()
+        }
+
+        function awaitNext() {
+            hidePopup();
+            nextTimer.restart();
+        }
+
+        // Turns into a frozen copy of the newer notification `id`, taking its
+        // own copies along
+        function becomeCopyOf(id: int) {
+            nextTimer.stop();
+            for (const c of root.list.filter(c => c.frozen && c.sourceId === notifId)) {
+                root._keepCopy(root._snapshot(c), false);
+                c.sourceId = id;
+                root._keepCopy(root._snapshot(c), true);
+            }
+            root._setTime(notifId, 0);
+            frozen = true;
+            sourceId = id;
+            actions = [];
+            hasInlineReply = false;
+            root._keepCopy(root._snapshot(notif), true);
+        }
+
         function showPopup() {
+            // One popup per conversation: the newest message takes the place
+            // of the one before (it shows the earlier ones when opened)
+            const key = root.conversationKey(notif);
+            for (const other of root.popups) {
+                if (other !== notif && root.conversationKey(other) === key)
+                    other.hidePopup();
+            }
             exitTimer.stop();
             exiting = false;
             popup = true;
@@ -298,6 +474,20 @@ Singleton {
                 return;
             }
             closed = true;
+            if (frozen) {
+                root._keepCopy({
+                    "sourceId": sourceId,
+                    "time": time.getTime()
+                }, false);
+            } else {
+                root._setTime(notifId, 0);
+                // The app closed it (the chat was opened): its earlier
+                // messages go too
+                if (dropped) {
+                    for (const c of root.list.filter(c => c.frozen && c.sourceId === notifId))
+                        c.close();
+                }
+            }
             expireAnim.stop();
             popup = false;
             root.list = root.list.filter(n => n !== notif);
@@ -308,6 +498,8 @@ Singleton {
         }
 
         function refresh() {
+            if (frozen)
+                return;
             notifId = notification.id;
             appName = notification.appName || I18n.tr("System");
             summary = notification.summary || "";
@@ -363,6 +555,9 @@ Singleton {
                         "invoke": () => a.invoke()
                     }));
 
+            const category = notification.hints?.category ?? "";
+            chat = site !== null || category.startsWith("im") || hasInlineReply;
+
             const value = notification.hints?.value;
             progressValue = value !== undefined ? Math.max(0, Math.min(100, value)) : -1;
         }
@@ -384,7 +579,12 @@ Singleton {
             // Closed by the app, expired or dismissed elsewhere
             function onClosed() {
                 notif.dropped = true;
-                notif.close();
+                // Chromium closes a chat's notification right before sending
+                // the next message as a new one: wait for it (see onNotification)
+                if (notif.chat && !notif.frozen)
+                    notif.awaitNext();
+                else
+                    notif.close();
             }
         }
 
@@ -397,6 +597,7 @@ Singleton {
         function _applyReplace() {
             if (closed)
                 return;
+            const before = root._snapshot(notif);
             const summaryBefore = summary;
             const bodyBefore = body;
             refresh();
@@ -404,6 +605,17 @@ Singleton {
             // expired: only news brings it back (a new title, or new text
             // without a progress bar), not each step of a download
             const news = summary !== summaryBefore || (body !== bodyBefore && progressValue < 0);
+            if (news) {
+                time = new Date();
+                root._setTime(notifId, time.getTime());
+                // A chat keeps the earlier message as its own row
+                if (chat) {
+                    root._createCopy(before);
+                    root._keepCopy(before, true);
+                }
+                root._sortList();
+                root._trimHistory();
+            }
             if (popup || (news && (!root.dndEnabled || isCritical)))
                 showPopup();
         }

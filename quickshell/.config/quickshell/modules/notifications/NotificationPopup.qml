@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell.Widgets
 import qs.config
+import qs.services
 import "../../components/"
 
 // Toast shown at the top right. Click runs the default action, right/middle
@@ -30,6 +31,8 @@ Item {
     clip: height < card.height + Config.notifSpacing
 
     Behavior on implicitHeight {
+        // The card's own easing already moves it while opening or closing
+        enabled: !cardHeightAnim.running
         NumberAnimation {
             duration: Config.animDuration
             easing.type: Easing.OutQuad
@@ -53,7 +56,8 @@ Item {
     Binding {
         target: root.notif
         property: "held"
-        value: hover.hovered || content.replyFocused || dragArea.drag.active
+        // Opened (expanded), it stays until closed or collapsed
+        value: hover.hovered || content.replyFocused || dragArea.drag.active || content.expanded
     }
 
     // The card clips its children: its shadow follows it from outside
@@ -77,6 +81,16 @@ Item {
 
         width: parent.width
         height: content.implicitHeight + Config.padding * 4
+
+        // Opening and closing the conversation ease the card
+        Behavior on height {
+            enabled: root.entered
+            NumberAnimation {
+                id: cardHeightAnim
+                duration: Config.animDuration
+                easing.type: Easing.OutCubic
+            }
+        }
         radius: Config.radiusLarge
         color: Config.backgroundTransparentColor
         // Only a critical notification has a border, in the error color
@@ -143,16 +157,12 @@ Item {
             anchors.margins: Config.padding * 2
             notif: root.notif
 
-            NotificationIconButton {
-                icon: "󰅖"
-                opacity: hover.hovered ? 1 : 0
-                onClicked: root.notif.close()
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Config.animDurationShort
-                    }
-                }
+            // md-close: dismisses the whole conversation (on hover)
+            MenuButton {
+                icon: "\u{f0156}"
+                danger: true
+                visible: hover.hovered
+                onClicked: NotificationService.dismissConversation(NotificationService.conversationKey(root.notif))
             }
         }
 

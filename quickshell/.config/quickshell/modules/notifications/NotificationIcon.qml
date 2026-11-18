@@ -23,9 +23,10 @@ Item {
     implicitWidth: size
     implicitHeight: size
 
+    // Rounded square, like a chat app's avatar
     ClippingRectangle {
         anchors.fill: parent
-        radius: width / 2
+        radius: Config.radius
         color: Qt.alpha(root.tint, 0.15)
 
         Image {

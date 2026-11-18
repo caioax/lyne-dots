@@ -7,9 +7,9 @@ import qs.config
 import qs.services
 import "../../components/"
 
-// Notification history card: app groups split by dividers, scrolling once
+// Notification history card: conversations split by dividers, scrolling once
 // taller than maxHeight. `preview` (Quick Settings dashboard) shows only the
-// newest groups plus "See all", which asks for the notifications page.
+// newest conversations plus "See all", which asks for the notifications page.
 Card {
     id: root
 
@@ -23,8 +23,8 @@ Card {
     signal actionTriggered
     signal openPageRequested
 
-    readonly property var shownGroups: preview ? NotificationService.groupNames.slice(0, previewGroups) : NotificationService.groupNames
-    readonly property int hiddenGroups: NotificationService.groupNames.length - shownGroups.length
+    readonly property var shownGroups: preview ? NotificationService.conversationKeys.slice(0, previewGroups) : NotificationService.conversationKeys
+    readonly property int hiddenGroups: NotificationService.conversationKeys.length - shownGroups.length
     readonly property real listMaxHeight: maxHeight > 0 ? maxHeight - padding * 2 - (showHeader ? header.implicitHeight + spacing : 0) : Infinity
 
     spacing: Config.spacing * 2
@@ -44,13 +44,16 @@ Card {
             iconSize: Config.fontSizeNormal
             // md-format_list_bulleted
             icon: "\u{f0279}"
-            text: root.hiddenGroups > 0 ? I18n.tr("See all %1", NotificationService.groupNames.length) : I18n.tr("See all")
+            text: root.hiddenGroups > 0 ? I18n.tr("See all %1", NotificationService.conversationKeys.length) : I18n.tr("See all")
             onClicked: root.openPageRequested()
         }
 
+        // md-trash_can_outline: clears them all (do not disturb has its tile)
         MenuButton {
-            id: menuButton
-            onClicked: menu.openAt(menuButton, null)
+            visible: NotificationService.count > 0
+            icon: "\u{f0a7a}"
+            danger: true
+            onClicked: NotificationService.clearAll()
         }
     }
 
@@ -101,9 +104,9 @@ Card {
                         color: Config.surface1Color
                     }
 
-                    NotificationGroup {
+                    NotificationConversation {
                         width: parent.width
-                        appName: entry.modelData
+                        key: entry.modelData
                         preview: root.preview
                         onActionTriggered: root.actionTriggered()
                         onOpenRequested: root.openPageRequested()
@@ -113,30 +116,4 @@ Card {
         }
     }
 
-    ContextMenu {
-        id: menu
-
-        items: [
-            {
-                label: NotificationService.dndEnabled ? I18n.tr("Turn off do not disturb") : I18n.tr("Do not disturb"),
-                // md-bell / md-bell_sleep
-                icon: NotificationService.dndEnabled ? "\u{f009a}" : "\u{f00a0}",
-                action: "dnd"
-            },
-            {
-                label: I18n.tr("Clear all"),
-                // md-notification_clear_all
-                icon: "\u{f039f}",
-                action: "clear",
-                danger: true
-            }
-        ]
-
-        onTriggered: action => {
-            if (action === "dnd")
-                NotificationService.toggleDnd();
-            else if (action === "clear")
-                NotificationService.clearAll();
-        }
-    }
 }
