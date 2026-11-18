@@ -10,6 +10,7 @@ import "../quickSettings/"
 import "../systemMonitor/"
 import "../calendar/"
 import "../dashboard/"
+import "../notifications/"
 
 Scope {
     id: root
@@ -220,7 +221,7 @@ Scope {
                         anchorItem: center
                     }
 
-                    // --- RIGHT: tray, quick settings ---
+                    // --- RIGHT: tray, notifications, quick settings ---
                     BarIsland {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
@@ -238,6 +239,8 @@ Scope {
                         BarDivider {
                             visible: TrayService.hasItems
                         }
+
+                        NotificationButton {}
 
                         QuickSettingsButton {}
                     }

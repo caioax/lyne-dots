@@ -64,6 +64,7 @@
         "showMedia": true,
         "showSystem": false,
         "showWeather": false,
+        "showNotifications": true,
         "launcher": {
             "style": "logo",
             "icon": "lyne",

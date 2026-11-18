@@ -229,15 +229,6 @@ Singleton {
         return out;
     }
 
-    // `qs ipc call notifications toggleWindow` opens it too
-    Connections {
-        target: NotificationService
-
-        function onWindowToggleRequested() {
-            root.toggle("", root.focusedScreen());
-        }
-    }
-
     // ========================================================================
     // IPC — qs ipc call quicksettings <function> [page]
     // ========================================================================

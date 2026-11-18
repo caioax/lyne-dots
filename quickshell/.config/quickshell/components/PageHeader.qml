@@ -4,7 +4,8 @@ import QtQuick.Layouts
 import qs.config
 
 // Header of a Quick Settings subpage: back, icon, title/subtitle and
-// trailing controls (children are appended at the end)
+// trailing controls (children are appended at the end). Without `showBack`
+// it heads a popup of its own
 RowLayout {
     id: root
 
@@ -12,6 +13,7 @@ RowLayout {
     property string subtitle: ""
     property string icon: ""
     property color iconColor: Config.accentColor
+    property bool showBack: true
 
     readonly property int boxSize: Config.fontSizeIconSmall * 2
 
@@ -21,6 +23,7 @@ RowLayout {
     spacing: Config.spacing
 
     BackButton {
+        visible: root.showBack
         size: root.boxSize
         onClicked: root.backClicked()
     }

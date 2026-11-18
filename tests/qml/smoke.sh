@@ -547,9 +547,16 @@ EOF
     check "launcher › rank by usage on: counted" ev_is true "$counted"
     ev 'LauncherService.clearUsage(); "ok"' >/dev/null
 
+    # The bell's history popup; looking at it marks everything seen
     step "notifications window" ipc notifications toggleWindow
+    check "notifications › the history opens" ev_is true 'NotificationService.historyOpen'
+    check "notifications › nothing unseen while it is open" ev_is 0 'NotificationService.unseenCount'
     step "notifications closed" ipc notifications toggleWindow
+    check "notifications › the history closed" ev_is false 'NotificationService.historyOpen'
     step "notification popup" ev 'Quickshell.execDetached(["notify-send", "-a", "Smoke", "Smoke test", "A notification body"]); "sent"'
+    check "notifications › a new one counts as unseen on the bell" ev_is true 'NotificationService.unseenCount > 0'
+    ev 'NotificationService.markSeen(); "ok"' >/dev/null
+    check "notifications › seen once looked at" ev_is 0 'NotificationService.unseenCount'
     step "power menu" ipc power open
     check "power › Farewell by default" ev_is "farewell" 'PowerService.style'
     check "power › fixed order, shut down to lock" ev_is "shutdown,reboot,firmware,logout,suspend,hibernate,lock" 'PowerService.allActions.map(a => a.id).join(",")'

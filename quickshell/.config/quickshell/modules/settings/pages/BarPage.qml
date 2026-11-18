@@ -429,6 +429,16 @@ ColumnLayout {
     }
 
     SettingsGroup {
+        title: I18n.tr("Notifications")
+
+        ToggleRow {
+            label: I18n.tr("Notifications button")
+            description: I18n.tr("A bell before Quick Settings that opens the notification history; the badge counts the conversations you haven't seen yet")
+            path: "bar.showNotifications"
+        }
+    }
+
+    SettingsGroup {
         title: I18n.tr("Quick Settings")
 
         TemplatePicker {

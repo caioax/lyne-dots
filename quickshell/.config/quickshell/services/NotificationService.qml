@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Hyprland
 import Quickshell.Services.Notifications
 import qs.config
 
@@ -44,7 +45,31 @@ Singleton {
 
     property bool dndEnabled: StateService.get("notifications.dnd", false)
 
-    signal windowToggleRequested
+    // Screen the history popup (the bar's bell) is open on, "" = closed.
+    // Each bar has its own NotificationsWindow that shows itself while this
+    // names its screen
+    property string historyScreen: ""
+    readonly property bool historyOpen: historyScreen !== ""
+
+    // Conversations with a message newer than the last look at the history
+    // (the bell's badge); none while it is open
+    readonly property int unseenCount: {
+        if (historyOpen)
+            return 0;
+        const since = seen.at;
+        const counted = [];
+        let unseen = 0;
+        // Newest first, so a conversation's first entry is its newest message
+        for (const n of list) {
+            const key = conversationKey(n);
+            if (counted.includes(key))
+                continue;
+            counted.push(key);
+            if (n.time.getTime() > since)
+                unseen++;
+        }
+        return unseen;
+    }
 
     Connections {
         target: StateService
@@ -79,6 +104,30 @@ Singleton {
     // ========================================================================
     // PUBLIC FUNCTIONS
     // ========================================================================
+
+    function openHistory(screenName: string): void {
+        markSeen();
+        historyScreen = screenName;
+    }
+
+    function closeHistory(): void {
+        // What arrived while it was open was seen too
+        if (historyOpen)
+            markSeen();
+        historyScreen = "";
+    }
+
+    // Closes it when open on that screen, otherwise opens or moves it there
+    function toggleHistory(screenName: string): void {
+        if (historyScreen === screenName)
+            closeHistory();
+        else
+            openHistory(screenName);
+    }
+
+    function markSeen(): void {
+        seen.at = Date.now();
+    }
 
     function conversationKey(n: var): string {
         return n.appName + "\n" + n.summary;
@@ -183,6 +232,14 @@ Singleton {
             else if (data.isTransient)
                 data.close();
         }
+    }
+
+    // When the history was last looked at, kept across reloads
+    PersistentProperties {
+        id: seen
+        reloadableId: "notificationSeen"
+
+        property real at: 0
     }
 
     // Arrival times by notification id, kept across reloads (the history is
@@ -630,8 +687,9 @@ Singleton {
     IpcHandler {
         target: "notifications"
 
+        // The history popup, on the focused screen
         function toggleWindow(): void {
-            root.windowToggleRequested();
+            root.toggleHistory(Hyprland.focusedMonitor?.name ?? "");
         }
 
         function toggleDnd(): void {

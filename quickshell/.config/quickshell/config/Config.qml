@@ -151,6 +151,8 @@ Singleton {
     readonly property bool barShowMedia: !barCenterClock && getState("bar.showMedia", true)
     readonly property bool barShowSystem: !barCenterClock && getState("bar.showSystem", false)
     readonly property bool barShowWeather: !barCenterClock && getState("bar.showWeather", false)
+    // The bell in the bar's right side, opening the notification history
+    readonly property bool barShowNotifications: getState("bar.showNotifications", true)
     // Launcher button: style "logo", "pill" or "compact"; icon "lyne" (the
     // lyne-dots logo) or "distro" (Nerd Font glyph from /etc/os-release)
     readonly property string barLauncherStyle: getState("bar.launcher.style", "logo")
