@@ -562,6 +562,18 @@ EOF
     fi
     step "wallpaper picker" ipc wallpapers open
     step "wallpaper picker closed" ipc wallpapers close
+    # A library wider than the carousel: it loops, and the arrows go round
+    # (the theme wallpapers linked into it for a moment)
+    local wall walls=0
+    for wall in "$SB"/home/.local/wallpapers/themes/*/*.jpg; do
+        ln -s "$wall" "$SB/home/.local/wallpapers/smoke-$((walls += 1)).jpg"
+    done
+    step "wallpaper picker › on a long library" ev "WallpaperPickerService.setFilter('all'); WallpaperPickerService.show(); 'shown'"
+    check "wallpaper picker › the carousel loops" ev_soon true 'WallpaperPickerService.items.length === '"$walls"' && WallpaperPickerService.wrap'
+    step "wallpaper picker › left from the first" ev 'WallpaperPickerService.selectFirst(); WallpaperPickerService.move(-1); "moved"'
+    check "wallpaper picker › went round to the last" ev_is "$((walls - 1))" 'WallpaperPickerService.selectedIndex'
+    step "wallpaper picker › closed again" ipc wallpapers close
+    rm -f "$SB"/home/.local/wallpapers/smoke-*.jpg
     for id in volume mic brightness layout tiling; do
         step "osd › $id" ev "OsdService.show('$id')"
     done
