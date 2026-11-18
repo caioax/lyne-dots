@@ -450,7 +450,7 @@ ColumnLayout {
 
         ToggleRow {
             label: I18n.tr("Pause while locked")
-            description: I18n.tr("The lock screen shows its first frame instead")
+            description: I18n.tr("The lock screen shows a still frame of it instead")
             path: "wallpaper.pauseLocked"
             onToggled: value => WallpaperService.pauseLocked = value
             onResetRequested: WallpaperService.pauseLocked = StateService.get(path, true)

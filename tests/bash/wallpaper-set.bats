@@ -81,7 +81,8 @@ players() {
 
 # The poster wallpaper-poster.sh made for $1
 poster_of() {
-    "$REPO/quickshell/.config/quickshell/scripts/wallpaper-poster.sh" "$1"
+    # LYNE_TEST_SHELL: a copy of the shell (to sabotage the script)
+    "${LYNE_TEST_SHELL:-$REPO/quickshell/.config/quickshell}/scripts/wallpaper-poster.sh" "$1"
 }
 
 # Waits for the detached mpvpaper's socket
@@ -251,6 +252,53 @@ awww img $(poster_of "$other")"
     assert_success
     assert_output "$WALL"
     assert_equal "$(cat "$STUB_LOG")" ""
+}
+
+# Frames of the video by second, with their brightness ("0:0 1:5 2:40"):
+# ffmpeg writes the second it was asked for, ffprobe reads it back
+frames_brightness() {
+    export FRAMES="$1"
+    cat >"$BATS_TEST_TMPDIR/bin/ffmpeg" <<'EOF2'
+#!/bin/bash
+for a; do :; done
+at=0
+while (($#)); do
+    [[ "$1" == -ss ]] && at="$2"
+    shift
+done
+[[ " $FRAMES " == *" $at:"* ]] || exit 0
+echo "ffmpeg -ss $at" >>"$STUB_LOG"
+printf '%s' "$at" >"$a"
+EOF2
+    cat >"$BATS_TEST_TMPDIR/bin/ffprobe" <<'EOF2'
+#!/bin/bash
+file="$(sed -n 's/.*movie=\([^,]*\),signalstats.*/\1/p' <<<"$*")"
+at="$(cat "$file")"
+for f in $FRAMES; do
+    [[ "${f%%:*}" == "$at" ]] && echo "${f#*:}.5"
+done
+EOF2
+    chmod +x "$BATS_TEST_TMPDIR/bin/ffmpeg" "$BATS_TEST_TMPDIR/bin/ffprobe"
+}
+
+@test "poster: a bright first frame, nothing else looked at" {
+    frames_brightness "0:120 1:130"
+    assert_equal "$(cat "$(poster_of "$VID")")" 0
+    assert_equal "$(cat "$STUB_LOG")" "ffmpeg -ss 0"
+}
+
+@test "poster: a black first frame (a fade-in) gives way to the first bright one" {
+    frames_brightness "0:0 1:5 2:40 3:90"
+    assert_equal "$(cat "$(poster_of "$VID")")" 2
+    assert_equal "$(grep -c '^ffmpeg' "$STUB_LOG")" 3
+    run ls -A "$HOME/.cache/lyne/wallpaper-posters"
+    assert_equal "$(grep -c . <<<"$output")" 1
+}
+
+@test "poster: a dark video gets its brightest frame, a short one what it has" {
+    frames_brightness "0:0 1:9 2:4"
+    assert_equal "$(cat "$(poster_of "$VID")")" 1
+    assert_equal "$(grep -c '^ffmpeg' "$STUB_LOG")" 3
 }
 
 @test "video: paused and resumed through its socket" {

@@ -133,7 +133,7 @@ fi
 
 # Without mpvpaper (its AUR build failed) the poster stays
 if ! command -v mpvpaper >/dev/null; then
-    echo "mpvpaper not installed: showing the first frame of $path" >&2
+    echo "mpvpaper not installed: showing the poster of $path" >&2
     exit 0
 fi
 

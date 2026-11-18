@@ -1246,7 +1246,7 @@
     "Pause under fullscreen windows": "Pausar sob janelas em tela cheia",
     "Once every screen is covered; a free screen keeps it moving": "Quando todas as telas estão cobertas; uma tela livre mantém o movimento",
     "Pause while locked": "Pausar com a tela bloqueada",
-    "The lock screen shows its first frame instead": "A tela de bloqueio mostra o primeiro quadro no lugar",
+    "The lock screen shows a still frame of it instead": "A tela de bloqueio mostra um quadro parado dele no lugar",
     "Pause on battery": "Pausar na bateria",
     "Saves power while the charger is unplugged": "Economiza energia enquanto o carregador está desconectado",
     "Picker": "Seletor",

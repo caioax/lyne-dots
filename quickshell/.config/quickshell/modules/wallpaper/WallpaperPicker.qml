@@ -37,6 +37,12 @@ PanelWindow {
 
     readonly property int tileWidth: Config.fontSizeNormal * 18
     readonly property int tileHeight: Math.round(tileWidth * 9 / 16)
+    // Arrows and the wheel go round when the carousel loops
+    Binding {
+        target: WallpaperPickerService
+        property: "wrap"
+        value: carousel.looping
+    }
     // Tiles beside the selected one are drawn smaller
     readonly property real sideScale: 0.8
 
@@ -268,98 +274,19 @@ PanelWindow {
                 }
             }
 
-            ListView {
+            WallpaperCarousel {
                 id: carousel
-
-                // Cells the width can show, for PageUp/PageDown
-                readonly property int visibleCount: Math.max(1, Math.floor(width / cellWidth))
-                readonly property real cellWidth: Math.round(root.tileWidth * (1 + root.sideScale) / 2 + Config.spacing)
 
                 Layout.fillWidth: true
                 Layout.preferredHeight: root.tileHeight
                 visible: count > 0
-                orientation: ListView.Horizontal
-                clip: true
-                // Not StopAtBounds: with StrictlyEnforceRange, a flick that
-                // would reach an end gets no target of its own and is snapped
-                // back to the next tile (Qt's ListView), so a quick swipe lost
-                // its momentum. Dragging still stops at the ends
-                boundsBehavior: Flickable.OvershootBounds
                 model: WallpaperPickerService.items
-                cacheBuffer: cellWidth * 4
-
-                // The selected tile stays in the middle
-                highlightRangeMode: ListView.StrictlyEnforceRange
-                preferredHighlightBegin: Math.round((width - cellWidth) / 2)
-                preferredHighlightEnd: preferredHighlightBegin + cellWidth
-                highlightMoveDuration: Config.animDuration
-                highlightFollowsCurrentItem: true
-
                 currentIndex: WallpaperPickerService.selectedIndex
-                // A drag or flick moves the current item: tell the service.
-                // Other changes (a new model resets it, the highlight sliding
-                // past items) follow the service
-                onCurrentIndexChanged: {
-                    if (currentIndex === WallpaperPickerService.selectedIndex)
-                        return;
-                    if ((dragging || flicking) && currentIndex >= 0)
-                        WallpaperPickerService.select(currentIndex);
-                    else
-                        currentIndex = WallpaperPickerService.selectedIndex;
-                }
-                onCountChanged: currentIndex = WallpaperPickerService.selectedIndex
-
-                Connections {
-                    target: WallpaperPickerService
-
-                    function onSelectedIndexChanged() {
-                        carousel.currentIndex = WallpaperPickerService.selectedIndex;
-                    }
-                }
-
-                delegate: Item {
-                    id: cell
-
-                    required property string modelData
-                    required property int index
-                    readonly property bool selected: index === carousel.currentIndex
-
-                    width: carousel.cellWidth
-                    height: root.tileHeight
-
-                    WallpaperTile {
-                        anchors.centerIn: parent
-                        width: root.tileWidth
-                        path: cell.modelData
-                        current: cell.modelData === WallpaperService.currentWallpaper
-                        highlighted: cell.selected
-                        showName: false
-                        scale: cell.selected ? 1 : root.sideScale
-                        opacity: cell.selected ? 1 : 0.6
-
-                        Behavior on scale {
-                            NumberAnimation {
-                                duration: Config.animDuration
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Config.animDuration
-                            }
-                        }
-
-                        // First click selects, a click on the selected one applies it
-                        onActivated: {
-                            if (cell.selected)
-                                root.applySelected();
-                            else
-                                WallpaperPickerService.select(cell.index);
-                        }
-                        onMenuRequested: anchor => menu.openAt(anchor, cell.modelData)
-                    }
-                }
+                tileWidth: root.tileWidth
+                sideScale: root.sideScale
+                onSelectRequested: index => WallpaperPickerService.select(index)
+                onActivated: root.applySelected()
+                onMenuRequested: (anchor, path) => menu.openAt(anchor, path)
             }
 
             // Nothing to show, with a way out when there's one

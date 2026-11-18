@@ -3,9 +3,9 @@
 # wallpaper-thumb.sh WxH PATH...
 # =============================================================================
 # Prints "PATH<TAB>THUMB" for each wallpaper: a small JPEG that covers WxH
-# (aspect kept), made once with ffmpeg and cached by path, size,
+# (aspect kept), made once with ffmpeg and cached by the still's path, size,
 # modification time and WxH, so a replaced file gets a new one. A video's
-# thumbnail comes from its poster (wallpaper-poster.sh). Tiles load these
+# still is its poster (wallpaper-poster.sh). Tiles load these
 # instead of decoding the full image (a 5K PNG) every time one scrolls in.
 #
 # A few run at once. A path that is not a file, or that ffmpeg can't read,
@@ -32,16 +32,17 @@ thumb_of() {
         echo "not found: $path" >&2
         return
     fi
-    real="$(realpath "$path")"
+    # An image is its own still; a video stands as its poster. Keyed by
+    # that still, so a new poster (a replaced video) makes a new thumbnail
+    source="$("$poster_script" "$path" 2>/dev/null)" || {
+        echo "no frame from: $path" >&2
+        return
+    }
+    real="$(realpath "$source")"
     key="$(printf '%s|%s|%s' "$real" "$(stat -c '%s|%Y' "$real")" "$size" | sha1sum | cut -d' ' -f1)"
     thumb="$cache/$key.jpg"
 
     if [[ ! -s "$thumb" ]]; then
-        # An image is its own still; a video stands as its poster
-        source="$("$poster_script" "$path" 2>/dev/null)" || {
-            echo "no frame from: $path" >&2
-            return
-        }
         # Written aside and moved, so a reader never gets half a file
         tmp="$cache/.$key.$BASHPID.jpg"
         if ! ffmpeg -nostdin -loglevel error -y -i "$source" -frames:v 1 \

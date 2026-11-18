@@ -34,6 +34,8 @@ Singleton {
     property string query: ""
     // Index into `items`
     property int selectedIndex: 0
+    // move() goes round past an end (the picker's carousel loops)
+    property bool wrap: false
 
     // "all" (the library, favorites first), "favorites" or "theme" (the
     // current theme's wallpapers). Saved, so it opens on the last one used
@@ -216,7 +218,11 @@ Singleton {
     // --- Navigation ---
 
     function move(delta: int) {
-        select(selectedIndex + delta);
+        const n = items.length;
+        if (wrap && n > 0)
+            select(((selectedIndex + delta) % n + n) % n);
+        else
+            select(selectedIndex + delta);
     }
 
     function select(index: int) {

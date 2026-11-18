@@ -69,7 +69,7 @@ Singleton {
     readonly property string _addScript: Qt.resolvedUrl("../scripts/wallpapers-add.sh").toString().replace("file://", "")
 
     // Wallpapers are images or videos (mp4, webm, mkv; wallpaper-set.sh plays
-    // these through mpvpaper). A video stands as its poster, its first frame,
+    // these through mpvpaper). A video stands as its poster, a frame of it,
     // wherever a still image is needed: posterOf/stillSource
     readonly property var videoExtensions: ["mp4", "webm", "mkv"]
     // Brace list for the ls listings (every case the Add script takes)

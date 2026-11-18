@@ -9,7 +9,7 @@
 #                       (~/.cache/lyne/nvim.json, auto mode too),
 #                       backgroundOpacity, wallpaper= (absolute path), layout=
 #   wallpaper.<ext>     the current wallpaper, its extension kept; a video
-#                       wallpaper gives its poster (first frame, a jpg)
+#                       wallpaper gives its poster (a frame of it, a jpg)
 #   avatars/<user>.png  the profile picture (Qt reads it by content)
 # Every file goes to a temp name inside the dir and is renamed into place, and
 # only when its content changed. Shows on the next login, nothing restarts.
