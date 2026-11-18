@@ -123,6 +123,30 @@ lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
     assert_output index.theme
 }
 
+@test "apply: the GTK settings.ini name the theme and size, for apps on XWayland" {
+    mkdir -p "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0" "$HOME/dots"
+    printf '[Settings]\ngtk-theme-name=adw-gtk3-dark\ngtk-cursor-theme-name=Adwaita\n\n[Other]\nx=1\n' >"$HOME/.config/gtk-3.0/settings.ini"
+    # A stowed file: written through the link
+    printf '[Settings]\ngtk-icon-theme-name=Tela\n' >"$HOME/dots/gtk4.ini"
+    ln -s "$HOME/dots/gtk4.ini" "$HOME/.config/gtk-4.0/settings.ini"
+    run cursor 'cursor_apply breeze_cursors 32'
+    assert_success
+    assert_equal "$(cat "$HOME/.config/gtk-3.0/settings.ini")" "$(printf '[Settings]\ngtk-theme-name=adw-gtk3-dark\ngtk-cursor-theme-name=breeze_cursors\ngtk-cursor-theme-size=32\n\n[Other]\nx=1')"
+    [[ -L "$HOME/.config/gtk-4.0/settings.ini" ]]
+    assert_equal "$(cat "$HOME/dots/gtk4.ini")" "$(printf '[Settings]\ngtk-icon-theme-name=Tela\ngtk-cursor-theme-name=breeze_cursors\ngtk-cursor-theme-size=32')"
+    # Again: the files stay as they are
+    touch -d '2001-01-01' "$HOME/.config/gtk-3.0/settings.ini"
+    cursor 'cursor_apply breeze_cursors 32'
+    run stat -c %Y "$HOME/.config/gtk-3.0/settings.ini"
+    assert_output "$(date -d 2001-01-01 +%s)"
+}
+
+@test "apply: no GTK settings.ini made where there was none" {
+    run cursor 'cursor_apply Adwaita 24'
+    assert_success
+    [[ ! -e "$HOME/.config/gtk-3.0/settings.ini" && ! -e "$HOME/.config/gtk-4.0/settings.ini" ]]
+}
+
 @test "apply: an unknown theme or a bad size changes nothing" {
     run cursor 'cursor_apply Nope 24'
     assert_failure

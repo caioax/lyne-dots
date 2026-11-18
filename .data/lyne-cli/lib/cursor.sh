@@ -31,9 +31,12 @@
 #                              when it isn't installed, 3 for a system theme
 #                              (a package's)
 #   cursor_apply <id> <size>   switch to it now: the running Hyprland
-#                              (hyprctl setcursor), GSettings (GTK) and the
-#                              "default" theme apps without a setting
-#                              inherit (~/.icons/default/index.theme). The
+#                              (hyprctl setcursor), GSettings (GTK on
+#                              Wayland), the GTK settings.ini (GTK on X11,
+#                              and the Chromium/CEF apps that run on XWayland
+#                              and take their cursor from GTK, like Spotify)
+#                              and the "default" theme apps without a
+#                              setting inherit (~/.icons/default/index.theme). The
 #                              XCURSOR_* variables new apps start with come
 #                              from Hyprland's hl.env (hypr/local/settings.lua,
 #                              written by the shell) and, at login, from
@@ -45,6 +48,52 @@
 # shellcheck disable=SC2034 # read by commands/cursor.sh
 CURSOR_DEFAULT_THEME="Bibata-Modern-Classic"
 CURSOR_DEFAULT_SIZE=24
+
+# ini_set FILE SECTION KEY VALUE: sets KEY in [SECTION] (added when
+# missing) of an existing file, through links (stowed files); 0 when the file
+# changed. Shared with icons.sh
+ini_set() {
+    local file="$1" real tmp
+    [[ -f "$file" ]] || return 1
+    real="$(realpath -- "$file")" || return 1
+    tmp="$(mktemp "${real%/*}/.${real##*/}.lyne.XXXXXX")" || return 1
+    # A new key goes after the section's last line, before the blank lines
+    # that end it (held back until something else comes)
+    awk -v section="[$2]" -v key="$3" -v value="$4" '
+        function put() { print key "=" value; done = 1 }
+        function flush() { printf "%s", blanks; blanks = "" }
+        {
+            line = $0; sub(/\r$/, "", line)
+            if (line ~ /^\[/) {
+                if (inside && !done) put()
+                flush()
+                inside = (line == section)
+                if (inside) seen = 1
+            } else if (inside && line ~ /^[ \t]*$/) {
+                blanks = blanks $0 "\n"
+                next
+            } else {
+                flush()
+                if (inside && !done && index(line, key) == 1 && substr(line, length(key) + 1) ~ /^[ \t]*=/) {
+                    put()
+                    next
+                }
+            }
+            print
+        }
+        END {
+            if (inside && !done) put()
+            flush()
+            if (!seen) { print ""; print section; put() }
+        }
+    ' "$real" >"$tmp" || { rm -f "$tmp"; return 1; }
+    if cmp -s "$tmp" "$real"; then
+        rm -f "$tmp"
+        return 1
+    fi
+    chmod --reference="$real" "$tmp" 2>/dev/null
+    mv -f "$tmp" "$real"
+}
 
 cursor_dirs() {
     if [[ -n "${LYNE_ICON_DIRS+x}" ]]; then
@@ -140,6 +189,14 @@ cursor_apply() {
         gsettings set org.gnome.desktop.interface cursor-theme "$id" 2>/dev/null || true
         gsettings set org.gnome.desktop.interface cursor-size "$size" 2>/dev/null || true
     fi
+
+    # GTK on X11 reads no GSettings: without these, apps on XWayland that
+    # ask GTK for the cursor (Spotify, other CEF/Chromium apps) get Adwaita
+    local config="${XDG_CONFIG_HOME:-$HOME/.config}" v
+    for v in 3.0 4.0; do
+        ini_set "$config/gtk-$v/settings.ini" Settings gtk-cursor-theme-name "$id"
+        ini_set "$config/gtk-$v/settings.ini" Settings gtk-cursor-theme-size "$size"
+    done
 
     # The theme an app falls back to when nothing names one
     local dir="$HOME/.icons/default" content

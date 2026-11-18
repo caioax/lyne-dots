@@ -56,7 +56,8 @@
 # as in cursor.sh.
 # =============================================================================
 
-# cursor_dirs, cursor_install_dir and _cursor_is_user: the same directories
+# cursor_dirs, cursor_install_dir and _cursor_is_user: the same directories;
+# ini_set for the toolkit files
 source "${BASH_SOURCE[0]%/*}/cursor.sh"
 
 # shellcheck disable=SC2034 # read by commands/icons.sh
@@ -207,40 +208,6 @@ icons_mode() {
     [[ "$scheme" == *light* ]] && echo light || echo dark
 }
 
-# _icons_ini_set FILE SECTION KEY VALUE: sets KEY in [SECTION] (added when
-# missing), through links (stowed files); 0 when the file changed
-_icons_ini_set() {
-    local file="$1" real tmp
-    [[ -f "$file" ]] || return 1
-    real="$(realpath -- "$file")" || return 1
-    tmp="$(mktemp "${real%/*}/.${real##*/}.lyne.XXXXXX")" || return 1
-    awk -v section="[$2]" -v key="$3" -v value="$4" '
-        function put() { print key "=" value; done = 1 }
-        {
-            line = $0; sub(/\r$/, "", line)
-            if (line ~ /^\[/) {
-                if (inside && !done) put()
-                inside = (line == section)
-                if (inside) seen = 1
-            } else if (inside && !done && index(line, key) == 1 && substr(line, length(key) + 1) ~ /^[ \t]*=/) {
-                put()
-                next
-            }
-            print
-        }
-        END {
-            if (inside && !done) put()
-            if (!seen) { print ""; print section; put() }
-        }
-    ' "$real" >"$tmp" || { rm -f "$tmp"; return 1; }
-    if cmp -s "$tmp" "$real"; then
-        rm -f "$tmp"
-        return 1
-    fi
-    chmod --reference="$real" "$tmp" 2>/dev/null
-    mv -f "$tmp" "$real"
-}
-
 icons_has() {
     [[ -n "$1" ]] && _icons_scan 2>/dev/null | cut -f1 | grep -qxF -- "$1"
 }
@@ -258,11 +225,11 @@ icons_apply() {
         gsettings set org.gnome.desktop.interface icon-theme "$id" >&2 2>/dev/null || true
     fi
     local qt=0
-    _icons_ini_set "$config/qt6ct/qt6ct.conf" Appearance icon_theme "$id" && qt=1
-    _icons_ini_set "$config/qt5ct/qt5ct.conf" Appearance icon_theme "$id" && qt=1
-    _icons_ini_set "$config/kdeglobals" Icons Theme "$id" && qt=1
-    _icons_ini_set "$config/gtk-3.0/settings.ini" Settings gtk-icon-theme-name "$id"
-    _icons_ini_set "$config/gtk-4.0/settings.ini" Settings gtk-icon-theme-name "$id"
+    ini_set "$config/qt6ct/qt6ct.conf" Appearance icon_theme "$id" && qt=1
+    ini_set "$config/qt5ct/qt5ct.conf" Appearance icon_theme "$id" && qt=1
+    ini_set "$config/kdeglobals" Icons Theme "$id" && qt=1
+    ini_set "$config/gtk-3.0/settings.ini" Settings gtk-icon-theme-name "$id"
+    ini_set "$config/gtk-4.0/settings.ini" Settings gtk-icon-theme-name "$id"
     ((qt)) && echo reload
     return 0
 }
