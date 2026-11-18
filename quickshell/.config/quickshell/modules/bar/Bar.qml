@@ -221,7 +221,7 @@ Scope {
                         anchorItem: center
                     }
 
-                    // --- RIGHT: tray, notifications, quick settings ---
+                    // --- RIGHT: tray, quick settings, notifications ---
                     BarIsland {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
@@ -240,9 +240,9 @@ Scope {
                             visible: TrayService.hasItems
                         }
 
-                        NotificationButton {}
-
                         QuickSettingsButton {}
+
+                        NotificationButton {}
                     }
                 }
             }

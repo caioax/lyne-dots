@@ -446,7 +446,7 @@
     "Hidden, not running": "Oculto, fora de execução",
     "Pinned, not running": "Fixado, fora de execução",
     "Notifications button": "Botão de notificações",
-    "A bell before Quick Settings that opens the notification history; the badge counts the conversations you haven't seen yet": "Um sino antes das Configurações rápidas que abre o histórico de notificações; o contador mostra as conversas que você ainda não viu",
+    "A bell after Quick Settings that opens the notification history; the badge counts the conversations you haven't seen yet": "Um sino depois das Configurações rápidas que abre o histórico de notificações; o contador mostra as conversas que você ainda não viu",
     "Quick Settings": "Configurações rápidas",
     "One icon; a dot on it when something needs a glance: low battery, no network, a microphone in use": "Um ícone; um ponto nele quando algo merece uma olhada: bateria fraca, sem rede, um microfone em uso",
     "Network, Bluetooth and battery; muted audio and a microphone in use show up only then": "Rede, Bluetooth e bateria; áudio mudo e microfone em uso só aparecem nesses momentos",
