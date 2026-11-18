@@ -7,7 +7,7 @@ import "../../../components/quickSettings/"
 
 // The Quick Settings button over the current wallpaper with the real style,
 // drawn from a fixed sample: Wi-Fi, a Bluetooth device, a microphone in use,
-// the battery at 72% and two unread notifications. The indicators switched
+// and the battery at 72%. The indicators switched
 // off in Settings stay off here too.
 ClippingRectangle {
     id: root
@@ -61,14 +61,6 @@ ClippingRectangle {
                     alert: false,
                     percentage: 72,
                     charging: false
-                },
-                "notifications": {
-                    shown: true,
-                    icon: "󰂚",
-                    tone: "normal",
-                    alert: false,
-                    dnd: false,
-                    count: 2
                 }
             })
     }

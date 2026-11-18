@@ -3,8 +3,7 @@ import QtQuick
 import qs.config
 
 // One icon for all of Quick Settings; a dot on its corner when something
-// needs a glance (unread notifications, low battery, no network, a
-// microphone in use...), colored by the worst of them
+// needs a glance (low battery, no network, a microphone in use...), colored by the worst of them
 Item {
     id: root
 

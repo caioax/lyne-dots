@@ -12,13 +12,13 @@ import qs.services
 QtObject {
     id: root
 
-    readonly property var order: ["network", "bluetooth", "volume", "mic", "battery", "notifications"]
+    readonly property var order: ["network", "bluetooth", "volume", "mic", "battery"]
 
     // Percentage next to the battery (bar.quickSettings.batteryPercent)
     readonly property bool batteryPercent: Config.barQsBatteryPercent
 
     // Worst state among the shown indicators, for styles that fold them into
-    // one icon: "error" (unread notifications, a nearly empty battery),
+    // one icon: "error" (a nearly empty battery, no network),
     // "warning" (other alerts) or "" when nothing needs a glance
     readonly property string summaryTone: {
         let worst = "";
@@ -27,9 +27,7 @@ QtObject {
             if (!ind.shown)
                 continue;
             let tone = "";
-            if (id === "notifications")
-                tone = !ind.dnd && ind.count > 0 ? "error" : "";
-            else if (ind.alert)
+            if (ind.alert)
                 tone = ind.tone === "error" ? "error" : "warning";
             if (tone === "error")
                 return tone;
@@ -66,8 +64,7 @@ QtObject {
             "bluetooth": bluetooth,
             "volume": volume,
             "mic": mic,
-            "battery": battery,
-            "notifications": notifications
+            "battery": battery
         } : sampleIndicators);
         const allowed = Config.barQsIndicators;
         for (const id of order) {
@@ -135,15 +132,5 @@ QtObject {
             alert: !BatteryService.isCharging && BatteryService.percentage < 20,
             percentage: BatteryService.percentage,
             charging: BatteryService.isCharging
-        })
-
-    // Unread count, or the DND bell
-    readonly property var notifications: ({
-            shown: NotificationService.dndEnabled || NotificationService.count > 0,
-            icon: NotificationService.dndEnabled ? "󰂛" : "󰂚",
-            tone: NotificationService.dndEnabled ? "warning" : "normal",
-            alert: false,
-            dnd: NotificationService.dndEnabled,
-            count: NotificationService.count
         })
 }

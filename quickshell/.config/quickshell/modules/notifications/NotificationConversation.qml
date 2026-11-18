@@ -16,12 +16,9 @@ Item {
     id: root
 
     required property string key
-    // Dashboard preview: the chevron opens the notifications page instead
-    property bool preview: false
     property bool expanded: false
 
     signal actionTriggered
-    signal openRequested
 
     // Newest first
     readonly property var notifs: NotificationService.conversationOf(key)
@@ -73,12 +70,7 @@ Item {
         anchors.fill: parent
         enabled: root.expandable
         cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            if (root.preview && root.hasMore && !root.expanded)
-                root.openRequested();
-            else
-                root.expanded = !root.expanded;
-        }
+        onClicked: root.expanded = !root.expanded
     }
 
     RowLayout {
@@ -193,12 +185,7 @@ Item {
             Layout.topMargin: Math.max(0, Math.round((Config.notifImageSize - implicitHeight) / 2))
             count: root.notifs.length
             expanded: root.expanded
-            onClicked: {
-                if (root.preview && root.hasMore && !root.expanded)
-                    root.openRequested();
-                else
-                    root.expanded = !root.expanded;
-            }
+            onClicked: root.expanded = !root.expanded
         }
     }
 

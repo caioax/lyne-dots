@@ -60,8 +60,6 @@ Item {
         NotificationList {
             visible: NotificationService.count > 0
             Layout.fillWidth: true
-            showHeader: false
-            separate: true
             maxHeight: root.availableHeight - header.implicitHeight - header.Layout.bottomMargin - main.spacing
             onActionTriggered: root.closeWindow()
         }

@@ -443,7 +443,7 @@ ColumnLayout {
 
         TemplatePicker {
             label: I18n.tr("Style")
-            description: Config.barQsStyle === "minimal" ? I18n.tr("One icon; a dot on it when something needs a glance: unread notifications, low battery, no network, a microphone in use") : I18n.tr("Network, Bluetooth, battery and notifications; muted audio and a microphone in use show up only then")
+            description: Config.barQsStyle === "minimal" ? I18n.tr("One icon; a dot on it when something needs a glance: low battery, no network, a microphone in use") : I18n.tr("Network, Bluetooth and battery; muted audio and a microphone in use show up only then")
             path: "bar.quickSettings.style"
             options: [
                 {
@@ -507,12 +507,6 @@ ColumnLayout {
             label: I18n.tr("Battery")
             description: I18n.tr("Level and charging, on laptops")
             path: "bar.quickSettings.indicators.battery"
-        }
-
-        ToggleRow {
-            label: I18n.tr("Notifications")
-            description: I18n.tr("Unread count, or the do not disturb bell")
-            path: "bar.quickSettings.indicators.notifications"
         }
     }
 

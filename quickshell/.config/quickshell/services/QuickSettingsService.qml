@@ -46,10 +46,6 @@ Singleton {
                 depth: 1,
                 back: ""
             },
-            notifications: {
-                depth: 1,
-                back: ""
-            },
             powerProfile: {
                 depth: 1,
                 back: ""
@@ -236,7 +232,7 @@ Singleton {
     IpcHandler {
         target: "quicksettings"
 
-        // Pages: wifi, bluetooth, nightLight, sound, notifications, powerProfile
+        // Pages: wifi, bluetooth, nightLight, sound, powerProfile
         function toggle(page: string): void {
             root.toggle(page, root.focusedScreen());
         }

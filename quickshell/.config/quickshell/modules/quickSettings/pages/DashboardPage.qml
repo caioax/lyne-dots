@@ -5,14 +5,9 @@ import qs.config
 import qs.services
 import "../../quickSettings/"
 import "../../../components/"
-import "../../notifications/"
 
 Item {
     id: root
-
-    // Height the page may use; the notification list scrolls within what's left
-    property real availableHeight: 0
-    readonly property bool hasNotifications: NotificationService.count > 0
 
     signal closeWindow
 
@@ -34,7 +29,7 @@ Item {
     }
 
     Layout.fillWidth: true
-    implicitHeight: main.implicitHeight + (hasNotifications ? notifList.anchors.topMargin + notifList.implicitHeight : 0)
+    implicitHeight: main.implicitHeight
 
     ColumnLayout {
         id: main
@@ -259,19 +254,5 @@ Item {
                 }
             }
         }
-    }
-
-    // ========== NOTIFICATIONS ==========
-    // Newest apps only; "See all" opens the notifications page
-    NotificationList {
-        id: notifList
-        visible: root.hasNotifications
-        anchors.top: main.bottom
-        anchors.topMargin: main.spacing
-        width: parent.width
-        preview: true
-        maxHeight: root.availableHeight - main.implicitHeight - anchors.topMargin
-        onActionTriggered: root.closeWindow()
-        onOpenPageRequested: QuickSettingsService.showPage("notifications")
     }
 }

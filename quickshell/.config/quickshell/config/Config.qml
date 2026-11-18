@@ -197,8 +197,7 @@ Singleton {
             "bluetooth": getState("bar.quickSettings.indicators.bluetooth", true),
             "volume": getState("bar.quickSettings.indicators.volume", true),
             "mic": getState("bar.quickSettings.indicators.mic", true),
-            "battery": getState("bar.quickSettings.indicators.battery", true),
-            "notifications": getState("bar.quickSettings.indicators.notifications", true)
+            "battery": getState("bar.quickSettings.indicators.battery", true)
         })
 
     readonly property int radiusSmall: getState("geometry.radiusSmall", 5)

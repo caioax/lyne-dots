@@ -28,12 +28,11 @@ QsPopupWindow {
             bluetooth: bluetoothSlot,
             nightLight: nightLightSlot,
             sound: soundSlot,
-            notifications: notificationsSlot,
             powerProfile: powerProfileSlot
         })
 
     popupWidth: Config.fontSizeNormal * 30
-    // Up to the screen's free height, so the notifications preview fits
+    // Up to the screen's free height
     popupMaxHeight: screen ? screen.height - Config.barReservedHeight - Config.spacing * 2 : 820
     anchorSide: "right"
     moduleName: "QuickSettings"
@@ -159,7 +158,7 @@ QsPopupWindow {
     }
 
     // A page; shown while current or sliding out. It only exists then (and
-    // while the window is open): one window per bar kept all seven pages
+    // while the window is open): one window per bar kept all six pages
     // of both alive, with their bindings and timers
     component PageSlot: Item {
         id: slot
@@ -189,7 +188,6 @@ QsPopupWindow {
 
             page: Component {
                 DashboardPage {
-                    availableHeight: root.contentMaxHeight
                     onCloseWindow: root.closeWindow()
                 }
             }
@@ -267,19 +265,6 @@ QsPopupWindow {
 
             page: Component {
                 PowerProfilePage {
-                    onBackRequested: QuickSettingsService.back()
-                    onCloseWindow: root.closeWindow()
-                }
-            }
-        }
-
-        PageSlot {
-            id: notificationsSlot
-            pageId: "notifications"
-
-            page: Component {
-                NotificationsPage {
-                    availableHeight: root.contentMaxHeight
                     onBackRequested: QuickSettingsService.back()
                     onCloseWindow: root.closeWindow()
                 }

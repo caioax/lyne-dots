@@ -23,7 +23,6 @@ Item {
     implicitHeight: holder.childrenRect.height
     Layout.alignment: Qt.AlignVCenter
     visible: shown || widthAnim.running
-    // Only while resizing: the bell's badge sits outside the glyph
     clip: widthAnim.running
 
     Behavior on implicitWidth {

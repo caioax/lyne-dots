@@ -96,8 +96,7 @@
                 "bluetooth": true,
                 "volume": true,
                 "mic": true,
-                "battery": true,
-                "notifications": true
+                "battery": true
             }
         }
     },
