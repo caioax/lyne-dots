@@ -50,6 +50,9 @@ Singleton {
     // names its screen
     property string historyScreen: ""
     readonly property bool historyOpen: historyScreen !== ""
+    // Conversation the history opens on (expanded and scrolled to), from a
+    // click on its popup; "" = the top
+    property string focusKey: ""
 
     // Conversations with a message newer than the last look at the history
     // (the bell's badge); none while it is open
@@ -105,8 +108,12 @@ Singleton {
     // PUBLIC FUNCTIONS
     // ========================================================================
 
+    // The popups step aside while it is open: they sit in the same corner,
+    // and the history shows them anyway
     function openHistory(screenName: string): void {
         markSeen();
+        for (const n of popups)
+            n.hidePopup();
         historyScreen = screenName;
     }
 
@@ -115,6 +122,14 @@ Singleton {
         if (historyOpen)
             markSeen();
         historyScreen = "";
+        focusKey = "";
+    }
+
+    // Opens the history on a conversation (a click on its popup)
+    function showConversation(key: string, screenName: string): void {
+        focusKey = key;
+        if (historyScreen !== screenName)
+            openHistory(screenName);
     }
 
     // Closes it when open on that screen, otherwise opens or moves it there
@@ -226,8 +241,9 @@ Singleton {
             }
             root._trimHistory();
 
-            // Notifications restored after a reload go straight to history
-            if (!notif.lastGeneration && (critical || !root.dndEnabled))
+            // Notifications restored after a reload go straight to history,
+            // and so do new ones while it is open (critical ones still pop up)
+            if (!notif.lastGeneration && (critical || (!root.dndEnabled && !root.historyOpen)))
                 data.showPopup();
             else if (data.isTransient)
                 data.close();

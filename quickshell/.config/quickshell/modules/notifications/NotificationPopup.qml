@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell
 import Quickshell.Widgets
 import qs.config
 import qs.services
@@ -141,9 +142,13 @@ Item {
             onClicked: mouse => {
                 if (dragged)
                     return;
-                if (mouse.button === Qt.LeftButton)
-                    root.notif.activate();
-                else
+                // Left: the history, open on this conversation (its actions,
+                // the default one included, are there)
+                if (mouse.button === Qt.LeftButton) {
+                    const key = NotificationService.conversationKey(root.notif);
+                    const screen = root.QsWindow.window?.screen?.name ?? "";
+                    WindowManagerService.openAfterClose("Notifications", () => NotificationService.showConversation(key, screen), 0);
+                } else
                     root.notif.close();
             }
         }

@@ -59,6 +59,7 @@ Warning: modules/lock/LockScreen.qml: Member "name" not found on type "Quickshel
 Warning: modules/lock/LockScreen.qml: Member "typing" not found on type "QObject" [missing-property]
 Warning: modules/lock/LockScreen.qml: Redundant optional chaining for lookup on non-voidable and non-nullable type QuickshellScreenInfo [redundant-optional-chaining]
 Warning: modules/notifications/NotificationButton.qml: Member "screen" not found on type "QObject" [missing-property]
+Warning: modules/notifications/NotificationPopup.qml: Member "screen" not found on type "QObject" [missing-property]
 Warning: modules/notifications/NotificationsWindow.qml: Member "height" not found on type "QuickshellScreenInfo" [missing-property]
 Warning: modules/notifications/NotificationsWindow.qml: Member "name" not found on type "QuickshellScreenInfo" [missing-property]
 Warning: modules/notifications/NotificationsWindow.qml: Redundant optional chaining for lookup on non-voidable and non-nullable type QuickshellScreenInfo [redundant-optional-chaining]

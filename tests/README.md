@@ -28,6 +28,8 @@ const M = load("services/monitors.js");
 const monitors = JSON.parse(fixture("monitors.json"));
 ```
 
+Some tests read the repo files instead: `settings-shortcuts.test.js` (no Settings page binds a key its window binds) and `global-shortcuts.test.js` (every `hl.dsp.global("quickshell:…")` bind has a `GlobalShortcut` with that name in the shell).
+
 One file: `node --test tests/js/fuzzy.test.js`. One test: add `--test-name-pattern "ranking"`.
 
 Fixtures in `tests/js/fixtures/` are trimmed copies of real output (`hyprctl -j`, `evdev.lst`); keep serial numbers and other personal details out of them.

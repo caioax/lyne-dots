@@ -21,6 +21,19 @@ Item {
 
     implicitHeight: maxHeight > 0 ? Math.min(cards.implicitHeight, maxHeight) : cards.implicitHeight
 
+    // Waits for the card's expand animation, then scrolls it into view
+    Timer {
+        id: scrollTimer
+
+        property Item target
+
+        interval: Config.animDuration
+        onTriggered: {
+            if (target)
+                flick.contentY = Math.max(0, Math.min(target.y, flick.contentHeight - flick.height));
+        }
+    }
+
     Flickable {
         id: flick
 
@@ -48,6 +61,26 @@ Item {
                     id: card
 
                     required property string modelData
+
+                    // Opened on this conversation: expand it and bring it
+                    // into view once it has grown
+                    function focusIfAsked(): void {
+                        if (modelData !== NotificationService.focusKey)
+                            return;
+                        conversation.expanded = true;
+                        scrollTimer.target = card;
+                        scrollTimer.restart();
+                    }
+
+                    Component.onCompleted: focusIfAsked()
+
+                    Connections {
+                        target: NotificationService
+
+                        function onFocusKeyChanged(): void {
+                            card.focusIfAsked();
+                        }
+                    }
 
                     width: cards.width
                     height: conversation.implicitHeight + root.inset * 2

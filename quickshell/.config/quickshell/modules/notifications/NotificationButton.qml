@@ -37,8 +37,8 @@ BarButton {
             }
         }
 
-        // On the bell's top-right corner without taking layout space, like
-        // the Quick Settings indicator's; dimmer under do not disturb
+        // Red on the bell's top-right corner without taking layout space;
+        // dimmer under do not disturb
         Rectangle {
             readonly property int textSize: Math.round(Config.fontSizeSmall * 0.7)
 
@@ -49,7 +49,7 @@ BarButton {
             height: textSize + Math.round(Config.padding * 2 / 3)
             width: Math.max(height, badgeText.implicitWidth + Config.padding)
             radius: height / 2
-            color: NotificationService.dndEnabled ? Config.surface2Color : Config.accentColor
+            color: NotificationService.dndEnabled ? Config.surface2Color : Config.errorColor
 
             Text {
                 id: badgeText
@@ -58,7 +58,7 @@ BarButton {
                 font.family: Config.font
                 font.pixelSize: parent.textSize
                 font.bold: true
-                color: NotificationService.dndEnabled ? Config.textColor : Config.textReverseColor
+                color: Config.textColor
             }
         }
     }

@@ -425,4 +425,16 @@ ShellRoot {
             WindowManagerService.openAfterClose("Dashboard", () => DashboardService.toggle("weather", screen), 0);
         }
     }
+
+    // Shortcut: the notification history (the bell's popup) on the focused
+    // screen. No keys by default (set in Settings › Keybinds)
+    GlobalShortcut {
+        name: "notifications"
+        description: "Notifications" // i18n-ignore
+
+        onPressed: {
+            const screen = Hyprland.focusedMonitor?.name ?? "";
+            WindowManagerService.openAfterClose("Notifications", () => NotificationService.toggleHistory(screen), 0);
+        }
+    }
 }

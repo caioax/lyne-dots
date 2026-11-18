@@ -218,6 +218,8 @@ bind("dashboard-overview", "Shell", "Dashboard (Overview)", "", hl.dsp.global("q
 bind("dashboard-media",    "Shell", "Dashboard (Media)",    "", hl.dsp.global("quickshell:dashboard_media"))
 bind("dashboard-system",   "Shell", "Dashboard (System)",   "", hl.dsp.global("quickshell:dashboard_system"))
 bind("dashboard-weather",  "Shell", "Dashboard (Weather)",  "", hl.dsp.global("quickshell:dashboard_weather"))
+-- Notification history (the bell's popup): no keys by default either
+bind("notifications",      "Shell", "Notifications",        "", hl.dsp.global("quickshell:notifications"))
 bind("reload",            "Shell", "Reload Quickshell", mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("lyne reload"))
 
 -- ==============================================================================

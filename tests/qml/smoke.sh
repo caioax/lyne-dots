@@ -557,6 +557,15 @@ EOF
     check "notifications › a new one counts as unseen on the bell" ev_is true 'NotificationService.unseenCount > 0'
     ev 'NotificationService.markSeen(); "ok"' >/dev/null
     check "notifications › seen once looked at" ev_is 0 'NotificationService.unseenCount'
+    # A click on a popup opens the history on its conversation; the popups
+    # step aside while it is open and new ones go straight into it
+    step "notifications › opened on a conversation" ev 'NotificationService.showConversation(NotificationService.conversationKeys[0], Quickshell.screens[0].name); "ok"'
+    check "notifications › focused on that conversation" ev_is true 'NotificationService.historyOpen && NotificationService.focusKey === NotificationService.conversationKeys[0]'
+    check "notifications › no popups while it is open" ev_is 0 'NotificationService.activePopupCount'
+    ev 'Quickshell.execDetached(["notify-send", "-a", "Smoke", "Smoke while open", "Into the history"]); "sent"' >/dev/null
+    check "notifications › a new one goes into the open history" ev_is true 'NotificationService.conversationKeys.some(k => k.endsWith("Smoke while open")) && NotificationService.activePopupCount === 0'
+    step "notifications › closed again" ev 'NotificationService.closeHistory(); "ok"'
+    check "notifications › the focus is gone once closed" ev_is "" 'NotificationService.focusKey'
     step "power menu" ipc power open
     check "power › Farewell by default" ev_is "farewell" 'PowerService.style'
     check "power › fixed order, shut down to lock" ev_is "shutdown,reboot,firmware,logout,suspend,hibernate,lock" 'PowerService.allActions.map(a => a.id).join(",")'
