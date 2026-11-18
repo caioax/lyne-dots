@@ -225,6 +225,9 @@
         "animations": {
             "enabled": true
         },
+        "render": {
+            "cm_auto_hdr": 0
+        },
         "input": {
             "sensitivity": 0,
             "force_no_accel": true,

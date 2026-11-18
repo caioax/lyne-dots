@@ -404,6 +404,9 @@ nested() { XDG_RUNTIME_DIR="$SB/run" HYPRLAND_INSTANCE_SIGNATURE="$NEST_SIG" hyp
 
 nothing_deprecated() { [[ "$(nested deprecated-config)" == "all good!" ]]; }
 
+# option_is NAME VALUE: the nested Hyprland's current value of an option
+option_is() { [[ "$(nested getoption "$1" -j | jq -r '.int // .float // .str // .bool')" == "$2" ]]; }
+
 # The special a window of CLASS opened in
 window_in() { [[ "$(nested clients -j | jq -r --arg c "$2" '.[] | select(.class == $c) | .workspace.name')" == "$1" ]]; }
 
@@ -610,6 +613,15 @@ EOF
     step "cursor › remove" ev 'CursorService.remove("Smoke-Cursor"); "ok"'
     check "cursor › removed" test ! -e "$SB/home/.local/share/icons/Smoke-Cursor"
     step "cursor › back to the default" ev 'StateService.set("cursor.theme", StateService.getDefault("cursor.theme", "")); StateService.set("cursor.size", StateService.getDefault("cursor.size", 24)); "ok"'
+
+    # HDR for fullscreen apps (Settings › Monitors › All monitors): off by
+    # default in settings.lua, and a switch reaches Hyprland and the file
+    check "auto hdr › off in settings.lua" grep -qF "cm_auto_hdr = 0," "$SB/home/.config/hypr/local/settings.lua"
+    step "auto hdr › on" ev 'StateService.set("hyprland.render.cm_auto_hdr", 1); "ok"'
+    check "auto hdr › applied" option_is render:cm_auto_hdr 1
+    check "auto hdr › on in settings.lua" grep -qF "cm_auto_hdr = 1," "$SB/home/.config/hypr/local/settings.lua"
+    step "auto hdr › off" ev 'StateService.set("hyprland.render.cm_auto_hdr", 0); "ok"'
+    check "auto hdr › applied off" option_is render:cm_auto_hdr 0
 
     # Icons: a family with dark and light versions in the user's folder; the
     # dark one reaches GTK, Qt and KDE, then the shell's icons load again

@@ -567,6 +567,23 @@ ColumnLayout {
         }
     }
 
+    // Options of every monitor (hyprland.render, HyprlandSettingsService)
+    SettingsGroup {
+        title: I18n.tr("All monitors")
+
+        // render:cm_auto_hdr (0 off, 1 on). Off by default: Chromium apps in
+        // fullscreen ask for HDR, and a monitor whose EDID claims HDR without
+        // doing it well goes black for a moment and looks washed out
+        ToggleRow {
+            readonly property string optionPath: "hyprland.render.cm_auto_hdr"
+
+            label: I18n.tr("HDR for fullscreen apps")
+            description: I18n.tr("Switch the monitor to HDR while a fullscreen app shows HDR content. Off, the picture stays as it is: some monitors go black for a moment and look washed out in HDR")
+            checked: Number(StateService.get(optionPath, StateService.getDefault(optionPath, 0))) !== 0
+            onToggled: value => StateService.set(optionPath, value ? 1 : 0)
+        }
+    }
+
     ContextMenu {
         id: menu
 
