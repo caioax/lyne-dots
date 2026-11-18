@@ -82,13 +82,15 @@ bind("layout-action-back", "Windows", "Previous column width (scrolling)",      
 -- Dwindle → master → scrolling, saved like the Settings choice and shown in the OSD
 bind("cycle-layout",       "Windows", "Next window layout",                     mainMod .. " + CTRL + TAB",  hl.dsp.global("quickshell:cycle_tiling"))
 
--- Scrolling layout only: columns on a strip (see conf/appearance.lua)
-bind("swap-column-left",  "Windows", "Swap column left (scrolling)",             mainMod .. " + comma",        hl.dsp.layout("swapcol l"))
-bind("swap-column-right", "Windows", "Swap column right (scrolling)",            mainMod .. " + period",       hl.dsp.layout("swapcol r"))
-bind("join-column-prev",  "Windows", "Join / leave previous column (scrolling)", mainMod .. " + bracketleft",  hl.dsp.layout("consume_or_expel prev"))
-bind("join-column-next",  "Windows", "Join / leave next column (scrolling)",     mainMod .. " + bracketright", hl.dsp.layout("consume_or_expel next"))
-bind("center-column",     "Windows", "Center column (scrolling)",                mainMod .. " + C",            hl.dsp.layout("center"))
-bind("fit-columns",       "Windows", "Fit visible columns (scrolling)",          mainMod .. " + R",            hl.dsp.layout("fit visible"))
+-- Scrolling layout only: columns on a strip (see conf/appearance.lua). Through
+-- layout_action, so on another layout they do nothing instead of Hyprland
+-- showing an unknown layoutmsg error
+bind("swap-column-left",  "Windows", "Swap column left (scrolling)",             mainMod .. " + comma",        layout_action({ scrolling = "swapcol l" }))
+bind("swap-column-right", "Windows", "Swap column right (scrolling)",            mainMod .. " + period",       layout_action({ scrolling = "swapcol r" }))
+bind("join-column-prev",  "Windows", "Join / leave previous column (scrolling)", mainMod .. " + bracketleft",  layout_action({ scrolling = "consume_or_expel prev" }))
+bind("join-column-next",  "Windows", "Join / leave next column (scrolling)",     mainMod .. " + bracketright", layout_action({ scrolling = "consume_or_expel next" }))
+bind("center-column",     "Windows", "Center column (scrolling)",                mainMod .. " + C",            layout_action({ scrolling = "center" }))
+bind("fit-columns",       "Windows", "Fit visible columns (scrolling)",          mainMod .. " + R",            layout_action({ scrolling = "fit visible" }))
 
 -- Move focus. The "(arrow)" binds have no keys by default: the navigation
 -- keys preset (Settings › Hyprland › Keybinds, conf/bind_presets.lua) gives
