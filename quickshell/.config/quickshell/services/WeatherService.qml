@@ -138,23 +138,22 @@ Singleton {
     // REQUESTS
     // ========================================================================
 
+    HttpGet {
+        id: http
+    }
+
     function _get(url, onSuccess) {
-        const xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState !== XMLHttpRequest.DONE)
-                return;
-            if (xhr.status !== 200) {
-                root._fail(xhr.status === 0 ? I18n.tr("No connection") : I18n.tr("Request failed (%1)", xhr.status));
+        http.get(url, {}, (status, body) => {
+            if (status !== 200) {
+                root._fail(status === 0 ? I18n.tr("No connection") : I18n.tr("Request failed (%1)", status));
                 return;
             }
             try {
-                onSuccess(JSON.parse(xhr.responseText));
+                onSuccess(JSON.parse(body));
             } catch (e) {
                 root._fail(I18n.tr("Invalid response"));
             }
-        };
-        xhr.open("GET", url);
-        xhr.send();
+        });
     }
 
     function _fail(message) {

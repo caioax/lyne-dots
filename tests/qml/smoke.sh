@@ -140,6 +140,11 @@ probe = """
             }
         }
     }
+    // A request without the network, for the HttpGet steps
+    HttpGet {
+        id: smokeHttp
+        property string got: ""
+    }
 """
 open(sys.argv[2], "w").write(text[:end] + probe + text[end:])
 EOF
@@ -226,6 +231,24 @@ esac
 exit 0
 EOF
     chmod +x "$SB/bin/nmcli"
+    # curl: no internet. The weather APIs answer with a fixed place and
+    # forecast; anything else has no connection (curl -w prints 000)
+    cat >"$SB/bin/curl" <<EOF
+#!/bin/bash
+echo "curl \$*" >>"$SB/calls.log"
+url="\${!#}"
+case "\$url" in
+    https://ipwho.is/*)
+        printf '%s\\n200' '{"success":true,"city":"Smokeville","latitude":-21.1,"longitude":-46.4}' ;;
+    https://api.open-meteo.com/v1/forecast*)
+        printf '%s\\n200' '{"current":{"time":"2026-11-19T14:00","temperature_2m":24.6,"apparent_temperature":25.2,"relative_humidity_2m":60,"weather_code":2,"wind_speed_10m":9.4,"is_day":1,"uv_index":5.1},"hourly":{"time":["2026-11-19T13:00","2026-11-19T14:00","2026-11-19T15:00"],"temperature_2m":[24,24.6,25],"weather_code":[1,2,3],"precipitation_probability":[0,10,20],"is_day":[1,1,1]},"daily":{"time":["2026-11-19","2026-11-20"],"weather_code":[2,61],"temperature_2m_max":[27.4,22],"temperature_2m_min":[16,15.2],"precipitation_probability_max":[10,80],"wind_speed_10m_max":[12,20],"uv_index_max":[8,4],"sunrise":["2026-11-19T05:21","2026-11-20T05:21"],"sunset":["2026-11-19T18:31","2026-11-20T18:32"]}}' ;;
+    *)
+        printf '000'
+        exit 6 ;;
+esac
+exit 0
+EOF
+    chmod +x "$SB/bin/curl"
 }
 
 # cable on|off: plugs the stand-in cable in or out (an nmcli event follows)
@@ -505,6 +528,11 @@ EOF
     check "wallpaper › its file stays" test -e "${pick[0]}"
     step "wallpaper › transition reset" ev 'StateService.reset("wallpaper.transition"); StateService.reset("wallpaper.transitionSpeed"); WallpaperService.transition = "fade"; WallpaperService.transitionSpeed = "normal"; "ok"'
     step "wallpaper › page closed" ipc settings close
+
+    # Weather and lyrics fetch through curl (the stand-in), not XMLHttpRequest
+    check "weather › fetched through curl" ev_soon "Smokeville 25 2 2" '[WeatherService.location, WeatherService.current?.temp, WeatherService.daily.length, WeatherService.hourly.length].join(" ")'
+    step "http › no connection" ev 'smokeHttp.get("https://lrclib.net/api/get?x=1", {}, (s, b) => smokeHttp.got = s + "|" + b); "ok"'
+    check "http › no connection is status 0" ev_soon "0|" 'smokeHttp.got'
 
     for id in $(list 'DashboardService.allTabs.map(t => t.id)'); do
         step "dashboard › $id" ipc dashboard open "$id"

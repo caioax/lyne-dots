@@ -158,21 +158,18 @@ Singleton {
         });
     }
 
+    HttpGet {
+        id: http
+    }
+
     function _get(url, headers, onDone) {
-        const xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState !== XMLHttpRequest.DONE)
-                return;
+        http.get(url, headers, (status, body) => {
             let data = null;
             try {
-                data = xhr.status === 200 ? JSON.parse(xhr.responseText) : null;
+                data = status === 200 ? JSON.parse(body) : null;
             } catch (e) {}
-            onDone(xhr.status, data);
-        };
-        xhr.open("GET", url);
-        for (const name in headers)
-            xhr.setRequestHeader(name, headers[name]);
-        xhr.send();
+            onDone(status, data);
+        });
     }
 
     // Close enough in length to be the same version (unknown lengths pass)
