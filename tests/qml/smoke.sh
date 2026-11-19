@@ -526,9 +526,24 @@ EOF
     step "wallpaper › add" ev 'WallpaperService.wallpapersAdded.connect(p => Quickshell.execDetached(["sh", "-c", "printf %s \"$1\" >\"$2\"", "sh", p.join(","), "'"$SB"'/added"])); WallpaperService.addWallpapers(false); "ok"'
     check "wallpaper › the new one is announced" grep -qx "$SB/home/.local/wallpapers/smoke-new.jpg" "$SB/added"
     step "wallpaper › the page shows it" ev 'WallpaperService.wallpapers.some(w => w.endsWith("/smoke-new.jpg")) ? "ok" : "ERROR not listed"'
-    step "wallpaper › delete it" ev 'WallpaperService.deleteWallpapers(WallpaperService.wallpapers.filter(w => w.endsWith("/smoke-new.jpg"))); "ok"'
+    # Rename: the one in use and a favorite, so its new name is saved,
+    # shown again by awww and kept among the favorites
+    local wdir="$SB/home/.local/wallpapers"
+    step "wallpaper › apply the new one" ev 'WallpaperService.setWallpaper("'"$wdir/smoke-new.jpg"'"); "ok"'
+    check "wallpaper › the new one applied" ev_soon "$wdir/smoke-new.jpg" 'WallpaperService.currentWallpaper'
+    step "wallpaper › favorite it" ev 'WallpaperService.toggleFavorite("'"$wdir/smoke-new.jpg"'"); "ok"'
+    step "wallpaper › names refused" ev '[".hidden", "a/b"].every(n => WallpaperService.renameWallpaper("'"$wdir/smoke-new.jpg"'", n) !== "") ? "ok" : "ERROR a bad name went through"'
+    step "wallpaper › rename it" ev 'WallpaperService.renameWallpaper("'"$wdir/smoke-new.jpg"'", " smoke-renamed ") || "ok"'
+    check "wallpaper › renamed in use, favorite, listed" ev_soon true 'WallpaperService.currentWallpaper === "'"$wdir/smoke-renamed.jpg"'" && StateService.get("wallpaper.current", "") === WallpaperService.currentWallpaper && WallpaperService.isFavorite(WallpaperService.currentWallpaper) && WallpaperService.wallpapers.includes(WallpaperService.currentWallpaper) && !WallpaperService.wallpapers.some(w => w.endsWith("/smoke-new.jpg"))'
+    check "wallpaper › the file moved" test -e "$wdir/smoke-renamed.jpg" -a ! -e "$wdir/smoke-new.jpg"
+    check "wallpaper › awww shows it under the new name" grep -qx "awww img $wdir/smoke-renamed.jpg --transition-type none" "$SB/calls.log"
+    step "wallpaper › another one applied" ev 'WallpaperService.setWallpaper("'"${pick[0]}"'"); "ok"'
+    check "wallpaper › the other one applied" ev_soon "${pick[0]}" 'WallpaperService.currentWallpaper'
+    step "wallpaper › delete it" ev 'WallpaperService.toggleFavorite("'"$wdir/smoke-renamed.jpg"'"); WallpaperService.deleteWallpapers(WallpaperService.wallpapers.filter(w => w.endsWith("/smoke-renamed.jpg"))); "ok"'
     step "wallpaper › add a folder" ev 'WallpaperService.addWallpapers(true); "ok"'
     check "wallpaper › the folder's images, subfolders too" grep -qx "$SB/home/.local/wallpapers/smoke-folder-a.jpg,$SB/home/.local/wallpapers/smoke-folder-b.jpg" "$SB/added"
+    step "wallpaper › a name another one has" ev 'WallpaperService.renameWallpaper("'"$wdir/smoke-folder-a.jpg"'", "smoke-folder-b") !== "" ? "ok" : "ERROR renamed over another"'
+    check "wallpaper › both stay" test -e "$wdir/smoke-folder-a.jpg" -a -e "$wdir/smoke-folder-b.jpg"
     step "wallpaper › delete them" ev 'WallpaperService.deleteWallpapers(WallpaperService.wallpapers.filter(w => w.includes("/smoke-folder-"))); "ok"'
     # Applying one uses the transition chosen on the page (as its rows do:
     # the state and the service's own property)

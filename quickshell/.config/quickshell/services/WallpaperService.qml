@@ -51,6 +51,8 @@ Singleton {
     property var generateErrors: ({})
 
     signal themeWallpapersGenerated(string themeName, bool ok)
+    // A library file got a new name (renameWallpaper)
+    signal wallpaperRenamed(string from, string to)
     // Files Add copied into the library, once the list shows them
     signal wallpapersAdded(var paths)
     // Copied by the running Add, announced after the next listing
@@ -441,6 +443,79 @@ Singleton {
         deleteWallpaperProc.running = true;
     }
 
+    // Rename: a file of the library to NAME, its extension kept. Returns
+    // why it can't be done ("" when it goes ahead, or there's nothing to do).
+    // The new path takes the old one's place everywhere: the list, the
+    // favorites, the thumbnail and poster already made, and the wallpaper in
+    // use (saved, and in awww; a video keeps playing the file it opened)
+    function renameError(path: string, name: string): string {
+        name = name.trim();
+        if (name.startsWith("."))
+            return I18n.tr("A name can't start with a dot");
+        if (name.includes("/"))
+            return I18n.tr("A name can't have a slash");
+        const target = _renamedPath(path, name);
+        if (target !== path && wallpapers.includes(target))
+            return I18n.tr("Another wallpaper has this name");
+        return "";
+    }
+
+    function _renamedPath(path: string, name: string): string {
+        const file = fileName(path);
+        const dot = file.lastIndexOf(".");
+        return path.substring(0, path.length - file.length) + name.trim() + (dot > 0 ? file.substring(dot) : "");
+    }
+
+    function renameWallpaper(path: string, name: string): string {
+        const error = renameError(path, name);
+        if (error !== "")
+            return error;
+        const target = _renamedPath(path, name);
+        if (name.trim() === "" || target === path || !wallpapers.includes(path) || fitting[path] !== undefined)
+            return "";
+        renameComponent.createObject(root, {
+            from: path,
+            to: target
+        });
+        return "";
+    }
+
+    function _wallpaperRenamed(from: string, to: string) {
+        wallpapers = wallpapers.map(w => w === from ? to : w);
+        // The files made for it still show the same picture
+        const thumbs = Object.assign({}, root.thumbs);
+        if (thumbs[from] !== undefined)
+            thumbs[to] = thumbs[from];
+        delete thumbs[from];
+        root.thumbs = thumbs;
+        const posters = Object.assign({}, root.posters);
+        if (posters[from] !== undefined)
+            posters[to] = posters[from];
+        delete posters[from];
+        root.posters = posters;
+
+        const rel = relativePath(from);
+        if (favorites.includes(rel)) {
+            const favs = favorites.map(f => f === rel ? relativePath(to) : f);
+            favorites = favs;
+            setState("wallpaper.favorites", favs);
+        }
+
+        if (currentWallpaper === from) {
+            currentWallpaper = to;
+            setState("wallpaper.current", to);
+            writeCurrentProc.command = ["sh", "-c", "printf '%s\\n' \"$1\" > \"$2/.current\"", "sh", to, wallpaperDir];
+            writeCurrentProc.running = true;
+            // awww reports the path it was given (getCurrentWallpaper): the
+            // same picture again under its new name, without a transition
+            if (!isVideo(to))
+                Quickshell.execDetached(["awww", "img", to, "--transition-type", "none"]);
+        }
+        wallpaperRenamed(from, to);
+        // Back in name order
+        refreshWallpapers();
+    }
+
     // Add: images (folder false) or every image in a folder and its
     // subfolders (folder true), picked in a dialog
     function addWallpapers(folder: bool) {
@@ -827,5 +902,29 @@ Singleton {
 
     Process {
         id: deleteWallpaperProc
+    }
+
+    // One per rename: refuses to replace a file that showed up meanwhile
+    Component {
+        id: renameComponent
+
+        Process {
+            id: renameProc
+
+            required property string from
+            required property string to
+
+            command: ["sh", "-c", "[ -e \"$2\" ] && exit 3; mv -T -- \"$1\" \"$2\"", "sh", from, to]
+            running: true
+            onExited: code => {
+                if (code === 0)
+                    root._wallpaperRenamed(renameProc.from, renameProc.to);
+                else {
+                    console.error("[Wallpaper] Couldn't rename", renameProc.from, "to", renameProc.to);
+                    root.refreshWallpapers();
+                }
+                renameProc.destroy();
+            }
+        }
     }
 }

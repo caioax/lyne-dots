@@ -20,6 +20,18 @@ ColumnLayout {
     property string category: "all" // "all" | "favorites"
     property string query: ""
     property var selection: []
+    // The library tile whose name is a field now (Rename in its menu)
+    property string renamingPath: ""
+
+    // A renamed file stays selected (and new) under its new name
+    Connections {
+        target: WallpaperService
+
+        function onWallpaperRenamed(from: string, to: string) {
+            root.selection = root.selection.map(p => p === from ? to : p);
+            root.newPaths = root.newPaths.map(p => p === from ? to : p);
+        }
+    }
     property bool confirmingDelete: false
     // Wallpaper just picked that may become the current theme's (inline prompt)
     property string offerPath: ""
@@ -216,14 +228,16 @@ ColumnLayout {
 
     spacing: Config.spacing * 3
 
+    // Not while a name is typed: Ctrl+A and Delete belong to the field then
     Shortcut {
         sequence: "Ctrl+A"
+        enabled: root.renamingPath === ""
         onActivated: root.selection = [...root.shown]
     }
 
     Shortcut {
         sequences: [StandardKey.Delete]
-        enabled: root.selecting
+        enabled: root.selecting && root.renamingPath === ""
         onActivated: root.deleteSelection()
     }
 
@@ -254,6 +268,11 @@ ColumnLayout {
                         }))
             },
             {
+                label: I18n.tr("Rename"),
+                icon: "\u{f03eb}",
+                action: "rename"
+            },
+            {
                 label: I18n.tr("Select"),
                 icon: "\u{f0485}",
                 action: "select"
@@ -280,6 +299,9 @@ ColumnLayout {
                 break;
             case "favorite":
                 WallpaperService.toggleFavorite(path);
+                break;
+            case "rename":
+                root.renamingPath = path;
                 break;
             case "select":
                 root.toggleSelected(path);
@@ -756,6 +778,16 @@ ColumnLayout {
                             onActivated: root.activate(tile.path)
                             onSelectToggled: root.toggleSelected(tile.path)
                             onMenuRequested: anchor => menu.openAt(anchor, tile.path)
+                            renaming: root.renamingPath === path
+                            onRenamingChanged: renameError = ""
+                            onRenameAccepted: name => {
+                                const error = WallpaperService.renameWallpaper(tile.path, name);
+                                if (error !== "")
+                                    tile.renameError = error;
+                                else
+                                    root.renamingPath = "";
+                            }
+                            onRenameCancelled: root.renamingPath = ""
                         }
                     }
 

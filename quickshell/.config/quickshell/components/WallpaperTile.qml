@@ -9,7 +9,9 @@ import qs.services
 // right click asks for the same menu. A video shows its poster, with a play
 // mark in the corner. With a progress (a video Add is scaling down), the
 // source's poster shows dimmed under a ring with the percentage and a ✕
-// that cancels; nothing else reacts
+// that cancels; nothing else reacts. While `renaming`, the name is a field:
+// Enter asks for the new name (renameAccepted), Escape or a click elsewhere
+// gives up (renameCancelled); `renameError` says why a name was refused
 Item {
     id: root
 
@@ -35,6 +37,8 @@ Item {
     property real progress: -1
     property string progressPoster: ""
     readonly property bool making: progress >= 0
+    property bool renaming: false
+    property string renameError: ""
 
     readonly property bool favorite: WallpaperService.isFavorite(path)
     readonly property bool animated: WallpaperService.isVideo(path)
@@ -50,6 +54,8 @@ Item {
     signal selectToggled
     signal menuRequested(Item anchor)
     signal cancelRequested
+    signal renameAccepted(string name)
+    signal renameCancelled
 
     implicitHeight: thumb.height + (showName ? nameText.implicitHeight + Config.padding : 0)
 
@@ -350,7 +356,7 @@ Item {
     Text {
         id: nameText
 
-        visible: root.showName
+        visible: root.showName && !root.renaming
         anchors.top: thumb.bottom
         anchors.topMargin: Config.padding
         width: parent.width
@@ -361,5 +367,46 @@ Item {
         font.pixelSize: Config.fontSizeSmall
         font.bold: root.current
         color: root.current ? Config.accentColor : root.hovered ? Config.textColor : Config.subtextColor
+    }
+
+    Loader {
+        active: root.renaming
+        anchors.top: thumb.bottom
+        anchors.topMargin: Math.round(Config.padding / 2)
+        width: parent.width
+
+        sourceComponent: QsTextField {
+            id: nameField
+
+            compact: true
+            catchEscape: true
+            text: root.displayName
+            textColor: root.renameError !== "" ? Config.errorColor : Config.textColor
+            border.width: 1
+            border.color: root.renameError !== "" ? Config.errorColor : Qt.alpha(Config.accentColor, 0.6)
+            // Opens with the whole name selected, ready to type over
+            Component.onCompleted: {
+                focusInput();
+                selectAll();
+            }
+            onAccepted: root.renameAccepted(text)
+            onEscapePressed: root.renameCancelled()
+            onTextEdited: root.renameError = ""
+            // A click elsewhere: given up
+            Connections {
+                target: nameField.input
+
+                function onActiveFocusChanged() {
+                    if (!nameField.input.activeFocus && root.renaming)
+                        root.renameCancelled();
+                }
+            }
+
+            QsToolTip {
+                text: root.renameError
+                shown: root.renameError !== ""
+                delay: 0
+            }
+        }
     }
 }

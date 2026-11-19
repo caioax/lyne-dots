@@ -1215,6 +1215,7 @@
     "Remove from favorites": "Remover dos favoritos",
     "Add to favorites": "Adicionar aos favoritos",
     "Add to theme": "Adicionar ao tema",
+    "Rename": "Renomear",
     "Select": "Selecionar",
     "Current": "Atual",
     "Material You: the colors follow this wallpaper": "Material You: as cores seguem este papel de parede",
@@ -1599,6 +1600,9 @@
     "New release. Update from here or Settings › About": "Nova versão. Atualize por aqui ou em Configurações › Sobre",
     "Latest channel, up to %1. Update from here or Settings › About": "Canal Mais recente, até %1. Atualize por aqui ou em Configurações › Sobre",
     "Details": "Detalhes",
+    "A name can't start with a dot": "O nome não pode começar com ponto",
+    "A name can't have a slash": "O nome não pode ter barra",
+    "Another wallpaper has this name": "Já existe um wallpaper com esse nome",
     "%n wallpaper added": [
         "%n papel de parede adicionado",
         "%n papéis de parede adicionados"
