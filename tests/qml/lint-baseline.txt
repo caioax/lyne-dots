@@ -103,8 +103,6 @@ Warning: modules/settings/pages/ThemePage.qml: Member "confirmLeave" not found o
 Warning: modules/settings/pages/ThemePage.qml: Member "contentY" not found on type conversion to QQuickItem [missing-property]
 Warning: modules/settings/pages/ThemePage.qml: Member "contentY" not found on type "QQuickItem" [missing-property]
 Warning: modules/settings/rows/TemplateTile.qml: Member "value" not found on type (component in modules/settings/rows/TemplateTile.qml)::item with type QObject [missing-property]
-Warning: modules/settings/SettingsWindow.qml: Detected height on an item that is managed by a layout. This is undefined behavior; use implictHeight or Layout.preferredHeight instead. [Quick.layout-positioning]
-Warning: modules/settings/SettingsWindow.qml: Detected width on an item that is managed by a layout. This is undefined behavior; use implicitWidth or Layout.preferredWidth instead. [Quick.layout-positioning]
 Warning: modules/settings/WindowSizeControls.qml: Member "height" not found on type "QuickshellScreenInfo" [missing-property]
 Warning: modules/settings/WindowSizeControls.qml: Member "width" not found on type "QuickshellScreenInfo" [missing-property]
 Warning: modules/settings/WindowSizeControls.qml: Member "x" not found on type "QuickshellScreenInfo" [missing-property]

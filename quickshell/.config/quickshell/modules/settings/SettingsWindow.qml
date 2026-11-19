@@ -519,54 +519,16 @@ FloatingWindow {
                     query: search.text
                 }
 
-                // Mask of the sidebar below (hidden: the layout skips it)
-                Rectangle {
+                ScrollFadeMask {
                     id: navFade
 
-                    width: navFlick.width
-                    height: navFlick.height
-                    visible: false
-                    layer.enabled: true
-                    gradient: Gradient {
-                        GradientStop {
-                            position: 0
-                            color: Qt.alpha("black", 1 - navFlick.topFade)
-                        }
-                        GradientStop {
-                            position: navFlick.fadeLength
-                            color: "black"
-                        }
-                        GradientStop {
-                            position: 1 - navFlick.fadeLength
-                            color: "black"
-                        }
-                        GradientStop {
-                            position: 1
-                            color: Qt.alpha("black", 1 - navFlick.bottomFade)
-                        }
-                    }
+                    flickable: navFlick
                 }
 
                 // Scrolls when the pages don't fit the window height; the
                 // items cut by an edge with more to scroll fade out
                 Flickable {
                     id: navFlick
-
-                    readonly property real fadeLength: Config.spacing * 4 / Math.max(height, 1)
-                    property real topFade: atYBeginning ? 0 : 1
-                    property real bottomFade: atYEnd ? 0 : 1
-
-                    Behavior on topFade {
-                        NumberAnimation {
-                            duration: Config.animDurationShort
-                        }
-                    }
-
-                    Behavior on bottomFade {
-                        NumberAnimation {
-                            duration: Config.animDurationShort
-                        }
-                    }
 
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -575,7 +537,7 @@ FloatingWindow {
                     contentHeight: navColumn.implicitHeight
                     boundsBehavior: Flickable.StopAtBounds
 
-                    layer.enabled: topFade > 0 || bottomFade > 0
+                    layer.enabled: navFade.active
                     layer.effect: MultiEffect {
                         maskEnabled: true
                         maskSource: navFade
@@ -588,6 +550,10 @@ FloatingWindow {
                     ScrollBar.vertical: QsScrollBar {
                         autoHide: true
                         peek: sidebarHover.hovered
+                    }
+
+                    SmoothWheel {
+                        flickable: navFlick
                     }
 
                     ColumnLayout {
@@ -784,6 +750,13 @@ FloatingWindow {
                 }
             }
 
+            ScrollFadeMask {
+                id: pageFade
+
+                flickable: flick
+            }
+
+            // The page; the rows cut by an edge with more to scroll fade out
             Flickable {
                 id: flick
 
@@ -794,7 +767,22 @@ FloatingWindow {
                 contentHeight: root.pageLoader.implicitHeight + Config.padding * 4
                 boundsBehavior: Flickable.StopAtBounds
 
+                layer.enabled: pageFade.active
+                layer.effect: MultiEffect {
+                    maskEnabled: true
+                    maskSource: pageFade
+                    // The mask's alpha as is, eased (smoothstep) instead of
+                    // linear
+                    maskThresholdMin: 0.5
+                    maskSpreadAtMin: 1
+                }
+
                 ScrollBar.vertical: QsScrollBar {}
+
+                SmoothWheel {
+                    flickable: flick
+                    onWheelStarted: scrollAnim.stop()
+                }
 
                 NumberAnimation {
                     id: scrollAnim
