@@ -13,8 +13,11 @@
 local vars = require("conf/variables")
 local HOME = os.getenv("HOME")
 
+-- Quickshell runs with 2 jemalloc arenas: by default every new worker thread
+-- gets an arena that keeps its memory after the thread ends (~70 MB more RSS,
+-- same CPU). lyne reload starts it the same way.
 local system = {
-    { name = "Quickshell",        command = "quickshell",
+    { name = "Quickshell",        command = "env MALLOC_CONF=narenas:2 quickshell",
       about = "Bar, notifications, launcher and this settings window" },
     { name = "Polkit agent",      command = "/usr/lib/polkit-kde-authentication-agent-1",
       about = "Asks for your password when an app needs admin rights" },

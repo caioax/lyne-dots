@@ -65,3 +65,22 @@ uwsm_env() {
     run uwsm_env
     assert_output "$HOME/.lyne-dots"
 }
+
+@test "lyne reload and the autostart start Quickshell with 2 jemalloc arenas" {
+    # Stand-ins for this test only: the real pkill would hit the user's shell
+    mkdir -p "$BATS_TEST_TMPDIR/bin"
+    printf '#!/bin/bash\necho "quickshell $* MALLOC_CONF=${MALLOC_CONF:-}" >>"$STUB_LOG"\n' >"$BATS_TEST_TMPDIR/bin/quickshell"
+    printf '#!/bin/bash\necho "pkill $*" >>"$STUB_LOG"\nexit 1\n' >"$BATS_TEST_TMPDIR/bin/pkill"
+    chmod +x "$BATS_TEST_TMPDIR/bin/"*
+    run env PATH="$BATS_TEST_TMPDIR/bin:$PATH" LYNE_DOTS="$REPO" "$REPO/local/.local/bin/lyne" reload
+    assert_success
+    # setsid starts it in the background
+    for _ in {1..50}; do grep -q '^quickshell  MALLOC' "$STUB_LOG" && break; sleep 0.1; done
+    run cat "$STUB_LOG"
+    assert_line "quickshell kill MALLOC_CONF="
+    assert_line "pkill -KILL -x quickshell"
+    assert_line "quickshell  MALLOC_CONF=narenas:2"
+
+    run grep -F 'name = "Quickshell",        command = "env MALLOC_CONF=narenas:2 quickshell"' "$REPO/hyprland/.config/hypr/conf/autostart.lua"
+    assert_success
+}

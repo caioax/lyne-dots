@@ -16,5 +16,6 @@ for _ in {1..10}; do
     sleep 0.1
 done
 pkill -KILL -x quickshell 2>/dev/null
-setsid quickshell >/dev/null 2>&1 &
+# Same 2 jemalloc arenas as the autostart in conf/autostart.lua (less RSS)
+MALLOC_CONF=narenas:2 setsid quickshell >/dev/null 2>&1 &
 disown
