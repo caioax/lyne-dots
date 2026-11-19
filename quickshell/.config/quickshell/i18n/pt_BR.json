@@ -1254,6 +1254,10 @@
     "Library": "Biblioteca",
     "Add": "Adicionar",
     "Add folder": "Adicionar pasta",
+    "%n selected · the one in use is kept": [
+        "%n selecionado · o que está em uso fica",
+        "%n selecionados · o que está em uso fica"
+    ],
     "%n selected · Ctrl+A selects all": [
         "%n selecionado · Ctrl+A seleciona todos",
         "%n selecionados · Ctrl+A seleciona todos"

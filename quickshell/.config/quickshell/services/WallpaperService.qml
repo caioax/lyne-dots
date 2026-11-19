@@ -395,7 +395,10 @@ Singleton {
     }
 
     // Delete image files (library or theme folders)
+    // The one in use is never deleted: it would stay on screen (a video
+    // playing on without its pause rules) and come back on the next start
     function deleteWallpapers(paths) {
+        paths = paths.filter(p => p !== currentWallpaper);
         if (paths.length === 0)
             return;
 
@@ -408,8 +411,6 @@ Singleton {
         paths.forEach(p => delete thumbs[p]);
         root.thumbs = thumbs;
         themeWallpapers = themeWallpapers.filter(w => !paths.includes(w));
-        if (paths.includes(currentWallpaper))
-            currentWallpaper = "";
 
         const favs = favorites.filter(f => !paths.includes(wallpaperDir + "/" + f));
         if (favs.length !== favorites.length) {

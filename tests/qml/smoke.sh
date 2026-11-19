@@ -497,6 +497,12 @@ EOF
     # the state and the service's own property)
     step "wallpaper › transition wipe, fast" ev 'StateService.set("wallpaper.transition", "wipe"); StateService.set("wallpaper.transitionSpeed", "fast"); WallpaperService.transition = "wipe"; WallpaperService.transitionSpeed = "fast"; WallpaperService.setWallpaper("'"${pick[0]}"'"); "ok"'
     check "wallpaper › awww got that transition" grep -q -- "^awww img ${pick[0]} --transition-type wipe --transition-duration 0.6 " "$SB/calls.log"
+    # The one in use is never deleted (it would stay on screen, a video
+    # playing on without its pause rules)
+    check "wallpaper › applied" ev_soon "${pick[0]}" 'WallpaperService.currentWallpaper'
+    step "wallpaper › delete the one in use" ev 'WallpaperService.deleteWallpapers([WallpaperService.currentWallpaper]); "ok"'
+    check "wallpaper › the one in use stays" ev_soon true 'WallpaperService.currentWallpaper === "'"${pick[0]}"'"'
+    check "wallpaper › its file stays" test -e "${pick[0]}"
     step "wallpaper › transition reset" ev 'StateService.reset("wallpaper.transition"); StateService.reset("wallpaper.transitionSpeed"); WallpaperService.transition = "fade"; WallpaperService.transitionSpeed = "normal"; "ok"'
     step "wallpaper › page closed" ipc settings close
 

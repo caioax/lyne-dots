@@ -31,6 +31,8 @@ ColumnLayout {
     property string _scrollTarget: ""
 
     readonly property bool selecting: selection.length > 0
+    // What Delete removes: the selection without the wallpaper in use
+    readonly property var deletable: selection.filter(p => p !== WallpaperService.currentWallpaper)
     readonly property string themeName: ThemeService.currentThemeName
     readonly property string themeLabel: ThemeService.themePreviews[themeName]?.name ?? themeName
     readonly property bool themeLinked: WallpaperService.dynamicWallpaper && !ThemeService.isAutoMode
@@ -93,11 +95,13 @@ ColumnLayout {
     }
 
     function deleteSelection() {
-        if (selection.length > 1 && !confirmingDelete) {
+        if (deletable.length === 0)
+            return;
+        if (deletable.length > 1 && !confirmingDelete) {
             confirmingDelete = true;
             return;
         }
-        WallpaperService.deleteWallpapers(selection);
+        WallpaperService.deleteWallpapers(deletable);
         clearSelection();
     }
 
@@ -258,7 +262,10 @@ ColumnLayout {
                 label: I18n.tr("Delete"),
                 icon: "\u{f09e7}",
                 action: "delete",
-                danger: true
+                danger: true,
+                // The one in use can't go: apply another first
+                disabled: target === WallpaperService.currentWallpaper,
+                detail: target === WallpaperService.currentWallpaper ? I18n.tr("In use") : ""
             }
         ].filter(item => !item.hidden)
 
@@ -614,7 +621,7 @@ ColumnLayout {
 
                         Text {
                             Layout.fillWidth: true
-                            text: I18n.trn("%n selected · Ctrl+A selects all", "%n selected · Ctrl+A selects all", root.selection.length)
+                            text: root.deletable.length < root.selection.length ? I18n.trn("%n selected · the one in use is kept", "%n selected · the one in use is kept", root.selection.length) : I18n.trn("%n selected · Ctrl+A selects all", "%n selected · Ctrl+A selects all", root.selection.length)
                             font.family: Config.font
                             font.pixelSize: Config.fontSizeSmall
                             font.bold: true
@@ -623,7 +630,9 @@ ColumnLayout {
 
                         ActionButton {
                             icon: "\u{f09e7}"
-                            text: root.confirmingDelete ? I18n.tr("Delete %1?", root.selection.length) : I18n.tr("Delete")
+                            enabled: root.deletable.length > 0
+                            opacity: enabled ? 1 : 0.4
+                            text: root.confirmingDelete ? I18n.tr("Delete %1?", root.deletable.length) : I18n.tr("Delete")
                             baseColor: root.confirmingDelete ? Config.errorColor : Config.surface1Color
                             hoverColor: root.confirmingDelete ? Qt.lighter(Config.errorColor, 1.1) : Config.surface2Color
                             textColor: root.confirmingDelete ? Config.textReverseColor : Config.errorColor

@@ -4,7 +4,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
 
-// ⋮ menu. `items` is a list of { label, icon, action, danger?, children?,
+// ⋮ menu. `items` is a list of { label, icon, action, danger?, disabled?, children?,
 // detail?, checked? }; an item with `children` opens them in place, with a
 // back row. `detail` is a muted note after the label, `checked` marks the
 // current choice of a picker
@@ -98,6 +98,8 @@ Popup {
                     icon: modelData.icon ?? ""
                     detail: modelData.detail ?? ""
                     danger: modelData.danger ?? false
+                    // Shown but not clickable; `detail` can say why
+                    enabled: !(modelData.disabled ?? false)
                     // md-chevron_right, md-check
                     trailingIcon: modelData.children ? "\u{f0142}" : modelData.checked ? "\u{f012c}" : ""
                     trailingAccent: modelData.checked ?? false
@@ -130,7 +132,7 @@ Popup {
         width: parent?.width ?? 0
         implicitHeight: row.implicitHeight + Config.padding * 2
         radius: Config.radius
-        color: itemMouse.containsMouse ? (danger ? Qt.alpha(Config.errorColor, 0.15) : Config.surface1Color) : "transparent"
+        color: itemMouse.containsMouse && enabled ? (danger ? Qt.alpha(Config.errorColor, 0.15) : Config.surface1Color) : "transparent"
 
         RowLayout {
             id: row
@@ -145,7 +147,7 @@ Popup {
                 text: item.icon
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeLarge
-                color: item.danger ? Config.errorColor : item.muted ? Config.subtextColor : Config.textColor
+                color: !item.enabled || item.muted ? Config.subtextColor : item.danger ? Config.errorColor : Config.textColor
             }
 
             Text {
@@ -155,7 +157,7 @@ Popup {
                 font.family: Config.font
                 font.pixelSize: Config.fontSizeNormal
                 font.bold: item.muted
-                color: item.danger ? Config.errorColor : item.muted ? Config.subtextColor : Config.textColor
+                color: !item.enabled || item.muted ? Config.subtextColor : item.danger ? Config.errorColor : Config.textColor
             }
 
             Text {

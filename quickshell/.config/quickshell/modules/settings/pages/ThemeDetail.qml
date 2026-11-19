@@ -82,7 +82,10 @@ ColumnLayout {
                 label: I18n.tr("Delete"),
                 icon: "\u{f09e7}",
                 action: "delete",
-                danger: true
+                danger: true,
+                // The one in use can't go: apply another first
+                disabled: target === WallpaperService.currentWallpaper,
+                detail: target === WallpaperService.currentWallpaper ? I18n.tr("In use") : ""
             }
         ]
 
