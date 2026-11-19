@@ -463,12 +463,37 @@ ColumnLayout {
             onResetRequested: WallpaperService.pauseLocked = StateService.get(path, true)
         }
 
+        // Unset until chosen: on where there is a battery (the service decides)
         ToggleRow {
             label: I18n.tr("Pause on battery")
             description: I18n.tr("Saves power while the charger is unplugged")
             path: "wallpaper.pauseOnBattery"
-            onToggled: value => WallpaperService.pauseOnBattery = value
-            onResetRequested: WallpaperService.pauseOnBattery = StateService.get(path, false)
+            checked: WallpaperService.pauseOnBattery
+            onToggled: value => WallpaperService.pauseOnBatteryStored = value
+            onResetRequested: WallpaperService.pauseOnBatteryStored = StateService.get(path, null)
+        }
+
+        SelectRow {
+            label: I18n.tr("Frame rate")
+            description: I18n.tr("Fewer frames take less work to draw; slower videos keep their own")
+            path: "wallpaper.videoFps"
+            value: WallpaperService.videoFps
+            options: [
+                {
+                    label: I18n.tr("Original"),
+                    value: 0
+                },
+                {
+                    label: I18n.tr("30 fps"),
+                    value: 30
+                },
+                {
+                    label: I18n.tr("15 fps"),
+                    value: 15
+                }
+            ]
+            onSelected: value => WallpaperService.videoFps = value
+            onResetRequested: WallpaperService.videoFps = StateService.get(path, 30)
         }
     }
 

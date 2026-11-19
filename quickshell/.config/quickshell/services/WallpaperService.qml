@@ -94,10 +94,16 @@ Singleton {
 
     // Pause rules of a video wallpaper (Settings › Wallpaper › Animated
     // wallpapers): every screen covered by a fullscreen window, the session
-    // locked, on battery. Its rows store them in the state and set these
+    // locked, on battery. Its rows store them in the state and set these.
+    // On battery is unset (null) until chosen: on where there is a battery
     property bool pauseCovered: getState("wallpaper.pauseCovered", true)
     property bool pauseLocked: getState("wallpaper.pauseLocked", true)
-    property bool pauseOnBattery: getState("wallpaper.pauseOnBattery", false)
+    property var pauseOnBatteryStored: getState("wallpaper.pauseOnBattery", null)
+    readonly property bool pauseOnBattery: VideoRules.batteryRule(pauseOnBatteryStored, BatteryService.hasBattery)
+    // Frame rate cap of a video wallpaper (Settings › Wallpaper › Animated
+    // wallpapers): 30, 15 or 0 for the video's own. Fewer frames, less work
+    // for Hyprland redrawing every screen
+    property int videoFps: getState("wallpaper.videoFps", 30)
     readonly property bool videoPlaying: isVideo(currentWallpaper)
     readonly property bool videoPaused: videoPlaying && VideoRules.shouldPause({
         covered: pauseCovered,
@@ -118,6 +124,13 @@ Singleton {
             pauseProc.run([_videoScript, "pause", videoPaused ? "yes" : "no"], null);
     }
 
+    // Sent on each change, and again once a new video has started
+    onVideoFpsChanged: _sendFps()
+    function _sendFps() {
+        if (videoPlaying)
+            fpsProc.run([_videoScript, "fps", String(videoFps)], null);
+    }
+
     // ========================================================================
     // INITIALIZATION
     // ========================================================================
@@ -126,8 +139,9 @@ Singleton {
         refreshWallpapers();
         getCurrentWallpaper();
         // A video kept playing across a shell restart, or started by the
-        // boot script: it gets the state of the rules now
+        // boot script: it gets the state of the rules and the cap now
         Qt.callLater(_sendPause);
+        Qt.callLater(_sendFps);
     }
 
     Connections {
@@ -142,7 +156,8 @@ Singleton {
             root.transitionSpeed = getState("wallpaper.transitionSpeed", "normal");
             root.pauseCovered = getState("wallpaper.pauseCovered", true);
             root.pauseLocked = getState("wallpaper.pauseLocked", true);
-            root.pauseOnBattery = getState("wallpaper.pauseOnBattery", false);
+            root.pauseOnBatteryStored = getState("wallpaper.pauseOnBattery", null);
+            root.videoFps = getState("wallpaper.videoFps", 30);
             // What awww shows wins over the saved path
             root.getCurrentWallpaper();
         }
@@ -373,9 +388,13 @@ Singleton {
         writeCurrentProc.command = ["sh", "-c", "printf '%s\\n' \"$1\" > \"$2/.current\"", "sh", path, wallpaperDir];
         writeCurrentProc.running = true;
 
-        // A video starts playing: paused at once when a rule says so
-        if (isVideo(path) && videoPaused)
-            _sendPause();
+        // A video starts playing: paused at once when a rule says so, and
+        // capped
+        if (isVideo(path)) {
+            if (videoPaused)
+                _sendPause();
+            _sendFps();
+        }
 
         // In auto mode, regenerate colors from the new wallpaper
         if (ThemeService.isAutoMode)
@@ -555,6 +574,11 @@ Singleton {
     // Pause or resume of the video wallpaper; only the newest one matters
     QueuedProcess {
         id: pauseProc
+    }
+
+    // Frame rate cap of the video wallpaper; only the newest one matters
+    QueuedProcess {
+        id: fpsProc
     }
 
     // "video<TAB>poster" lines from wallpaper-poster.sh, one per video

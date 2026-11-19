@@ -9,7 +9,7 @@ load helpers
 setup() {
     lyne_setup
     SCRIPT="$REPO/quickshell/.config/quickshell/scripts/wallpaper-set.sh"
-    VIDEO="$REPO/quickshell/.config/quickshell/scripts/wallpaper-video.sh"
+    VIDEO="${LYNE_TEST_SHELL:-$REPO/quickshell/.config/quickshell}/scripts/wallpaper-video.sh"
     BOOT="$REPO/local/.local/scripts/Wallpaper/wallpaper-boot.sh"
     STATE="$HOME/.config/quickshell/state.json"
     WALL="$HOME/.local/wallpapers/a.jpg"
@@ -53,7 +53,10 @@ while True:
         log.write("ipc " + " ".join(json.dumps(c) if isinstance(c, bool) else str(c) for c in cmd) + "\n")
     if cmd[0] == "screenshot-to-file":
         open(cmd[1], "w").write("frame")
-    conn.sendall(b'{"error": "success"}\n')
+    if cmd[:2] == ["get_property", "container-fps"]:
+        conn.sendall(json.dumps({"data": float(os.environ.get("VIDEO_FPS", "30")), "error": "success"}).encode() + b"\n")
+    else:
+        conn.sendall(b'{"error": "success"}\n')
     conn.close()
 EOF
     chmod +x "$BATS_TEST_TMPDIR/bin/mpvpaper"
@@ -313,12 +316,33 @@ EOF2
 ipc set_property pause false"
 }
 
+@test "video: frame rate capped only when the video is faster" {
+    "$SCRIPT" "$VID" none
+    : >"$STUB_LOG"
+    # 30 fps under a cap of 15: frames dropped
+    run "$VIDEO" fps 15
+    assert_success
+    # Under or at the cap (29.97 against 30): its own rate
+    VIDEO_FPS=29.97 run "$VIDEO" fps 30
+    assert_success
+    # 0: no cap
+    run "$VIDEO" fps 0
+    assert_success
+    assert_equal "$(grep '^ipc set_property vf' "$STUB_LOG")" "ipc set_property vf fps=15
+ipc set_property vf 
+ipc set_property vf "
+    # Asked for the rate only when there is a cap
+    assert_equal "$(grep -c '^ipc get_property container-fps' "$STUB_LOG")" 2
+}
+
 @test "video: no player, nothing to pause; bad commands" {
     run "$VIDEO" pause yes
     assert_failure 1
     run "$VIDEO" pause maybe
     assert_failure 2
     run "$VIDEO" rewind
+    assert_failure 2
+    run "$VIDEO" fps fast
     assert_failure 2
     assert_equal "$(cat "$STUB_LOG")" ""
 }

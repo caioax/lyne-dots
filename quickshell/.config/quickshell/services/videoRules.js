@@ -20,3 +20,9 @@ function shouldPause(rules, now) {
         return true;
     return rules.covered === true && allCovered(now.screens, now.coveredScreens);
 }
+
+// "Pause on battery" as stored: true or false once chosen in Settings; null
+// (the default) means on where there is a battery to save, off elsewhere
+function batteryRule(stored, hasBattery) {
+    return stored === null || stored === undefined ? hasBattery === true : stored === true;
+}

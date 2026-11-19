@@ -39,3 +39,14 @@ test("on battery: plays by default, pauses with that rule on", () => {
     assert.equal(R.shouldPause({ ...defaults, battery: true }, now({ onBattery: true })), true);
     assert.equal(R.shouldPause({ ...defaults, battery: true }, now()), false);
 });
+
+test("pause on battery unset: on with a battery, off without one", () => {
+    assert.equal(R.batteryRule(null, true), true);
+    assert.equal(R.batteryRule(null, false), false);
+    assert.equal(R.batteryRule(undefined, true), true);
+});
+
+test("pause on battery chosen: the choice, battery or not", () => {
+    assert.equal(R.batteryRule(false, true), false);
+    assert.equal(R.batteryRule(true, false), true);
+});
