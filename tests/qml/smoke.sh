@@ -249,7 +249,21 @@ esac
 exit 0
 EOF
     chmod +x "$SB/bin/curl"
+    # gdbus monitor: logind's signals are lines a step writes to
+    # $SB/login1-event (see login1); other gdbus calls are the real ones
+    cat >"$SB/bin/gdbus" <<EOF
+#!/bin/bash
+[[ "\$1" == monitor ]] || exec /usr/bin/gdbus "\$@"
+echo "gdbus \$*" >>"$SB/calls.log"
+while sleep 0.2; do
+    [[ -e "$SB/login1-event" ]] && cat "$SB/login1-event" && rm -f "$SB/login1-event"
+done
+EOF
+    chmod +x "$SB/bin/gdbus"
 }
+
+# login1 LINE: logind sends that line to the stand-in gdbus monitor
+login1() { echo "$1" >"$SB/login1-event"; }
 
 # cable on|off: plugs the stand-in cable in or out (an nmcli event follows)
 cable() {
@@ -655,6 +669,19 @@ EOF
     step "lock" ipc lock lock
     # What a right password does: the lock screen releases the session lock
     step "unlock" ev 'LockService.authSucceeded()'
+    # logind: one monitor for the whole shell; an idle inhibitor holds the
+    # idle timers, and the system going to sleep locks first
+    check "login1 › one monitor" test "$(grep -c '^gdbus monitor --system --dest org.freedesktop.login1' "$SB/calls.log")" -eq 1
+    login1 "/org/freedesktop/login1: org.freedesktop.DBus.Properties.PropertiesChanged ('org.freedesktop.login1.Manager', {'BlockInhibited': <'handle-lid-switch:idle'>}, @as [])"
+    check "login1 › an idle inhibitor holds idle" ev_soon true 'IdleService.systemInhibited'
+    login1 "/org/freedesktop/login1: org.freedesktop.DBus.Properties.PropertiesChanged ('org.freedesktop.login1.Manager', {'BlockInhibited': <'sleep'>}, @as [])"
+    check "login1 › released" ev_soon false 'IdleService.systemInhibited'
+    login1 "/org/freedesktop/login1: org.freedesktop.login1.Manager.PrepareForSleep (true,)"
+    check "login1 › locks before sleeping" ev_soon true 'LockService.locked'
+    login1 "/org/freedesktop/login1: org.freedesktop.login1.Manager.PrepareForSleep (false,)"
+    step "login1 › unlock after waking" ev 'LockService.authSucceeded()'
+    # The pairing agent runs only while the adapter is on
+    check "bluetooth › agent only with the adapter on" ev_is true 'bluetoothAgent.running === BluetoothService.isPowered'
     step "theme › catppuccin-latte" ev "ThemeService.setPresetMode('catppuccin-latte')"
     step "theme › tokyonight" ev "ThemeService.setPresetMode('tokyonight')"
     step "theme › auto" ev "ThemeService.setAutoMode()"

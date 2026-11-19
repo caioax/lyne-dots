@@ -157,8 +157,9 @@ Singleton {
 
     // A logind "delay" inhibitor holds suspend (lid close included) for up to
     // InhibitDelayMaxSec after PrepareForSleep(true); it is released once the
-    // lock is secure, and taken again on wake. setpriv --pdeathsig ends both
-    // helpers with the shell (killed, they were left running as orphans)
+    // lock is secure, and taken again on wake (PrepareForSleep comes from
+    // Login1Service). setpriv --pdeathsig ends the helper with the shell
+    // (killed, it was left running as an orphan)
     property bool _holdSleep: lockBeforeSleep
 
     Process {
@@ -166,23 +167,20 @@ Singleton {
         command: ["setpriv", "--pdeathsig", "TERM", "--", "systemd-inhibit", "--what=sleep", "--mode=delay", "--who=Quickshell", "--why=Lock the screen before sleeping", "sleep", "infinity"]
     }
 
-    Process {
-        running: root.lockBeforeSleep
-        command: ["setpriv", "--pdeathsig", "TERM", "--", "gdbus", "monitor", "--system", "--dest", "org.freedesktop.login1", "--object-path", "/org/freedesktop/login1"]
-        stdout: SplitParser {
-            onRead: line => {
-                if (!line.includes("PrepareForSleep"))
-                    return;
-                if (line.includes("true")) {
-                    root.lock();
-                    if (root.secure)
-                        root._holdSleep = false;
-                    else
-                        releaseFallback.restart();
-                } else {
-                    releaseFallback.stop();
-                    root._holdSleep = root.lockBeforeSleep;
-                }
+    Connections {
+        target: Login1Service
+        enabled: root.lockBeforeSleep
+
+        function onPrepareForSleep(start: bool): void {
+            if (start) {
+                root.lock();
+                if (root.secure)
+                    root._holdSleep = false;
+                else
+                    releaseFallback.restart();
+            } else {
+                releaseFallback.stop();
+                root._holdSleep = root.lockBeforeSleep;
             }
         }
     }

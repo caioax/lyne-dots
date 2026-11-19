@@ -127,6 +127,7 @@ Warning: services/KeybindsService.qml: Type KeybindsService not declared as sing
 Warning: services/KeyboardService.qml: Type KeyboardService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/LauncherService.qml: Type LauncherService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/LockService.qml: Type LockService not declared as singleton in qmldir but using pragma Singleton [import]
+Warning: services/Login1Service.qml: Type Login1Service not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/LyricsService.qml: Type LyricsService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/MonitorsService.qml: Type MonitorsService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/MprisService.qml: Cannot assign binding of type UntypedObjectModel to QObject [incompatible-type]

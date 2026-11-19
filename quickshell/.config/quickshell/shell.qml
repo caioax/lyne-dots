@@ -89,10 +89,12 @@ ShellRoot {
 
     readonly property string bluetoothAgentScriptPath: Qt.resolvedUrl("./scripts/bluetooth-agent.py").toString().replace("file://", "")
 
+    // Pairing needs the adapter on, so the agent (python + dbus, ~28 MB) only
+    // runs while it is; BlueZ forgets it when it exits
     Process {
         id: bluetoothAgent
         command: ["python3", root.bluetoothAgentScriptPath]
-        running: true
+        running: BluetoothService.isPowered
 
         stdout: SplitParser {
             onRead: data => console.log("[BluetoothAgent]: " + data)
