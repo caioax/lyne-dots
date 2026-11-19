@@ -32,7 +32,9 @@ Item {
     readonly property var actions: live ? live.listedActions : []
     readonly property bool hasMore: notifs.length > collapsedCount
     readonly property bool expandable: expanded || hasMore || truncated || actions.length > 0 || (live?.hasInlineReply ?? false)
-    property bool truncated: false
+    // Messages cut short right now (each one counts itself in and out)
+    property int truncatedCount: 0
+    readonly property bool truncated: truncatedCount > 0
 
     // Opening and closing ease the height; clipped only meanwhile, so the
     // hover highlight can bleed out at rest
@@ -206,7 +208,8 @@ Item {
         maximumLineCount: root.expanded ? undefined : 1
         elide: Text.ElideRight
         onLinkActivated: link => Qt.openUrlExternally(link)
-        onTruncatedChanged: if (truncated) root.truncated = true
+        onTruncatedChanged: root.truncatedCount += truncated ? 1 : -1
+        Component.onDestruction: if (truncated) root.truncatedCount--
 
         HoverHandler {
             cursorShape: message.hoveredLink !== "" ? Qt.PointingHandCursor : Qt.ArrowCursor

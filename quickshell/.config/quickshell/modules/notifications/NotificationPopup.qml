@@ -149,7 +149,7 @@ Item {
                     const screen = root.QsWindow.window?.screen?.name ?? "";
                     WindowManagerService.openAfterClose("Notifications", () => NotificationService.showConversation(key, screen), 0);
                 } else
-                    root.notif.close();
+                    NotificationService.dismissConversation(NotificationService.conversationKey(root.notif));
             }
         }
 

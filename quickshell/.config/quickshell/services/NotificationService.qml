@@ -153,6 +153,20 @@ Singleton {
         return list.filter(n => conversationKey(n) === key);
     }
 
+    // <img> in a notification's text: only local files are shown. A remote
+    // src would be fetched by the shell (a tracking pixel for the sender)
+    function stripRemoteImages(text: string): string {
+        if (!text.includes("<img"))
+            return text;
+        // An expression arrow: a block one makes qmllint skip the whole file
+        return text.replace(/<img\b[^>]*>/gi, tag => root._localImage(tag) ? tag : "");
+    }
+
+    function _localImage(tag: string): bool {
+        const src = tag.match(/\bsrc\s*=\s*["']?([^"'\s>]*)/i)?.[1] ?? "";
+        return /^(file:\/\/|\/)/i.test(src);
+    }
+
     function dismissConversation(key: string) {
         for (const n of conversationOf(key))
             n.close();
@@ -554,12 +568,10 @@ Singleton {
                 }, false);
             } else {
                 root._setTime(notifId, 0);
-                // The app closed it (the chat was opened): its earlier
-                // messages go too
-                if (dropped) {
-                    for (const c of root.list.filter(c => c.frozen && c.sourceId === notifId))
-                        c.close();
-                }
+                // Its earlier messages go too, whoever closed it: they only
+                // come back with it after a reload
+                for (const c of root.list.filter(c => c.frozen && c.sourceId === notifId))
+                    c.close();
             }
             expireAnim.stop();
             popup = false;
@@ -611,6 +623,8 @@ Singleton {
                 appIconHint = "";
             }
             image = img;
+            summary = root.stripRemoteImages(summary);
+            body = root.stripRemoteImages(body);
 
             const candidates = [iconHint, appIconHint, notification.desktopEntry, appName.toLowerCase()];
             appIcon = candidates.find(c => c && root.iconSource(c) !== "") ?? "";
@@ -689,7 +703,9 @@ Singleton {
                 root._sortList();
                 root._trimHistory();
             }
-            if (popup || (news && (!root.dndEnabled || isCritical)))
+            // Like a new one: not while the history is open (critical ones
+            // still pop up)
+            if (popup || (news && (isCritical || (!root.dndEnabled && !root.historyOpen))))
                 showPopup();
         }
 

@@ -15,7 +15,8 @@ RowLayout {
     property bool includeDefault: false
     property bool compact: false
 
-    readonly property var actions: includeDefault ? root.notif.listedActions : root.notif.buttonActions
+    // notif is null for a moment while a dismissed conversation leaves
+    readonly property var actions: (includeDefault ? root.notif?.listedActions : root.notif?.buttonActions) ?? []
 
     signal triggered
 
@@ -29,7 +30,7 @@ RowLayout {
             id: pill
 
             required property var modelData
-            readonly property string iconSource: root.notif.hasActionIcons ? (IconService.has(modelData.identifier) ? IconService.url(modelData.identifier, "") : "") : ""
+            readonly property string iconSource: root.notif?.hasActionIcons ? (IconService.has(modelData.identifier) ? IconService.url(modelData.identifier, "") : "") : ""
 
             Layout.fillWidth: !root.compact
             implicitWidth: pillRow.implicitWidth + Config.padding * 4

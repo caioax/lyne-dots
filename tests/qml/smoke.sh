@@ -564,6 +564,19 @@ EOF
     check "notifications › no popups while it is open" ev_is 0 'NotificationService.activePopupCount'
     ev 'Quickshell.execDetached(["notify-send", "-a", "Smoke", "Smoke while open", "Into the history"]); "sent"' >/dev/null
     check "notifications › a new one goes into the open history" ev_is true 'NotificationService.conversationKeys.some(k => k.endsWith("Smoke while open")) && NotificationService.activePopupCount === 0'
+    # A replaced one (same id, new text) stays in the open history too
+    ev 'Quickshell.execDetached(["notify-send", "-a", "Smoke", "-r", String(NotificationService.list.find(n => n.summary === "Smoke while open").notifId), "Smoke while open", "Replaced"]); "sent"' >/dev/null
+    check "notifications › a replaced one stays in the open history" ev_is true 'NotificationService.list.some(n => n.body === "Replaced") && NotificationService.activePopupCount === 0'
+    # A chat's earlier messages go with its last one, whoever dismisses it
+    local chat='NotificationService.list.filter(n => n.appName === "SmokeChat")'
+    ev 'Quickshell.execDetached(["notify-send", "-a", "SmokeChat", "-h", "string:category:im.received", "Smoke chat", "First"]); "sent"' >/dev/null
+    check "notifications › a chat message arrives" ev_is 1 "$chat.length"
+    ev 'Quickshell.execDetached(["notify-send", "-a", "SmokeChat", "-h", "string:category:im.received", "-r", String(NotificationService.list.find(n => n.appName === "SmokeChat").notifId), "Smoke chat", "Second"]); "sent"' >/dev/null
+    check "notifications › the earlier message stays as a copy" ev_is 2 "$chat.length"
+    ev "$chat.find(n => !n.frozen).close(); \"ok\"" >/dev/null
+    check "notifications › dismissing the last one takes the copy along" ev_is true "$chat.length === 0 && !NotificationService._copies().some(c => c.appName === \"SmokeChat\")"
+    # Remote pictures in a body are never fetched (tracking pixels)
+    check "notifications › remote images dropped from the body" ev_is 'a b<img src="file:///tmp/i.png"/>' 'NotificationService.stripRemoteImages(`a<img src="http://127.0.0.1/p.png"/> b<img src="file:///tmp/i.png"/><IMG SRC=https://x/y.gif>`)'
     step "notifications › closed again" ev 'NotificationService.closeHistory(); "ok"'
     check "notifications › the focus is gone once closed" ev_is "" 'NotificationService.focusKey'
     step "power menu" ipc power open
