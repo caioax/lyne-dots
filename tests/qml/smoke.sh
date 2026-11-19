@@ -528,6 +528,8 @@ EOF
     for id in $(list 'LauncherService.modes.map(m => m.id)'); do
         step "launcher › $id" ev "LauncherService.showMode('$id')"
     done
+    # Only the bar on that screen animates its launcher button
+    check "launcher › knows the screen it opened on" ev_soon true 'LauncherService.screenName !== "" && LauncherService.screenName === Hyprland.focusedMonitor?.name'
     step "launcher closed" ipc launcher close
     # A shortcut with another popup open closes it first and opens once it
     # is gone, so its exit animation isn't stalled by the new window

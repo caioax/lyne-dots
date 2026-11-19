@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import qs.config
 import qs.services
@@ -34,7 +35,10 @@ BarButton {
         }
     }
 
-    active: live && LauncherService.visible
+    // Only on the bar of the screen the launcher opened on: the open motion
+    // runs for seconds and keeps the bar's window rendering at the refresh rate
+    readonly property string screenName: QsWindow.window?.screen?.name ?? ""
+    active: live && LauncherService.visible && (LauncherService.screenName === "" || LauncherService.screenName === screenName)
     enabled: live
     contentItem: content
     animateColor: false

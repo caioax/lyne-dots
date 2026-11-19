@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Hyprland
 import qs.config
 import "fuzzy.js" as Fuzzy
 
@@ -15,6 +16,9 @@ Singleton {
     // ========================================================================
 
     property bool visible: false
+    // Monitor the launcher opened on (the focused one), so only that bar's
+    // button lights up and animates; "" when Hyprland doesn't say
+    property string screenName: ""
     property string query: ""
     // Index into `entries` (favorites first, then the results)
     property int selectedIndex: 0
@@ -407,6 +411,7 @@ Singleton {
         query = modes.find(m => m.id === id)?.prefix ?? "";
         selectedIndex = 0;
         clipFilter = "all";
+        screenName = Hyprland.focusedMonitor?.name ?? "";
         visible = true;
         if (id === "clipboard")
             ClipboardService.refresh();
