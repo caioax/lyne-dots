@@ -99,3 +99,37 @@ thumb_of() {
     assert_failure 2
     assert_equal "$(cat "$STUB_LOG")" ""
 }
+
+@test "cache: files unused for a month go, the ones in use stay" {
+    POSTERS="$HOME/.cache/lyne/wallpaper-posters"
+    keep="$(thumb_of 320x180 "$IMG")"
+    keep_poster="$("${SCRIPT%/*}/wallpaper-poster.sh" "$VID")"
+    mkdir -p "$CACHE" "$POSTERS"
+    printf 'old' >"$CACHE/gone.jpg"
+    printf 'old' >"$POSTERS/gone.jpg"
+    printf 'old' >"$CACHE/.half.123.jpg"
+    printf 'new' >"$CACHE/recent.jpg"
+    touch -d '40 days ago' "$keep" "$keep_poster" "$CACHE/gone.jpg" "$POSTERS/gone.jpg" "$CACHE/.half.123.jpg"
+    touch -d '10 days ago' "$CACHE/recent.jpg"
+    rm -f "$HOME/.cache/lyne/.wallpaper-cache-pruned"
+    run "$SCRIPT" 320x180 "$IMG" "$VID"
+    assert_success
+    # Asked for again: touched before the next prune
+    assert [ -f "$keep" ]
+    assert [ -f "$keep_poster" ]
+    refute [ -e "$CACHE/gone.jpg" ]
+    refute [ -e "$POSTERS/gone.jpg" ]
+    refute [ -e "$CACHE/.half.123.jpg" ]
+    assert [ -f "$CACHE/recent.jpg" ]
+    find "$keep" -mmin -5 | grep -q .
+}
+
+@test "cache: pruned once a day" {
+    mkdir -p "$CACHE"
+    touch "$HOME/.cache/lyne/.wallpaper-cache-pruned"
+    printf 'old' >"$CACHE/gone.jpg"
+    touch -d '40 days ago' "$CACHE/gone.jpg"
+    run "$SCRIPT" 320x180 "$IMG"
+    assert_success
+    assert [ -f "$CACHE/gone.jpg" ]
+}

@@ -11,6 +11,9 @@
 # wherever a still image is needed: under the video while it starts, colors
 # (matugen), thumbnails, the lock screen and the login screen.
 #
+# A poster is touched each time it's asked for; wallpaper-thumb.sh deletes
+# the ones nothing asked for in a month (a deleted or replaced video's).
+#
 # Exits 3 when PATH is not a file, 4 when ffmpeg can't read the video.
 # =============================================================================
 
@@ -74,6 +77,9 @@ if [[ ! -s "$poster" ]]; then
         exit 4
     fi
     mv -f "$best" "$poster"
+else
+    # Still in use: wallpaper-thumb.sh prunes the ones left unused
+    touch -c "$poster"
 fi
 
 printf '%s\n' "$poster"
