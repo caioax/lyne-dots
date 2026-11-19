@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell.Widgets
 import qs.config
 import qs.services
+import "../../components/"
 
 // Icon, texts, action buttons and inline reply of one notification (the
 // popups), looking like a history conversation: "Name • time", the newest
@@ -16,7 +17,9 @@ ColumnLayout {
     // The badge on the picture already shows the app
     property bool showAppName: false
     property bool expanded: false
-    default property alias trailing: trailingSlot.data
+    // The X shows (on the popup's hover) and was clicked
+    property bool closeShown: false
+    signal closeClicked
 
     // Earlier messages of its conversation, oldest first
     readonly property var earlier: NotificationService.conversationOf(NotificationService.conversationKey(notif)).filter(n => n !== notif && n.time.getTime() <= notif.time.getTime()).reverse()
@@ -79,6 +82,24 @@ ColumnLayout {
 
                 Item {
                     Layout.fillWidth: true
+                }
+
+                // The X (on hover): the line keeps its room, so nothing moves when it
+                // shows, and the messages below use the whole width
+                Item {
+                    Layout.preferredWidth: closeButton.implicitWidth
+
+                    // md-close: dismisses the whole conversation
+                    MenuButton {
+                        id: closeButton
+
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        icon: "\u{f0156}"
+                        danger: true
+                        visible: root.closeShown
+                        onClicked: root.closeClicked()
+                    }
                 }
             }
 
@@ -151,15 +172,6 @@ ColumnLayout {
                     }
                 }
             }
-        }
-
-        // Trailing buttons (the popup's X), then the pill
-        RowLayout {
-            id: trailingSlot
-            Layout.alignment: Qt.AlignTop
-            // Level with the picture's middle, open or closed: it doesn't jump
-            Layout.topMargin: Math.max(0, Math.round((Config.notifImageSize - implicitHeight) / 2))
-            spacing: Config.padding
         }
 
         NotificationPill {

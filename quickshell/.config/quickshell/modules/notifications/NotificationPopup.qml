@@ -161,14 +161,8 @@ Item {
             anchors.top: parent.top
             anchors.margins: Config.padding * 2
             notif: root.notif
-
-            // md-close: dismisses the whole conversation (on hover)
-            MenuButton {
-                icon: "\u{f0156}"
-                danger: true
-                visible: hover.hovered
-                onClicked: NotificationService.dismissConversation(NotificationService.conversationKey(root.notif))
-            }
+            closeShown: hover.hovered
+            onCloseClicked: NotificationService.dismissConversation(NotificationService.conversationKey(root.notif))
         }
 
         // Time left before the popup goes to the history

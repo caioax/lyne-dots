@@ -126,6 +126,24 @@ Item {
                 Item {
                     Layout.fillWidth: true
                 }
+
+                // The X (on hover): the line keeps its room, so nothing moves when it
+                // shows, and the messages below use the whole width
+                Item {
+                    Layout.preferredWidth: closeButton.implicitWidth
+
+                    // md-close: dismisses the whole conversation
+                    MenuButton {
+                        id: closeButton
+
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        icon: "\u{f0156}"
+                        danger: true
+                        visible: hover.hovered
+                        onClicked: NotificationService.dismissConversation(root.key)
+                    }
+                }
             }
 
             // ========== MESSAGES ==========
@@ -166,18 +184,6 @@ Item {
                     root.actionTriggered();
                 }
             }
-        }
-
-        // md-close: dismisses the whole conversation (on hover)
-        MenuButton {
-            Layout.alignment: Qt.AlignTop
-            // Level with the picture's middle, open or closed: it doesn't jump
-            Layout.topMargin: Math.max(0, Math.round((Config.notifImageSize - implicitHeight) / 2))
-            icon: "\u{f0156}"
-            danger: true
-            // Takes its room only then, so the message uses the whole line
-            visible: hover.hovered
-            onClicked: NotificationService.dismissConversation(root.key)
         }
 
         NotificationPill {
