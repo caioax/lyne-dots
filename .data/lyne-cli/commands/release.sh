@@ -6,13 +6,16 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
     echo "Tag main's tip as the next release, push the tag and publish it on"
     echo "GitHub. Users on the Stable channel update to it."
     echo ""
-    echo "  patch    fixes only (v1.2.3 -> v1.2.4)"
-    echo "  minor    new things (v1.2.3 -> v1.3.0)"
+    echo "  patch    fixes, performance and small tweaks, even a new option or"
+    echo "           default (v1.2.3 -> v1.2.4)"
+    echo "  minor    a headline: a new feature or area, or a change in how"
+    echo "           something is used (v1.2.3 -> v1.3.0)"
     echo "  major    breaks something or needs the user to act (v1.2.3 -> v2.0.0)"
     echo "Without one, it asks. The first release is v1.0.0."
     echo ""
     echo "The notes are written in \$EDITOR, from a list of the commits since"
-    echo "the last release. No notes: users don't get a What's new."
+    echo "the last release. Any release with notes shows them in What's new,"
+    echo "a patch too; no notes: users don't get a What's new."
     echo ""
     echo "  --dry-run  every check and the notes, but nothing is created"
     return 0
@@ -94,7 +97,7 @@ else
     IFS=. read -r major minor patch <<<"${last#v}"
     if [[ -z "$bump" ]]; then
         echo "Last release: $last"
-        read -rp "[f]ixes only (v$major.$minor.$((patch + 1))), [n]ew things (v$major.$((minor + 1)).0) or [b]reaking (v$((major + 1)).0.0)? " bump
+        read -rp "[f]ixes and tweaks (v$major.$minor.$((patch + 1))), [n]ew feature (v$major.$((minor + 1)).0) or [b]reaking (v$((major + 1)).0.0)? " bump
         case "${bump,,}" in
         f) bump="patch" ;;
         n) bump="minor" ;;
@@ -137,8 +140,8 @@ notes="$(mktemp --suffix=.md)" || return 1
     echo "$scissors"
     echo "# Notes for $next go above this line, in Markdown. Users see them in"
     echo "# the What's new window and on GitHub. Nothing above the line: a"
-    echo "# release without notes (a fix), and no What's new. Everything from"
-    echo "# the line down is removed."
+    echo "# release without notes, and no What's new. Everything from the line"
+    echo "# down is removed."
     echo "#"
     echo "# Commits since ${last:-the start} ($count), first clause, by scope:"
     ((count > shown)) && echo "# (the newest $shown)"
