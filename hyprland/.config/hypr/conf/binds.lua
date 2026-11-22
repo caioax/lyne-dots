@@ -22,6 +22,21 @@ local function lone_modifier(keys)
         or last:match("^CONTROL_[LR]$") or last:match("^SHIFT_[LR]$")
 end
 
+-- ...and by keycode: with some keyboards and layouts (the laptop's own
+-- keyboard on br abnt2) Hyprland never matches the SUPER_L keysym on
+-- release, while code:133 always does. Settings keeps showing SUPER_L
+local lone_codes = {
+    SUPER_L = 133, SUPER_R = 134, ALT_L = 64, ALT_R = 108,
+    CONTROL_L = 37, CONTROL_R = 105, SHIFT_L = 50, SHIFT_R = 62,
+}
+local function keys_for(keys)
+    local mod = lone_modifier(keys)
+    if not mod then
+        return keys
+    end
+    return (keys:gsub("[^+]+$", " code:" .. lone_codes[mod]))
+end
+
 local function opts_for(opts, keys)
     if not lone_modifier(keys) then
         return opts
@@ -54,6 +69,7 @@ local function dispatcher_for(dispatcher, keys)
     end
 end
 M.lone_modifier = lone_modifier
+M.keys_for = keys_for
 
 function M.bind(id, group, description, keys, dispatcher, opts)
     -- Copy: callers may share one options table between binds
@@ -78,7 +94,7 @@ function M.bind(id, group, description, keys, dispatcher, opts)
 
     -- No default keys: listed in Settings, bound once keys are set
     if keys ~= "" then
-        hl.bind(keys, dispatcher_for(dispatcher, keys), opts_for(opts, keys))
+        hl.bind(keys_for(keys), dispatcher_for(dispatcher, keys), opts_for(opts, keys))
     end
 end
 
@@ -112,16 +128,16 @@ function lyne_rebind(id, keys)
     if old ~= "" then
         -- hl.unbind drops every bind on these keys: put back the others
         -- that share them (two actions on one combo)
-        hl.unbind(old)
+        hl.unbind(keys_for(old))
         local combo = normalize(old)
         for _, other in ipairs(LYNE_BINDS.list) do
             if other ~= entry and other.keys ~= "" and normalize(other.keys) == combo then
-                hl.bind(other.keys, dispatcher_for(other.dispatcher, other.keys), opts_for(other.opts, other.keys))
+                hl.bind(keys_for(other.keys), dispatcher_for(other.dispatcher, other.keys), opts_for(other.opts, other.keys))
             end
         end
     end
     if keys ~= "" then
-        hl.bind(keys, dispatcher_for(entry.dispatcher, keys), opts_for(entry.opts, keys))
+        hl.bind(keys_for(keys), dispatcher_for(entry.dispatcher, keys), opts_for(entry.opts, keys))
     end
 end
 
