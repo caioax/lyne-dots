@@ -35,6 +35,7 @@ Singleton {
     readonly property bool showPower: StateService.get("lock.showPower", true)
     readonly property bool showMedia: StateService.get("lock.showMedia", true)
     readonly property bool lockBeforeSleep: StateService.get("lock.beforeSleep", true)
+    readonly property bool lockNumlock: StateService.get("lock.numlock", true)
 
     signal authSucceeded
     // The password field was clicked: the surfaces take the keyboard back
@@ -99,7 +100,16 @@ Singleton {
             _pendingPassword = "";
             locked = true;
             checkCapsLock();
+            if (lockNumlock)
+                numlockProc.running = true;
         }
+    }
+
+    // Turns Num Lock on while the screen is locked, through ydotool's virtual
+    // keyboard (KEY_NUMLOCK = 69), only when hyprland reports it off
+    Process {
+        id: numlockProc
+        command: ["sh", "-c", "hyprctl devices -j | jq -e '[.keyboards[] | select(.main == true)][0].numLock' >/dev/null || ydotool key 69:1 69:0"]
     }
 
     function unlock() {

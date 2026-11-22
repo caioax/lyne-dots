@@ -65,6 +65,12 @@ ColumnLayout {
             path: "lock.beforeSleep"
         }
 
+        ToggleRow {
+      label: I18n.tr("Num Lock on while locked")
+      description: I18n.tr("Turn Num Lock on when the screen locks, needs ydotool running")
+      path: "lock.numlock"
+        }
+
         SettingRow {
             label: I18n.tr("Lock now")
             description: I18n.tr("Also Super + Escape, or qs ipc call lock lock")
