@@ -169,7 +169,8 @@
         "showStatus": true,
         "showPower": true,
         "showMedia": true,
-        "beforeSleep": true
+        "beforeSleep": true,
+        "onBoot": true
     },
     "power": {
         "style": "farewell",

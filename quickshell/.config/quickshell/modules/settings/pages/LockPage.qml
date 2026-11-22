@@ -65,6 +65,12 @@ ColumnLayout {
             path: "lock.beforeSleep"
         }
 
+        ToggleRow {
+      label: I18n.tr("Lock on boot")
+      description: I18n.tr("Lock once when the desktop starts, after an automatic login")
+      path: "lock.onBoot"
+        }
+
         SettingRow {
             label: I18n.tr("Lock now")
             description: I18n.tr("Also Super + Escape, or qs ipc call lock lock")

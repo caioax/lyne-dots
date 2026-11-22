@@ -35,6 +35,7 @@ Singleton {
     readonly property bool showPower: StateService.get("lock.showPower", true)
     readonly property bool showMedia: StateService.get("lock.showMedia", true)
     readonly property bool lockBeforeSleep: StateService.get("lock.beforeSleep", true)
+    readonly property bool lockOnBoot: StateService.get("lock.onBoot", true)
 
     signal authSucceeded
     // The password field was clicked: the surfaces take the keyboard back
@@ -202,6 +203,24 @@ Singleton {
     }
 
     // ========================================================================
+    // LOCK ON BOOT
+    // Once per boot: the marker lives in XDG_RUNTIME_DIR, which is cleared on
+    // reboot, so a Quickshell restart doesn't lock again
+    readonly property string _bootMarker: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/lyne-lock-on-boot"
+
+    Process {
+        id: bootLockCheck
+        command: ["sh", "-c", "test -e \"$1\" && echo done || { touch \"$1\"; echo new; }", "sh", root._bootMarker]
+        stdout: StdioCollector {
+      onStreamFinished: {
+          if (text.trim() === "new" && root.lockOnBoot)
+              root.lock();
+      }
+        }
+    }
+
+    Component.onCompleted: bootLockCheck.running = true
+
     // IPC — qs ipc call lock lock
     // ========================================================================
 
